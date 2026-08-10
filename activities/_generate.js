@@ -97,10 +97,14 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
 `;
 }
 
+let written = 0;
 for (const row of lessons) {
   const n = row[0];
+  // 1차시는 커스텀 활동지(나 사용 설명서) — 덮어쓰지 않음
+  if (n === 1) continue;
   const file = path.join(base, String(n).padStart(2, "0") + ".html");
   fs.writeFileSync(file, htmlFor(row), "utf8");
+  written += 1;
 }
 
-console.log("generated", lessons.length, "files");
+console.log("generated", written, "files (skipped custom 01.html)");

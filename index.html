@@ -2118,8 +2118,10 @@
         const re =
           /<label[^>]*>([\s\S]*?)<\/label>[\s\S]*?(?:<textarea[^>]*>([\s\S]*?)<\/textarea>|<input[^>]*value="([^"]*)"[^>]*>|<input[^>]*value='([^']*)'[^>]*>)/gi;
         let m;
-        while ((m = re.exec(s)) && out.length < 12) {
+        while ((m = re.exec(s)) && out.length < 16) {
           const label = htmlToPlainTextFast(m[1]).trim();
+          // 학번/이름 입력칸은 요약에서 제외
+          if (/^(학번|이름)\b/.test(label)) continue;
           const value = htmlToPlainTextFast(m[2] || m[3] || m[4] || "").trim();
           if (label || value) out.push({ label, value });
         }
