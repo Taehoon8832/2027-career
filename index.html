@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --color-primary-50:  #FBEFE7;
@@ -255,12 +256,17 @@
     .class-count-control .count-hint {
       font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary);
     }
+    .grade-chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .grade-chip-meta {
+      font: 600 10px/1 var(--font-sans); color: var(--text-tertiary);
+    }
+    .grade-chip-meta.is-saved { color: var(--color-primary-700); }
     .roster-box { margin-top: 8px; }
     .roster-list {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 8px;
-      max-height: min(52vh, 420px);
+      max-height: min(70vh, 640px);
       overflow-y: auto;
       margin: 8px 0 10px;
       padding: 2px;
@@ -271,7 +277,7 @@
       border: 1px solid var(--border-default);
       border-radius: 10px;
       background: var(--bg-subtle);
-      min-height: 96px;
+      min-height: 120px;
     }
     .roster-cell.has-sub {
       border-color: var(--color-primary-300);
@@ -286,37 +292,133 @@
       font: 500 12px/1 var(--font-sans); color: var(--text-primary);
     }
     .roster-cell .sub-meta {
-      display: flex; align-items: center; justify-content: space-between; gap: 4px;
       font: 600 10px/1.2 var(--font-sans); color: var(--text-tertiary);
-    }
-    .roster-cell .sub-meta button {
-      border: 0; background: transparent; color: var(--color-primary-700);
-      font: 700 10px/1 var(--font-sans); cursor: pointer; padding: 0;
     }
     .roster-cell .del {
       align-self: flex-end; border: 0; background: transparent;
       color: var(--text-tertiary); font: 600 10px/1 var(--font-sans); cursor: pointer;
     }
+    .roster-sub-list {
+      display: grid; gap: 4px; max-height: 140px; overflow-y: auto;
+      margin-top: 2px;
+    }
+    .roster-sub-item {
+      display: grid; gap: 2px;
+      padding: 6px; border-radius: 8px;
+      background: #fff; border: 1px solid var(--border-default);
+      text-align: left; cursor: pointer;
+      font: 500 10px/1.3 var(--font-sans); color: var(--text-secondary);
+    }
+    .roster-sub-item:hover { border-color: var(--color-primary-300); }
+    .roster-sub-item strong {
+      display: block; font: 700 10px/1.2 var(--font-sans); color: var(--text-primary);
+    }
+    .roster-sub-item .sub-actions {
+      display: flex; gap: 6px; margin-top: 2px;
+    }
+    .roster-sub-item .sub-actions button {
+      border: 0; background: transparent; padding: 0;
+      font: 700 10px/1 var(--font-sans); cursor: pointer;
+      color: var(--color-primary-700);
+    }
+    .roster-sub-item .sub-actions button.is-danger { color: #B23A2C; }
     .roster-actions {
       display: flex; gap: 8px; flex-wrap: wrap;
     }
-    .roster-preview {
-      margin-top: 12px; padding: 12px;
-      border: 1px solid var(--border-default);
-      border-radius: 12px; background: var(--bg-elevated);
+    .sub-viewer {
+      position: fixed; inset: 0; z-index: 80;
+      background: rgba(28, 25, 23, 0.55);
+      display: none; align-items: center; justify-content: center;
+      padding: 24px;
     }
-    .roster-preview[hidden] { display: none !important; }
-    .roster-preview h3 {
-      margin: 0 0 8px; font: 700 14px/1.3 var(--font-sans); color: var(--text-primary);
+    .sub-viewer.is-open { display: flex; }
+    .sub-viewer-panel {
+      width: min(920px, 100%);
+      height: min(84vh, 820px);
+      background: #fff;
+      border-radius: 16px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.22);
     }
-    .roster-preview-list { display: grid; gap: 8px; max-height: 220px; overflow-y: auto; }
-    .roster-preview-item {
-      padding: 10px; border-radius: 10px; background: var(--bg-subtle);
-      border: 1px solid var(--border-default);
+    .sub-viewer-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px; border-bottom: 1px solid var(--border-default);
     }
-    .roster-preview-item strong { font: 700 12px/1.3 var(--font-sans); }
-    .roster-preview-item p {
-      margin: 6px 0 0; font: 500 12px/1.45 var(--font-sans); color: var(--text-secondary);
+    .sub-viewer-head h3 {
+      margin: 0; flex: 1; font: 700 15px/1.3 var(--font-sans);
+    }
+    .sub-viewer-body {
+      flex: 1; overflow: auto; padding: 16px; background: var(--bg-subtle);
+    }
+    .sub-viewer-body iframe {
+      width: 100%; min-height: 60vh; border: 0; background: #fff; border-radius: 10px;
+    }
+    .sub-viewer-body .plain {
+      white-space: pre-wrap; font: 500 14px/1.55 var(--font-sans); color: var(--text-primary);
+      background: #fff; padding: 16px; border-radius: 10px;
+    }
+    .detail-toolbar {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      margin: 0 0 12px;
+    }
+    .detail-toolbar .grow { flex: 1; min-width: 8px; }
+    .detail-section-title {
+      margin: 18px 0 8px;
+      font: 700 15px/1.3 var(--font-sans); color: var(--text-primary);
+    }
+    .detail-roster-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .detail-roster-cell {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 8px; border: 1px solid var(--border-default);
+      border-radius: 10px; background: var(--bg-subtle); min-height: 110px;
+    }
+    .detail-roster-cell.has-sub {
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
+    }
+    .detail-roster-cell .no {
+      font: 700 12px/1 var(--font-sans); color: var(--color-primary-700);
+    }
+    .detail-roster-cell .name {
+      font: 600 12px/1.2 var(--font-sans); color: var(--text-primary);
+      min-height: 16px;
+    }
+    .detail-roster-cell .status {
+      font: 600 10px/1.2 var(--font-sans); color: var(--text-tertiary);
+    }
+    .detail-sub-preview {
+      border: 1px solid var(--border-default); border-radius: 8px;
+      background: #fff; overflow: hidden; max-height: 88px;
+    }
+    .detail-sub-preview iframe {
+      width: 100%; height: 88px; border: 0; pointer-events: none;
+      transform: scale(0.55); transform-origin: top left;
+      width: 182%; height: 160px;
+    }
+    .detail-sub-preview .plain-mini {
+      padding: 6px; font: 500 10px/1.35 var(--font-sans);
+      color: var(--text-secondary); max-height: 88px; overflow: hidden;
+    }
+    .detail-sub-actions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .detail-sub-actions button {
+      border: 0; background: transparent; padding: 0;
+      font: 700 10px/1 var(--font-sans); cursor: pointer;
+      color: var(--color-primary-700);
+    }
+    .detail-sub-actions button.is-danger { color: #B23A2C; }
+    @media (max-width: 900px) {
+      .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 560px) {
+      .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     @media (max-width: 720px) {
       .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -481,7 +583,7 @@
     }
     .lesson-item {
       width: 100%; text-align: left; display: grid;
-      grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center;
+      grid-template-columns: 1fr auto; gap: 10px; align-items: center;
       padding: 10px; margin-bottom: 6px;
       border: 1px solid var(--border-default); border-radius: var(--radius-md);
       background: var(--bg-elevated); cursor: pointer;
@@ -761,13 +863,6 @@
     </div>
     <div class="dash" id="dashRoot" data-panel="list">
       <aside class="dash-list">
-        <div class="class-code-bar" id="classCodeBar">
-          <span class="label">수업코드</span>
-          <strong id="classCodeValue">--------</strong>
-          <button type="button" class="btn-tiny" id="btnCopyClassCode">복사</button>
-          <span class="hint" id="classCodeHint">학급별 별도 코드</span>
-        </div>
-        <div class="cohort-row" id="cohortRow" hidden></div>
         <div class="dash-head">
           <h2>30차시 워크북</h2>
           <span id="lessonCountLabel">30차시</span>
@@ -790,7 +885,7 @@
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
           <h2>초기 설정 · 학급별</h2>
-          <p class="settings-sub">학년을 전환해도 기존 학급 설정은 유지됩니다. 학년별로 학급 수를 정한 뒤 저장하면 반마다 별도 DB(수업코드·30차시·명단)가 만들어집니다.</p>
+          <p class="settings-sub">학년별로 학급 수를 따로 설정·저장할 수 있습니다. 1학년 ↔ 2학년을 전환해도 이미 저장한 학년 정보는 유지됩니다. 반마다 제출코드·30차시·명단 DB가 따로 생깁니다.</p>
           <p class="settings-sub" style="margin-bottom:8px">학년</p>
           <div class="chip-row" id="classGradeChips"></div>
           <p class="settings-sub" style="margin-bottom:8px">학급 수</p>
@@ -815,14 +910,20 @@
               <button type="button" class="btn btn-secondary" id="btnAddStudent">+1명 추가</button>
               <button type="button" class="btn btn-secondary" id="btnAddStudentRow">+5명(한 줄) 추가</button>
             </div>
-            <div class="roster-preview" id="rosterPreview" hidden>
-              <h3 id="rosterPreviewTitle">제출 내용</h3>
-              <div class="roster-preview-list" id="rosterPreviewList"></div>
+          </div>
+        </div>
+        <div class="sub-viewer" id="subViewer" aria-hidden="true">
+          <div class="sub-viewer-panel" role="dialog" aria-modal="true" aria-labelledby="subViewerTitle">
+            <div class="sub-viewer-head">
+              <h3 id="subViewerTitle">제출 보고서</h3>
+              <button type="button" class="btn-tiny" id="btnSubViewerDelete">삭제</button>
+              <button type="button" class="btn-tiny" id="btnSubViewerClose">닫기</button>
             </div>
+            <div class="sub-viewer-body" id="subViewerBody"></div>
           </div>
         </div>
         <div class="detail-card" id="detailCard">
-          <p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출 목록이 표시됩니다.</p>
+          <p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출코드가 표시됩니다.</p>
         </div>
       </section>
     </div>
@@ -951,6 +1052,10 @@
       let rosterStudents = [];
       let rosterClassId = null;
       let rosterSubMap = new Map();
+      let detailSubMap = new Map();
+      let submissionById = new Map();
+      let detailExportRows = [];
+      let detailFilterGrade = null;
       const MAX_CLASS_COUNT = 10;
       let lessonsHaveSubmitCode = null; // null=미확인, true/false
 
@@ -1112,12 +1217,28 @@
 
         classGradeRoot.innerHTML = "";
         [1, 2, 3].forEach((g) => {
+          const wrap = document.createElement("div");
+          wrap.className = "grade-chip-wrap";
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip-toggle" + (classSettings.classGrade === g ? " is-on" : "");
           btn.textContent = `${g}학년`;
           btn.addEventListener("click", () => changeClassGrade(g));
-          classGradeRoot.appendChild(btn);
+          const meta = document.createElement("span");
+          meta.className = "grade-chip-meta";
+          const saved = activeClassesForGrade(g);
+          const remembered = Number(classSettings.byGrade?.[String(g)]?.classCount) || 0;
+          if (saved.length) {
+            meta.classList.add("is-saved");
+            meta.textContent = `${Math.max(...saved.map((c) => Number(c.class_no)))}반 저장됨`;
+          } else if (remembered) {
+            meta.textContent = `${remembered}반(미저장)`;
+          } else {
+            meta.textContent = "미설정";
+          }
+          wrap.appendChild(btn);
+          wrap.appendChild(meta);
+          classGradeRoot.appendChild(wrap);
         });
 
         const countEl = $("classCountValue");
@@ -1125,9 +1246,18 @@
         if (countEl) countEl.textContent = String(classSettings.classCount);
         if (hintEl) {
           const n = classSettings.classCount;
-          hintEl.textContent = n === 1
-            ? `${classSettings.classGrade}학년 1반만 사용`
-            : `${classSettings.classGrade}학년 1반~${n}반 (반마다 별도 DB)`;
+          const others = [1, 2, 3]
+            .filter((g) => g !== classSettings.classGrade && activeClassesForGrade(g).length)
+            .map((g) => {
+              const maxNo = Math.max(...activeClassesForGrade(g).map((c) => Number(c.class_no)));
+              return `${g}학년 1~${maxNo}반`;
+            });
+          const current = n === 1
+            ? `${classSettings.classGrade}학년 1반`
+            : `${classSettings.classGrade}학년 1~${n}반`;
+          hintEl.textContent = others.length
+            ? `${current} 편집 중 · 유지: ${others.join(", ")}`
+            : `${current} (반마다 별도 DB)`;
         }
 
         $("classSettingsSummary").textContent = formatClassSettingsSummary();
@@ -1137,6 +1267,7 @@
 
       function changeClassGrade(g) {
         if (classSettings.classGrade === g) return;
+        // 현재 학년 학급 수는 로컬에만 기억 (DB의 다른 학년은 그대로 유지)
         rememberGradeCount();
         classSettings.classGrade = g;
 
@@ -1157,16 +1288,23 @@
           activeClassId = first.id;
           teacherClass = first;
           rosterClassId = first.id;
-        }
-        $("rosterPreview")?.setAttribute("hidden", "");
-        renderClassSettingsUI();
-        renderClassCode();
-        renderCohortRow();
-        if (first) {
-          loadRoster(first.id).catch(() => {});
-          toast(`${g}학년으로 전환했습니다. 기존 학급 설정을 유지합니다.`);
         } else {
-          toast(`${g}학년입니다. 학급 수를 정한 뒤 저장하면 새 학급이 만들어집니다.`);
+          rosterClassId = null;
+          rosterStudents = [];
+          rosterSubMap = new Map();
+        }
+        closeSubViewer();
+        renderClassSettingsUI();
+        if (first) {
+          loadRoster(first.id)
+            .then(() => loadLessons())
+            .then(() => renderLessonList())
+            .catch(() => {});
+          toast(`${g}학년으로 전환했습니다. 다른 학년 학급은 그대로 유지됩니다.`);
+        } else {
+          lessons = [];
+          renderLessonList().catch(() => {});
+          toast(`${g}학년입니다. 학급 수를 정한 뒤 저장하면 이 학년 학급이 추가됩니다.`);
         }
       }
 
@@ -1192,7 +1330,6 @@
           $("rosterClassLabel").textContent = "이 학년에 저장된 학급이 없습니다. 학급 수를 정한 뒤 [학급 저장]을 눌러 주세요.";
           $("rosterList").innerHTML = "";
           $("rosterCountLabel").textContent = "0명";
-          $("rosterPreview")?.setAttribute("hidden", "");
           return;
         }
         if (!rosterClassId || !active.some((c) => c.id === rosterClassId)) {
@@ -1202,7 +1339,7 @@
         }
         const current = active.find((c) => c.id === rosterClassId);
         $("rosterClassLabel").textContent = current
-          ? `${unitLabel(current)} · 가로 5명씩 배치 · 차시 제출이 번호에 연결됩니다`
+          ? `${unitLabel(current)} · 가로 5명 · 이름 아래 차시별 제출 보고서`
           : "명단을 볼 학급을 선택하세요.";
 
         active.forEach((c) => {
@@ -1210,13 +1347,16 @@
           btn.type = "button";
           btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
           btn.textContent = `${c.class_no}반`;
-          btn.addEventListener("click", () => {
+          btn.addEventListener("click", async () => {
             rosterClassId = c.id;
             activeClassId = c.id;
             teacherClass = c;
-            renderClassCode();
-            loadRoster(c.id);
+            selectedLessonId = null;
             renderRosterClassChips();
+            await loadRoster(c.id);
+            await loadLessons();
+            await renderLessonList();
+            toast(`${unitLabel(c)} 명단·차시로 전환했습니다.`);
           });
           root.appendChild(btn);
         });
@@ -1263,10 +1403,12 @@
           const key = normalizeStudentNo(s.student_no);
           if (!key) continue;
           if (!rosterSubMap.has(key)) rosterSubMap.set(key, []);
-          rosterSubMap.get(key).push({
+          const row = {
             ...s,
             session_no: lessonMap.get(s.lesson_id) || null
-          });
+          };
+          rosterSubMap.get(key).push(row);
+          submissionById.set(row.id, row);
         }
         return rosterSubMap;
       }
@@ -1315,24 +1457,37 @@
         const root = $("rosterList");
         if (!root) return;
         $("rosterCountLabel").textContent = `${rosterStudents.length}명`;
-        $("rosterPreview")?.setAttribute("hidden", "");
         if (!rosterStudents.length) {
           root.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">학생이 없습니다. 아래에서 추가해 주세요.</p>`;
           return;
         }
         root.innerHTML = rosterStudents.map((s) => {
           const key = normalizeStudentNo(s.student_no);
-          const subs = rosterSubMap.get(key) || [];
+          const subs = (rosterSubMap.get(key) || []).slice().sort((a, b) => {
+            const sa = Number(a.session_no) || 0;
+            const sb_ = Number(b.session_no) || 0;
+            if (sa !== sb_) return sa - sb_;
+            return new Date(b.created_at) - new Date(a.created_at);
+          });
           const labelNo = key || s.student_no;
+          const subListHtml = subs.length
+            ? `<div class="roster-sub-list">${subs.map((sub) => `
+                <div class="roster-sub-item" data-open="${sub.id}">
+                  <strong>${sub.session_no ? `${sub.session_no}차시` : "차시"}</strong>
+                  <span>${escapeHtml(previewText(sub.content, 42))}</span>
+                  <div class="sub-actions">
+                    <button type="button" data-open="${sub.id}">크게 보기</button>
+                    <button type="button" class="is-danger" data-del-sub="${sub.id}">삭제</button>
+                  </div>
+                </div>`).join("")}</div>`
+            : `<div class="roster-sub-list"><div class="roster-sub-item" style="cursor:default;opacity:.75">제출된 보고서 없음</div></div>`;
           return `
           <div class="roster-cell${subs.length ? " has-sub" : ""}" data-id="${s.id}" data-no="${escapeHtml(key)}">
             <div class="no">${escapeHtml(labelNo)}번</div>
             <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" />
-            <div class="sub-meta">
-              <span>${subs.length ? `제출 ${subs.length}건` : "미제출"}</span>
-              ${subs.length ? `<button type="button" data-view="${escapeHtml(key)}">보기</button>` : ""}
-            </div>
-            <button type="button" class="del" data-del="${s.id}">삭제</button>
+            <div class="sub-meta">${subs.length ? `제출 ${subs.length}건` : "미제출"}</div>
+            ${subListHtml}
+            <button type="button" class="del" data-del="${s.id}">학생 삭제</button>
           </div>`;
         }).join("");
 
@@ -1353,35 +1508,93 @@
             toast("학생을 삭제했습니다.");
           });
         });
-        root.querySelectorAll("button[data-view]").forEach((btn) => {
-          btn.addEventListener("click", () => {
-            showRosterStudentSubs(btn.getAttribute("data-view"));
+        root.querySelectorAll(".roster-sub-item[data-open]").forEach((el) => {
+          el.addEventListener("click", (e) => {
+            if (e.target.closest("[data-del-sub]")) return;
+            const id = el.getAttribute("data-open");
+            if (id) openSubViewer(id);
+          });
+        });
+        root.querySelectorAll("button[data-del-sub]").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute("data-del-sub");
+            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
+            await deleteSubmission(id);
           });
         });
       }
 
-      function showRosterStudentSubs(studentNoKey) {
-        const preview = $("rosterPreview");
-        const list = $("rosterPreviewList");
-        const title = $("rosterPreviewTitle");
-        if (!preview || !list) return;
-        const subs = rosterSubMap.get(normalizeStudentNo(studentNoKey)) || [];
-        const student = rosterStudents.find(
-          (s) => normalizeStudentNo(s.student_no) === normalizeStudentNo(studentNoKey)
-        );
-        title.textContent = `${studentNoKey}번 ${student?.student_name || ""} · 제출 ${subs.length}건`.trim();
-        if (!subs.length) {
-          list.innerHTML = `<p class="settings-sub">아직 제출이 없습니다.</p>`;
-        } else {
-          list.innerHTML = subs.map((s) => `
-            <article class="roster-preview-item">
-              <strong>${s.session_no ? `${s.session_no}차시` : "차시"} · ${escapeHtml(s.student_name || "")}</strong>
-              <p>${escapeHtml(previewText(s.content, 160))}</p>
-              <p style="color:var(--text-tertiary)">${formatTime(s.created_at)}</p>
-            </article>`).join("");
+      let viewingSubmissionId = null;
+
+      function registerSubmissions(list) {
+        (list || []).forEach((s) => {
+          if (s?.id) submissionById.set(s.id, s);
+        });
+      }
+
+      function findSubmissionById(id) {
+        if (submissionById.has(id)) return submissionById.get(id);
+        for (const list of rosterSubMap.values()) {
+          const found = list.find((s) => s.id === id);
+          if (found) return found;
         }
-        preview.hidden = false;
-        preview.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        for (const list of detailSubMap.values()) {
+          const found = list.find((s) => s.id === id);
+          if (found) return found;
+        }
+        return null;
+      }
+
+      function htmlToPlainText(html) {
+        const tmp = document.createElement("div");
+        tmp.innerHTML = String(html || "");
+        return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
+      }
+
+      function openSubViewer(submissionId) {
+        const sub = findSubmissionById(submissionId);
+        const viewer = $("subViewer");
+        const body = $("subViewerBody");
+        const title = $("subViewerTitle");
+        if (!sub || !viewer || !body) return;
+        viewingSubmissionId = sub.id;
+        title.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${sub.student_no}번 ${sub.student_name || ""}`.trim();
+        if (looksLikeHtml(sub.content)) {
+          body.innerHTML = `<iframe sandbox="" srcdoc="${escapeSrcdoc(sub.content)}" title="제출 보고서"></iframe>`;
+        } else {
+          body.innerHTML = `<div class="plain">${escapeHtml(sub.content || "(내용 없음)")}</div>`;
+        }
+        viewer.classList.add("is-open");
+        viewer.setAttribute("aria-hidden", "false");
+      }
+
+      function closeSubViewer() {
+        const viewer = $("subViewer");
+        if (!viewer) return;
+        viewer.classList.remove("is-open");
+        viewer.setAttribute("aria-hidden", "true");
+        const body = $("subViewerBody");
+        if (body) body.innerHTML = "";
+        viewingSubmissionId = null;
+      }
+
+      async function deleteSubmission(submissionId) {
+        if (!sb || !submissionId) return;
+        const { error } = await sb.from("submissions").delete().eq("id", submissionId);
+        if (error) {
+          toast("제출 삭제 실패: " + (error.message || "권한/정책을 확인해 주세요."));
+          return;
+        }
+        if (viewingSubmissionId === submissionId) closeSubViewer();
+        submissionById.delete(submissionId);
+        toast("제출 보고서를 삭제했습니다.");
+        if (rosterClassId) await loadRoster(rosterClassId);
+        await renderLessonList();
+        const current = lessons.find((l) => l.id === selectedLessonId);
+        if (current && $("detailCard") && !$("detailCard").hidden) {
+          await renderDetail(current);
+        }
       }
 
       async function addRosterStudents(count) {
@@ -1873,60 +2086,16 @@
       }
 
       function renderClassCode() {
-        $("classCodeValue").textContent = (teacherClass?.class_code || "--------").toUpperCase();
-        const hint = $("classCodeHint");
-        if (hint) {
-          hint.textContent = teacherClass
-            ? `${unitLabel(teacherClass)} 전용 코드`
-            : "학급별 별도 코드";
-        }
+        /* 왼쪽 수업코드 UI 제거됨 — 차시 상세의 제출코드만 사용 */
       }
 
       function renderCohortRow() {
-        const root = $("cohortRow");
-        if (!root) return;
-        const active = teacherClasses.filter((c) => c.is_active);
-        if (!active.length) {
-          root.hidden = true;
-          root.innerHTML = "";
-          return;
-        }
-        root.hidden = false;
-        root.innerHTML = "";
-        active.forEach((c) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "cohort-chip" + (c.id === activeClassId ? " is-on" : "");
-          btn.textContent = unitLabel(c);
-          btn.title = `수업코드 ${(c.class_code || "").toUpperCase()}`;
-          btn.addEventListener("click", async () => {
-            activeClassId = c.id;
-            teacherClass = c;
-            classSettings.classGrade = Number(c.grade) || classSettings.classGrade;
-            const nos = activeClassesForGrade(classSettings.classGrade).map((x) => Number(x.class_no));
-            if (nos.length) {
-              classSettings.classCount = clampClassCount(Math.max(...nos));
-              rememberGradeCount();
-              localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
-            }
-            selectedLessonId = null;
-            renderClassCode();
-            renderCohortRow();
-            renderClassSettingsUI();
-            await loadLessons();
-            await renderLessonList();
-            if (lessons.length) await selectLesson(lessons[0].id);
-            toast(`${unitLabel(c)} 으로 전환했습니다.`);
-          });
-          root.appendChild(btn);
-        });
+        /* 왼쪽 학년·반 칩 UI 제거됨 — 초기 설정에서 학급 전환 */
       }
 
       async function loadLessons() {
         if (!session || !sb) return;
         const classId = await ensureTeacherClassSeeded();
-        renderClassCode();
-        renderCohortRow();
         if (!classId) {
           lessons = [];
           return;
@@ -1997,7 +2166,6 @@
             btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
             btn.dataset.id = lesson.id;
             btn.innerHTML = `
-              <div class="lesson-qr" data-qr="${lesson.token}"></div>
               <div class="lesson-meta">
                 <strong>${sessionNo}차시 · ${escapeHtml(meta.title)}</strong>
                 <small>${escapeHtml(meta.summary)}</small>
@@ -2008,7 +2176,6 @@
               if (window.matchMedia("(max-width: 899px)").matches) setDashPanel("detail");
             });
             group.appendChild(btn);
-            paintQr(btn.querySelector("[data-qr]"), activityUrl(lesson.session_no, lessonSubmitCode(lesson)), 44);
           }
           root.appendChild(group);
         }
@@ -2026,16 +2193,6 @@
         });
       }
 
-      async function fetchSubmissions(lessonId) {
-        const { data, error } = await sb
-          .from("submissions")
-          .select("id, student_no, student_name, content, created_at")
-          .eq("lesson_id", lessonId)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        return data || [];
-      }
-
       function formatTime(iso) {
         try {
           const d = new Date(iso);
@@ -2045,11 +2202,117 @@
         }
       }
 
+      async function loadDetailStudentsAndSubs(classId, lessonId, sessionNo) {
+        detailSubMap = new Map();
+        detailExportRows = [];
+        let students = [];
+        try {
+          await seedDefaultStudents(classId);
+          const { data, error } = await sb
+            .from("students")
+            .select("id, student_no, student_name, sort_order")
+            .eq("class_id", classId)
+            .order("sort_order", { ascending: true });
+          if (error) throw error;
+          students = (data || []).slice().sort((a, b) => {
+            const na = Number(normalizeStudentNo(a.student_no)) || a.sort_order;
+            const nb = Number(normalizeStudentNo(b.student_no)) || b.sort_order;
+            return na - nb;
+          });
+        } catch (e) {
+          console.warn(e);
+          students = Array.from({ length: 30 }, (_, i) => ({
+            id: `tmp-${i + 1}`,
+            student_no: String(i + 1),
+            student_name: "",
+            sort_order: i + 1
+          }));
+        }
+
+        const { data: subs } = await sb
+          .from("submissions")
+          .select("id, lesson_id, student_no, student_name, content, created_at")
+          .eq("lesson_id", lessonId)
+          .order("created_at", { ascending: false });
+
+        for (const s of subs || []) {
+          const key = normalizeStudentNo(s.student_no);
+          if (!key) continue;
+          const row = { ...s, session_no: sessionNo };
+          if (!detailSubMap.has(key)) detailSubMap.set(key, []);
+          detailSubMap.get(key).push(row);
+          submissionById.set(row.id, row);
+        }
+
+        // 이름 비어 있으면 제출 이름으로 표시용 채움
+        students = students.map((st) => {
+          if (st.student_name) return st;
+          const first = (detailSubMap.get(normalizeStudentNo(st.student_no)) || [])[0];
+          return first?.student_name ? { ...st, student_name: first.student_name } : st;
+        });
+
+        detailExportRows = students.map((st) => {
+          const key = normalizeStudentNo(st.student_no);
+          const list = detailSubMap.get(key) || [];
+          const latest = list[0] || null;
+          return {
+            번호: key || st.student_no,
+            이름: st.student_name || latest?.student_name || "",
+            차시: sessionNo,
+            제출여부: latest ? "제출" : "미제출",
+            제출시각: latest ? formatTime(latest.created_at) : "",
+            내용: latest ? htmlToPlainText(latest.content) : "",
+            HTML: latest ? String(latest.content || "") : ""
+          };
+        });
+
+        return students;
+      }
+
+      async function switchDetailClass(targetClass, sessionNo) {
+        if (!targetClass) return;
+        activeClassId = targetClass.id;
+        teacherClass = targetClass;
+        classSettings.classGrade = Number(targetClass.grade) || classSettings.classGrade;
+        detailFilterGrade = classSettings.classGrade;
+        rememberGradeCount();
+        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        await loadLessons();
+        const nextLesson = lessons.find((l) => l.session_no === sessionNo) || lessons[0];
+        if (nextLesson) {
+          selectedLessonId = nextLesson.id;
+          await renderLessonList();
+          await renderDetail(nextLesson);
+          subscribeRealtime(nextLesson.id);
+        } else {
+          await renderLessonList();
+          await renderDetail(null);
+        }
+      }
+
+      function downloadDetailXlsx(sessionNo) {
+        if (!window.XLSX) {
+          toast("엑셀 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
+          return;
+        }
+        if (!detailExportRows.length) {
+          toast("내려받을 명단이 없습니다.");
+          return;
+        }
+        const cls = teacherClass ? unitLabel(teacherClass) : "학급";
+        const sheet = XLSX.utils.json_to_sheet(detailExportRows);
+        const book = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(book, sheet, `${sessionNo}차시`);
+        const fname = `${cls}_${sessionNo}차시_제출보고서.xlsx`.replace(/\s+/g, "");
+        XLSX.writeFile(book, fname);
+        toast("xlsx 파일을 저장했습니다.");
+      }
+
       async function renderDetail(lesson) {
         showRightPanel("lesson");
         const card = $("detailCard");
         if (!lesson) {
-          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학급·제출 미리보기가 표시됩니다.</p>`;
+          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 제출코드와 번호별 보고서를 확인할 수 있습니다.</p>`;
           return;
         }
         if (!isClassSettingsReady()) {
@@ -2060,44 +2323,124 @@
           return;
         }
 
+        detailFilterGrade = Number(teacherClass?.grade || detailFilterGrade || classSettings.classGrade || 1);
+        const gradesWithClasses = [1, 2, 3].filter((g) => activeClassesForGrade(g).length);
+        if (!gradesWithClasses.includes(detailFilterGrade) && gradesWithClasses.length) {
+          detailFilterGrade = gradesWithClasses[0];
+        }
+        let classesForGrade = activeClassesForGrade(detailFilterGrade);
+
         const meta = getLessonMeta(lesson.session_no);
         const submitCode = lessonSubmitCode(lesson) || "--------";
         const url = activityUrl(lesson.session_no, lessonSubmitCode(lesson));
-        const subs = await fetchSubmissions(lesson.id);
-        const pills = getClassPills();
+        const classId = teacherClass?.id || lesson.class_id;
+        const students = classId
+          ? await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no)
+          : [];
+        const submittedCount = [...detailSubMap.values()].filter((arr) => arr.length).length;
+
         card.innerHTML = `
-          <div class="class-row" aria-label="설정된 학년 반">
-            ${pills.map((p) => `<span class="class-pill">${escapeHtml(p)}</span>`).join("")}
-          </div>
           <span class="lesson-theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
           <h2 class="lesson-title">${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
           <p class="lesson-summary">${escapeHtml(meta.summary)}</p>
-          <div class="class-code-bar" style="margin:0 0 14px">
+
+          <p class="settings-sub" style="margin-bottom:6px">학년</p>
+          <div class="chip-row" id="detailGradeChips"></div>
+          <p class="settings-sub" style="margin-bottom:6px">학급(반)</p>
+          <div class="chip-row" id="detailClassChips"></div>
+
+          <div class="class-code-bar" style="margin:4px 0 12px">
             <span class="label">이 차시 제출코드</span>
             <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
             <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
-            <span class="hint">차시마다 다른 코드</span>
+            <span class="hint">${teacherClass ? escapeHtml(unitLabel(teacherClass)) : "학급"}</span>
           </div>
           <div class="detail-top">
             <div class="detail-qr-lg" id="detailQr"></div>
             <div class="detail-info">
               <h3>학생 활동 HTML</h3>
               <p>${escapeHtml(url)}</p>
-              <p style="margin-top:-6px;color:var(--text-tertiary);font-size:12px">
-                QR을 찍거나 링크를 열면 제출코드가 자동 입력됩니다. 수동 제출 시에도 <strong>${escapeHtml(submitCode)}</strong> 를 입력하세요.
-              </p>
               <div class="detail-actions">
                 <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
                 <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
-                <button type="button" class="btn btn-secondary" id="btnRefreshSubs">새로고침</button>
               </div>
             </div>
           </div>
-          <div class="dash-head" style="margin-top:4px">
-            <h2 style="font-size:18px">제출 미리보기</h2>
-            <span id="subCountLabel">${subs.length}건</span>
+
+          <div class="detail-toolbar">
+            <h3 class="detail-section-title" style="margin:0">번호별 제출 보고서</h3>
+            <span class="settings-sub" style="margin:0">${submittedCount}/${students.length}명 제출</span>
+            <span class="grow"></span>
+            <button type="button" class="btn btn-secondary" id="btnDownloadXlsx">모든 보고서 xlsx</button>
           </div>
-          <div class="news-grid" id="subList"></div>`;
+          <div class="detail-roster-grid" id="detailRosterGrid"></div>`;
+
+        const gradeRoot = $("detailGradeChips");
+        (gradesWithClasses.length ? gradesWithClasses : [detailFilterGrade]).forEach((g) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip-toggle" + (Number(detailFilterGrade) === g ? " is-on" : "");
+          btn.textContent = `${g}학년`;
+          btn.addEventListener("click", async () => {
+            detailFilterGrade = g;
+            const list = activeClassesForGrade(g);
+            if (!list.length) {
+              toast(`${g}학년에 저장된 학급이 없습니다. 초기 설정에서 저장해 주세요.`);
+              return;
+            }
+            const prefer = list.find((c) => c.id === activeClassId) || list[0];
+            await switchDetailClass(prefer, lesson.session_no);
+          });
+          gradeRoot.appendChild(btn);
+        });
+
+        const classRoot = $("detailClassChips");
+        classesForGrade = activeClassesForGrade(detailFilterGrade);
+        if (!classesForGrade.length) {
+          classRoot.innerHTML = `<span class="settings-sub">이 학년에 학급이 없습니다.</span>`;
+        } else {
+          classesForGrade.forEach((c) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "chip-toggle" + (c.id === activeClassId ? " is-on" : "");
+            btn.textContent = `${c.class_no}반`;
+            btn.addEventListener("click", async () => {
+              if (c.id === activeClassId) return;
+              await switchDetailClass(c, lesson.session_no);
+            });
+            classRoot.appendChild(btn);
+          });
+        }
+
+        const grid = $("detailRosterGrid");
+        if (!students.length) {
+          grid.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">명단이 없습니다. 초기 설정에서 학급을 저장해 주세요.</p>`;
+        } else {
+          grid.innerHTML = students.map((st) => {
+            const key = normalizeStudentNo(st.student_no);
+            const list = detailSubMap.get(key) || [];
+            const latest = list[0] || null;
+            const preview = latest
+              ? (looksLikeHtml(latest.content)
+                ? `<div class="detail-sub-preview"><iframe sandbox="" srcdoc="${escapeSrcdoc(latest.content)}" title="미리보기"></iframe></div>`
+                : `<div class="detail-sub-preview"><div class="plain-mini">${escapeHtml(previewText(latest.content, 80))}</div></div>`)
+              : `<div class="detail-sub-preview"><div class="plain-mini">미제출</div></div>`;
+            const actions = latest
+              ? `<div class="detail-sub-actions">
+                   <button type="button" data-open-detail="${latest.id}">크게 보기</button>
+                   <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
+                 </div>`
+              : "";
+            return `
+              <div class="detail-roster-cell${latest ? " has-sub" : ""}">
+                <div class="no">${escapeHtml(key || st.student_no)}번</div>
+                <div class="name">${escapeHtml(st.student_name || "이름 없음")}</div>
+                <div class="status">${latest ? `제출 · ${escapeHtml(formatTime(latest.created_at))}` : "미제출"}</div>
+                ${preview}
+                ${actions}
+              </div>`;
+          }).join("");
+        }
 
         paintQr($("detailQr"), url, 136);
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
@@ -2117,30 +2460,26 @@
             toast(submitCode);
           }
         });
-        $("btnRefreshSubs").addEventListener("click", () => selectLesson(lesson.id, true));
-
-        const list = $("subList");
-        if (!subs.length) {
-          list.outerHTML = `<p class="sub-empty">아직 제출이 없습니다. 학생이 이 차시 제출코드로 제출하면 여기에 표시됩니다.</p>`;
-          return;
-        }
-        list.innerHTML = subs.map((s) => {
-          const body = looksLikeHtml(s.content)
-            ? `<iframe class="news-frame" sandbox="" srcdoc="${escapeSrcdoc(s.content)}" title="${escapeHtml(s.student_name)} 제출"></iframe>`
-            : `<p class="news-card-preview">${escapeHtml(previewText(s.content, 110))}</p>`;
-          return `
-          <article class="news-card">
-            <div class="news-card-band" aria-hidden="true"></div>
-            <div class="news-card-body">
-              <div class="news-card-meta">
-                <strong>${escapeHtml(s.student_name)}</strong>
-                <time>${formatTime(s.created_at)}</time>
-              </div>
-              ${body}
-              <div class="news-card-foot">${escapeHtml(s.student_no)}</div>
-            </div>
-          </article>`;
-        }).join("");
+        $("btnDownloadXlsx")?.addEventListener("click", () => downloadDetailXlsx(lesson.session_no));
+        grid?.querySelectorAll("[data-open-detail]").forEach((btn) => {
+          btn.addEventListener("click", () => openSubViewer(btn.getAttribute("data-open-detail")));
+        });
+        grid?.querySelectorAll("[data-del-detail]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-del-detail");
+            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
+            await deleteSubmission(id);
+            const current = lessons.find((l) => l.id === selectedLessonId);
+            if (current) await renderDetail(current);
+          });
+        });
+        grid?.querySelectorAll(".detail-sub-preview").forEach((el) => {
+          const cell = el.closest(".detail-roster-cell");
+          const openBtn = cell?.querySelector("[data-open-detail]");
+          if (!openBtn) return;
+          el.style.cursor = "pointer";
+          el.addEventListener("click", () => openSubViewer(openBtn.getAttribute("data-open-detail")));
+        });
       }
 
       function escapeHtml(str) {
@@ -2186,9 +2525,12 @@
           .on(
             "postgres_changes",
             { event: "INSERT", schema: "public", table: "submissions", filter: `lesson_id=eq.${lessonId}` },
-            () => {
-              selectLesson(lessonId, true);
-              renderLessonList();
+            async () => {
+              await renderLessonList();
+              const current = lessons.find((l) => l.id === selectedLessonId);
+              if (current && $("detailCard") && !$("detailCard").hidden) {
+                await renderDetail(current);
+              }
             }
           )
           .subscribe();
@@ -2404,15 +2746,14 @@
       $("btnSignup").addEventListener("click", () => signupTeacher());
       $("btnShowSignup").addEventListener("click", () => setAuthMode("signup"));
       $("btnShowLogin").addEventListener("click", () => setAuthMode("login"));
-      $("btnCopyClassCode").addEventListener("click", async () => {
-        const code = teacherClass?.class_code;
-        if (!code) return toast("수업코드를 불러오지 못했습니다.");
-        try {
-          await navigator.clipboard.writeText(code);
-          toast("수업코드를 복사했습니다.");
-        } catch {
-          toast(code);
-        }
+      $("btnSubViewerClose")?.addEventListener("click", () => closeSubViewer());
+      $("btnSubViewerDelete")?.addEventListener("click", async () => {
+        if (!viewingSubmissionId) return;
+        if (!confirm("이 제출 보고서를 삭제할까요?")) return;
+        await deleteSubmission(viewingSubmissionId);
+      });
+      $("subViewer")?.addEventListener("click", (e) => {
+        if (e.target === $("subViewer")) closeSubViewer();
       });
       $("btnOpenSetup").addEventListener("click", async () => {
         showRightPanel("setup");

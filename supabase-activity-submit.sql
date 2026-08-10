@@ -165,6 +165,21 @@ create policy "submissions_insert_public" on public.submissions
 
 grant insert on public.submissions to anon, authenticated;
 
+-- 교사: 본인 학급 제출 삭제
+drop policy if exists "submissions_delete_teacher" on public.submissions;
+create policy "submissions_delete_teacher" on public.submissions
+  for delete to authenticated
+  using (
+    exists (
+      select 1
+      from public.lessons l
+      join public.classes c on c.id = l.class_id
+      where l.id = submissions.lesson_id and c.teacher_id = auth.uid()
+    )
+  );
+
+grant delete on public.submissions to authenticated;
+
 -- 교사가 제출코드 보정/갱신 가능
 drop policy if exists "lessons_update_teacher" on public.lessons;
 create policy "lessons_update_teacher" on public.lessons
