@@ -246,10 +246,157 @@
       .forEach((el) => el.remove());
   }
 
+  const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6];
+  const ZOOM_STORAGE_KEY = "activity-page-zoom";
+  let pageZoom = 1;
+
+  function nearestZoomStep(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 1;
+    let best = ZOOM_STEPS[0];
+    let bestDist = Math.abs(n - best);
+    for (let i = 1; i < ZOOM_STEPS.length; i++) {
+      const d = Math.abs(n - ZOOM_STEPS[i]);
+      if (d < bestDist) {
+        best = ZOOM_STEPS[i];
+        bestDist = d;
+      }
+    }
+    return best;
+  }
+
+  function readStoredZoom() {
+    try {
+      const raw = sessionStorage.getItem(ZOOM_STORAGE_KEY);
+      if (raw == null || raw === "") return 1;
+      return nearestZoomStep(raw);
+    } catch {
+      return 1;
+    }
+  }
+
+  function persistZoom(level) {
+    try {
+      sessionStorage.setItem(ZOOM_STORAGE_KEY, String(level));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function supportsCssZoom() {
+    try {
+      return typeof CSS !== "undefined" && CSS.supports && CSS.supports("zoom", "1");
+    } catch {
+      return false;
+    }
+  }
+
+  function applyPageZoom(level) {
+    pageZoom = nearestZoomStep(level);
+    const shell = document.querySelector(".shell");
+    document.documentElement.style.setProperty("--page-zoom", String(pageZoom));
+    document.documentElement.dataset.pageZoom = String(pageZoom);
+
+    if (shell) {
+      if (supportsCssZoom()) {
+        shell.style.zoom = String(pageZoom);
+        shell.style.transform = "";
+        shell.style.transformOrigin = "";
+        shell.style.width = "";
+        shell.style.maxWidth = "";
+        shell.style.marginLeft = "";
+        shell.style.marginRight = "";
+      } else {
+        shell.style.zoom = "";
+        shell.style.transform = pageZoom === 1 ? "" : `scale(${pageZoom})`;
+        shell.style.transformOrigin = "top center";
+        if (pageZoom === 1) {
+          shell.style.width = "";
+          shell.style.maxWidth = "";
+          shell.style.marginLeft = "";
+          shell.style.marginRight = "";
+        } else {
+          shell.style.width = `${100 / pageZoom}%`;
+          shell.style.maxWidth = `calc(820px / ${pageZoom})`;
+          shell.style.marginLeft = "auto";
+          shell.style.marginRight = "auto";
+        }
+      }
+    }
+
+    persistZoom(pageZoom);
+    syncZoomControls();
+  }
+
+  function syncZoomControls() {
+    const label = document.getElementById("zoomLevelLabel");
+    const btnOut = document.getElementById("btnZoomOut");
+    const btnIn = document.getElementById("btnZoomIn");
+    const idx = ZOOM_STEPS.indexOf(pageZoom);
+    if (label) {
+      label.textContent = `${Math.round(pageZoom * 100)}%`;
+      label.title = "탭하면 100%로 되돌리기";
+      label.setAttribute("aria-label", `현재 확대 ${Math.round(pageZoom * 100)}퍼센트. 누르면 원래 크기로`);
+    }
+    if (btnOut) {
+      btnOut.disabled = idx <= 0;
+      btnOut.setAttribute("aria-disabled", btnOut.disabled ? "true" : "false");
+    }
+    if (btnIn) {
+      btnIn.disabled = idx < 0 || idx >= ZOOM_STEPS.length - 1;
+      btnIn.setAttribute("aria-disabled", btnIn.disabled ? "true" : "false");
+    }
+  }
+
+  function stepZoom(delta) {
+    const idx = Math.max(0, ZOOM_STEPS.indexOf(pageZoom));
+    const next = ZOOM_STEPS[Math.min(ZOOM_STEPS.length - 1, Math.max(0, idx + delta))];
+    applyPageZoom(next);
+  }
+
+  function ensureZoomControls(actionsHost) {
+    if (document.getElementById("zoomControls")) {
+      applyPageZoom(pageZoom !== 1 ? pageZoom : readStoredZoom());
+      return;
+    }
+
+    const zoom = document.createElement("div");
+    zoom.className = "zoom-controls";
+    zoom.id = "zoomControls";
+    zoom.setAttribute("role", "group");
+    zoom.setAttribute("aria-label", "화면 확대 축소");
+    zoom.innerHTML = `
+      <button type="button" class="zoom-btn" id="btnZoomOut" aria-label="화면 축소" title="축소">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5"/>
+          <path d="M16 16l5 5"/>
+          <path d="M7.5 10.5h6"/>
+        </svg>
+      </button>
+      <button type="button" class="zoom-level" id="zoomLevelLabel" title="탭하면 100%로 되돌리기">100%</button>
+      <button type="button" class="zoom-btn" id="btnZoomIn" aria-label="화면 확대" title="확대">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="10.5" cy="10.5" r="6.5"/>
+          <path d="M16 16l5 5"/>
+          <path d="M7.5 10.5h6"/>
+          <path d="M10.5 7.5v6"/>
+        </svg>
+      </button>`;
+
+    actionsHost.appendChild(zoom);
+    document.getElementById("btnZoomOut")?.addEventListener("click", () => stepZoom(-1));
+    document.getElementById("btnZoomIn")?.addEventListener("click", () => stepZoom(1));
+    document.getElementById("zoomLevelLabel")?.addEventListener("click", () => applyPageZoom(1));
+    applyPageZoom(readStoredZoom());
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
-    if (document.getElementById("submitOverlay")) return;
+    if (document.getElementById("submitOverlay")) {
+      ensureZoomControls(document.querySelector(".topbar-actions") || document.querySelector(".topbar") || document.body);
+      return;
+    }
 
     const fab = document.createElement("button");
     fab.type = "button";
@@ -264,15 +411,21 @@
       </svg>
       <span class="label">제출하기</span>`;
 
+    const actions = document.createElement("div");
+    actions.className = "topbar-actions";
+    actions.appendChild(fab);
+
     const topbar = document.querySelector(".topbar");
-    if (topbar) topbar.appendChild(fab);
+    if (topbar) topbar.appendChild(actions);
     else {
-      fab.style.position = "fixed";
-      fab.style.top = "14px";
-      fab.style.right = "14px";
-      fab.style.zIndex = "30";
-      document.body.appendChild(fab);
+      actions.style.position = "fixed";
+      actions.style.top = "14px";
+      actions.style.right = "14px";
+      actions.style.zIndex = "30";
+      document.body.appendChild(actions);
     }
+
+    ensureZoomControls(actions);
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";
