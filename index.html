@@ -467,22 +467,26 @@
       width: 1px; height: 22px; background: var(--border-default); margin: 0 2px;
     }
     .detail-action-strip {
-      display: grid;
-      grid-template-columns: 148px 1fr auto;
-      gap: 12px; align-items: center;
-      margin-bottom: 12px; padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 12px;
+      padding: 18px 16px 16px;
       border-radius: 14px;
       border: 2px solid #1f1e1d;
+      text-align: center;
       background:
         linear-gradient(135deg, rgba(255,255,255,0.98), rgba(251,239,231,0.85)),
         var(--bg-elevated);
     }
     .detail-action-strip .qr,
     .detail-action-strip a.qr {
-      width: 148px; height: 148px; border-radius: 12px;
+      width: 200px; height: 200px; border-radius: 14px;
       border: 2px solid #1f1e1d; background: #fff;
       display: grid; place-items: center; overflow: hidden;
-      padding: 12px; flex-shrink: 0;
+      padding: 14px; flex-shrink: 0;
+      margin: 0 auto;
       text-decoration: none; color: inherit;
       cursor: pointer; touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -498,13 +502,22 @@
     .detail-action-strip .qr .qr-img {
       max-width: 100%; max-height: 100%;
       display: block; object-fit: contain;
+      margin: 0 auto;
       pointer-events: none;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
-    .detail-action-strip .meta { min-width: 0; }
+    .detail-action-strip .meta {
+      min-width: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
     .detail-action-strip .code-row {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; flex-wrap: wrap;
     }
     .detail-action-strip .code-row .label {
       font: 700 10px/1 var(--font-sans); color: var(--color-primary-700);
@@ -518,10 +531,12 @@
       font: 600 11px/1 var(--font-sans); color: var(--text-tertiary);
     }
     .detail-action-strip .btns {
-      display: flex; flex-direction: column; gap: 8px; min-width: 132px;
+      display: flex; flex-direction: row; gap: 8px;
+      width: 100%; max-width: 420px; min-width: 0;
     }
     .detail-action-strip .btns .btn {
-      height: 42px; padding: 0 16px; font-size: 13px; font-weight: 800;
+      flex: 1;
+      height: 44px; padding: 0 16px; font-size: 13px; font-weight: 800;
       white-space: nowrap; border-radius: 999px;
     }
     .detail-action-strip .btns .btn-primary {
@@ -621,10 +636,8 @@
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .detail-action-strip { grid-template-columns: 160px 1fr; }
       .detail-action-strip .qr,
-      .detail-action-strip a.qr { width: 160px; height: 160px; padding: 12px; }
-      .detail-action-strip .btns { grid-column: 1 / -1; flex-direction: row; }
+      .detail-action-strip a.qr { width: 220px; height: 220px; padding: 16px; }
     }
     @media (max-width: 560px) {
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -948,9 +961,8 @@
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
       .topbar-switcher select { height: 40px; font-size: 14px; }
-      .detail-action-strip { grid-template-columns: 168px 1fr auto; }
       .detail-action-strip .qr,
-      .detail-action-strip a.qr { width: 168px; height: 168px; padding: 12px; }
+      .detail-action-strip a.qr { width: 240px; height: 240px; padding: 18px; }
       .detail-action-strip .btns .btn { min-height: 46px; font-size: 14px; }
     }
     /* 폰·좁은 태블릿: 단일 패널 */
@@ -996,20 +1008,21 @@
       .detail-filter { gap: 6px; padding: 8px; }
       .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
       .detail-action-strip {
-        grid-template-columns: 160px 1fr;
-        gap: 10px;
-        padding: 12px;
+        gap: 12px;
+        padding: 16px 12px 14px;
       }
       .detail-action-strip .qr,
       .detail-action-strip a.qr {
-        width: 160px; height: 160px; min-width: 160px; min-height: 160px;
-        padding: 12px;
+        width: min(72vw, 240px);
+        height: min(72vw, 240px);
+        min-width: 200px; min-height: 200px;
+        padding: 16px;
       }
       .detail-action-strip .code-row strong { font-size: 16px; word-break: break-all; }
       .detail-action-strip .btns {
-        grid-column: 1 / -1;
         flex-direction: row;
         min-width: 0;
+        max-width: none;
       }
       .detail-action-strip .btns .btn {
         flex: 1; min-height: 48px; font-size: 15px;
@@ -2663,10 +2676,10 @@ ${built.html}
         if (typeof window.QRCode !== "function") return false;
 
         // 표시 영역(패딩 제외)에 맞춰 정수 모듈로만 그려 카메라 인식률 확보
-        const boxPx = Math.max(140, Number(displaySize) || 148);
-        const pad = 12;
+        const boxPx = Math.max(180, Number(displaySize) || 200);
+        const pad = 14;
         const quiet = 4;
-        const avail = Math.max(116, boxPx - pad * 2);
+        const avail = Math.max(152, boxPx - pad * 2);
 
         const host = document.createElement("div");
         host.setAttribute("aria-hidden", "true");
@@ -3194,7 +3207,7 @@ ${built.html}
 
       function paintQr(el, text, size) {
         if (!el || !text) return;
-        const displayPx = Math.max(140, Number(size) || 148);
+        const displayPx = Math.max(180, Number(size) || 200);
         const url = String(text).trim();
         if (el.tagName === "A") {
           el.href = url;
@@ -3643,7 +3656,7 @@ ${built.html}
                 <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
                 <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
               </div>
-              <div class="class-tag" style="margin-top:6px">${escapeHtml(classLabel || "학급 선택")}</div>
+              <div class="class-tag">${escapeHtml(classLabel || "학급 선택")}</div>
             </div>
             <div class="btns">
               <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
@@ -3701,10 +3714,10 @@ ${built.html}
         if (qrEl) {
           qrEl.innerHTML = "";
           const qrSize = window.matchMedia("(max-width: 768px)").matches
-            ? 160
+            ? 240
             : window.matchMedia("(max-width: 1024px)").matches
-              ? 168
-              : 148;
+              ? 240
+              : 200;
           requestAnimationFrame(() => paintQr(qrEl, url, qrSize));
         }
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
