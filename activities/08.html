@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>8차시 · K-MOOC 전공 스펙 쌓기</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
+  <link rel="stylesheet" href="./activity.css" />
+  <script>window.ACTIVITY_SESSION = 8;</script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand" aria-hidden="true">✳</div>
+    <div class="top-meta">
+      <span class="chip">8차시 활동</span>
+      <strong>K-MOOC 전공 스펙 쌓기</strong>
+    </div>
+  </div>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="theme">4월 · 데이터 기반 진학 진단과 AI 노코딩 시각화</div>
+      <h1>8차시 · K-MOOC 전공 스펙 쌓기</h1>
+      <p>목표 학과 연계 온라인 강좌를 AI로 3줄 요약하며 생기부에 넣을 전공 배경지식 축적.</p>
+    </section>
+    <section class="activity-card" id="activity-root">
+      <h2>학생 활동지</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f1">강좌명</label>
+          <input id="f1" name="f1" type="text" placeholder="강좌 제목" />
+        </div>
+        <div class="field">
+          <label for="f2">3줄 요약</label>
+          <input id="f2" name="f2" type="text" placeholder="핵심 내용" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f3">생기부용 한 문장</label>
+        <textarea id="f3" name="f3" placeholder="배움 기록"></textarea>
+      </div>
+      <div class="field">
+        <label for="f4">추가로 남기고 싶은 내용</label>
+        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
+      </div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./submit.js"></script>
+</body>
+</html>

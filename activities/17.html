@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>17차시 · AI 학생부 스크리닝</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
+  <link rel="stylesheet" href="./activity.css" />
+  <script>window.ACTIVITY_SESSION = 17;</script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand" aria-hidden="true">✳</div>
+    <div class="top-meta">
+      <span class="chip">17차시 활동</span>
+      <strong>AI 학생부 스크리닝</strong>
+    </div>
+  </div>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="theme">7월 · AI 모의 학종 진단과 방학 진로 플래닝</div>
+      <h1>17차시 · AI 학생부 스크리닝</h1>
+      <p>학종 경쟁력과 세특 보완점 진단.</p>
+    </section>
+    <section class="activity-card" id="activity-root">
+      <h2>학생 활동지</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f1">강점 세특</label>
+          <input id="f1" name="f1" type="text" placeholder="잘된 활동" />
+        </div>
+        <div class="field">
+          <label for="f2">부족한 영역</label>
+          <input id="f2" name="f2" type="text" placeholder="보완점" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f3">보완 계획</label>
+        <textarea id="f3" name="f3" placeholder="방학 계획"></textarea>
+      </div>
+      <div class="field">
+        <label for="f4">추가로 남기고 싶은 내용</label>
+        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
+      </div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./submit.js"></script>
+</body>
+</html>

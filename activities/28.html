@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>28차시 · 미래 10년 커리어 발표</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
+  <link rel="stylesheet" href="./activity.css" />
+  <script>window.ACTIVITY_SESSION = 28;</script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand" aria-hidden="true">✳</div>
+    <div class="top-meta">
+      <span class="chip">28차시 활동</span>
+      <strong>미래 10년 커리어 발표</strong>
+    </div>
+  </div>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="theme">10월 · AI 생기부 기반 대입 면접과 실전 스피치</div>
+      <h1>28차시 · 미래 10년 커리어 발표</h1>
+      <p>커리어 로드맵 3분 스피치.</p>
+    </section>
+    <section class="activity-card" id="activity-root">
+      <h2>학생 활동지</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f1">10년 후 목표</label>
+          <input id="f1" name="f1" type="text" placeholder="커리어 목표" />
+        </div>
+        <div class="field">
+          <label for="f2">중간 마일스톤</label>
+          <input id="f2" name="f2" type="text" placeholder="3·5·10년" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f3">발표 스크립트</label>
+        <textarea id="f3" name="f3" placeholder="3분 대본"></textarea>
+      </div>
+      <div class="field">
+        <label for="f4">추가로 남기고 싶은 내용</label>
+        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
+      </div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./submit.js"></script>
+</body>
+</html>

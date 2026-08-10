@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>12차시 · 오프라인 논리력 토론</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
+  <link rel="stylesheet" href="./activity.css" />
+  <script>window.ACTIVITY_SESSION = 12;</script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand" aria-hidden="true">✳</div>
+    <div class="top-meta">
+      <span class="chip">12차시 활동</span>
+      <strong>오프라인 논리력 토론</strong>
+    </div>
+  </div>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="theme">5월 · AI 대입 전략 진단과 데이터 분석 역량</div>
+      <h1>12차시 · 오프라인 논리력 토론</h1>
+      <p>스마트폰을 끄고 시사 이슈 딜레마를 논리로 해결하는 생각 훈련.</p>
+    </section>
+    <section class="activity-card" id="activity-root">
+      <h2>학생 활동지</h2>
+      <div class="grid-2">
+        <div class="field">
+          <label for="f1">토론 주제</label>
+          <input id="f1" name="f1" type="text" placeholder="시사 이슈" />
+        </div>
+        <div class="field">
+          <label for="f2">내 주장</label>
+          <input id="f2" name="f2" type="text" placeholder="찬성/반대와 근거" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="f3">반박</label>
+        <textarea id="f3" name="f3" placeholder="반박 논리"></textarea>
+      </div>
+      <div class="field">
+        <label for="f4">추가로 남기고 싶은 내용</label>
+        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
+      </div>
+    </section>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./submit.js"></script>
+</body>
+</html>

@@ -266,10 +266,104 @@
     .dash-list { border-right: 1px solid var(--border-default); background: rgba(250,249,245,0.7); }
     .dash-head {
       display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .dash-head h2 { font: 600 20px/1.3 var(--font-serif); letter-spacing: -0.02em; }
     .dash-head span { color: var(--text-tertiary); font: 500 12px/1 var(--font-sans); }
+    .setup-launch {
+      width: 100%; display: flex; align-items: center; gap: 12px;
+      margin: 0 0 14px; padding: 12px 14px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.95), rgba(251,239,231,0.55)),
+        var(--bg-elevated);
+      box-shadow: var(--shadow-sm);
+      cursor: pointer; text-align: left;
+      transition: border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce), box-shadow var(--duration-fast) ease;
+    }
+    .setup-launch:hover {
+      border-color: var(--color-primary-300);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+    .setup-launch.is-active {
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
+    }
+    .setup-icon {
+      width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px;
+      display: grid; place-items: center;
+      background: linear-gradient(145deg, #D88861 0%, #C96442 55%, #8C4022 100%);
+      color: #F7F1EA;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 14px rgba(201,100,66,0.28);
+    }
+    .setup-icon svg {
+      width: 22px; height: 22px; stroke: currentColor; fill: none;
+      stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .setup-launch-copy { min-width: 0; flex: 1; }
+    .setup-launch-copy strong {
+      display: block; font: 600 13px/1.3 var(--font-sans); color: var(--text-primary); margin-bottom: 2px;
+    }
+    .setup-launch-copy span {
+      display: block; font: 500 11px/1.35 var(--font-sans); color: var(--text-tertiary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .setup-launch-chevron {
+      color: var(--text-disabled); font-size: 18px; line-height: 1;
+    }
+    .class-settings[hidden], .detail-card[hidden] { display: none !important; }
+    .class-row {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      margin-bottom: 14px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-default);
+    }
+    .class-pill {
+      display: inline-flex; align-items: center; height: 26px; padding: 0 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--color-primary-100);
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
+      font: 600 11px/1 var(--font-sans);
+      letter-spacing: 0.01em;
+    }
+    .news-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .news-card {
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      background: var(--bg-elevated); overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      animation: enter-bounce 0.45s var(--ease-bounce);
+      display: flex; flex-direction: column; min-height: 168px;
+    }
+    .news-card-band {
+      height: 4px;
+      background: linear-gradient(90deg, #D88861, #C96442 55%, #8C4022);
+    }
+    .news-card-body { padding: 12px 12px 14px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .news-card-meta {
+      display: flex; justify-content: space-between; gap: 8px; align-items: baseline;
+    }
+    .news-card-meta strong {
+      font: 600 13px/1.3 var(--font-sans); color: var(--text-primary);
+    }
+    .news-card-meta time {
+      flex-shrink: 0; color: var(--text-tertiary); font: 500 10px/1 var(--font-sans);
+    }
+    .news-card-preview {
+      color: var(--text-secondary); font: 400 12px/1.55 var(--font-serif);
+      display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical;
+      overflow: hidden; word-break: break-word;
+    }
+    .news-frame {
+      width: 100%; height: 120px; border: 1px solid var(--border-default);
+      border-radius: 8px; background: #faf9f5; pointer-events: none;
+    }
+    .news-card-foot {
+      margin-top: auto; color: var(--text-tertiary); font: 500 11px/1.3 var(--font-sans);
+    }
     .month-group { margin-bottom: 14px; }
     .month-label {
       display: flex; flex-direction: column; gap: 2px;
@@ -563,7 +657,7 @@
     </header>
     <div class="dash-mobile-tabs" role="tablist" aria-label="대시보드 패널">
       <button type="button" class="is-active" id="tabDashList" data-panel="list">차시 목록</button>
-      <button type="button" id="tabDashDetail" data-panel="detail">반 설정 · 콘텐츠</button>
+      <button type="button" id="tabDashDetail" data-panel="detail">상세</button>
     </div>
     <div class="dash" id="dashRoot" data-panel="list">
       <aside class="dash-list">
@@ -577,12 +671,25 @@
           <h2>30차시 워크북</h2>
           <span id="lessonCountLabel">30차시</span>
         </div>
+        <button type="button" class="setup-launch" id="btnOpenSetup" aria-label="초기 설정">
+          <span class="setup-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 13a7.8 7.8 0 0 0 .1-2l2-1.2-2-3.4-2.3.7a7.7 7.7 0 0 0-1.7-1L15 3.5h-4l-.5 2.6a7.7 7.7 0 0 0-1.7 1L6.5 6.4l-2 3.4 2 1.2a7.8 7.8 0 0 0 0 2l-2 1.2 2 3.4 2.3-.7a7.7 7.7 0 0 0 1.7 1l.5 2.6h4l.5-2.6a7.7 7.7 0 0 0 1.7-1l2.3.7 2-3.4-2-1.2Z"/>
+            </svg>
+          </span>
+          <span class="setup-launch-copy">
+            <strong>초기 설정</strong>
+            <span id="setupLaunchHint">학년 · 반을 먼저 지정해 주세요</span>
+          </span>
+          <span class="setup-launch-chevron" aria-hidden="true">›</span>
+        </button>
         <div id="lessonList"></div>
       </aside>
       <section class="dash-detail">
-        <div class="class-settings" id="classSettings">
-          <h2>반 설정</h2>
-          <p class="settings-sub">수업 대상 반을 학년별 또는 학급별로 지정합니다.</p>
+        <div class="class-settings" id="classSettings" hidden>
+          <h2>초기 설정</h2>
+          <p class="settings-sub">수업 대상 학년과 반을 지정합니다.</p>
           <div class="seg" role="tablist" aria-label="반 설정 방식">
             <button type="button" class="is-active" id="btnModeGrade" data-mode="grade">학년별</button>
             <button type="button" id="btnModeClass" data-mode="class">학급별</button>
@@ -757,6 +864,49 @@
         return `학급별 · ${classSettings.classGrade}학년 ` + nos.map((n) => `${n}반`).join(", ");
       }
 
+      function getClassPills() {
+        if (classSettings.mode === "grade") {
+          return (classSettings.grades || []).slice().sort((a, b) => a - b).map((n) => `${n}학년`);
+        }
+        return (classSettings.classNos || [])
+          .slice()
+          .sort((a, b) => a - b)
+          .map((n) => `${classSettings.classGrade}학년 ${n}반`);
+      }
+
+      function isClassSettingsReady() {
+        if (classSettings.mode === "grade") return (classSettings.grades || []).length > 0;
+        return (classSettings.classNos || []).length > 0;
+      }
+
+      function updateSetupLaunchHint() {
+        const hint = $("setupLaunchHint");
+        if (!hint) return;
+        hint.textContent = isClassSettingsReady()
+          ? formatClassSettingsSummary()
+          : "학년 · 반을 먼저 지정해 주세요";
+      }
+
+      function showRightPanel(mode) {
+        const setup = $("classSettings");
+        const detail = $("detailCard");
+        const launch = $("btnOpenSetup");
+        const isSetup = mode === "setup";
+        if (setup) setup.hidden = !isSetup;
+        if (detail) detail.hidden = isSetup;
+        launch?.classList.toggle("is-active", isSetup);
+        if (isSetup) {
+          renderClassSettingsUI();
+          setDashPanel("detail");
+        }
+      }
+
+      function previewText(content, maxLen) {
+        const text = String(content || "").replace(/\s+/g, " ").trim();
+        if (text.length <= maxLen) return text;
+        return text.slice(0, maxLen).trim() + "…";
+      }
+
       function renderClassSettingsUI() {
         const gradeRoot = $("gradeChips");
         const classGradeRoot = $("classGradeChips");
@@ -816,6 +966,7 @@
         }
 
         $("classSettingsSummary").textContent = formatClassSettingsSummary();
+        updateSetupLaunchHint();
       }
 
       function setDashPanel(panel) {
@@ -955,6 +1106,21 @@
         u.hash = "";
         u.searchParams.set("t", token);
         return u.toString();
+      }
+
+      function activityUrl(sessionNo) {
+        const file = String(sessionNo).padStart(2, "0") + ".html";
+        const path = location.pathname.replace(/index\.html$/i, "");
+        const root = path.endsWith("/") ? path : path.replace(/[^/]+$/, "");
+        return `${location.origin}${root}activities/${file}`;
+      }
+
+      function looksLikeHtml(content) {
+        return /<\/?[a-z][\s\S]*>/i.test(String(content || ""));
+      }
+
+      function escapeSrcdoc(html) {
+        return String(html ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;");
       }
 
       function showWelcome(s) {
@@ -1151,7 +1317,7 @@
               if (window.matchMedia("(max-width: 899px)").matches) setDashPanel("detail");
             });
             group.appendChild(btn);
-            paintQr(btn.querySelector("[data-qr]"), studentUrl(lesson.token), 44);
+            paintQr(btn.querySelector("[data-qr]"), activityUrl(lesson.session_no), 44);
           }
           root.appendChild(group);
         }
@@ -1189,41 +1355,58 @@
       }
 
       async function renderDetail(lesson) {
+        showRightPanel("lesson");
         const card = $("detailCard");
         if (!lesson) {
-          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출 목록이 표시됩니다.</p>`;
+          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학년·반과 제출 미리보기가 표시됩니다.</p>`;
           return;
         }
+        if (!isClassSettingsReady()) {
+          card.innerHTML = `
+            <p class="sub-empty">
+              먼저 왼쪽 <strong>초기 설정</strong>에서 학년·반을 지정해 주세요.
+            </p>`;
+          return;
+        }
+
         const meta = getLessonMeta(lesson.session_no);
-        const url = studentUrl(lesson.token);
+        const url = activityUrl(lesson.session_no);
         const subs = await fetchSubmissions(lesson.id);
+        const pills = getClassPills();
         card.innerHTML = `
+          <div class="class-row" aria-label="설정된 학년 반">
+            ${pills.map((p) => `<span class="class-pill">${escapeHtml(p)}</span>`).join("")}
+          </div>
           <span class="lesson-theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
           <h2 class="lesson-title">${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
           <p class="lesson-summary">${escapeHtml(meta.summary)}</p>
           <div class="detail-top">
             <div class="detail-qr-lg" id="detailQr"></div>
             <div class="detail-info">
-              <h3>학생 제출 QR</h3>
+              <h3>학생 활동 HTML</h3>
               <p>${escapeHtml(url)}</p>
-              <p style="margin-top:-6px;color:var(--text-tertiary);font-size:12px">${escapeHtml(formatClassSettingsSummary())}</p>
+              <p style="margin-top:-6px;color:var(--text-tertiary);font-size:12px">
+                학생이 활동지 우측 상단 <strong>제출하기</strong>에서 수업코드 <strong>${escapeHtml(teacherClass?.class_code || "--------")}</strong> 를 입력하면 이 화면에 전송됩니다.
+              </p>
               <div class="detail-actions">
-                <button type="button" class="btn btn-primary" id="btnCopyLink">링크 복사</button>
+                <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
+                <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
                 <button type="button" class="btn btn-secondary" id="btnRefreshSubs">새로고침</button>
               </div>
             </div>
           </div>
           <div class="dash-head" style="margin-top:4px">
-            <h2 style="font-size:18px">제출 목록</h2>
+            <h2 style="font-size:18px">제출 미리보기</h2>
             <span id="subCountLabel">${subs.length}건</span>
           </div>
-          <div class="sub-list" id="subList"></div>`;
+          <div class="news-grid" id="subList"></div>`;
 
         paintQr($("detailQr"), url, 136);
+        $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(url);
-            toast("제출 링크를 복사했습니다.");
+            toast("활동지 링크를 복사했습니다.");
           } catch {
             toast(url);
           }
@@ -1232,17 +1415,26 @@
 
         const list = $("subList");
         if (!subs.length) {
-          list.innerHTML = `<p class="sub-empty">아직 제출이 없습니다. 학생 QR을 스캔해 제출하면 여기에 자동으로 나타납니다.</p>`;
+          list.outerHTML = `<p class="sub-empty">아직 제출이 없습니다. 학생이 활동지에서 수업코드로 제출하면 카드뉴스처럼 여기에 쌓입니다.</p>`;
           return;
         }
-        list.innerHTML = subs.map((s) => `
-          <article class="sub-card">
-            <header>
-              <span>${escapeHtml(s.student_no)} · ${escapeHtml(s.student_name)}</span>
-              <time>${formatTime(s.created_at)}</time>
-            </header>
-            <div class="body">${escapeHtml(s.content)}</div>
-          </article>`).join("");
+        list.innerHTML = subs.map((s) => {
+          const body = looksLikeHtml(s.content)
+            ? `<iframe class="news-frame" sandbox="" srcdoc="${escapeSrcdoc(s.content)}" title="${escapeHtml(s.student_name)} 제출"></iframe>`
+            : `<p class="news-card-preview">${escapeHtml(previewText(s.content, 110))}</p>`;
+          return `
+          <article class="news-card">
+            <div class="news-card-band" aria-hidden="true"></div>
+            <div class="news-card-body">
+              <div class="news-card-meta">
+                <strong>${escapeHtml(s.student_name)}</strong>
+                <time>${formatTime(s.created_at)}</time>
+              </div>
+              ${body}
+              <div class="news-card-foot">${escapeHtml(s.student_no)}</div>
+            </div>
+          </article>`;
+        }).join("");
       }
 
       function escapeHtml(str) {
@@ -1259,6 +1451,7 @@
         document.querySelectorAll(".lesson-item").forEach((el) => {
           el.classList.toggle("is-active", el.dataset.id === lessonId);
         });
+        showRightPanel("lesson");
         await renderDetail(lesson);
         if (!silent) {
           const countEls = document.querySelectorAll(".lesson-item");
@@ -1305,11 +1498,12 @@
           showView("teacher");
           const label = session.name || session.loginId || "교사";
           $("teacherBarTitle").textContent = `${label} · ${formatClassSettingsSummary()}`;
-          renderClassSettingsUI();
-          setDashPanel(window.matchMedia("(max-width: 899px)").matches ? "list" : "list");
+          updateSetupLaunchHint();
+          showRightPanel(isClassSettingsReady() ? "lesson" : "setup");
+          setDashPanel("list");
           await loadLessons();
           await renderLessonList();
-          if (lessons.length) await selectLesson(lessons[0].id);
+          if (isClassSettingsReady() && lessons.length) await selectLesson(lessons[0].id);
         } catch (e) {
           console.error(e);
           toast("대시보드를 불러오지 못했습니다: " + (e.message || e));
@@ -1512,6 +1706,9 @@
           toast(code);
         }
       });
+      $("btnOpenSetup").addEventListener("click", () => {
+        showRightPanel("setup");
+      });
       $("btnModeGrade").addEventListener("click", () => {
         classSettings.mode = "grade";
         renderClassSettingsUI();
@@ -1520,7 +1717,7 @@
         classSettings.mode = "class";
         renderClassSettingsUI();
       });
-      $("btnSaveClassSettings").addEventListener("click", () => {
+      $("btnSaveClassSettings").addEventListener("click", async () => {
         if (classSettings.mode === "grade" && !classSettings.grades.length) {
           return toast("학년을 하나 이상 선택해 주세요.");
         }
@@ -1528,14 +1725,20 @@
           return toast("학급(반)을 하나 이상 선택해 주세요.");
         }
         saveClassSettings();
+        updateSetupLaunchHint();
         if (session) {
           $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
         }
+        showRightPanel("lesson");
         if (selectedLessonId) {
           const lesson = lessons.find((l) => l.id === selectedLessonId);
-          if (lesson) renderDetail(lesson);
+          if (lesson) await renderDetail(lesson);
+        } else if (lessons.length) {
+          await selectLesson(lessons[0].id);
+        } else {
+          $("detailCard").innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학년·반과 제출 미리보기가 표시됩니다.</p>`;
         }
-        toast("반 설정을 저장했습니다.");
+        toast("초기 설정을 저장했습니다.");
       });
       $("tabDashList").addEventListener("click", () => setDashPanel("list"));
       $("tabDashDetail").addEventListener("click", () => setDashPanel("detail"));
