@@ -28,21 +28,17 @@
     }
   }
 
-  /** 교사 대시보드와 동일한 정규 활동지 URL */
+  /**
+   * 현재 열린 활동지 주소 그대로 사용.
+   * 경로를 다시 조립하면 file:// · 한글 폴더명에서 ERR_FILE_NOT_FOUND 가 난다.
+   */
   function activityPageUrl() {
     try {
-      const file = String(sessionNo).padStart(2, "0") + ".html";
-      const code = (new URLSearchParams(location.search).get("code") || "").trim().toUpperCase();
-      let path = String(location.pathname || "/").replace(/\/{2,}/g, "/");
-      if (/\/activities\/[^/]*$/i.test(path)) {
-        path = path.replace(/\/activities\/[^/]*$/i, "/activities/");
-      } else {
-        path = path.replace(/\/[^/]*$/, "/");
-        if (!/\/activities\/$/i.test(path)) path += "activities/";
-      }
-      if (!path.endsWith("/")) path += "/";
-      const url = `${location.origin}${path}${file}`;
-      return code ? `${url}?code=${encodeURIComponent(code)}` : url;
+      const u = new URL(location.href);
+      u.hash = "";
+      const code = (u.searchParams.get("code") || "").trim().toUpperCase();
+      if (code) u.searchParams.set("code", code);
+      return u.href;
     } catch {
       return String(location.href || "").split("#")[0];
     }

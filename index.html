@@ -2653,18 +2653,19 @@ ${built.html}
 
       function activityUrl(sessionNo, submitCode) {
         const file = String(sessionNo).padStart(2, "0") + ".html";
-        let base = location.pathname.replace(/\/index\.html$/i, "");
-        const last = base.split("/").filter(Boolean).pop() || "";
-        if (last && /\.[a-z0-9]+$/i.test(last)) {
-          base = base.replace(/\/[^/]+$/, "");
+        // URL API로 상대 경로 해석 (file:// · 한글 경로 · GitHub Pages 모두 안전)
+        const base = new URL(location.href);
+        base.hash = "";
+        base.search = "";
+        if (/\/index\.html$/i.test(base.pathname)) {
+          base.pathname = base.pathname.replace(/\/index\.html$/i, "/");
+        } else if (!base.pathname.endsWith("/")) {
+          base.pathname = base.pathname.replace(/\/[^/]*$/, "/");
         }
-        base = base.replace(/\/{2,}/g, "/");
-        if (!base.endsWith("/")) base += "/";
+        const u = new URL(`activities/${file}`, base);
         const code = String(submitCode || "").trim().toUpperCase();
-        // 활동지 헤더 QR과 동일한 정규 URL
-        return code
-          ? `${location.origin}${base}activities/${file}?code=${encodeURIComponent(code)}`
-          : `${location.origin}${base}activities/${file}`;
+        if (code) u.searchParams.set("code", code);
+        return u.href;
       }
 
       /**
