@@ -191,6 +191,7 @@ button, .submit-fab, a { touch-action: manipulation; }
 .control-panel,
 .control-bar,
 .action-bar,
+.btn-pdf,
 #sheetStudentNo,
 #sheetStudentName,
 #studentId,

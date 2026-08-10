@@ -228,12 +228,22 @@
   function stripSheetIdentityFields() {
     document
       .querySelectorAll(
-        ".na-manual-info, .na-manual .student-info, #sheetStudentNo, #sheetStudentName, #studentId, #studentName"
+        [
+          ".control-panel",
+          ".control-bar",
+          ".action-bar",
+          ".btn-pdf",
+          ".profile-info",
+          ".na-manual-info",
+          ".na-info-box",
+          ".na-manual .student-info",
+          "#sheetStudentNo",
+          "#sheetStudentName",
+          "#studentId",
+          "#studentName"
+        ].join(", ")
       )
-      .forEach((el) => {
-        const wrap = el.closest(".na-manual-info, .student-info") || el;
-        wrap.remove();
-      });
+      .forEach((el) => el.remove());
   }
 
   function ensureUi() {
