@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <!-- xlsx는 다운로드 시에만 지연 로드 -->
   <style>
     :root {
@@ -1944,7 +1944,7 @@
             ? `<div class="roster-sub-list">${subs.map((sub) => `
                 <div class="roster-sub-item">
                   <strong>${sub.session_no ? `${sub.session_no}차시` : "차시"}</strong>
-                  <span>${escapeHtml(previewText(htmlToPlainTextFast(sub.content), 48))}</span>
+                  <span>${escapeHtml(buildYukhaSummary(sub).oneLine || previewText(htmlToPlainTextFast(sub.content), 48))}</span>
                   <div class="sub-actions">
                     <button type="button" class="is-view" data-tab-sub="${sub.id}">크게 보기</button>
                     <button type="button" class="is-danger" data-del-sub="${sub.id}">삭제</button>
@@ -2056,19 +2056,103 @@
         return activityCssPromise;
       }
 
+      function extractActivityAnswersFast(html) {
+        const s = String(html || "");
+        const out = [];
+        const re =
+          /<label[^>]*>([\s\S]*?)<\/label>[\s\S]*?(?:<textarea[^>]*>([\s\S]*?)<\/textarea>|<input[^>]*value="([^"]*)"[^>]*>|<input[^>]*value='([^']*)'[^>]*>)/gi;
+        let m;
+        while ((m = re.exec(s)) && out.length < 12) {
+          const label = htmlToPlainTextFast(m[1]).trim();
+          const value = htmlToPlainTextFast(m[2] || m[3] || m[4] || "").trim();
+          if (label || value) out.push({ label, value });
+        }
+        if (!out.length) {
+          const plain = htmlToPlainTextFast(s);
+          if (plain) out.push({ label: "활동 내용", value: previewText(plain, 220) });
+        }
+        return out;
+      }
+
+      function buildYukhaSummary(sub, opts = {}) {
+        if (!sub) {
+          return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
+        }
+        const cacheKey = opts.where || "";
+        if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
+        const meta = getLessonMeta(sub.session_no);
+        const filled = extractActivityAnswersFast(sub.content).filter((a) => a.value);
+        const answers = filled.map((a) => a.value);
+        const whoName = (sub.student_name || "학생").trim();
+        const whoNo = (sub.student_no || "-").trim();
+        const who = `${whoName}(학번 ${whoNo})`;
+        const when = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${formatTime(sub.created_at) || "제출"}`;
+        const where =
+          opts.where ||
+          (teacherClass ? `${unitLabel(teacherClass)} 수업` : "교실 수업");
+        const lessonTitle = meta?.title || (sub.session_no ? `${sub.session_no}차시 활동` : "활동");
+        const whatCore = answers[0] || "활동 내용을 정리함";
+        const howCore =
+          answers.slice(1, 3).filter(Boolean).join(", ") ||
+          (filled.length > 1
+            ? filled
+                .slice(1, 3)
+                .map((a) => a.label)
+                .filter(Boolean)
+                .join(", ") + " 항목을 구체적으로 작성함"
+            : "활동지 문항에 자신의 생각을 구체적으로 기록함");
+        const whyCore =
+          answers[answers.length - 1] && answers.length > 1
+            ? answers[answers.length - 1]
+            : "진로·자아 탐색을 위해 활동에 성실히 참여함";
+
+        const lines = [
+          { k: "누가", v: who },
+          { k: "언제", v: when },
+          { k: "어디서", v: where },
+          { k: "무엇을", v: `${lessonTitle} — ${whatCore}` },
+          { k: "어떻게", v: howCore },
+          { k: "왜", v: whyCore }
+        ];
+        const paragraph =
+          `${who}은(는) ${where}에서 '${lessonTitle}' 활동에 참여하여 ${whatCore} 등을 정리하였고, ` +
+          `${howCore} 방식으로 탐구·표현하였다. ${whyCore}`.replace(/\s+/g, " ").trim();
+        const oneLine = previewText(`${whoName} · ${lessonTitle} · ${whatCore}`, 72);
+        const sheetText = lines.map((l) => `${l.k}: ${l.v}`).join(" / ");
+        sub._yukhaWhere = cacheKey;
+        sub._yukha = { oneLine, paragraph, lines, sheetText };
+        return sub._yukha;
+      }
+
       function buildSubmissionReportBody(sub) {
         const raw = String(sub.content || "");
         const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
         const studentLine = `${sub.student_no || ""} · ${sub.student_name || ""}`.trim();
+        const yukha = buildYukhaSummary(sub);
+        const yukhaBlock = `
+<section class="eval-card" aria-label="육하원칙 관찰 요약">
+  <h2>육하원칙 관찰 요약 <span>(세부능력평가 참고)</span></h2>
+  <ul>
+    ${yukha.lines.map((l) => `<li><strong>${escapeHtml(l.k)}</strong><span>${escapeHtml(l.v)}</span></li>`).join("")}
+  </ul>
+  <p class="eval-para"><strong>세특 문장 초안</strong>${escapeHtml(yukha.paragraph)}</p>
+</section>`;
+
         if (!looksLikeHtml(raw)) {
           return {
             title: `${sessionLabel} 제출 보고서`,
-            html: `<div class="shell"><section class="activity-card"><h2>제출 내용</h2><pre style="white-space:pre-wrap;margin:0;font:500 14px/1.65 var(--serif)">${escapeHtml(raw || "(내용 없음)")}</pre></section></div>`
+            html: `<div class="shell">${yukhaBlock}<section class="activity-card"><h2>제출 내용</h2><pre style="white-space:pre-wrap;margin:0;font:500 14px/1.65 var(--serif)">${escapeHtml(raw || "(내용 없음)")}</pre></section></div>`
           };
         }
         // 신규 포맷: 활동지와 동일한 shell 구조
         if (raw.includes("student-activity-export") && raw.includes("activity-card")) {
-          return { title: `${sessionLabel} · ${studentLine}`.trim(), html: raw };
+          let html = raw;
+          if (html.includes('<div class="shell">')) {
+            html = html.replace('<div class="shell">', `<div class="shell">${yukhaBlock}`);
+          } else {
+            html = yukhaBlock + html;
+          }
+          return { title: `${sessionLabel} · ${studentLine}`.trim(), html };
         }
         // 구 포맷 호환
         try {
@@ -2100,17 +2184,20 @@
     </div>
   </div>
   <div class="shell">
+    ${yukhaBlock}
     <section class="hero-card">
-      ${theme ? `<div class="theme">${escapeHtml(theme)}</div>` : ""}
-      <h1>${escapeHtml(title)}</h1>
-      <p>${escapeHtml(studentLine)}</p>
+      <div class="hero-copy">
+        ${theme ? `<div class="theme">${escapeHtml(theme)}</div>` : ""}
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(studentLine)}</p>
+      </div>
     </section>
     <section class="activity-card">${inner}</section>
   </div>
 </div>`
           };
         } catch {
-          return { title: `${sessionLabel} 제출 보고서`, html: raw };
+          return { title: `${sessionLabel} 제출 보고서`, html: yukhaBlock + raw };
         }
       }
 
@@ -2121,10 +2208,25 @@
         const built = buildSubmissionReportBody(sub);
         const reportCss = `
 ${css}
-.submit-fab,.overlay{display:none!important}
+.submit-fab,.overlay,.hero-qr-wrap{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
 .student-activity-export .topbar{position:sticky}
 body{padding-top:calc(12px + var(--safe-top))}
+.eval-card{
+  margin:0 0 14px;padding:16px 16px 14px;border:2.5px solid #111110;border-radius:16px;
+  background:linear-gradient(180deg,#fff 0%,#fbefe7 100%);
+}
+.eval-card h2{margin:0 0 10px;font:700 16px/1.3 var(--serif);color:#1f1e1d}
+.eval-card h2 span{font:600 12px/1 var(--sans);color:#8c4022;margin-left:6px}
+.eval-card ul{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.eval-card li{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:start}
+.eval-card li strong{
+  display:inline-flex;align-items:center;justify-content:center;height:22px;padding:0 8px;
+  border-radius:999px;background:#c96442;color:#fff;font:700 11px/1 var(--sans);
+}
+.eval-card li span{font:500 13px/1.45 var(--sans);color:#1f1e1d}
+.eval-para{margin:12px 0 0;padding-top:10px;border-top:1px dashed #e5e0d5;font:500 13px/1.65 var(--serif);color:#1f1e1d}
+.eval-para strong{display:block;margin-bottom:4px;font:700 12px/1.2 var(--sans);color:#8c4022}
 `;
         const doc = `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"/>
@@ -2980,49 +3082,56 @@ ${built.html}
         if (!el || !text) return;
         const px = Math.max(48, Number(size) || 72);
         el.innerHTML = "";
-        el.title = text;
+        el.title = String(text);
+        el.setAttribute("aria-label", "활동지 QR 코드");
 
-        const draw = () => {
-          if (!window.QRCode || typeof QRCode.toCanvas !== "function") {
-            el.innerHTML = `<span style="font:700 10px/1.2 var(--font-sans);color:var(--text-tertiary)">QR</span>`;
-            return false;
-          }
-          QRCode.toCanvas(
-            text,
-            { width: px, margin: 1, errorCorrectionLevel: "M", color: { dark: "#111110", light: "#FFFFFF" } },
-            (err, canvas) => {
-              if (err || !canvas) {
-                QRCode.toDataURL(text, { width: px, margin: 1 }, (e2, url) => {
-                  if (e2 || !url) {
-                    el.textContent = "QR";
-                    return;
-                  }
-                  const img = document.createElement("img");
-                  img.src = url;
-                  img.alt = "활동지 QR";
-                  img.width = px;
-                  img.height = px;
-                  el.appendChild(img);
-                });
-                return;
-              }
+        const paintImgFallback = () => {
+          const img = document.createElement("img");
+          img.alt = "활동지 QR";
+          img.width = px;
+          img.height = px;
+          img.decoding = "async";
+          img.src =
+            "https://api.qrserver.com/v1/create-qr-code/?size=" +
+            px +
+            "x" +
+            px +
+            "&margin=6&data=" +
+            encodeURIComponent(String(text));
+          el.appendChild(img);
+        };
+
+        // qrcodejs: new QRCode(el, { text, width, height })
+        if (typeof window.QRCode === "function") {
+          try {
+            // eslint-disable-next-line no-new
+            new window.QRCode(el, {
+              text: String(text),
+              width: px,
+              height: px,
+              colorDark: "#111110",
+              colorLight: "#ffffff",
+              correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 1
+            });
+            const canvas = el.querySelector("canvas");
+            const img = el.querySelector("img");
+            if (canvas) {
               canvas.style.width = "100%";
               canvas.style.height = "100%";
               canvas.style.display = "block";
-              el.appendChild(canvas);
             }
-          );
-          return true;
-        };
-
-        if (!draw()) {
-          // CDN 지연 시 짧게 재시도
-          let tries = 0;
-          const timer = setInterval(() => {
-            tries += 1;
-            if (draw() || tries > 20) clearInterval(timer);
-          }, 100);
+            if (img) {
+              img.style.width = "100%";
+              img.style.height = "100%";
+              img.style.display = "block";
+            }
+            if (!canvas && !img) paintImgFallback();
+            return;
+          } catch (e) {
+            console.warn("QRCode render failed", e);
+          }
         }
+        paintImgFallback();
       }
 
       function formatTime(iso) {
@@ -3161,14 +3270,15 @@ ${built.html}
         }
       }
 
-      function summarizeSubmissionText(content) {
+      function summarizeSubmissionText(content, subHint) {
+        if (subHint) {
+          const y = buildYukhaSummary(subHint);
+          if (y?.paragraph) return y.paragraph;
+          if (y?.sheetText) return y.sheetText;
+        }
         const text = htmlToPlainTextFast(content);
         if (!text) return "";
-        // 보고서 한눈 요약: 잡음 줄이고 문장 간격만 정리
-        return text
-          .replace(/\s*·\s*/g, " · ")
-          .replace(/\s{2,}/g, " ")
-          .trim();
+        return text.replace(/\s*·\s*/g, " · ").replace(/\s{2,}/g, " ").trim();
       }
 
       async function exportAllSubmissionsXlsx() {
@@ -3195,16 +3305,24 @@ ${built.html}
               const classNo = cls.class_no || 1;
               const { data: subs } = await sb
                 .from("submissions")
-                .select("lesson_id, student_no, student_name, content")
+                .select("lesson_id, student_no, student_name, content, created_at")
                 .in("lesson_id", lessonIds)
                 .order("created_at", { ascending: false });
               (subs || []).forEach((s) => {
                 const no = resolveRosterStudentKey(s.student_no, grade, classNo);
+                const sessionNo = sessionByLesson.get(s.lesson_id) || "";
+                const hint = {
+                  ...s,
+                  student_no: no,
+                  session_no: sessionNo
+                };
+                const yukha = buildYukhaSummary(hint, { where: `${unitLabel(cls)} 수업` });
                 rows.push({
                   학번: no,
                   이름: (s.student_name || "").trim(),
-                  차시: sessionByLesson.get(s.lesson_id) || "",
-                  내용: summarizeSubmissionText(s.content)
+                  차시: sessionNo,
+                  육하원칙: yukha.sheetText || "",
+                  세특초안: yukha.paragraph || summarizeSubmissionText(s.content, hint)
                 });
               });
             }));
@@ -3219,8 +3337,10 @@ ${built.html}
             String(a.이름).localeCompare(String(b.이름), "ko")
           );
           const book = XLSX.utils.book_new();
-          const sheet = XLSX.utils.json_to_sheet(rows, { header: ["학번", "이름", "차시", "내용"] });
-          sheet["!cols"] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 80 }];
+          const sheet = XLSX.utils.json_to_sheet(rows, {
+            header: ["학번", "이름", "차시", "육하원칙", "세특초안"]
+          });
+          sheet["!cols"] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 56 }, { wch: 70 }];
           XLSX.utils.book_append_sheet(book, sheet, "제출요약");
           const stamp = new Date().toISOString().slice(0, 10);
           XLSX.writeFile(book, `제출요약_${stamp}.xlsx`);
@@ -3348,11 +3468,10 @@ ${built.html}
           const key = resolveRosterStudentKey(st.student_no, grade, classNo);
           const list = detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
           const latest = list[0] || null;
-          const summary = latest
-            ? previewText(htmlToPlainTextFast(latest.content), 72) || "(내용 없음)"
-            : "미제출";
+          const yukha = latest ? buildYukhaSummary(latest) : null;
+          const summary = yukha?.oneLine || "미제출";
           const preview = latest
-            ? `<div class="detail-sub-preview" data-tab-detail="${latest.id}" title="새 탭으로 크게 보기"><div class="plain-mini">${escapeHtml(summary)}</div></div>`
+            ? `<div class="detail-sub-preview" data-tab-detail="${latest.id}" title="육하원칙 요약 · 새 탭으로 보기"><div class="plain-mini">${escapeHtml(summary)}</div></div>`
             : `<div class="detail-sub-preview"><div class="plain-mini is-empty">미제출</div></div>`;
           const actions = latest
             ? `<div class="detail-sub-actions">

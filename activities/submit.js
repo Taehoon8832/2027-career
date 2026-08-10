@@ -29,21 +29,21 @@
   }
 
   function loadQrLib() {
-    if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
+    if (typeof window.QRCode === "function") {
       return Promise.resolve(window.QRCode);
     }
     return new Promise((resolve) => {
       const existing = document.querySelector("script[data-qrcode-lib]");
       if (existing) {
-        existing.addEventListener("load", () => resolve(window.QRCode || null));
+        existing.addEventListener("load", () => resolve(typeof window.QRCode === "function" ? window.QRCode : null));
         existing.addEventListener("error", () => resolve(null));
         return;
       }
       const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js";
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js";
       s.async = true;
       s.dataset.qrcodeLib = "1";
-      s.onload = () => resolve(window.QRCode || null);
+      s.onload = () => resolve(typeof window.QRCode === "function" ? window.QRCode : null);
       s.onerror = () => resolve(null);
       document.head.appendChild(s);
     });
@@ -84,33 +84,58 @@
     if (!el || el.dataset.painted === "1") return;
     const url = activityPageUrl();
 
+    const size = window.matchMedia("(max-width: 640px)").matches ? 70 : 88;
+    const paintImg = () => {
+      el.innerHTML = "";
+      const img = document.createElement("img");
+      img.alt = "활동지 QR";
+      img.width = size;
+      img.height = size;
+      img.decoding = "async";
+      img.src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=" +
+        size +
+        "x" +
+        size +
+        "&margin=6&data=" +
+        encodeURIComponent(url);
+      el.appendChild(img);
+      el.dataset.painted = "1";
+    };
+
     loadQrLib().then((QR) => {
-      if (!QR || !el) return;
-      const size = window.matchMedia("(max-width: 640px)").matches ? 70 : 88;
-      QR.toCanvas(
-        url,
-        { width: size, margin: 1, errorCorrectionLevel: "M", color: { dark: "#111110", light: "#FFFFFF" } },
-        (err, canvas) => {
-          if (err || !canvas) {
-            QR.toDataURL(url, { width: size, margin: 1 }, (e2, dataUrl) => {
-              if (e2 || !dataUrl) return;
-              el.innerHTML = "";
-              const img = document.createElement("img");
-              img.src = dataUrl;
-              img.alt = "활동지 QR";
-              el.appendChild(img);
-              el.dataset.painted = "1";
-            });
+      if (!el) return;
+      if (typeof QR === "function") {
+        try {
+          el.innerHTML = "";
+          // eslint-disable-next-line no-new
+          new QR(el, {
+            text: url,
+            width: size,
+            height: size,
+            colorDark: "#111110",
+            colorLight: "#ffffff",
+            correctLevel: QR.CorrectLevel ? QR.CorrectLevel.M : 1
+          });
+          const canvas = el.querySelector("canvas");
+          const img = el.querySelector("img");
+          if (canvas) {
+            canvas.style.width = "100%";
+            canvas.style.height = "100%";
+          }
+          if (img) {
+            img.style.width = "100%";
+            img.style.height = "100%";
+          }
+          if (canvas || img) {
+            el.dataset.painted = "1";
             return;
           }
-          el.innerHTML = "";
-          canvas.style.width = "100%";
-          canvas.style.height = "100%";
-          canvas.style.display = "block";
-          el.appendChild(canvas);
-          el.dataset.painted = "1";
+        } catch {
+          /* fallback */
         }
-      );
+      }
+      paintImg();
     });
   }
 
