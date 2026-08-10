@@ -99,11 +99,19 @@
     }
     .topbar-spacer { flex: 1; }
     .topbar .btn-tiny {
-      height: 32px; padding: 0 12px; border: 1px solid var(--border-default);
+      height: 32px; padding: 0 10px; border: 1px solid var(--border-default);
       border-radius: var(--radius-full); background: var(--bg-elevated);
-      color: var(--text-secondary); font: 600 12px/1 var(--font-sans); cursor: pointer;
+      color: var(--text-secondary); font: 600 11px/1 var(--font-sans); cursor: pointer;
+      white-space: nowrap;
     }
     .topbar .btn-tiny:hover { background: var(--bg-subtle); }
+    .topbar .btn-tiny.is-accent {
+      border-color: var(--color-primary-300);
+      color: var(--color-primary-700);
+      background: var(--color-primary-50);
+    }
+    .topbar .btn-tiny:disabled { opacity: 0.55; cursor: wait; }
+    .detail-roster-grid.is-loading { opacity: 0.55; pointer-events: none; }
 
     /* Landing */
     .stage {
@@ -854,6 +862,8 @@
       <span class="chip">교사</span>
       <span class="topbar-title" id="teacherBarTitle">30차시 QR · 제출 현황</span>
       <span class="topbar-spacer"></span>
+      <button type="button" class="btn-tiny" id="btnResetDashboard" title="화면·선택 상태 초기화">초기화</button>
+      <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 제출 보고서">XLSX 다운로드</button>
       <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
       <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
     </header>
@@ -1058,6 +1068,11 @@
       let detailFilterGrade = null;
       const MAX_CLASS_COUNT = 10;
       let lessonsHaveSubmitCode = null; // null=미확인, true/false
+      const lessonsCache = new Map(); // classId -> lessons[]
+      const studentsCache = new Map(); // classId -> students[]
+      const subCountCache = new Map(); // lessonId -> count
+      let switchSeq = 0;
+      let listRenderSeq = 0;
 
       function clampClassCount(n) {
         const v = Number(n) || 1;
@@ -1296,14 +1311,17 @@
         closeSubViewer();
         renderClassSettingsUI();
         if (first) {
-          loadRoster(first.id)
-            .then(() => loadLessons())
-            .then(() => renderLessonList())
+          loadRoster(first.id).catch(() => {});
+          fetchLessonsForClass(first.id, { seed: !lessonsCache.has(first.id) })
+            .then((rows) => {
+              lessons = rows;
+              return renderLessonList();
+            })
             .catch(() => {});
           toast(`${g}학년으로 전환했습니다. 다른 학년 학급은 그대로 유지됩니다.`);
         } else {
           lessons = [];
-          renderLessonList().catch(() => {});
+          renderLessonList();
           toast(`${g}학년입니다. 학급 수를 정한 뒤 저장하면 이 학년 학급이 추가됩니다.`);
         }
       }
@@ -1504,6 +1522,7 @@
             if (!confirm("이 학생을 명단에서 삭제할까요?")) return;
             const { error } = await sb.from("students").delete().eq("id", id);
             if (error) return toast("삭제 실패: " + error.message);
+            studentsCache.delete(rosterClassId);
             await loadRoster(rosterClassId);
             toast("학생을 삭제했습니다.");
           });
@@ -1587,10 +1606,12 @@
           return;
         }
         if (viewingSubmissionId === submissionId) closeSubViewer();
+        const removed = submissionById.get(submissionId);
         submissionById.delete(submissionId);
+        if (removed?.lesson_id) subCountCache.delete(removed.lesson_id);
         toast("제출 보고서를 삭제했습니다.");
         if (rosterClassId) await loadRoster(rosterClassId);
-        await renderLessonList();
+        renderLessonList();
         const current = lessons.find((l) => l.id === selectedLessonId);
         if (current && $("detailCard") && !$("detailCard").hidden) {
           await renderDetail(current);
@@ -1617,6 +1638,7 @@
         }
         const { error } = await sb.from("students").insert(rows);
         if (error) return toast("추가 실패: " + (error.message || "중복 번호일 수 있습니다."));
+        studentsCache.delete(rosterClassId);
         await loadRoster(rosterClassId);
         toast(`${count}명을 추가했습니다.`);
       }
@@ -2063,6 +2085,7 @@
         }
 
         saveClassSettings();
+        invalidateClassCache();
         await loadTeacherClassesFromDb();
         const firstActive = activeClassesForGrade(grade)[0]
           || teacherClasses.find((c) => c.is_active);
@@ -2093,15 +2116,23 @@
         /* 왼쪽 학년·반 칩 UI 제거됨 — 초기 설정에서 학급 전환 */
       }
 
-      async function loadLessons() {
-        if (!session || !sb) return;
-        const classId = await ensureTeacherClassSeeded();
-        if (!classId) {
-          lessons = [];
-          return;
+      function invalidateClassCache(classId) {
+        if (classId) {
+          lessonsCache.delete(classId);
+          studentsCache.delete(classId);
+        } else {
+          lessonsCache.clear();
+          studentsCache.clear();
+          subCountCache.clear();
         }
-        if (teacherClass?.id) await seedLessonsForClass(teacherClass.id);
+      }
 
+      async function fetchLessonsForClass(classId, { seed = false } = {}) {
+        if (!classId) return [];
+        if (lessonsCache.has(classId)) return lessonsCache.get(classId);
+        if (seed) {
+          try { await seedLessonsForClass(classId); } catch (e) { console.warn(e); }
+        }
         let data = null;
         let error = null;
         if (lessonsHaveSubmitCode !== false) {
@@ -2125,27 +2156,61 @@
             .order("session_no", { ascending: true }));
         }
         if (error) throw error;
-        lessons = (data || []).map((l) => ({
+        const rows = (data || []).map((l) => ({
           ...l,
           submit_code: l.submit_code || lessonSubmitCode(l)
         }));
+        lessonsCache.set(classId, rows);
+        return rows;
+      }
+
+      async function loadLessons({ seed = true } = {}) {
+        if (!session || !sb) return;
+        const classId = await ensureTeacherClassSeeded();
+        if (!classId) {
+          lessons = [];
+          return;
+        }
+        lessons = await fetchLessonsForClass(classId, { seed });
       }
 
       async function countSubs(lessonId) {
+        if (subCountCache.has(lessonId)) return subCountCache.get(lessonId);
         const { count, error } = await sb
           .from("submissions")
           .select("id", { count: "exact", head: true })
           .eq("lesson_id", lessonId);
-        if (error) return 0;
-        return count || 0;
+        const n = error ? 0 : (count || 0);
+        subCountCache.set(lessonId, n);
+        return n;
+      }
+
+      async function refreshSubCountsInBackground(lessonIds, seq) {
+        const missing = lessonIds.filter((id) => !subCountCache.has(id));
+        if (!missing.length) return;
+        await Promise.all(missing.map(async (id) => {
+          const { count } = await sb
+            .from("submissions")
+            .select("id", { count: "exact", head: true })
+            .eq("lesson_id", id);
+          subCountCache.set(id, count || 0);
+        }));
+        if (seq !== listRenderSeq) return;
+        document.querySelectorAll(".lesson-item .lesson-count").forEach((badge) => {
+          const id = badge.closest(".lesson-item")?.dataset?.id;
+          if (id && subCountCache.has(id)) badge.textContent = String(subCountCache.get(id));
+        });
       }
 
       async function renderLessonList() {
         const root = $("lessonList");
+        if (!root) return;
+        const seq = ++listRenderSeq;
         root.innerHTML = "";
         $("lessonCountLabel").textContent = `${lessons.length}차시`;
 
         const byNo = new Map(lessons.map((l) => [l.session_no, l]));
+        const lessonIds = [];
 
         for (const month of MONTH_THEMES) {
           const group = document.createElement("div");
@@ -2159,8 +2224,9 @@
           for (const sessionNo of month.sessions) {
             const lesson = byNo.get(sessionNo);
             if (!lesson) continue;
+            lessonIds.push(lesson.id);
             const meta = getLessonMeta(sessionNo);
-            const count = await countSubs(lesson.id);
+            const count = subCountCache.has(lesson.id) ? subCountCache.get(lesson.id) : "·";
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
@@ -2179,6 +2245,7 @@
           }
           root.appendChild(group);
         }
+        refreshSubCountsInBackground(lessonIds, seq);
       }
 
       function paintQr(el, text, size) {
@@ -2202,40 +2269,54 @@
         }
       }
 
-      async function loadDetailStudentsAndSubs(classId, lessonId, sessionNo) {
-        detailSubMap = new Map();
-        detailExportRows = [];
-        let students = [];
+      async function fetchStudentsForClass(classId) {
+        if (!classId) return [];
+        if (studentsCache.has(classId)) return studentsCache.get(classId);
         try {
-          await seedDefaultStudents(classId);
+          const { count } = await sb
+            .from("students")
+            .select("id", { count: "exact", head: true })
+            .eq("class_id", classId);
+          if (!count) {
+            try { await seedDefaultStudents(classId); } catch (e) { console.warn(e); }
+          }
           const { data, error } = await sb
             .from("students")
             .select("id, student_no, student_name, sort_order")
             .eq("class_id", classId)
             .order("sort_order", { ascending: true });
           if (error) throw error;
-          students = (data || []).slice().sort((a, b) => {
+          const students = (data || []).slice().sort((a, b) => {
             const na = Number(normalizeStudentNo(a.student_no)) || a.sort_order;
             const nb = Number(normalizeStudentNo(b.student_no)) || b.sort_order;
             return na - nb;
           });
+          studentsCache.set(classId, students);
+          return students;
         } catch (e) {
           console.warn(e);
-          students = Array.from({ length: 30 }, (_, i) => ({
+          return Array.from({ length: 30 }, (_, i) => ({
             id: `tmp-${i + 1}`,
             student_no: String(i + 1),
             student_name: "",
             sort_order: i + 1
           }));
         }
+      }
 
-        const { data: subs } = await sb
-          .from("submissions")
-          .select("id, lesson_id, student_no, student_name, content, created_at")
-          .eq("lesson_id", lessonId)
-          .order("created_at", { ascending: false });
+      async function loadDetailStudentsAndSubs(classId, lessonId, sessionNo) {
+        detailSubMap = new Map();
+        detailExportRows = [];
+        const [studentsRaw, subsRes] = await Promise.all([
+          fetchStudentsForClass(classId),
+          sb
+            .from("submissions")
+            .select("id, lesson_id, student_no, student_name, content, created_at")
+            .eq("lesson_id", lessonId)
+            .order("created_at", { ascending: false })
+        ]);
 
-        for (const s of subs || []) {
+        for (const s of subsRes.data || []) {
           const key = normalizeStudentNo(s.student_no);
           if (!key) continue;
           const row = { ...s, session_no: sessionNo };
@@ -2243,9 +2324,9 @@
           detailSubMap.get(key).push(row);
           submissionById.set(row.id, row);
         }
+        subCountCache.set(lessonId, (subsRes.data || []).length);
 
-        // 이름 비어 있으면 제출 이름으로 표시용 채움
-        students = students.map((st) => {
+        let students = studentsRaw.map((st) => {
           if (st.student_name) return st;
           const first = (detailSubMap.get(normalizeStudentNo(st.student_no)) || [])[0];
           return first?.student_name ? { ...st, student_name: first.student_name } : st;
@@ -2271,44 +2352,198 @@
 
       async function switchDetailClass(targetClass, sessionNo) {
         if (!targetClass) return;
+        const seq = ++switchSeq;
         activeClassId = targetClass.id;
         teacherClass = targetClass;
         classSettings.classGrade = Number(targetClass.grade) || classSettings.classGrade;
         detailFilterGrade = classSettings.classGrade;
         rememberGradeCount();
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
-        await loadLessons();
-        const nextLesson = lessons.find((l) => l.session_no === sessionNo) || lessons[0];
+
+        // 캐시 우선 로드 (시드/전체 리렌더 최소화)
+        lessons = await fetchLessonsForClass(targetClass.id, { seed: !lessonsCache.has(targetClass.id) });
+        if (seq !== switchSeq) return;
+        const nextLesson = lessons.find((l) => l.session_no === sessionNo) || lessons[0] || null;
+        selectedLessonId = nextLesson?.id || null;
+
+        // 왼쪽 목록은 가볍게 갱신, 상세는 즉시
+        renderLessonList();
         if (nextLesson) {
-          selectedLessonId = nextLesson.id;
-          await renderLessonList();
-          await renderDetail(nextLesson);
-          subscribeRealtime(nextLesson.id);
+          await renderDetail(nextLesson, { switchSeq: seq });
+          if (seq === switchSeq) subscribeRealtime(nextLesson.id);
         } else {
-          await renderLessonList();
           await renderDetail(null);
         }
       }
 
-      function downloadDetailXlsx(sessionNo) {
+      async function exportAllSubmissionsXlsx() {
         if (!window.XLSX) {
           toast("엑셀 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
           return;
         }
-        if (!detailExportRows.length) {
-          toast("내려받을 명단이 없습니다.");
-          return;
+        const btn = $("btnExportAllXlsx");
+        if (btn) btn.disabled = true;
+        toast("전체 제출 보고서를 모으는 중…");
+        try {
+          const active = teacherClasses.filter((c) => c.is_active && c.class_no);
+          if (!active.length) {
+            toast("저장된 학급이 없습니다.");
+            return;
+          }
+          const rows = [];
+          // 학급별 병렬 수집 (과한 요청 방지: 3개씩)
+          for (let i = 0; i < active.length; i += 3) {
+            const chunk = active.slice(i, i + 3);
+            await Promise.all(chunk.map(async (cls) => {
+              const classLessons = await fetchLessonsForClass(cls.id, { seed: false });
+              const students = await fetchStudentsForClass(cls.id);
+              const studentNameByNo = new Map(
+                students.map((s) => [normalizeStudentNo(s.student_no), s.student_name || ""])
+              );
+              const lessonIds = classLessons.map((l) => l.id);
+              if (!lessonIds.length) return;
+              const sessionByLesson = new Map(classLessons.map((l) => [l.id, l.session_no]));
+              const { data: subs } = await sb
+                .from("submissions")
+                .select("id, lesson_id, student_no, student_name, content, created_at")
+                .in("lesson_id", lessonIds)
+                .order("created_at", { ascending: false });
+              (subs || []).forEach((s) => {
+                const no = normalizeStudentNo(s.student_no);
+                rows.push({
+                  학년: cls.grade,
+                  반: cls.class_no,
+                  학급: unitLabel(cls),
+                  번호: no,
+                  이름: s.student_name || studentNameByNo.get(no) || "",
+                  차시: sessionByLesson.get(s.lesson_id) || "",
+                  제출시각: formatTime(s.created_at),
+                  내용: htmlToPlainText(s.content),
+                  HTML: String(s.content || "")
+                });
+              });
+            }));
+          }
+          if (!rows.length) {
+            toast("제출된 보고서가 없습니다.");
+            return;
+          }
+          rows.sort((a, b) =>
+            a.학년 - b.학년 ||
+            a.반 - b.반 ||
+            Number(a.번호) - Number(b.번호) ||
+            Number(a.차시) - Number(b.차시)
+          );
+          const book = XLSX.utils.book_new();
+          const allSheet = XLSX.utils.json_to_sheet(rows);
+          XLSX.utils.book_append_sheet(book, allSheet, "전체제출");
+
+          // 학년·반별 시트 (한눈에 필터용)
+          const byClass = new Map();
+          rows.forEach((r) => {
+            const key = `${r.학년}-${r.반}`;
+            if (!byClass.has(key)) byClass.set(key, []);
+            byClass.get(key).push(r);
+          });
+          [...byClass.keys()].sort().forEach((key) => {
+            const list = byClass.get(key);
+            const name = `${list[0].학년}학년${list[0].반}반`.slice(0, 31);
+            XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(list), name);
+          });
+
+          const stamp = new Date().toISOString().slice(0, 10);
+          XLSX.writeFile(book, `전체제출보고서_${stamp}.xlsx`);
+          toast(`xlsx 저장 완료 · 제출 ${rows.length}건`);
+        } catch (e) {
+          console.error(e);
+          toast("xlsx 다운로드 실패: " + (e.message || e));
+        } finally {
+          if (btn) btn.disabled = false;
         }
-        const cls = teacherClass ? unitLabel(teacherClass) : "학급";
-        const sheet = XLSX.utils.json_to_sheet(detailExportRows);
-        const book = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(book, sheet, `${sessionNo}차시`);
-        const fname = `${cls}_${sessionNo}차시_제출보고서.xlsx`.replace(/\s+/g, "");
-        XLSX.writeFile(book, fname);
-        toast("xlsx 파일을 저장했습니다.");
       }
 
-      async function renderDetail(lesson) {
+      async function resetTeacherDashboard() {
+        if (!confirm("화면과 학급 선택 상태를 초기화하고 서버 데이터를 다시 불러올까요?\n(제출 데이터는 삭제되지 않습니다)")) {
+          return;
+        }
+        closeSubViewer();
+        unsubscribeRealtime();
+        invalidateClassCache();
+        selectedLessonId = null;
+        detailFilterGrade = null;
+        detailSubMap = new Map();
+        detailExportRows = [];
+        classSettings.needsResave = false;
+        await loadTeacherClassesFromDb();
+        const first = teacherClasses.find((c) => c.is_active && c.class_no);
+        activeClassId = first?.id || null;
+        teacherClass = first || null;
+        if (first) {
+          classSettings.classGrade = Number(first.grade) || 1;
+          classSettings.classCount = clampClassCount(
+            Math.max(...activeClassesForGrade(classSettings.classGrade).map((c) => Number(c.class_no)))
+          );
+          rememberGradeCount();
+          localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        }
+        await loadLessons({ seed: true });
+        await renderLessonList();
+        showRightPanel("setup");
+        renderClassSettingsUI();
+        if (rosterClassId || activeClassId) {
+          try { await loadRoster(rosterClassId || activeClassId); } catch (_) {}
+        }
+        if (session) {
+          $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
+        }
+        toast("초기화했습니다.");
+      }
+
+      function paintDetailRosterGrid(students) {
+        const grid = $("detailRosterGrid");
+        if (!grid) return;
+        if (!students.length) {
+          grid.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">명단이 없습니다. 초기 설정에서 학급을 저장해 주세요.</p>`;
+          return;
+        }
+        // iframe 미리보기는 전환 시 버벅임 원인이므로 텍스트 미리보기만 사용
+        grid.innerHTML = students.map((st) => {
+          const key = normalizeStudentNo(st.student_no);
+          const list = detailSubMap.get(key) || [];
+          const latest = list[0] || null;
+          const preview = latest
+            ? `<div class="detail-sub-preview" data-open-detail="${latest.id}" style="cursor:pointer"><div class="plain-mini">${escapeHtml(previewText(htmlToPlainText(latest.content), 90))}</div></div>`
+            : `<div class="detail-sub-preview"><div class="plain-mini">미제출</div></div>`;
+          const actions = latest
+            ? `<div class="detail-sub-actions">
+                 <button type="button" data-open-detail="${latest.id}">크게 보기</button>
+                 <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
+               </div>`
+            : "";
+          return `
+            <div class="detail-roster-cell${latest ? " has-sub" : ""}">
+              <div class="no">${escapeHtml(key || st.student_no)}번</div>
+              <div class="name">${escapeHtml(st.student_name || "이름 없음")}</div>
+              <div class="status">${latest ? `제출 · ${escapeHtml(formatTime(latest.created_at))}` : "미제출"}</div>
+              ${preview}
+              ${actions}
+            </div>`;
+        }).join("");
+
+        grid.querySelectorAll("[data-open-detail]").forEach((el) => {
+          el.addEventListener("click", () => openSubViewer(el.getAttribute("data-open-detail")));
+        });
+        grid.querySelectorAll("[data-del-detail]").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute("data-del-detail");
+            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
+            await deleteSubmission(id);
+          });
+        });
+      }
+
+      async function renderDetail(lesson, opts = {}) {
         showRightPanel("lesson");
         const card = $("detailCard");
         if (!lesson) {
@@ -2328,17 +2563,13 @@
         if (!gradesWithClasses.includes(detailFilterGrade) && gradesWithClasses.length) {
           detailFilterGrade = gradesWithClasses[0];
         }
-        let classesForGrade = activeClassesForGrade(detailFilterGrade);
 
         const meta = getLessonMeta(lesson.session_no);
         const submitCode = lessonSubmitCode(lesson) || "--------";
         const url = activityUrl(lesson.session_no, lessonSubmitCode(lesson));
         const classId = teacherClass?.id || lesson.class_id;
-        const students = classId
-          ? await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no)
-          : [];
-        const submittedCount = [...detailSubMap.values()].filter((arr) => arr.length).length;
 
+        // 셸을 먼저 그려 전환 체감 속도를 올림
         card.innerHTML = `
           <span class="lesson-theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
           <h2 class="lesson-title">${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
@@ -2369,11 +2600,13 @@
 
           <div class="detail-toolbar">
             <h3 class="detail-section-title" style="margin:0">번호별 제출 보고서</h3>
-            <span class="settings-sub" style="margin:0">${submittedCount}/${students.length}명 제출</span>
+            <span class="settings-sub" style="margin:0" id="detailSubmitCount">불러오는 중…</span>
             <span class="grow"></span>
-            <button type="button" class="btn btn-secondary" id="btnDownloadXlsx">모든 보고서 xlsx</button>
+            <span class="settings-sub" style="margin:0">전체는 상단 XLSX 다운로드</span>
           </div>
-          <div class="detail-roster-grid" id="detailRosterGrid"></div>`;
+          <div class="detail-roster-grid is-loading" id="detailRosterGrid">
+            <p class="settings-sub" style="grid-column:1/-1">명단·제출을 불러오는 중…</p>
+          </div>`;
 
         const gradeRoot = $("detailGradeChips");
         (gradesWithClasses.length ? gradesWithClasses : [detailFilterGrade]).forEach((g) => {
@@ -2381,21 +2614,21 @@
           btn.type = "button";
           btn.className = "chip-toggle" + (Number(detailFilterGrade) === g ? " is-on" : "");
           btn.textContent = `${g}학년`;
-          btn.addEventListener("click", async () => {
-            detailFilterGrade = g;
+          btn.addEventListener("click", () => {
+            if (Number(detailFilterGrade) === g && Number(teacherClass?.grade) === g) return;
             const list = activeClassesForGrade(g);
             if (!list.length) {
               toast(`${g}학년에 저장된 학급이 없습니다. 초기 설정에서 저장해 주세요.`);
               return;
             }
             const prefer = list.find((c) => c.id === activeClassId) || list[0];
-            await switchDetailClass(prefer, lesson.session_no);
+            switchDetailClass(prefer, lesson.session_no);
           });
           gradeRoot.appendChild(btn);
         });
 
         const classRoot = $("detailClassChips");
-        classesForGrade = activeClassesForGrade(detailFilterGrade);
+        const classesForGrade = activeClassesForGrade(detailFilterGrade);
         if (!classesForGrade.length) {
           classRoot.innerHTML = `<span class="settings-sub">이 학년에 학급이 없습니다.</span>`;
         } else {
@@ -2404,45 +2637,16 @@
             btn.type = "button";
             btn.className = "chip-toggle" + (c.id === activeClassId ? " is-on" : "");
             btn.textContent = `${c.class_no}반`;
-            btn.addEventListener("click", async () => {
+            btn.addEventListener("click", () => {
               if (c.id === activeClassId) return;
-              await switchDetailClass(c, lesson.session_no);
+              switchDetailClass(c, lesson.session_no);
             });
             classRoot.appendChild(btn);
           });
         }
 
-        const grid = $("detailRosterGrid");
-        if (!students.length) {
-          grid.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">명단이 없습니다. 초기 설정에서 학급을 저장해 주세요.</p>`;
-        } else {
-          grid.innerHTML = students.map((st) => {
-            const key = normalizeStudentNo(st.student_no);
-            const list = detailSubMap.get(key) || [];
-            const latest = list[0] || null;
-            const preview = latest
-              ? (looksLikeHtml(latest.content)
-                ? `<div class="detail-sub-preview"><iframe sandbox="" srcdoc="${escapeSrcdoc(latest.content)}" title="미리보기"></iframe></div>`
-                : `<div class="detail-sub-preview"><div class="plain-mini">${escapeHtml(previewText(latest.content, 80))}</div></div>`)
-              : `<div class="detail-sub-preview"><div class="plain-mini">미제출</div></div>`;
-            const actions = latest
-              ? `<div class="detail-sub-actions">
-                   <button type="button" data-open-detail="${latest.id}">크게 보기</button>
-                   <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
-                 </div>`
-              : "";
-            return `
-              <div class="detail-roster-cell${latest ? " has-sub" : ""}">
-                <div class="no">${escapeHtml(key || st.student_no)}번</div>
-                <div class="name">${escapeHtml(st.student_name || "이름 없음")}</div>
-                <div class="status">${latest ? `제출 · ${escapeHtml(formatTime(latest.created_at))}` : "미제출"}</div>
-                ${preview}
-                ${actions}
-              </div>`;
-          }).join("");
-        }
-
-        paintQr($("detailQr"), url, 136);
+        // QR는 다음 프레임에 (전환 블로킹 방지)
+        requestAnimationFrame(() => paintQr($("detailQr"), url, 120));
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {
           try {
@@ -2460,26 +2664,17 @@
             toast(submitCode);
           }
         });
-        $("btnDownloadXlsx")?.addEventListener("click", () => downloadDetailXlsx(lesson.session_no));
-        grid?.querySelectorAll("[data-open-detail]").forEach((btn) => {
-          btn.addEventListener("click", () => openSubViewer(btn.getAttribute("data-open-detail")));
-        });
-        grid?.querySelectorAll("[data-del-detail]").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-del-detail");
-            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
-            await deleteSubmission(id);
-            const current = lessons.find((l) => l.id === selectedLessonId);
-            if (current) await renderDetail(current);
-          });
-        });
-        grid?.querySelectorAll(".detail-sub-preview").forEach((el) => {
-          const cell = el.closest(".detail-roster-cell");
-          const openBtn = cell?.querySelector("[data-open-detail]");
-          if (!openBtn) return;
-          el.style.cursor = "pointer";
-          el.addEventListener("click", () => openSubViewer(openBtn.getAttribute("data-open-detail")));
-        });
+
+        if (!classId) return;
+        const students = await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no);
+        if (opts.switchSeq != null && opts.switchSeq !== switchSeq) return;
+
+        const submittedCount = [...detailSubMap.values()].filter((arr) => arr.length).length;
+        const countEl = $("detailSubmitCount");
+        if (countEl) countEl.textContent = `${submittedCount}/${students.length}명 제출`;
+        const grid = $("detailRosterGrid");
+        if (grid) grid.classList.remove("is-loading");
+        paintDetailRosterGrid(students);
       }
 
       function escapeHtml(str) {
@@ -2498,14 +2693,12 @@
         });
         showRightPanel("lesson");
         await renderDetail(lesson);
-        if (!silent) {
-          const countEls = document.querySelectorAll(".lesson-item");
-          for (const el of countEls) {
-            const id = el.dataset.id;
-            const n = await countSubs(id);
-            const badge = el.querySelector(".lesson-count");
+        if (!silent && lesson) {
+          // 선택 차시 카운트만 갱신 (전체 await 제거)
+          countSubs(lesson.id).then((n) => {
+            const badge = document.querySelector(`.lesson-item[data-id="${lesson.id}"] .lesson-count`);
             if (badge) badge.textContent = String(n);
-          }
+          });
         }
         subscribeRealtime(lessonId);
       }
@@ -2526,7 +2719,8 @@
             "postgres_changes",
             { event: "INSERT", schema: "public", table: "submissions", filter: `lesson_id=eq.${lessonId}` },
             async () => {
-              await renderLessonList();
+              if (lessonId) subCountCache.delete(lessonId);
+              renderLessonList();
               const current = lessons.find((l) => l.id === selectedLessonId);
               if (current && $("detailCard") && !$("detailCard").hidden) {
                 await renderDetail(current);
@@ -2799,6 +2993,8 @@
       $("tabDashDetail").addEventListener("click", () => setDashPanel("detail"));
       $("btnLogout").addEventListener("click", () => logout());
       $("btnTeacherLogout").addEventListener("click", () => logout());
+      $("btnResetDashboard")?.addEventListener("click", () => resetTeacherDashboard());
+      $("btnExportAllXlsx")?.addEventListener("click", () => exportAllSubmissionsXlsx());
       $("btnBackLanding").addEventListener("click", () => {
         unsubscribeRealtime();
         showView("landing");
