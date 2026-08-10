@@ -238,6 +238,34 @@
       background: var(--color-primary-50);
       color: var(--color-primary-700);
     }
+    .roster-box { margin-top: 8px; }
+    .roster-list {
+      display: grid; gap: 6px; max-height: 280px; overflow-y: auto;
+      margin: 8px 0 10px; padding-right: 2px;
+    }
+    .roster-item {
+      display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; align-items: center;
+      padding: 8px 10px; border: 1px solid var(--border-default);
+      border-radius: var(--radius-md); background: var(--bg-subtle);
+    }
+    .roster-item input {
+      width: 100%; height: 36px; border: 1px solid var(--border-default);
+      border-radius: 8px; padding: 0 10px; background: #fff;
+      font: 500 13px/1 var(--font-sans); color: var(--text-primary);
+    }
+    .roster-item .no {
+      font: 700 12px/1 var(--font-sans); color: var(--color-primary-700); text-align: center;
+    }
+    .roster-add {
+      display: grid; grid-template-columns: 88px 1fr auto; gap: 8px;
+    }
+    .roster-add input {
+      height: 42px; border: 1px solid var(--border-default); border-radius: 10px;
+      padding: 0 12px; background: #fff; font: 500 13px/1 var(--font-sans);
+    }
+    @media (max-width: 640px) {
+      .roster-add { grid-template-columns: 1fr; }
+    }
     .auth-msg { min-height: 18px; margin: 8px 0 0; font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary); text-align: center; }
     .auth-msg.is-error { color: #B23A2C; }
     .auth-msg.is-ok { color: #4F7A35; }
@@ -679,7 +707,7 @@
           <span class="label">수업코드</span>
           <strong id="classCodeValue">--------</strong>
           <button type="button" class="btn-tiny" id="btnCopyClassCode">복사</button>
-          <span class="hint" id="classCodeHint">학년·반별 별도 코드</span>
+          <span class="hint" id="classCodeHint">학급별 별도 코드</span>
         </div>
         <div class="cohort-row" id="cohortRow" hidden></div>
         <div class="dash-head">
@@ -695,7 +723,7 @@
           </span>
           <span class="setup-launch-copy">
             <strong>초기 설정</strong>
-            <span id="setupLaunchHint">학년 · 반을 먼저 지정해 주세요</span>
+            <span id="setupLaunchHint">학급을 먼저 지정해 주세요</span>
           </span>
           <span class="setup-launch-chevron" aria-hidden="true">›</span>
         </button>
@@ -703,23 +731,29 @@
       </aside>
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
-          <h2>초기 설정</h2>
-          <p class="settings-sub">수업 대상 학년과 반을 지정합니다.</p>
-          <div class="seg" role="tablist" aria-label="반 설정 방식">
-            <button type="button" class="is-active" id="btnModeGrade" data-mode="grade">학년별</button>
-            <button type="button" id="btnModeClass" data-mode="class">학급별</button>
-          </div>
-          <div class="settings-panel" id="panelGrade">
-            <p class="settings-sub" style="margin-bottom:8px">운영할 학년을 선택하세요.</p>
-            <div class="chip-row" id="gradeChips"></div>
-          </div>
-          <div class="settings-panel" id="panelClass" hidden>
-            <p class="settings-sub" style="margin-bottom:8px">학년을 고른 뒤 학급(반)을 선택하세요.</p>
-            <div class="chip-row" id="classGradeChips"></div>
-            <div class="chip-row" id="classNoChips"></div>
-          </div>
-          <button type="button" class="btn btn-primary" id="btnSaveClassSettings" style="width:100%">설정 저장</button>
+          <h2>초기 설정 · 학급별</h2>
+          <p class="settings-sub">학년과 반을 고르면 학급마다 수업코드·30차시·기본 학생 30명이 만들어집니다.</p>
+          <p class="settings-sub" style="margin-bottom:8px">학년</p>
+          <div class="chip-row" id="classGradeChips"></div>
+          <p class="settings-sub" style="margin-bottom:8px">학급(반)</p>
+          <div class="chip-row" id="classNoChips"></div>
+          <button type="button" class="btn btn-primary" id="btnSaveClassSettings" style="width:100%">학급 저장</button>
           <p class="settings-summary" id="classSettingsSummary">선택된 반이 없습니다.</p>
+
+          <div class="roster-box" id="rosterBox">
+            <div class="dash-head" style="margin-top:18px">
+              <h2 style="font-size:16px">학급 명단</h2>
+              <span id="rosterCountLabel">0명</span>
+            </div>
+            <p class="settings-sub" id="rosterClassLabel">저장된 학급을 선택한 뒤 명단을 관리하세요.</p>
+            <div class="chip-row" id="rosterClassChips"></div>
+            <div class="roster-list" id="rosterList"></div>
+            <div class="roster-add">
+              <input id="newStudentNo" type="text" placeholder="학번/번호" />
+              <input id="newStudentName" type="text" placeholder="이름" />
+              <button type="button" class="btn btn-secondary" id="btnAddStudent">추가</button>
+            </div>
+          </div>
         </div>
         <div class="detail-card" id="detailCard">
           <p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출 목록이 표시됩니다.</p>
@@ -848,45 +882,38 @@
       let activeClassId = null;
       let authMode = "login";
       let classSettings = loadClassSettings();
+      let rosterStudents = [];
+      let rosterClassId = null;
 
       function loadClassSettings() {
         try {
           const raw = JSON.parse(localStorage.getItem(CLASS_SETTINGS_KEY) || "null");
           if (!raw || typeof raw !== "object") {
-            return { mode: "grade", grades: [1], classGrade: 1, classNos: [1] };
+            return { mode: "class", classGrade: 1, classNos: [1] };
           }
           return {
-            mode: raw.mode === "class" ? "class" : "grade",
-            grades: Array.isArray(raw.grades) ? raw.grades.map(Number).filter((n) => n >= 1 && n <= 3) : [1],
+            mode: "class",
             classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
             classNos: Array.isArray(raw.classNos) ? raw.classNos.map(Number).filter((n) => n >= 1 && n <= 10) : [1]
           };
         } catch {
-          return { mode: "grade", grades: [1], classGrade: 1, classNos: [1] };
+          return { mode: "class", classGrade: 1, classNos: [1] };
         }
       }
 
       function saveClassSettings() {
+        classSettings.mode = "class";
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
       }
 
       function unitLabel(row) {
         if (!row) return "";
-        if (row.mode === "class") return `${row.grade}학년 ${row.class_no}반`;
-        return `${row.grade}학년`;
+        return `${row.grade}학년 ${row.class_no}반`;
       }
 
       function formatClassSettingsSummary() {
         const active = teacherClasses.filter((c) => c.is_active);
-        if (active.length) {
-          const mode = active[0].mode === "class" ? "학급별" : "학년별";
-          return `${mode} · ` + active.map(unitLabel).join(", ");
-        }
-        if (classSettings.mode === "grade") {
-          const g = (classSettings.grades || []).slice().sort((a, b) => a - b);
-          if (!g.length) return "선택된 학년이 없습니다.";
-          return "학년별 · " + g.map((n) => `${n}학년`).join(", ");
-        }
+        if (active.length) return "학급별 · " + active.map(unitLabel).join(", ");
         const nos = (classSettings.classNos || []).slice().sort((a, b) => a - b);
         if (!nos.length) return "선택된 학급이 없습니다.";
         return `학급별 · ${classSettings.classGrade}학년 ` + nos.map((n) => `${n}반`).join(", ");
@@ -895,9 +922,6 @@
       function getClassPills() {
         const active = teacherClasses.filter((c) => c.is_active);
         if (active.length) return active.map(unitLabel);
-        if (classSettings.mode === "grade") {
-          return (classSettings.grades || []).slice().sort((a, b) => a - b).map((n) => `${n}학년`);
-        }
         return (classSettings.classNos || [])
           .slice()
           .sort((a, b) => a - b)
@@ -905,14 +929,6 @@
       }
 
       function desiredUnitsFromSettings() {
-        if (classSettings.mode === "grade") {
-          return (classSettings.grades || []).map((grade) => ({
-            mode: "grade",
-            grade,
-            class_no: null,
-            title: `${grade}학년 · AI와 함께 하는 고교학점제 진로설계`
-          }));
-        }
         return (classSettings.classNos || []).map((class_no) => ({
           mode: "class",
           grade: classSettings.classGrade,
@@ -922,12 +938,11 @@
       }
 
       function unitKey(mode, grade, classNo) {
-        return `${mode}:${grade}:${classNo == null ? 0 : classNo}`;
+        return `class:${grade}:${classNo == null ? 0 : classNo}`;
       }
 
       function isClassSettingsReady() {
-        if (teacherClasses.some((c) => c.is_active)) return true;
-        if (classSettings.mode === "grade") return (classSettings.grades || []).length > 0;
+        if (teacherClasses.some((c) => c.is_active && c.class_no)) return true;
         return (classSettings.classNos || []).length > 0;
       }
 
@@ -936,7 +951,7 @@
         if (!hint) return;
         hint.textContent = isClassSettingsReady()
           ? formatClassSettingsSummary()
-          : "학년 · 반을 먼저 지정해 주세요";
+          : "학급을 먼저 지정해 주세요";
       }
 
       function showRightPanel(mode) {
@@ -960,32 +975,10 @@
       }
 
       function renderClassSettingsUI() {
-        const gradeRoot = $("gradeChips");
+        classSettings.mode = "class";
         const classGradeRoot = $("classGradeChips");
         const classNoRoot = $("classNoChips");
-        if (!gradeRoot || !classGradeRoot || !classNoRoot) return;
-
-        $("btnModeGrade").classList.toggle("is-active", classSettings.mode === "grade");
-        $("btnModeClass").classList.toggle("is-active", classSettings.mode === "class");
-        $("panelGrade").hidden = classSettings.mode !== "grade";
-        $("panelClass").hidden = classSettings.mode !== "class";
-
-        gradeRoot.innerHTML = "";
-        [1, 2, 3].forEach((g) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "chip-toggle" + (classSettings.grades.includes(g) ? " is-on" : "");
-          btn.textContent = `${g}학년`;
-          btn.addEventListener("click", () => {
-            if (classSettings.grades.includes(g)) {
-              classSettings.grades = classSettings.grades.filter((x) => x !== g);
-            } else {
-              classSettings.grades = [...classSettings.grades, g].sort((a, b) => a - b);
-            }
-            renderClassSettingsUI();
-          });
-          gradeRoot.appendChild(btn);
-        });
+        if (!classGradeRoot || !classNoRoot) return;
 
         classGradeRoot.innerHTML = "";
         [1, 2, 3].forEach((g) => {
@@ -1019,6 +1012,142 @@
 
         $("classSettingsSummary").textContent = formatClassSettingsSummary();
         updateSetupLaunchHint();
+        renderRosterClassChips();
+      }
+
+      function renderRosterClassChips() {
+        const root = $("rosterClassChips");
+        if (!root) return;
+        const active = teacherClasses.filter((c) => c.is_active && c.class_no);
+        root.innerHTML = "";
+        if (!active.length) {
+          $("rosterClassLabel").textContent = "학급을 저장하면 명단(기본 30명)을 관리할 수 있습니다.";
+          $("rosterList").innerHTML = "";
+          $("rosterCountLabel").textContent = "0명";
+          return;
+        }
+        if (!rosterClassId || !active.some((c) => c.id === rosterClassId)) {
+          rosterClassId = activeClassId && active.some((c) => c.id === activeClassId)
+            ? activeClassId
+            : active[0].id;
+        }
+        const current = active.find((c) => c.id === rosterClassId);
+        $("rosterClassLabel").textContent = current
+          ? `${unitLabel(current)} 명단 · 기본 30명, 추가/삭제 가능`
+          : "명단을 관리할 학급을 선택하세요.";
+
+        active.forEach((c) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
+          btn.textContent = unitLabel(c);
+          btn.addEventListener("click", () => {
+            rosterClassId = c.id;
+            loadRoster(c.id);
+            renderRosterClassChips();
+          });
+          root.appendChild(btn);
+        });
+      }
+
+      async function seedDefaultStudents(classId) {
+        if (!sb || !classId) return;
+        const { count, error } = await sb
+          .from("students")
+          .select("id", { count: "exact", head: true })
+          .eq("class_id", classId);
+        if (error) throw error;
+        if (count && count > 0) return;
+
+        const { error: rpcErr } = await sb.rpc("seed_default_students", { p_class_id: classId });
+        if (!rpcErr) return;
+
+        const rows = Array.from({ length: 30 }, (_, i) => ({
+          class_id: classId,
+          student_no: String(i + 1).padStart(2, "0"),
+          student_name: "",
+          sort_order: i + 1
+        }));
+        const { error: insErr } = await sb.from("students").insert(rows);
+        if (insErr) throw insErr;
+      }
+
+      async function loadRoster(classId) {
+        if (!sb || !classId) return;
+        rosterClassId = classId;
+        try {
+          await seedDefaultStudents(classId);
+          const { data, error } = await sb
+            .from("students")
+            .select("id, student_no, student_name, sort_order")
+            .eq("class_id", classId)
+            .order("sort_order", { ascending: true });
+          if (error) throw error;
+          rosterStudents = data || [];
+          renderRosterList();
+          renderRosterClassChips();
+        } catch (e) {
+          console.warn(e);
+          rosterStudents = [];
+          const root = $("rosterList");
+          if (root) {
+            root.innerHTML = `<p class="settings-sub">명단을 불러오지 못했습니다. Supabase에서 <code>supabase-students.sql</code> 을 실행해 주세요.</p>`;
+          }
+          $("rosterCountLabel").textContent = "0명";
+        }
+      }
+
+      function renderRosterList() {
+        const root = $("rosterList");
+        if (!root) return;
+        $("rosterCountLabel").textContent = `${rosterStudents.length}명`;
+        if (!rosterStudents.length) {
+          root.innerHTML = `<p class="settings-sub">학생이 없습니다. 아래에서 추가해 주세요.</p>`;
+          return;
+        }
+        root.innerHTML = rosterStudents.map((s) => `
+          <div class="roster-item" data-id="${s.id}">
+            <div class="no">${escapeHtml(s.student_no)}</div>
+            <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name)}" placeholder="이름" />
+            <button type="button" class="btn-tiny" data-del="${s.id}">삭제</button>
+          </div>`).join("");
+
+        root.querySelectorAll("input[data-name]").forEach((input) => {
+          input.addEventListener("change", async () => {
+            const id = input.getAttribute("data-name");
+            const { error } = await sb.from("students").update({ student_name: input.value.trim() }).eq("id", id);
+            if (error) toast("이름 저장 실패: " + error.message);
+          });
+        });
+        root.querySelectorAll("button[data-del]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const id = btn.getAttribute("data-del");
+            if (!confirm("이 학생을 명단에서 삭제할까요?")) return;
+            const { error } = await sb.from("students").delete().eq("id", id);
+            if (error) return toast("삭제 실패: " + error.message);
+            await loadRoster(rosterClassId);
+            toast("학생을 삭제했습니다.");
+          });
+        });
+      }
+
+      async function addRosterStudent() {
+        if (!rosterClassId) return toast("먼저 학급을 저장·선택해 주세요.");
+        const no = ($("newStudentNo").value || "").trim();
+        const name = ($("newStudentName").value || "").trim();
+        if (!no) return toast("학번/번호를 입력해 주세요.");
+        const maxOrder = rosterStudents.reduce((m, s) => Math.max(m, Number(s.sort_order) || 0), 0);
+        const { error } = await sb.from("students").insert({
+          class_id: rosterClassId,
+          student_no: no,
+          student_name: name,
+          sort_order: maxOrder + 1
+        });
+        if (error) return toast("추가 실패: " + (error.message || "중복 번호일 수 있습니다."));
+        $("newStudentNo").value = "";
+        $("newStudentName").value = "";
+        await loadRoster(rosterClassId);
+        toast("학생을 추가했습니다.");
       }
 
       function setDashPanel(panel) {
@@ -1287,22 +1416,23 @@
           .from("classes")
           .select("id, class_code, title, mode, grade, class_no, is_active, created_at")
           .eq("teacher_id", session.userId)
+          .eq("mode", "class")
           .order("grade", { ascending: true })
-          .order("class_no", { ascending: true, nullsFirst: true });
+          .order("class_no", { ascending: true });
         if (error) throw error;
         teacherClasses = data || [];
 
-        const active = teacherClasses.filter((c) => c.is_active);
+        const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (active.length) {
-          classSettings.mode = active[0].mode === "class" ? "class" : "grade";
-          if (classSettings.mode === "grade") {
-            classSettings.grades = [...new Set(active.map((c) => Number(c.grade)))].sort((a, b) => a - b);
-          } else {
-            classSettings.classGrade = Number(active[0].grade) || 1;
-            classSettings.classNos = active
-              .map((c) => Number(c.class_no))
-              .filter((n) => n >= 1 && n <= 10)
-              .sort((a, b) => a - b);
+          classSettings.mode = "class";
+          classSettings.classGrade = Number(active[0].grade) || 1;
+          classSettings.classNos = active
+            .filter((c) => Number(c.grade) === classSettings.classGrade)
+            .map((c) => Number(c.class_no))
+            .filter((n) => n >= 1 && n <= 10)
+            .sort((a, b) => a - b);
+          if (!classSettings.classNos.length) {
+            classSettings.classNos = active.map((c) => Number(c.class_no)).filter((n) => n >= 1 && n <= 10);
           }
           saveClassSettings();
         }
@@ -1317,8 +1447,9 @@
       async function syncClassGroupsToDb() {
         if (!sb || !session) throw new Error("로그인이 필요합니다.");
         await ensureTeacherProfile();
+        classSettings.mode = "class";
         const desired = desiredUnitsFromSettings();
-        if (!desired.length) throw new Error("선택된 학년/반이 없습니다.");
+        if (!desired.length) throw new Error("선택된 학급이 없습니다.");
 
         const { data: existing, error } = await sb
           .from("classes")
@@ -1326,14 +1457,16 @@
           .eq("teacher_id", session.userId);
         if (error) throw error;
 
-        const map = new Map(
-          (existing || []).map((c) => [unitKey(c.mode || "grade", c.grade || 1, c.class_no), c])
-        );
-        const desiredKeys = new Set(desired.map((u) => unitKey(u.mode, u.grade, u.class_no)));
+        const map = new Map();
+        for (const c of existing || []) {
+          const key = unitKey("class", c.grade || 1, c.class_no);
+          const prev = map.get(key);
+          if (!prev || (!prev.is_active && c.is_active)) map.set(key, c);
+        }
+        const desiredKeys = new Set(desired.map((u) => unitKey("class", u.grade, u.class_no)));
 
-        // 선택되지 않은 기존 단위는 비활성
         for (const row of existing || []) {
-          const key = unitKey(row.mode || "grade", row.grade || 1, row.class_no);
+          const key = unitKey("class", row.grade || 1, row.class_no);
           if (!desiredKeys.has(key) && row.is_active) {
             const { error: offErr } = await sb
               .from("classes")
@@ -1343,15 +1476,22 @@
           }
         }
 
+        // 예전 학년별 레코드는 비활성
+        await sb
+          .from("classes")
+          .update({ is_active: false })
+          .eq("teacher_id", session.userId)
+          .eq("mode", "grade");
+
         for (const unit of desired) {
-          const key = unitKey(unit.mode, unit.grade, unit.class_no);
+          const key = unitKey("class", unit.grade, unit.class_no);
           const found = map.get(key);
           if (found) {
             const { error: onErr } = await sb
               .from("classes")
               .update({
                 is_active: true,
-                mode: unit.mode,
+                mode: "class",
                 grade: unit.grade,
                 class_no: unit.class_no,
                 title: unit.title
@@ -1359,6 +1499,7 @@
               .eq("id", found.id);
             if (onErr) throw onErr;
             await seedLessonsForClass(found.id);
+            try { await seedDefaultStudents(found.id); } catch (e) { console.warn(e); }
           } else {
             const { data: created, error: cErr } = await sb
               .from("classes")
@@ -1366,7 +1507,7 @@
                 teacher_id: session.userId,
                 title: unit.title,
                 class_code: generateClassCode(),
-                mode: unit.mode,
+                mode: "class",
                 grade: unit.grade,
                 class_no: unit.class_no,
                 is_active: true
@@ -1375,21 +1516,18 @@
               .single();
             if (cErr) throw cErr;
             await seedLessonsForClass(created.id);
+            try { await seedDefaultStudents(created.id); } catch (e) { console.warn(e); }
           }
         }
-
-        // 다른 모드의 활성 수업은 모두 비활성 (학년별/학급별 DB 분리)
-        const { error: modeOffErr } = await sb
-          .from("classes")
-          .update({ is_active: false })
-          .eq("teacher_id", session.userId)
-          .neq("mode", classSettings.mode);
-        if (modeOffErr) console.warn(modeOffErr);
 
         await loadTeacherClassesFromDb();
         const firstActive = teacherClasses.find((c) => c.is_active);
         activeClassId = firstActive?.id || null;
         teacherClass = firstActive || null;
+        rosterClassId = activeClassId;
+        if (rosterClassId) {
+          try { await loadRoster(rosterClassId); } catch (e) { console.warn(e); }
+        }
         return teacherClass?.id || null;
       }
 
@@ -1409,7 +1547,7 @@
         if (hint) {
           hint.textContent = teacherClass
             ? `${unitLabel(teacherClass)} 전용 코드`
-            : "학년·반별 별도 코드";
+            : "학급별 별도 코드";
         }
       }
 
@@ -1551,13 +1689,13 @@
         showRightPanel("lesson");
         const card = $("detailCard");
         if (!lesson) {
-          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학년·반과 제출 미리보기가 표시됩니다.</p>`;
+          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학급·제출 미리보기가 표시됩니다.</p>`;
           return;
         }
         if (!isClassSettingsReady()) {
           card.innerHTML = `
             <p class="sub-empty">
-              먼저 왼쪽 <strong>초기 설정</strong>에서 학년·반을 지정해 주세요.
+              먼저 왼쪽 <strong>초기 설정</strong>에서 학급을 지정해 주세요.
             </p>`;
           return;
         }
@@ -1901,22 +2039,19 @@
           toast(code);
         }
       });
-      $("btnOpenSetup").addEventListener("click", () => {
+      $("btnOpenSetup").addEventListener("click", async () => {
         showRightPanel("setup");
-      });
-      $("btnModeGrade").addEventListener("click", () => {
-        classSettings.mode = "grade";
-        renderClassSettingsUI();
-      });
-      $("btnModeClass").addEventListener("click", () => {
-        classSettings.mode = "class";
-        renderClassSettingsUI();
-      });
-      $("btnSaveClassSettings").addEventListener("click", async () => {
-        if (classSettings.mode === "grade" && !classSettings.grades.length) {
-          return toast("학년을 하나 이상 선택해 주세요.");
+        try {
+          await loadTeacherClassesFromDb();
+          renderClassSettingsUI();
+          if (rosterClassId || activeClassId) await loadRoster(rosterClassId || activeClassId);
+        } catch (e) {
+          console.warn(e);
         }
-        if (classSettings.mode === "class" && !classSettings.classNos.length) {
+      });
+      $("btnAddStudent").addEventListener("click", () => addRosterStudent());
+      $("btnSaveClassSettings").addEventListener("click", async () => {
+        if (!classSettings.classNos.length) {
           return toast("학급(반)을 하나 이상 선택해 주세요.");
         }
         const btn = $("btnSaveClassSettings");
@@ -1925,21 +2060,18 @@
           saveClassSettings();
           await syncClassGroupsToDb();
           updateSetupLaunchHint();
+          renderClassSettingsUI();
           if (session) {
             $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
           }
           selectedLessonId = null;
           await loadLessons();
           await renderLessonList();
-          showRightPanel("lesson");
-          if (lessons.length) await selectLesson(lessons[0].id);
-          else {
-            $("detailCard").innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학년·반과 제출 미리보기가 표시됩니다.</p>`;
-          }
-          toast("학년/반별 DB에 저장했습니다. 각 단위마다 수업코드가 다릅니다.");
+          showRightPanel("setup");
+          toast("학급을 저장했습니다. 학급마다 수업코드·기본 학생 30명이 준비됩니다.");
         } catch (e) {
           console.error(e);
-          toast("저장 실패: " + (e.message || e) + " (supabase-class-groups.sql 실행 여부 확인)");
+          toast("저장 실패: " + (e.message || e) + " (supabase-students.sql 실행 여부 확인)");
         } finally {
           btn.disabled = false;
         }
