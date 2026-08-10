@@ -24,3 +24,7 @@ as $$
 $$;
 
 grant execute on function public.get_lesson_by_class_code(text, int) to anon, authenticated;
+grant execute on function public.get_lesson_by_class_code(text, integer) to anon, authenticated;
+
+-- API 스키마 캐시 새로고침
+notify pgrst, 'reload schema';

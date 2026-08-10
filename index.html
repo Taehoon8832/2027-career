@@ -209,7 +209,7 @@
     .auth-form.is-signup .login-only { display: none; }
     .class-code-bar {
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      padding: 10px 14px; margin-bottom: 12px;
+      padding: 10px 14px; margin-bottom: 10px;
       border: 1px solid var(--border-default); border-radius: var(--radius-md);
       background: var(--color-primary-50);
     }
@@ -221,8 +221,22 @@
       color: var(--text-primary);
     }
     .class-code-bar .hint {
-      flex: 1; min-width: 140px;
+      flex: 1; min-width: 120px;
       font: 500 12px/1.35 var(--font-sans); color: var(--text-tertiary);
+    }
+    .cohort-row {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px;
+    }
+    .cohort-row[hidden] { display: none !important; }
+    .cohort-chip {
+      height: 32px; padding: 0 10px; border-radius: var(--radius-full);
+      border: 1px solid var(--border-default); background: var(--bg-elevated);
+      color: var(--text-secondary); font: 600 11px/1 var(--font-sans); cursor: pointer;
+    }
+    .cohort-chip.is-on {
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
     }
     .auth-msg { min-height: 18px; margin: 8px 0 0; font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary); text-align: center; }
     .auth-msg.is-error { color: #B23A2C; }
@@ -665,8 +679,9 @@
           <span class="label">수업코드</span>
           <strong id="classCodeValue">--------</strong>
           <button type="button" class="btn-tiny" id="btnCopyClassCode">복사</button>
-          <span class="hint">학생 제출은 차시별 QR</span>
+          <span class="hint" id="classCodeHint">학년·반별 별도 코드</span>
         </div>
+        <div class="cohort-row" id="cohortRow" hidden></div>
         <div class="dash-head">
           <h2>30차시 워크북</h2>
           <span id="lessonCountLabel">30차시</span>
@@ -829,6 +844,8 @@
       let toastTimer = 0;
       let studentLesson = null;
       let teacherClass = null;
+      let teacherClasses = [];
+      let activeClassId = null;
       let authMode = "login";
       let classSettings = loadClassSettings();
 
@@ -853,7 +870,18 @@
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
       }
 
+      function unitLabel(row) {
+        if (!row) return "";
+        if (row.mode === "class") return `${row.grade}학년 ${row.class_no}반`;
+        return `${row.grade}학년`;
+      }
+
       function formatClassSettingsSummary() {
+        const active = teacherClasses.filter((c) => c.is_active);
+        if (active.length) {
+          const mode = active[0].mode === "class" ? "학급별" : "학년별";
+          return `${mode} · ` + active.map(unitLabel).join(", ");
+        }
         if (classSettings.mode === "grade") {
           const g = (classSettings.grades || []).slice().sort((a, b) => a - b);
           if (!g.length) return "선택된 학년이 없습니다.";
@@ -865,6 +893,8 @@
       }
 
       function getClassPills() {
+        const active = teacherClasses.filter((c) => c.is_active);
+        if (active.length) return active.map(unitLabel);
         if (classSettings.mode === "grade") {
           return (classSettings.grades || []).slice().sort((a, b) => a - b).map((n) => `${n}학년`);
         }
@@ -874,7 +904,29 @@
           .map((n) => `${classSettings.classGrade}학년 ${n}반`);
       }
 
+      function desiredUnitsFromSettings() {
+        if (classSettings.mode === "grade") {
+          return (classSettings.grades || []).map((grade) => ({
+            mode: "grade",
+            grade,
+            class_no: null,
+            title: `${grade}학년 · AI와 함께 하는 고교학점제 진로설계`
+          }));
+        }
+        return (classSettings.classNos || []).map((class_no) => ({
+          mode: "class",
+          grade: classSettings.classGrade,
+          class_no,
+          title: `${classSettings.classGrade}학년 ${class_no}반 · AI와 함께 하는 고교학점제 진로설계`
+        }));
+      }
+
+      function unitKey(mode, grade, classNo) {
+        return `${mode}:${grade}:${classNo == null ? 0 : classNo}`;
+      }
+
       function isClassSettingsReady() {
+        if (teacherClasses.some((c) => c.is_active)) return true;
         if (classSettings.mode === "grade") return (classSettings.grades || []).length > 0;
         return (classSettings.classNos || []).length > 0;
       }
@@ -1213,55 +1265,196 @@
         await enrichSessionFromProfile();
       }
 
-      async function ensureTeacherClassSeeded() {
-        if (!sb || !session) return null;
-        await ensureTeacherProfile();
-
-        const { data: classes, error } = await sb
-          .from("classes")
-          .select("id, class_code, title")
-          .eq("teacher_id", session.userId)
-          .limit(1);
+      async function seedLessonsForClass(classId) {
+        const { count, error } = await sb
+          .from("lessons")
+          .select("id", { count: "exact", head: true })
+          .eq("class_id", classId);
         if (error) throw error;
-        if (classes && classes.length) {
-          teacherClass = classes[0];
-          return classes[0].id;
-        }
-
-        const { data: created, error: cErr } = await sb
-          .from("classes")
-          .insert({
-            teacher_id: session.userId,
-            title: "AI와 함께 하는 고교학점제 진로설계",
-            class_code: generateClassCode()
-          })
-          .select("id, class_code, title")
-          .single();
-        if (cErr) throw cErr;
-        teacherClass = created;
-
+        if (count && count >= 30) return;
         const rows = Array.from({ length: 30 }, (_, i) => ({
-          class_id: created.id,
+          class_id: classId,
           session_no: i + 1,
           token: cryptoRandomToken()
         }));
         const { error: lErr } = await sb.from("lessons").insert(rows);
-        if (lErr) throw lErr;
-        return created.id;
+        if (lErr && !/duplicate|unique/i.test(lErr.message || "")) throw lErr;
+      }
+
+      async function loadTeacherClassesFromDb() {
+        if (!sb || !session) return [];
+        const { data, error } = await sb
+          .from("classes")
+          .select("id, class_code, title, mode, grade, class_no, is_active, created_at")
+          .eq("teacher_id", session.userId)
+          .order("grade", { ascending: true })
+          .order("class_no", { ascending: true, nullsFirst: true });
+        if (error) throw error;
+        teacherClasses = data || [];
+
+        const active = teacherClasses.filter((c) => c.is_active);
+        if (active.length) {
+          classSettings.mode = active[0].mode === "class" ? "class" : "grade";
+          if (classSettings.mode === "grade") {
+            classSettings.grades = [...new Set(active.map((c) => Number(c.grade)))].sort((a, b) => a - b);
+          } else {
+            classSettings.classGrade = Number(active[0].grade) || 1;
+            classSettings.classNos = active
+              .map((c) => Number(c.class_no))
+              .filter((n) => n >= 1 && n <= 10)
+              .sort((a, b) => a - b);
+          }
+          saveClassSettings();
+        }
+
+        if (!activeClassId || !teacherClasses.some((c) => c.id === activeClassId)) {
+          activeClassId = (active[0] || teacherClasses[0] || {}).id || null;
+        }
+        teacherClass = teacherClasses.find((c) => c.id === activeClassId) || null;
+        return teacherClasses;
+      }
+
+      async function syncClassGroupsToDb() {
+        if (!sb || !session) throw new Error("로그인이 필요합니다.");
+        await ensureTeacherProfile();
+        const desired = desiredUnitsFromSettings();
+        if (!desired.length) throw new Error("선택된 학년/반이 없습니다.");
+
+        const { data: existing, error } = await sb
+          .from("classes")
+          .select("id, mode, grade, class_no, class_code, is_active")
+          .eq("teacher_id", session.userId);
+        if (error) throw error;
+
+        const map = new Map(
+          (existing || []).map((c) => [unitKey(c.mode || "grade", c.grade || 1, c.class_no), c])
+        );
+        const desiredKeys = new Set(desired.map((u) => unitKey(u.mode, u.grade, u.class_no)));
+
+        // 선택되지 않은 기존 단위는 비활성
+        for (const row of existing || []) {
+          const key = unitKey(row.mode || "grade", row.grade || 1, row.class_no);
+          if (!desiredKeys.has(key) && row.is_active) {
+            const { error: offErr } = await sb
+              .from("classes")
+              .update({ is_active: false })
+              .eq("id", row.id);
+            if (offErr) throw offErr;
+          }
+        }
+
+        for (const unit of desired) {
+          const key = unitKey(unit.mode, unit.grade, unit.class_no);
+          const found = map.get(key);
+          if (found) {
+            const { error: onErr } = await sb
+              .from("classes")
+              .update({
+                is_active: true,
+                mode: unit.mode,
+                grade: unit.grade,
+                class_no: unit.class_no,
+                title: unit.title
+              })
+              .eq("id", found.id);
+            if (onErr) throw onErr;
+            await seedLessonsForClass(found.id);
+          } else {
+            const { data: created, error: cErr } = await sb
+              .from("classes")
+              .insert({
+                teacher_id: session.userId,
+                title: unit.title,
+                class_code: generateClassCode(),
+                mode: unit.mode,
+                grade: unit.grade,
+                class_no: unit.class_no,
+                is_active: true
+              })
+              .select("id")
+              .single();
+            if (cErr) throw cErr;
+            await seedLessonsForClass(created.id);
+          }
+        }
+
+        // 다른 모드의 활성 수업은 모두 비활성 (학년별/학급별 DB 분리)
+        const { error: modeOffErr } = await sb
+          .from("classes")
+          .update({ is_active: false })
+          .eq("teacher_id", session.userId)
+          .neq("mode", classSettings.mode);
+        if (modeOffErr) console.warn(modeOffErr);
+
+        await loadTeacherClassesFromDb();
+        const firstActive = teacherClasses.find((c) => c.is_active);
+        activeClassId = firstActive?.id || null;
+        teacherClass = firstActive || null;
+        return teacherClass?.id || null;
+      }
+
+      async function ensureTeacherClassSeeded() {
+        if (!sb || !session) return null;
+        await ensureTeacherProfile();
+        await loadTeacherClassesFromDb();
+        if (teacherClasses.some((c) => c.is_active)) {
+          return activeClassId;
+        }
+        return syncClassGroupsToDb();
       }
 
       function renderClassCode() {
-        $("classCodeValue").textContent = teacherClass?.class_code || "--------";
+        $("classCodeValue").textContent = (teacherClass?.class_code || "--------").toUpperCase();
+        const hint = $("classCodeHint");
+        if (hint) {
+          hint.textContent = teacherClass
+            ? `${unitLabel(teacherClass)} 전용 코드`
+            : "학년·반별 별도 코드";
+        }
+      }
+
+      function renderCohortRow() {
+        const root = $("cohortRow");
+        if (!root) return;
+        const active = teacherClasses.filter((c) => c.is_active);
+        if (!active.length) {
+          root.hidden = true;
+          root.innerHTML = "";
+          return;
+        }
+        root.hidden = false;
+        root.innerHTML = "";
+        active.forEach((c) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "cohort-chip" + (c.id === activeClassId ? " is-on" : "");
+          btn.textContent = unitLabel(c);
+          btn.title = `수업코드 ${(c.class_code || "").toUpperCase()}`;
+          btn.addEventListener("click", async () => {
+            activeClassId = c.id;
+            teacherClass = c;
+            selectedLessonId = null;
+            renderClassCode();
+            renderCohortRow();
+            await loadLessons();
+            await renderLessonList();
+            if (lessons.length) await selectLesson(lessons[0].id);
+            toast(`${unitLabel(c)} 으로 전환했습니다.`);
+          });
+          root.appendChild(btn);
+        });
       }
 
       async function loadLessons() {
         if (!session || !sb) return;
         const classId = await ensureTeacherClassSeeded();
         renderClassCode();
+        renderCohortRow();
         if (!classId) {
           lessons = [];
           return;
         }
+        if (teacherClass?.id) await seedLessonsForClass(teacherClass.id);
         const { data, error } = await sb
           .from("lessons")
           .select("id, class_id, session_no, token")
@@ -1609,6 +1802,8 @@
         lessons = [];
         selectedLessonId = null;
         teacherClass = null;
+        teacherClasses = [];
+        activeClassId = null;
         showLogin();
         showView("landing");
         toast("로그아웃되었습니다.");
@@ -1724,21 +1919,30 @@
         if (classSettings.mode === "class" && !classSettings.classNos.length) {
           return toast("학급(반)을 하나 이상 선택해 주세요.");
         }
-        saveClassSettings();
-        updateSetupLaunchHint();
-        if (session) {
-          $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
+        const btn = $("btnSaveClassSettings");
+        btn.disabled = true;
+        try {
+          saveClassSettings();
+          await syncClassGroupsToDb();
+          updateSetupLaunchHint();
+          if (session) {
+            $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
+          }
+          selectedLessonId = null;
+          await loadLessons();
+          await renderLessonList();
+          showRightPanel("lesson");
+          if (lessons.length) await selectLesson(lessons[0].id);
+          else {
+            $("detailCard").innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학년·반과 제출 미리보기가 표시됩니다.</p>`;
+          }
+          toast("학년/반별 DB에 저장했습니다. 각 단위마다 수업코드가 다릅니다.");
+        } catch (e) {
+          console.error(e);
+          toast("저장 실패: " + (e.message || e) + " (supabase-class-groups.sql 실행 여부 확인)");
+        } finally {
+          btn.disabled = false;
         }
-        showRightPanel("lesson");
-        if (selectedLessonId) {
-          const lesson = lessons.find((l) => l.id === selectedLessonId);
-          if (lesson) await renderDetail(lesson);
-        } else if (lessons.length) {
-          await selectLesson(lessons[0].id);
-        } else {
-          $("detailCard").innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 학년·반과 제출 미리보기가 표시됩니다.</p>`;
-        }
-        toast("초기 설정을 저장했습니다.");
       });
       $("tabDashList").addEventListener("click", () => setDashPanel("list"));
       $("tabDashDetail").addEventListener("click", () => setDashPanel("detail"));
