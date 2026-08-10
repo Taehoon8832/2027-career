@@ -483,10 +483,13 @@
     .detail-action-strip .qr,
     .detail-action-strip a.qr {
       grid-area: qr;
+      align-self: center;
       width: 120px; height: 120px; border-radius: 12px;
       border: 2px solid #1f1e1d; background: #fff;
-      display: grid; place-items: center; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
       padding: 8px; flex-shrink: 0;
+      margin-top: -4px; /* 시각적 세로 가운데 */
       text-decoration: none; color: inherit;
       cursor: pointer; touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -500,9 +503,10 @@
     .detail-action-strip .qr img,
     .detail-action-strip .qr table,
     .detail-action-strip .qr .qr-img {
+      width: 100%; height: 100%;
       max-width: 100%; max-height: 100%;
       display: block; object-fit: contain;
-      margin: 0 auto;
+      margin: 0;
       pointer-events: none;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
@@ -2747,7 +2751,7 @@ ${built.html}
           el.dataset.painted = "1";
           canvas.className = "qr-img";
           canvas.style.cssText =
-            `display:block;width:${canvasSize}px;height:${canvasSize}px;max-width:100%;max-height:100%;image-rendering:pixelated;image-rendering:crisp-edges`;
+            "display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges";
           el.appendChild(canvas);
           try { qr.clear(); } catch { /* ignore */ }
           return true;
