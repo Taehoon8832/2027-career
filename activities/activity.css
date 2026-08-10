@@ -107,13 +107,13 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 .hero-card .hero-qr,
 .hero-card a.hero-qr {
-  width: 96px; height: 96px;
+  width: 108px; height: 108px;
   border: 2px solid #111110;
   border-radius: 12px;
   background: #fff;
   display: grid; place-items: center;
   overflow: hidden;
-  padding: 4px;
+  padding: 8px;
   margin: 0 auto;
   text-decoration: none; color: inherit;
   cursor: pointer; touch-action: manipulation;
@@ -124,13 +124,17 @@ button, .submit-fab, a { touch-action: manipulation; }
 .hero-card a.hero-qr:active { transform: scale(0.96); }
 .hero-card .hero-qr canvas,
 .hero-card .hero-qr img,
-.hero-card .hero-qr table {
+.hero-card .hero-qr table,
+.hero-card .hero-qr .qr-img {
   width: 100% !important;
   height: 100% !important;
   display: block;
   border: 0 !important;
   border-collapse: collapse;
   pointer-events: none;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
 }
 .hero-card .hero-qr table td { border: 0 !important; padding: 0 !important; line-height: 0; }
 .hero-card .hero-qr-cap {
@@ -195,7 +199,8 @@ button, .submit-fab, a { touch-action: manipulation; }
   .hero-card p { font-size: 15px; line-height: 1.65; }
   .hero-card .hero-qr,
   .hero-card a.hero-qr {
-    width: 88px; height: 88px; min-width: 88px; min-height: 88px;
+    width: 100px; height: 100px; min-width: 100px; min-height: 100px;
+    padding: 8px;
   }
   .hero-card .hero-qr-cap { font-size: 10px; }
   .activity-card h2 { font-size: 17px; }
