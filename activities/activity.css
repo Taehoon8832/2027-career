@@ -187,6 +187,10 @@ button, .submit-fab, a { touch-action: manipulation; }
 .na-info-box,
 .na-manual .student-info,
 .na-manual .info-box,
+.profile-info,
+.control-panel,
+.control-bar,
+.action-bar,
 #sheetStudentNo,
 #sheetStudentName,
 #studentId,
@@ -291,6 +295,215 @@ button, .submit-fab, a { touch-action: manipulation; }
   background: #fff !important;
   box-shadow: inset 0 0 0 1.5px rgba(74, 96, 122, 0.35);
 }
+
+/* 1차시 (2) · 100문 100답 */
+.activity-card--session1 > h2 {
+  margin: 0 0 10px;
+  font: 700 16px/1.3 var(--sans);
+  color: #1f1e1d;
+}
+.activity-part-title {
+  margin: 22px 0 10px !important;
+  padding-top: 18px;
+  border-top: 2px solid rgba(31, 30, 29, 0.12);
+  font: 700 16px/1.3 var(--sans) !important;
+  color: #1f1e1d !important;
+}
+.q100-head {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+.q100-head strong {
+  font: 700 16px/1.25 var(--sans);
+  color: #312e81;
+  letter-spacing: -0.02em;
+}
+.q100-head span {
+  font: 500 12px/1.4 var(--sans);
+  color: #64748b;
+}
+.questions-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.q-item {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 7px 5px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #faf5ff 0%, #f5f3ff 100%);
+  border: 1px solid #e9d5ff;
+  border-left: 3px solid #8b5cf6;
+}
+.q-item .q-title,
+.q-item label.q-title {
+  margin: 0;
+  font: 700 11px/1.25 var(--sans);
+  color: #5b21b6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.q-item input,
+.activity-card .q-item input {
+  width: 100%;
+  height: 28px !important;
+  min-height: 28px !important;
+  border: 0 !important;
+  border-bottom: 1px dashed #ddd6fe !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 2px 0 !important;
+  font: 500 12px/1.3 var(--sans) !important;
+  color: #1f2937;
+  outline: none;
+  box-shadow: none !important;
+}
+.q-item input:focus,
+.activity-card .q-item input:focus {
+  border-bottom: 1.5px solid #7c3aed !important;
+}
+
+/* 3차시 · 진로 빙고 */
+.activity-card--bingo {
+  padding: 14px !important;
+}
+.bingo-head {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid rgba(30, 58, 138, 0.28);
+}
+.bingo-head strong {
+  font: 800 18px/1.25 var(--sans);
+  color: #1e3a8a;
+  letter-spacing: -0.02em;
+}
+.bingo-head span {
+  font: 500 12px/1.4 var(--sans);
+  color: #6b7280;
+}
+.bingo-guide {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  border-radius: 0 10px 10px 0;
+  background: #eff6ff;
+  border-left: 4px solid #3b82f6;
+}
+.bingo-guide strong {
+  display: block;
+  margin-bottom: 4px;
+  font: 700 12px/1.3 var(--sans);
+  color: #1e40af;
+}
+.bingo-guide ol {
+  margin: 0;
+  padding-left: 18px;
+  font: 500 12px/1.4 var(--sans);
+  color: #1e293b;
+}
+.bingo-board {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+}
+.bingo-cell {
+  min-width: 0;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 7px 7px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+}
+.bingo-cell.is-free {
+  background: #f0f9ff;
+  border-color: #0284c7;
+}
+.bingo-cell .cell-number {
+  font: 700 10px/1 var(--sans);
+  color: #94a3b8;
+}
+.bingo-cell.is-free .cell-number { color: #0284c7; }
+.bingo-cell .cell-title,
+.bingo-cell label.cell-title {
+  margin: 0;
+  font: 700 11px/1.25 var(--sans);
+  color: #1e293b;
+  text-align: center;
+  word-break: keep-all;
+}
+.bingo-cell.is-free .cell-title { color: #0369a1; }
+.bingo-cell textarea.cell-input,
+.activity-card .bingo-cell textarea.cell-input {
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 48px !important;
+  height: auto !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: rgba(248, 250, 252, 0.9) !important;
+  resize: none;
+  padding: 4px 4px !important;
+  font: 500 12px/1.3 var(--sans) !important;
+  text-align: center;
+  color: #2563eb;
+  outline: none;
+  box-shadow: none !important;
+}
+.bingo-cell.is-free textarea.cell-input {
+  color: #0369a1 !important;
+  font-weight: 700 !important;
+}
+.bingo-cell textarea.cell-input::placeholder {
+  color: #cbd5e1;
+  font-weight: 400;
+  font-size: 11px;
+}
+.bingo-cell textarea.cell-input:focus {
+  background: #fff !important;
+  box-shadow: inset 0 0 0 1.5px rgba(37, 99, 235, 0.35) !important;
+}
+.bingo-reflection {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  display: grid;
+  gap: 6px;
+}
+.bingo-reflection label {
+  margin: 0;
+  font: 700 12px/1.35 var(--sans);
+  color: #1e3a8a;
+}
+.bingo-reflection textarea,
+.activity-card .bingo-reflection textarea {
+  width: 100%;
+  min-height: 72px !important;
+  height: 72px !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  resize: vertical;
+  padding: 10px 12px !important;
+  font: 500 13px/1.45 var(--sans) !important;
+  color: #1e293b;
+  outline: none;
+  box-shadow: none !important;
+}
+.bingo-reflection textarea:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+}
 @media (max-width: 1024px) and (min-width: 721px) {
   body { font-size: 16px; }
   .field input, .field textarea, .field select { font-size: 16px; }
@@ -307,6 +520,29 @@ button, .submit-fab, a { touch-action: manipulation; }
     font-size: 15px !important;
   }
   .na-card-head label { font-size: 14px; }
+  .questions-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+  .q-item { padding: 7px 8px; }
+  .q-item .q-title { font-size: 12px; white-space: normal; }
+  .q-item input,
+  .activity-card .q-item input {
+    height: 34px !important;
+    min-height: 34px !important;
+    font-size: 15px !important;
+  }
+  .bingo-board { gap: 7px; }
+  .bingo-cell { min-height: 120px; }
+  .bingo-cell .cell-title { font-size: 12px; }
+  .bingo-cell textarea.cell-input,
+  .activity-card .bingo-cell textarea.cell-input {
+    min-height: 56px !important;
+    font-size: 14px !important;
+  }
+  .bingo-reflection textarea,
+  .activity-card .bingo-reflection textarea {
+    font-size: 15px !important;
+    min-height: 80px !important;
+    height: 80px !important;
+  }
 }
 @media (max-width: 900px) {
   body { font-size: 16px; }
@@ -375,6 +611,44 @@ button, .submit-fab, a { touch-action: manipulation; }
   }
   .na-card textarea::placeholder {
     font-size: 13px;
+  }
+  .activity-part-title { margin-top: 18px !important; padding-top: 14px; font-size: 15px !important; }
+  .q100-head strong { font-size: 15px; }
+  .questions-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .q-item { padding: 8px; }
+  .q-item .q-title {
+    font-size: 12px;
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  .q-item input,
+  .activity-card .q-item input {
+    height: 36px !important;
+    min-height: 36px !important;
+    font-size: 16px !important; /* iOS 줌 방지 */
+  }
+  .bingo-head strong { font-size: 16px; }
+  .bingo-guide { font-size: 13px; }
+  .bingo-guide ol { font-size: 13px; line-height: 1.45; }
+  .bingo-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .bingo-cell { min-height: 112px; padding: 8px; }
+  .bingo-cell .cell-title { font-size: 12.5px; }
+  .bingo-cell textarea.cell-input,
+  .activity-card .bingo-cell textarea.cell-input {
+    min-height: 52px !important;
+    font-size: 16px !important; /* iOS 줌 방지 */
+  }
+  .bingo-reflection label { font-size: 13px; }
+  .bingo-reflection textarea,
+  .activity-card .bingo-reflection textarea {
+    min-height: 88px !important;
+    height: 88px !important;
+    font-size: 16px !important;
   }
   .submit-fab span.label { display: none; }
   .submit-fab {
