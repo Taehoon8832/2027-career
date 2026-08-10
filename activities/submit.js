@@ -66,8 +66,8 @@
           <input id="submitCodeInput" type="text" autocomplete="off" placeholder="교사가 알려준 이 차시 제출코드" maxlength="16" />
         </div>
         <div class="field">
-          <label for="studentNoInput">번호(명단)</label>
-          <input id="studentNoInput" type="text" autocomplete="off" placeholder="예: 7 (학급 명단 번호)" />
+          <label for="studentNoInput">학번</label>
+          <input id="studentNoInput" type="text" inputmode="numeric" autocomplete="off" placeholder="예: 10101 (1학년 1반 1번)" maxlength="8" />
         </div>
         <div class="field">
           <label for="studentNameInput">이름</label>

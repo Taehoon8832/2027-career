@@ -443,17 +443,17 @@
     .detail-action-strip {
       display: grid;
       grid-template-columns: 72px 1fr auto;
-      gap: 10px; align-items: center;
-      margin-bottom: 12px; padding: 10px;
-      border-radius: 12px;
-      border: 1px solid var(--color-primary-100);
+      gap: 12px; align-items: center;
+      margin-bottom: 12px; padding: 12px;
+      border-radius: 14px;
+      border: 2px solid #1f1e1d;
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.95), rgba(251,239,231,0.7)),
+        linear-gradient(135deg, rgba(255,255,255,0.98), rgba(251,239,231,0.85)),
         var(--bg-elevated);
     }
     .detail-action-strip .qr {
       width: 72px; height: 72px; border-radius: 10px;
-      border: 1px solid var(--border-default); background: #fff;
+      border: 2px solid #1f1e1d; background: #fff;
       display: grid; place-items: center; overflow: hidden;
     }
     .detail-action-strip .qr canvas,
@@ -474,10 +474,26 @@
       font: 600 11px/1 var(--font-sans); color: var(--text-tertiary);
     }
     .detail-action-strip .btns {
-      display: flex; flex-direction: column; gap: 6px;
+      display: flex; flex-direction: column; gap: 8px; min-width: 132px;
     }
     .detail-action-strip .btns .btn {
-      height: 34px; padding: 0 12px; font-size: 12px; white-space: nowrap;
+      height: 42px; padding: 0 16px; font-size: 13px; font-weight: 800;
+      white-space: nowrap; border-radius: 999px;
+    }
+    .detail-action-strip .btns .btn-primary {
+      background: linear-gradient(145deg, #d88861, var(--color-primary-500) 55%, var(--color-primary-700));
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(201, 100, 66, 0.38);
+      border: 2px solid #8c4022;
+    }
+    .detail-action-strip .btns .btn-secondary {
+      background: #fff;
+      color: var(--color-primary-700);
+      border: 2px solid var(--color-primary-500);
+      box-shadow: 0 2px 0 rgba(31, 30, 29, 0.08);
+    }
+    .detail-action-strip .btns .btn-secondary:hover:not(:disabled) {
+      background: var(--color-primary-50);
     }
     .detail-toolbar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -494,27 +510,28 @@
       gap: 6px;
     }
     .detail-roster-cell {
-      display: flex; flex-direction: column; gap: 4px;
-      padding: 7px; border: 1px solid var(--border-default);
+      display: flex; flex-direction: column; gap: 5px;
+      padding: 9px; border: 1.5px solid var(--border-default);
       border-radius: 10px; background: var(--bg-subtle); min-height: 0;
     }
     .detail-roster-cell.has-sub {
-      border-color: var(--color-primary-300);
-      background: var(--color-primary-50);
+      border-color: #1f1e1d;
+      background: #fff;
+      box-shadow: 0 2px 0 rgba(31, 30, 29, 0.06);
     }
     .detail-roster-cell .head {
       display: flex; align-items: center; justify-content: space-between; gap: 4px;
     }
     .detail-roster-cell .no {
-      font: 800 12px/1 var(--font-sans); color: var(--color-primary-700);
+      font: 800 11px/1 var(--font-sans); color: var(--color-primary-700);
     }
     .detail-roster-cell .dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: var(--border-strong); flex-shrink: 0;
     }
-    .detail-roster-cell.has-sub .dot { background: var(--color-primary-500); }
+    .detail-roster-cell.has-sub .dot { background: #2f7d32; }
     .detail-roster-cell .name {
-      font: 600 12px/1.2 var(--font-sans); color: var(--text-primary);
+      font: 700 13px/1.25 var(--font-sans); color: var(--text-primary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .detail-roster-cell .status {
@@ -522,21 +539,36 @@
     }
     .detail-sub-preview {
       border: 1px solid var(--border-default); border-radius: 8px;
-      background: #fff; overflow: hidden; max-height: 54px;
+      background: #faf9f5; overflow: hidden;
+      min-height: 28px;
+    }
+    .detail-roster-cell.has-sub .detail-sub-preview {
+      border-color: var(--color-primary-200);
+      background: var(--color-primary-50);
+      cursor: pointer;
     }
     .detail-sub-preview .plain-mini {
-      padding: 5px 6px; font: 500 10px/1.35 var(--font-sans);
-      color: var(--text-secondary); max-height: 54px; overflow: hidden;
+      padding: 6px 8px;
+      font: 500 12px/1.35 var(--font-sans);
+      color: var(--text-secondary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .detail-sub-preview .plain-mini.is-empty { color: var(--text-tertiary); font-weight: 600; }
     .detail-sub-actions {
-      display: flex; gap: 8px; flex-wrap: wrap;
+      display: flex; gap: 6px; flex-wrap: wrap;
     }
     .detail-sub-actions button {
-      border: 0; background: transparent; padding: 0;
-      font: 700 10px/1 var(--font-sans); cursor: pointer;
+      flex: 1; min-height: 28px; padding: 0 8px;
+      border: 1.5px solid var(--border-default); border-radius: 999px;
+      background: #fff; cursor: pointer;
+      font: 700 11px/1 var(--font-sans);
       color: var(--color-primary-700);
     }
-    .detail-sub-actions button.is-danger { color: #B23A2C; }
+    .detail-sub-actions button:hover { background: var(--color-primary-50); }
+    .detail-sub-actions button.is-danger {
+      color: #B23A2C; border-color: rgba(178, 58, 44, 0.35);
+    }
+    .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .detail-action-strip { grid-template-columns: 64px 1fr; }
@@ -1132,7 +1164,7 @@
         <form id="studentForm">
           <div class="field">
             <label for="studentNo">학번</label>
-            <input id="studentNo" required placeholder="예: 30101" />
+            <input id="studentNo" required inputmode="numeric" placeholder="예: 10101 (1학년 1반 1번)" maxlength="8" />
           </div>
           <div class="field">
             <label for="studentName">이름</label>
@@ -1485,6 +1517,41 @@
         return s.replace(/^0+(\d)/, "$1");
       }
 
+      /** 학번: 학년 + 반(2) + 번호(2) → 예: 1학년 1반 1번 = 10101 */
+      function formatHakbun(grade, classNo, seat) {
+        const g = Math.max(1, Math.min(3, Number(grade) || 1));
+        const c = Math.max(1, Math.min(99, Number(classNo) || 1));
+        const n = Math.max(1, Math.min(99, Number(seat) || 1));
+        return `${g}${String(c).padStart(2, "0")}${String(n).padStart(2, "0")}`;
+      }
+
+      function classMetaById(classId) {
+        return teacherClasses.find((c) => c.id === classId) || null;
+      }
+
+      function seatFromStudentNo(no, grade, classNo) {
+        const key = normalizeStudentNo(no);
+        if (!key) return 0;
+        const g = Number(grade) || 1;
+        const c = Number(classNo) || 1;
+        const prefix = `${g}${String(c).padStart(2, "0")}`;
+        if (key.length >= 5 && key.startsWith(prefix)) {
+          return Number(key.slice(prefix.length)) || 0;
+        }
+        if (/^\d{1,2}$/.test(key)) return Number(key);
+        return Number(key) || 0;
+      }
+
+      /** 제출/명단 번호를 학급 학번 키로 통일 (1 → 10101) */
+      function resolveRosterStudentKey(rawNo, grade, classNo) {
+        const key = normalizeStudentNo(rawNo);
+        if (!key) return "";
+        if (/^\d{1,2}$/.test(key)) {
+          return formatHakbun(grade, classNo, Number(key));
+        }
+        return key;
+      }
+
       function isClassSettingsReady() {
         return teacherClasses.some((c) => c.is_active && c.class_no);
       }
@@ -1659,19 +1726,56 @@
           .select("id", { count: "exact", head: true })
           .eq("class_id", classId);
         if (error) throw error;
-        if (count && count > 0) return;
+        if (count && count > 0) {
+          await migrateRosterToHakbun(classId);
+          return;
+        }
 
         const { error: rpcErr } = await sb.rpc("seed_default_students", { p_class_id: classId });
-        if (!rpcErr) return;
+        if (!rpcErr) {
+          await migrateRosterToHakbun(classId);
+          return;
+        }
 
+        const meta = classMetaById(classId);
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
         const rows = Array.from({ length: 30 }, (_, i) => ({
           class_id: classId,
-          student_no: String(i + 1),
+          student_no: formatHakbun(grade, classNo, i + 1),
           student_name: "",
           sort_order: i + 1
         }));
         const { error: insErr } = await sb.from("students").insert(rows);
         if (insErr) throw insErr;
+      }
+
+      /** 기존 1·2자리 번호 명단을 학번(10101) 형식으로 승격 */
+      async function migrateRosterToHakbun(classId) {
+        if (!sb || !classId) return;
+        const meta = classMetaById(classId);
+        if (!meta?.grade || !meta?.class_no) return;
+        const { data, error } = await sb
+          .from("students")
+          .select("id, student_no")
+          .eq("class_id", classId);
+        if (error || !data?.length) return;
+        const updates = [];
+        for (const row of data) {
+          const raw = String(row.student_no || "").trim();
+          if (!/^\d{1,2}$/.test(raw)) continue;
+          const hakbun = formatHakbun(meta.grade, meta.class_no, Number(raw));
+          if (hakbun === raw) continue;
+          updates.push({ id: row.id, student_no: hakbun });
+        }
+        for (const u of updates) {
+          const { error: upErr } = await sb
+            .from("students")
+            .update({ student_no: u.student_no })
+            .eq("id", u.id);
+          if (upErr) console.warn(upErr);
+        }
+        if (updates.length) studentsCache.delete(classId);
       }
 
       async function loadRosterSubmissionMap(classId) {
@@ -1773,7 +1877,7 @@
             : `<div class="roster-sub-list"><div class="roster-sub-item" style="cursor:default;opacity:.75">제출된 보고서 없음</div></div>`;
           return `
           <div class="roster-cell${subs.length ? " has-sub" : ""}" data-id="${s.id}" data-no="${escapeHtml(key)}">
-            <div class="no">${escapeHtml(labelNo)}번</div>
+            <div class="no">${escapeHtml(labelNo)}</div>
             <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" />
             <div class="sub-meta">${subs.length ? `제출 ${subs.length}건` : "미제출"}</div>
             ${subListHtml}
@@ -1850,7 +1954,7 @@
         const title = $("subViewerTitle");
         if (!sub || !viewer || !body) return;
         viewingSubmissionId = sub.id;
-        title.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${sub.student_no}번 ${sub.student_name || ""}`.trim();
+        title.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${sub.student_no} ${sub.student_name || ""}`.trim();
         if (looksLikeHtml(sub.content)) {
           body.innerHTML = `<iframe sandbox="" srcdoc="${escapeSrcdoc(sub.content)}" title="제출 보고서"></iframe>`;
         } else {
@@ -1858,6 +1962,29 @@
         }
         viewer.classList.add("is-open");
         viewer.setAttribute("aria-hidden", "false");
+      }
+
+      function openSubmissionInNewTab(submissionId) {
+        const sub = findSubmissionById(submissionId);
+        if (!sub) return;
+        const heading = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${sub.student_no} ${sub.student_name || ""}`.trim();
+        const body = looksLikeHtml(sub.content)
+          ? String(sub.content || "")
+          : `<pre style="white-space:pre-wrap;font:14px/1.6 sans-serif">${escapeHtml(sub.content || "(내용 없음)")}</pre>`;
+        const doc = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${escapeHtml(heading)}</title>
+<style>body{margin:0;padding:20px;font-family:Pretendard,Noto Sans KR,sans-serif;background:#f7f4ee;color:#1f1e1d}
+header{margin:0 0 16px;padding-bottom:12px;border-bottom:2px solid #111}
+header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
+<body><header><h1>${escapeHtml(heading)}</h1></header>${body}</body></html>`;
+        const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const win = window.open(url, "_blank", "noopener");
+        if (!win) {
+          URL.revokeObjectURL(url);
+          toast("팝업이 차단되었습니다. 브라우저에서 새 탭을 허용해 주세요.");
+          return;
+        }
+        setTimeout(() => URL.revokeObjectURL(url), 120000);
       }
 
       function closeSubViewer() {
@@ -1892,24 +2019,32 @@
 
       async function addRosterStudents(count) {
         if (!rosterClassId) return toast("먼저 학급을 저장·선택해 주세요.");
+        const meta = classMetaById(rosterClassId);
+        const grade = meta?.grade || classSettings.classGrade || 1;
+        const classNo = meta?.class_no || 1;
         const used = new Set(rosterStudents.map((s) => normalizeStudentNo(s.student_no)));
-        let next = 1;
-        while (used.has(String(next))) next += 1;
+        let nextSeat = 1;
+        while (used.has(formatHakbun(grade, classNo, nextSeat)) || used.has(String(nextSeat))) {
+          nextSeat += 1;
+        }
         const maxOrder = rosterStudents.reduce((m, s) => Math.max(m, Number(s.sort_order) || 0), 0);
         const rows = [];
         for (let i = 0; i < count; i += 1) {
-          while (used.has(String(next))) next += 1;
+          while (used.has(formatHakbun(grade, classNo, nextSeat)) || used.has(String(nextSeat))) {
+            nextSeat += 1;
+          }
+          const hakbun = formatHakbun(grade, classNo, nextSeat);
           rows.push({
             class_id: rosterClassId,
-            student_no: String(next),
+            student_no: hakbun,
             student_name: "",
             sort_order: maxOrder + i + 1
           });
-          used.add(String(next));
-          next += 1;
+          used.add(hakbun);
+          nextSeat += 1;
         }
         const { error } = await sb.from("students").insert(rows);
-        if (error) return toast("추가 실패: " + (error.message || "중복 번호일 수 있습니다."));
+        if (error) return toast("추가 실패: " + (error.message || "중복 학번일 수 있습니다."));
         studentsCache.delete(rosterClassId);
         await loadRoster(rosterClassId);
         toast(`${count}명을 추가했습니다.`);
@@ -2552,9 +2687,7 @@
             .from("students")
             .select("id", { count: "exact", head: true })
             .eq("class_id", classId);
-          if (!count) {
-            try { await seedDefaultStudents(classId); } catch (e) { console.warn(e); }
-          }
+          try { await seedDefaultStudents(classId); } catch (e) { console.warn(e); }
           const { data, error } = await sb
             .from("students")
             .select("id, student_no, student_name, sort_order")
@@ -2570,9 +2703,10 @@
           return students;
         } catch (e) {
           console.warn(e);
+          const meta = classMetaById(classId);
           return Array.from({ length: 30 }, (_, i) => ({
             id: `tmp-${i + 1}`,
-            student_no: String(i + 1),
+            student_no: formatHakbun(meta?.grade || 1, meta?.class_no || 1, i + 1),
             student_name: "",
             sort_order: i + 1
           }));
@@ -2582,6 +2716,9 @@
       async function loadDetailStudentsAndSubs(classId, lessonId, sessionNo) {
         detailSubMap = new Map();
         detailExportRows = [];
+        const meta = classMetaById(classId);
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
         const [studentsRaw, subsRes] = await Promise.all([
           fetchStudentsForClass(classId),
           sb
@@ -2592,9 +2729,9 @@
         ]);
 
         for (const s of subsRes.data || []) {
-          const key = normalizeStudentNo(s.student_no);
+          const key = resolveRosterStudentKey(s.student_no, grade, classNo);
           if (!key) continue;
-          const row = { ...s, session_no: sessionNo };
+          const row = { ...s, session_no: sessionNo, student_no: key };
           if (!detailSubMap.has(key)) detailSubMap.set(key, []);
           detailSubMap.get(key).push(row);
           submissionById.set(row.id, row);
@@ -2602,17 +2739,34 @@
         subCountCache.set(lessonId, (subsRes.data || []).length);
 
         let students = studentsRaw.map((st) => {
-          if (st.student_name) return st;
-          const first = (detailSubMap.get(normalizeStudentNo(st.student_no)) || [])[0];
-          return first?.student_name ? { ...st, student_name: first.student_name } : st;
+          const key = resolveRosterStudentKey(st.student_no, grade, classNo);
+          if (st.student_name) return { ...st, student_no: key || st.student_no };
+          const first = (detailSubMap.get(key) || [])[0];
+          return {
+            ...st,
+            student_no: key || st.student_no,
+            student_name: first?.student_name || st.student_name || ""
+          };
         });
 
+        const known = new Set(students.map((st) => resolveRosterStudentKey(st.student_no, grade, classNo)));
+        for (const [key, list] of detailSubMap) {
+          if (known.has(key) || !list.length) continue;
+          students.push({
+            id: `orphan-${key}`,
+            student_no: key,
+            student_name: list[0].student_name || "명단 외 제출",
+            sort_order: 9000 + students.length
+          });
+          known.add(key);
+        }
+
         detailExportRows = students.map((st) => {
-          const key = normalizeStudentNo(st.student_no);
+          const key = resolveRosterStudentKey(st.student_no, grade, classNo);
           const list = detailSubMap.get(key) || [];
           const latest = list[0] || null;
           return {
-            번호: key || st.student_no,
+            학번: key || st.student_no,
             이름: st.student_name || latest?.student_name || "",
             차시: sessionNo,
             제출여부: latest ? "제출" : "미제출",
@@ -2688,7 +2842,7 @@
                   학년: cls.grade,
                   반: cls.class_no,
                   학급: unitLabel(cls),
-                  번호: no,
+                  학번: no,
                   이름: s.student_name || studentNameByNo.get(no) || "",
                   차시: sessionByLesson.get(s.lesson_id) || "",
                   제출시각: formatTime(s.created_at),
@@ -2705,7 +2859,7 @@
           rows.sort((a, b) =>
             a.학년 - b.학년 ||
             a.반 - b.반 ||
-            Number(a.번호) - Number(b.번호) ||
+            Number(a.학번) - Number(b.학번) ||
             Number(a.차시) - Number(b.차시)
           );
           const book = XLSX.utils.book_new();
@@ -2840,18 +2994,24 @@
           grid.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">명단이 없습니다. 초기 설정에서 학급을 저장해 주세요.</p>`;
           return;
         }
+        const meta = classMetaById(activeClassId || teacherClass?.id);
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
         const parts = new Array(students.length);
         for (let i = 0; i < students.length; i++) {
           const st = students[i];
-          const key = normalizeStudentNo(st.student_no);
-          const list = detailSubMap.get(key) || [];
+          const key = resolveRosterStudentKey(st.student_no, grade, classNo);
+          const list = detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
           const latest = list[0] || null;
+          const summary = latest
+            ? previewText(htmlToPlainTextFast(latest.content), 72) || "(내용 없음)"
+            : "미제출";
           const preview = latest
-            ? `<div class="detail-sub-preview" data-open-detail="${latest.id}" style="cursor:pointer" title="크게 보기"><div class="plain-mini">${escapeHtml(previewText(htmlToPlainTextFast(latest.content), 56))}</div></div>`
-            : `<div class="detail-sub-preview"><div class="plain-mini">미제출</div></div>`;
+            ? `<div class="detail-sub-preview" data-tab-detail="${latest.id}" title="새 탭으로 크게 보기"><div class="plain-mini">${escapeHtml(summary)}</div></div>`
+            : `<div class="detail-sub-preview"><div class="plain-mini is-empty">미제출</div></div>`;
           const actions = latest
             ? `<div class="detail-sub-actions">
-                 <button type="button" data-open-detail="${latest.id}">보기</button>
+                 <button type="button" data-tab-detail="${latest.id}">새 탭</button>
                  <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
                </div>`
             : "";
@@ -2859,10 +3019,9 @@
             <div class="detail-roster-cell${latest ? " has-sub" : ""}">
               <div class="head">
                 <span class="no">${escapeHtml(key || st.student_no)}</span>
-                <span class="dot" aria-hidden="true"></span>
+                <span class="dot" aria-hidden="true" title="${latest ? "제출됨" : "미제출"}"></span>
               </div>
-              <div class="name" title="${escapeHtml(st.student_name || "")}">${escapeHtml(st.student_name || "이름 없음")}</div>
-              <div class="status">${latest ? escapeHtml(formatTime(latest.created_at)) : "미제출"}</div>
+              <div class="name" title="${escapeHtml(st.student_name || latest?.student_name || "")}">${escapeHtml(st.student_name || latest?.student_name || "이름 없음")}</div>
               ${preview}
               ${actions}
             </div>`;
@@ -2880,8 +3039,11 @@
               await deleteSubmission(id);
               return;
             }
-            const open = e.target.closest("[data-open-detail]");
-            if (open) openSubViewer(open.getAttribute("data-open-detail"));
+            const tab = e.target.closest("[data-tab-detail]");
+            if (tab) {
+              openSubmissionInNewTab(tab.getAttribute("data-tab-detail"));
+              return;
+            }
           });
         }
       }
@@ -2890,7 +3052,7 @@
         showRightPanel("lesson");
         const card = $("detailCard");
         if (!lesson) {
-          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 제출코드와 번호별 보고서를 확인할 수 있습니다.</p>`;
+          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 제출코드와 학번별 보고서를 확인할 수 있습니다.</p>`;
           return;
         }
         if (!isClassSettingsReady()) {

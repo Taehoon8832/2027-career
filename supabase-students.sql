@@ -147,7 +147,7 @@ create policy "classes_update_own" on public.classes
 grant select, insert, update, delete on public.students to authenticated;
 grant update on public.classes to authenticated;
 
--- 학급 생성 시 기본 30명 시드
+-- 학급 생성 시 기본 30명 시드 (학번: 학년+반2자리+번호2자리, 예: 1학년 1반 1번 → 10101)
 create or replace function public.seed_default_students(p_class_id uuid)
 returns void
 language plpgsql
@@ -156,15 +156,34 @@ set search_path = public
 as $$
 declare
   i int;
+  v_grade int;
+  v_class_no int;
+  v_hakbun text;
 begin
   if exists (select 1 from public.students s where s.class_id = p_class_id) then
     return;
   end if;
+
+  select coalesce(c.grade, 1), coalesce(c.class_no, 1)
+    into v_grade, v_class_no
+  from public.classes c
+  where c.id = p_class_id;
+
+  if v_grade is null then
+    v_grade := 1;
+  end if;
+  if v_class_no is null then
+    v_class_no := 1;
+  end if;
+
   for i in 1..30 loop
+    v_hakbun := v_grade::text
+      || lpad(v_class_no::text, 2, '0')
+      || lpad(i::text, 2, '0');
     insert into public.students (class_id, student_no, student_name, sort_order)
     values (
       p_class_id,
-      i::text,
+      v_hakbun,
       '',
       i
     )
