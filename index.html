@@ -414,13 +414,21 @@
                   <label for="teacherName">성명</label>
                   <input id="teacherName" name="teacherName" type="text" autocomplete="name" placeholder="홍길동" />
                 </div>
+                <div class="field signup-only">
+                  <label for="teacherEmail">이메일</label>
+                  <input id="teacherEmail" name="teacherEmail" type="email" autocomplete="email" placeholder="teacher@school.kr" />
+                </div>
                 <div class="field">
                   <label for="loginId">아이디</label>
-                  <input id="loginId" name="loginId" type="text" autocomplete="username" placeholder="아이디" required />
+                  <input id="loginId" name="loginId" type="text" autocomplete="username" placeholder="아이디 (소문자)" required />
                 </div>
                 <div class="field">
                   <label for="password">비밀번호</label>
-                  <input id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호 (6자 이상)" required />
+                  <input id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호 (6자 이상, 소문자)" required />
+                </div>
+                <div class="field signup-only">
+                  <label for="passwordConfirm">비밀번호 확인</label>
+                  <input id="passwordConfirm" name="passwordConfirm" type="password" autocomplete="new-password" placeholder="비밀번호를 다시 입력" />
                 </div>
                 <div class="auth-actions login-only">
                   <button type="submit" class="btn btn-primary" id="btnLogin">로그인</button>
@@ -518,7 +526,7 @@
         SUPABASE_URL: "https://wdpohasgttifsxjqblhf.supabase.co",
         SUPABASE_ANON_KEY: "sb_publishable_JDkkbUVPruBg33cvLEh11A_ipF3VPCv"
       };
-      /** Supabase Auth용 합성 이메일 도메인 (화면에는 아이디만 사용) */
+      /** 예전 합성 이메일 계정 호환용 */
       const AUTH_EMAIL_DOMAIN = "id.2027career.local";
 
       const $ = (id) => document.getElementById(id);
@@ -555,20 +563,43 @@
         return String(id || "").trim().toLowerCase();
       }
 
-      function idToAuthEmail(loginId) {
+      function stripUppercase(value) {
+        return String(value || "").replace(/[A-Z]/g, (ch) => ch.toLowerCase());
+      }
+
+      function bindNoUppercase(ids) {
+        ids.forEach((id) => {
+          const el = $(id);
+          if (!el) return;
+          el.addEventListener("input", () => {
+            const next = stripUppercase(el.value);
+            if (el.value === next) return;
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            el.value = next;
+            try { el.setSelectionRange(start, end); } catch (_) {}
+          });
+        });
+      }
+
+      function hasUppercase(value) {
+        return /[A-Z]/.test(String(value || ""));
+      }
+
+      function idToLegacyAuthEmail(loginId) {
         return `${normalizeLoginId(loginId)}@${AUTH_EMAIL_DOMAIN}`;
       }
 
       function userFromAuth(user) {
         if (!user) return null;
         const meta = user.user_metadata || {};
-        const loginId = meta.login_id || (user.email || "").split("@")[0] || "";
+        const loginId = meta.login_id || "";
         return {
           userId: user.id,
           loginId,
           schoolName: meta.school_name || "",
           name: meta.display_name || loginId || "교사",
-          email: user.email || "",
+          email: meta.email || user.email || "",
           at: Date.now()
         };
       }
@@ -582,13 +613,14 @@
         if (!sb || !session?.userId) return session;
         const { data } = await sb
           .from("profiles")
-          .select("login_id, school_name, display_name")
+          .select("login_id, email, school_name, display_name")
           .eq("id", session.userId)
           .maybeSingle();
         if (!data) return session;
         session = {
           ...session,
           loginId: data.login_id || session.loginId,
+          email: data.email || session.email,
           schoolName: data.school_name || session.schoolName,
           name: data.display_name || session.name
         };
@@ -601,9 +633,10 @@
         form.classList.toggle("is-signup", authMode === "signup");
         $("authTitle").textContent = authMode === "signup" ? "교사 회원가입" : "교사 로그인";
         $("authSub").textContent = authMode === "signup"
-          ? "재직교·성명·아이디·비밀번호를 입력해 주세요."
+          ? "재직교·성명·이메일·아이디·비밀번호를 입력해 주세요. (영문 대문자 불가)"
           : "아이디와 비밀번호로 로그인해 주세요.";
         $("password").autocomplete = authMode === "signup" ? "new-password" : "current-password";
+        if (authMode === "login") $("passwordConfirm").value = "";
         setMsg($("authMsg"), "");
       }
 
@@ -661,6 +694,7 @@
         $("welcome").classList.remove("is-visible");
         $("authForm").classList.remove("is-hidden");
         $("password").value = "";
+        $("passwordConfirm").value = "";
         setAuthMode("login");
         setMsg($("authMsg"), "");
       }
@@ -668,8 +702,9 @@
       function validateLoginId(loginId) {
         const id = normalizeLoginId(loginId);
         if (!id) return "아이디를 입력해 주세요.";
+        if (hasUppercase(loginId)) return "대문자는 입력할 수 없습니다.";
         if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(id)) {
-          return "아이디는 영문·숫자·._- 조합 3~32자로 입력해 주세요.";
+          return "아이디는 영문 소문자·숫자·._- 조합 3~32자로 입력해 주세요.";
         }
         return "";
       }
@@ -678,14 +713,31 @@
         const idErr = validateLoginId(loginId);
         if (idErr) return idErr;
         if (!password) return "비밀번호를 입력해 주세요.";
+        if (hasUppercase(password)) return "비밀번호에 대문자를 사용할 수 없습니다.";
         if (password.length < 6) return "비밀번호는 6자 이상으로 입력해 주세요.";
         return "";
       }
 
-      function validateSignup(schoolName, teacherName, loginId, password) {
+      function validateSignup(schoolName, teacherName, email, loginId, password, passwordConfirm) {
         if (!schoolName.trim()) return "재직교를 입력해 주세요.";
         if (!teacherName.trim()) return "성명을 입력해 주세요.";
-        return validateLogin(loginId, password);
+        const mail = String(email || "").trim().toLowerCase();
+        if (!mail) return "이메일을 입력해 주세요.";
+        if (hasUppercase(email)) return "대문자는 입력할 수 없습니다.";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return "올바른 이메일 형식을 입력해 주세요.";
+        const loginErr = validateLogin(loginId, password);
+        if (loginErr) return loginErr;
+        if (!passwordConfirm) return "비밀번호 확인을 입력해 주세요.";
+        if (hasUppercase(passwordConfirm)) return "비밀번호에 대문자를 사용할 수 없습니다.";
+        if (password !== passwordConfirm) return "비밀번호가 일치하지 않습니다.";
+        return "";
+      }
+
+      async function resolveAuthEmail(loginId) {
+        const id = normalizeLoginId(loginId);
+        const { data, error } = await sb.rpc("get_auth_email_by_login_id", { p_login_id: id });
+        if (!error && data) return String(data).trim().toLowerCase();
+        return idToLegacyAuthEmail(id);
       }
 
       function cryptoRandomToken() {
@@ -951,10 +1003,14 @@
         const btn = $("btnLogin");
         btn.disabled = true;
         try {
-          const { data, error } = await sb.auth.signInWithPassword({
-            email: idToAuthEmail(loginId),
-            password
-          });
+          const email = await resolveAuthEmail(loginId);
+          let { data, error } = await sb.auth.signInWithPassword({ email, password });
+          if (error && email !== idToLegacyAuthEmail(loginId)) {
+            ({ data, error } = await sb.auth.signInWithPassword({
+              email: idToLegacyAuthEmail(loginId),
+              password
+            }));
+          }
           if (error) {
             setMsg($("authMsg"), "로그인 실패: " + (error.message || "아이디 또는 비밀번호를 확인해 주세요."), "error");
             return;
@@ -971,9 +1027,11 @@
       async function signupTeacher() {
         const schoolName = $("schoolName").value.trim();
         const teacherName = $("teacherName").value.trim();
+        const email = stripUppercase($("teacherEmail").value).trim().toLowerCase();
         const loginId = normalizeLoginId($("loginId").value);
         const password = $("password").value;
-        const err = validateSignup(schoolName, teacherName, loginId, password);
+        const passwordConfirm = $("passwordConfirm").value;
+        const err = validateSignup(schoolName, teacherName, email, loginId, password, passwordConfirm);
         if (err) return setMsg($("authMsg"), err, "error");
         if (!sb) return setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
 
@@ -981,19 +1039,20 @@
         btn.disabled = true;
         try {
           const { data, error } = await sb.auth.signUp({
-            email: idToAuthEmail(loginId),
+            email,
             password,
             options: {
               data: {
                 login_id: loginId,
                 school_name: schoolName,
-                display_name: teacherName
+                display_name: teacherName,
+                email
               }
             }
           });
           if (error) {
             const msg = /already|registered|exists/i.test(error.message || "")
-              ? "이미 사용 중인 아이디입니다."
+              ? "이미 사용 중인 이메일 또는 아이디입니다."
               : (error.message || "회원가입에 실패했습니다.");
             setMsg($("authMsg"), "회원가입 실패: " + msg, "error");
             return;
@@ -1095,6 +1154,8 @@
         if (session) await enrichSessionFromProfile();
         return session;
       }
+
+      bindNoUppercase(["schoolName", "teacherName", "teacherEmail", "loginId", "password", "passwordConfirm"]);
 
       // Events
       $("loginForm").addEventListener("submit", (e) => {

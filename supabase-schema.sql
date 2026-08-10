@@ -8,6 +8,7 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   login_id text not null unique,
+  email text,
   school_name text not null default '',
   display_name text not null default '',
   role text not null default 'teacher' check (role in ('teacher')),
@@ -16,9 +17,14 @@ create table if not exists public.profiles (
 
 -- 기존 테이블이 있을 때 컬럼 보강
 alter table public.profiles add column if not exists login_id text;
+alter table public.profiles add column if not exists email text;
 alter table public.profiles add column if not exists school_name text not null default '';
 alter table public.profiles add column if not exists display_name text;
 alter table public.profiles alter column display_name set default '';
+
+create unique index if not exists profiles_email_unique_idx
+  on public.profiles (lower(email))
+  where email is not null and email <> '';
 
 do $$
 begin
@@ -141,11 +147,11 @@ declare
   v_login_id text;
   v_school text;
   v_name text;
+  v_email text;
 begin
-  v_login_id := nullif(trim(coalesce(new.raw_user_meta_data->>'login_id', '')), '');
+  v_login_id := lower(nullif(trim(coalesce(new.raw_user_meta_data->>'login_id', '')), ''));
   if v_login_id is null then
-    -- fallback: local-part of synthetic email (id@id.2027career.local)
-    v_login_id := split_part(coalesce(new.email, ''), '@', 1);
+    v_login_id := lower(split_part(coalesce(new.email, ''), '@', 1));
   end if;
   if v_login_id is null or v_login_id = '' then
     v_login_id := 'user_' || substr(replace(new.id::text, '-', ''), 1, 12);
@@ -156,11 +162,16 @@ begin
     nullif(trim(new.raw_user_meta_data->>'display_name'), ''),
     v_login_id
   );
+  v_email := lower(coalesce(
+    nullif(trim(new.raw_user_meta_data->>'email'), ''),
+    nullif(trim(new.email), '')
+  ));
 
-  insert into public.profiles (id, login_id, school_name, display_name, role)
-  values (new.id, v_login_id, v_school, v_name, 'teacher')
+  insert into public.profiles (id, login_id, email, school_name, display_name, role)
+  values (new.id, v_login_id, v_email, v_school, v_name, 'teacher')
   on conflict (id) do update
     set login_id = excluded.login_id,
+        email = excluded.email,
         school_name = excluded.school_name,
         display_name = excluded.display_name;
 
@@ -251,6 +262,23 @@ as $$
 $$;
 
 grant execute on function public.get_lesson_by_token(text) to anon, authenticated;
+
+-- 아이디로 로그인할 때 Auth 이메일 조회 (anon 허용)
+create or replace function public.get_auth_email_by_login_id(p_login_id text)
+returns text
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select coalesce(nullif(trim(p.email), ''), u.email)
+  from public.profiles p
+  left join auth.users u on u.id = p.id
+  where lower(p.login_id) = lower(trim(p_login_id))
+  limit 1;
+$$;
+
+grant execute on function public.get_auth_email_by_login_id(text) to anon, authenticated;
 
 -- Submissions: teacher reads own class; anyone can insert (student QR)
 drop policy if exists "submissions_select_teacher" on public.submissions;
