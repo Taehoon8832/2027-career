@@ -204,11 +204,6 @@
     }
     .btn-ghost:hover { background: var(--color-primary-50); }
     .auth-foot { margin-top: 8px; text-align: center; }
-    .demo-hint {
-      margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-md);
-      background: var(--color-primary-50); border: 1px solid var(--color-primary-100);
-      color: var(--color-primary-700); font: 500 12px/1.45 var(--font-sans); text-align: center;
-    }
     .auth-msg { min-height: 18px; margin: 8px 0 0; font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary); text-align: center; }
     .auth-msg.is-error { color: #B23A2C; }
     .auth-msg.is-ok { color: #4F7A35; }
@@ -387,13 +382,13 @@
                 </div>
                 <div>
                   <h2>교사 로그인</h2>
-                  <p>아이디 또는 이메일로 로그인해 주세요.</p>
+                  <p>이메일로 로그인해 주세요.</p>
                 </div>
               </div>
               <form id="loginForm" novalidate>
                 <div class="field">
-                  <label for="loginId">아이디 또는 이메일</label>
-                  <input id="loginId" name="loginId" type="text" autocomplete="username" placeholder="teacher@school.kr" required />
+                  <label for="email">이메일</label>
+                  <input id="email" name="email" type="email" autocomplete="username" placeholder="teacher@school.kr" required />
                 </div>
                 <div class="field">
                   <label for="password">비밀번호</label>
@@ -484,16 +479,10 @@
 
   <script>
     (() => {
-      /** Supabase 연동 시 아래 값을 채워 주세요. 비어 있으면 TEST/1234 데모 모드로 동작합니다. */
       const CONFIG = {
-        SUPABASE_URL: "",
-        SUPABASE_ANON_KEY: ""
+        SUPABASE_URL: "https://wdpohasgttifsxjqblhf.supabase.co",
+        SUPABASE_ANON_KEY: "sb_publishable_JDkkbUVPruBg33cvLEh11A_ipF3VPCv"
       };
-
-      const SESSION_KEY = "career-workbook-session-v2";
-      const DEMO_SUBS_KEY = "career-workbook-demo-subs-v1";
-      const DEMO_ID = "TEST";
-      const DEMO_PW = "1234";
 
       const $ = (id) => document.getElementById(id);
       const views = {
@@ -510,15 +499,32 @@
       let toastTimer = 0;
       let studentLesson = null;
 
-      const hasSupabase = () =>
-        !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && window.supabase);
-
       function initSupabase() {
-        if (!hasSupabase()) return null;
+        if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || !window.supabase) return null;
         sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
-          auth: { persistSession: true, autoRefreshToken: true }
+          auth: {
+            persistSession: true,
+            autoRefreshToken: true,
+            detectSessionInUrl: true,
+            storage: localStorage
+          }
         });
         return sb;
+      }
+
+      function userFromAuth(user) {
+        if (!user) return null;
+        return {
+          userId: user.id,
+          email: user.email || "",
+          name: user.user_metadata?.display_name || user.email || "교사",
+          at: Date.now()
+        };
+      }
+
+      function applyAuthUser(user) {
+        session = userFromAuth(user);
+        return session;
       }
 
       function toast(message) {
@@ -558,71 +564,14 @@
         return u.toString();
       }
 
-      function demoToken(n) {
-        return "demo-" + String(n).padStart(2, "0") + "-career2027";
-      }
-
-      function buildDemoLessons() {
-        return Array.from({ length: 30 }, (_, i) => {
-          const session_no = i + 1;
-          return {
-            id: "demo-lesson-" + session_no,
-            session_no,
-            token: demoToken(session_no),
-            class_id: "demo-class"
-          };
-        });
-      }
-
-      function loadDemoSubs() {
-        try {
-          return JSON.parse(localStorage.getItem(DEMO_SUBS_KEY) || "{}") || {};
-        } catch {
-          return {};
-        }
-      }
-
-      function saveDemoSubs(map) {
-        localStorage.setItem(DEMO_SUBS_KEY, JSON.stringify(map));
-      }
-
-      function getDemoSubsForLesson(lessonId) {
-        const map = loadDemoSubs();
-        return Array.isArray(map[lessonId]) ? map[lessonId] : [];
-      }
-
-      function addDemoSub(lessonId, row) {
-        const map = loadDemoSubs();
-        const list = Array.isArray(map[lessonId]) ? map[lessonId] : [];
-        list.unshift(row);
-        map[lessonId] = list;
-        saveDemoSubs(map);
-      }
-
-      function getSession() {
-        try {
-          return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
-        } catch {
-          return null;
-        }
-      }
-
-      function setSession(next) {
-        session = next;
-        if (!next) localStorage.removeItem(SESSION_KEY);
-        else localStorage.setItem(SESSION_KEY, JSON.stringify(next));
-      }
-
       function showWelcome(s) {
         $("authForm").classList.add("is-hidden");
         $("welcome").classList.add("is-visible");
-        const label = s.demo ? s.name : (s.email || s.name || "교사");
+        const label = s.email || s.name || "교사";
         const local = String(label).split("@")[0];
         $("welcomeAvatar").textContent = (local[0] || "T").toUpperCase();
         $("welcomeTitle").textContent = `${local} 님, 환영합니다`;
-        $("welcomeEmail").textContent = s.demo
-          ? "테스트 교사 계정 (데모 모드)"
-          : (s.email || "");
+        $("welcomeEmail").textContent = s.email || "";
         setMsg($("authMsg"), "");
       }
 
@@ -630,25 +579,21 @@
         $("welcome").classList.remove("is-visible");
         $("authForm").classList.remove("is-hidden");
         $("password").value = "";
+        setMsg($("authMsg"), "");
       }
 
-      function isDemoLogin(id, pw) {
-        return id.trim().toUpperCase() === DEMO_ID && pw === DEMO_PW;
-      }
-
-      function validateLogin(id, password) {
-        if (!id.trim()) return "아이디 또는 이메일을 입력해 주세요.";
+      function validateLogin(email, password) {
+        if (!email.trim()) return "이메일을 입력해 주세요.";
         if (!password) return "비밀번호를 입력해 주세요.";
-        if (isDemoLogin(id, password)) return "";
-        if (id.includes("@") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id.trim())) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
           return "올바른 이메일 형식을 입력해 주세요.";
         }
-        if (password.length < 4) return "비밀번호는 4자 이상으로 입력해 주세요.";
+        if (password.length < 6) return "비밀번호는 6자 이상으로 입력해 주세요.";
         return "";
       }
 
       async function ensureTeacherClassSeeded() {
-        if (!sb || !session || session.demo) return;
+        if (!sb || !session) return;
         const { data: classes, error } = await sb
           .from("classes")
           .select("id")
@@ -681,11 +626,7 @@
       }
 
       async function loadLessons() {
-        if (!session) return;
-        if (session.demo) {
-          lessons = buildDemoLessons();
-          return;
-        }
+        if (!session || !sb) return;
         await ensureTeacherClassSeeded();
         const { data: classes, error: cErr } = await sb
           .from("classes")
@@ -707,7 +648,6 @@
       }
 
       async function countSubs(lessonId) {
-        if (session?.demo) return getDemoSubsForLesson(lessonId).length;
         const { count, error } = await sb
           .from("submissions")
           .select("id", { count: "exact", head: true })
@@ -753,9 +693,6 @@
       }
 
       async function fetchSubmissions(lessonId) {
-        if (session?.demo) {
-          return getDemoSubsForLesson(lessonId).slice().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
-        }
         const { data, error } = await sb
           .from("submissions")
           .select("id, student_no, student_name, content, created_at")
@@ -862,7 +799,7 @@
 
       function subscribeRealtime(lessonId) {
         unsubscribeRealtime();
-        if (!sb || session?.demo || !lessonId) return;
+        if (!sb || !lessonId) return;
         realtimeChannel = sb
           .channel("subs-" + lessonId)
           .on(
@@ -877,11 +814,14 @@
       }
 
       async function openTeacherDashboard() {
+        if (!session) {
+          showLogin();
+          toast("로그인이 필요합니다.");
+          return;
+        }
         try {
           showView("teacher");
-          $("teacherBarTitle").textContent = session.demo
-            ? "테스트 교사 · 30차시 QR"
-            : "30차시 QR · 제출 현황";
+          $("teacherBarTitle").textContent = "30차시 QR · 제출 현황";
           await loadLessons();
           await renderLessonList();
           if (lessons.length) await selectLesson(lessons[0].id);
@@ -891,104 +831,88 @@
         }
       }
 
-      async function login() {
-        const id = $("loginId").value.trim();
+      async function loginTeacher() {
+        const email = $("email").value.trim();
         const password = $("password").value;
-        const err = validateLogin(id, password);
+        const err = validateLogin(email, password);
         if (err) return setMsg($("authMsg"), err, "error");
+        if (!sb) return setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
 
-        if (isDemoLogin(id, password)) {
-          const next = { demo: true, name: DEMO_ID, email: DEMO_ID, at: Date.now() };
-          setSession(next);
-          showWelcome(next);
-          toast("테스트 계정으로 로그인되었습니다.");
-          return;
+        const btn = $("btnLogin");
+        btn.disabled = true;
+        try {
+          const { data, error } = await sb.auth.signInWithPassword({
+            email: email.toLowerCase(),
+            password
+          });
+          if (error) {
+            setMsg($("authMsg"), "로그인 실패: " + (error.message || "로그인에 실패했습니다."), "error");
+            return;
+          }
+          applyAuthUser(data.user);
+          showWelcome(session);
+          toast("로그인되었습니다.");
+        } finally {
+          btn.disabled = false;
         }
-
-        if (!hasSupabase()) {
-          setMsg($("authMsg"), "Supabase 설정이 없어 테스트 계정(TEST/1234)만 사용할 수 있습니다.", "error");
-          return;
-        }
-
-        if (!id.includes("@")) {
-          setMsg($("authMsg"), "Supabase 로그인은 이메일이 필요합니다. 테스트는 TEST/1234를 사용해 주세요.", "error");
-          return;
-        }
-
-        const { data, error } = await sb.auth.signInWithPassword({
-          email: id.toLowerCase(),
-          password
-        });
-        if (error) {
-          setMsg($("authMsg"), error.message || "로그인에 실패했습니다.", "error");
-          return;
-        }
-        const next = {
-          demo: false,
-          userId: data.user.id,
-          email: data.user.email,
-          name: data.user.email,
-          at: Date.now()
-        };
-        setSession(next);
-        showWelcome(next);
-        toast("로그인되었습니다.");
       }
 
-      async function signup() {
-        const id = $("loginId").value.trim();
+      async function signupTeacher() {
+        const email = $("email").value.trim();
         const password = $("password").value;
+        const err = validateLogin(email, password);
+        if (err) return setMsg($("authMsg"), err, "error");
+        if (!sb) return setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
 
-        if (isDemoLogin(id, password)) {
-          return login();
+        const btn = $("btnSignup");
+        btn.disabled = true;
+        try {
+          const { data, error } = await sb.auth.signUp({
+            email: email.toLowerCase(),
+            password,
+            options: { data: { display_name: email.split("@")[0] } }
+          });
+          if (error) {
+            setMsg($("authMsg"), "회원가입 실패: " + (error.message || "회원가입에 실패했습니다."), "error");
+            return;
+          }
+          if (!data.session) {
+            setMsg($("authMsg"), "회원가입이 완료되었습니다. 이메일 인증 후 로그인해 주세요.", "ok");
+            toast("회원가입이 완료되었습니다.");
+            return;
+          }
+          applyAuthUser(data.user);
+          try { await ensureTeacherClassSeeded(); } catch (e) { console.warn(e); }
+          showWelcome(session);
+          toast("회원가입이 완료되었습니다.");
+        } finally {
+          btn.disabled = false;
         }
+      }
 
-        if (!hasSupabase()) {
-          setMsg($("authMsg"), "회원가입은 Supabase URL/키 설정 후 이용할 수 있습니다. 테스트는 TEST/1234.", "error");
+      async function findPassword() {
+        const email = $("email").value.trim();
+        if (!sb) return toast("Supabase 연결에 실패했습니다.");
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+          setMsg($("authMsg"), "비밀번호 재설정을 위해 이메일을 입력해 주세요.", "error");
           return;
         }
-        if (!id.includes("@")) {
-          setMsg($("authMsg"), "회원가입은 이메일 주소를 입력해 주세요.", "error");
-          return;
-        }
-        if (password.length < 4) {
-          setMsg($("authMsg"), "비밀번호는 4자 이상으로 입력해 주세요.", "error");
-          return;
-        }
-
-        const { data, error } = await sb.auth.signUp({
-          email: id.toLowerCase(),
-          password,
-          options: { data: { display_name: id.split("@")[0] } }
+        const { error } = await sb.auth.resetPasswordForEmail(email.toLowerCase(), {
+          redirectTo: location.href.split("?")[0].split("#")[0]
         });
         if (error) {
-          setMsg($("authMsg"), error.message || "회원가입에 실패했습니다.", "error");
+          setMsg($("authMsg"), error.message || "재설정 메일 발송에 실패했습니다.", "error");
           return;
         }
-        if (!data.session) {
-          setMsg($("authMsg"), "가입 확인 메일을 확인해 주세요. (이메일 확인이 켜져 있는 경우)", "ok");
-          toast("회원가입 요청이 접수되었습니다.");
-          return;
-        }
-        const next = {
-          demo: false,
-          userId: data.user.id,
-          email: data.user.email,
-          name: data.user.email,
-          at: Date.now()
-        };
-        setSession(next);
-        try { await ensureTeacherClassSeeded(); } catch (e) { console.warn(e); }
-        showWelcome(next);
-        toast("회원가입 완료 · 30차시 QR이 준비됩니다.");
+        setMsg($("authMsg"), "비밀번호 재설정 메일을 보냈습니다. 이메일을 확인해 주세요.", "ok");
       }
 
       async function logout() {
         unsubscribeRealtime();
-        if (sb && !session?.demo) {
+        if (sb) {
           try { await sb.auth.signOut(); } catch (_) {}
         }
-        setSession(null);
+        applyAuthUser(null);
         lessons = [];
         selectedLessonId = null;
         showLogin();
@@ -1001,37 +925,22 @@
         studentLesson = null;
         setMsg($("studentMsg"), "");
 
-        if (token.startsWith("demo-")) {
-          const m = token.match(/^demo-(\d{2})-career2027$/);
-          const no = m ? parseInt(m[1], 10) : NaN;
-          if (!no || no < 1 || no > 30) {
-            $("studentTitle").textContent = "유효하지 않은 QR";
-            $("studentSub").textContent = "교사에게 새 QR을 요청해 주세요.";
-            $("studentForm").style.display = "none";
-            return;
-          }
-          studentLesson = {
-            id: "demo-lesson-" + no,
-            session_no: no,
-            token,
-            demo: true
-          };
-        } else if (hasSupabase()) {
-          const { data, error } = await sb.rpc("get_lesson_by_token", { p_token: token });
-          const row = Array.isArray(data) ? data[0] : data;
-          if (error || !row) {
-            $("studentTitle").textContent = "유효하지 않은 QR";
-            $("studentSub").textContent = "교사에게 새 QR을 요청해 주세요.";
-            $("studentForm").style.display = "none";
-            return;
-          }
-          studentLesson = { ...row, token, demo: false };
-        } else {
+        if (!sb) {
           $("studentTitle").textContent = "서버 미연결";
-          $("studentSub").textContent = "데모 QR(demo-01-…)만 사용할 수 있습니다.";
+          $("studentSub").textContent = "잠시 후 다시 시도해 주세요.";
           $("studentForm").style.display = "none";
           return;
         }
+
+        const { data, error } = await sb.rpc("get_lesson_by_token", { p_token: token });
+        const row = Array.isArray(data) ? data[0] : data;
+        if (error || !row) {
+          $("studentTitle").textContent = "유효하지 않은 QR";
+          $("studentSub").textContent = "교사에게 새 QR을 요청해 주세요.";
+          $("studentForm").style.display = "none";
+          return;
+        }
+        studentLesson = { ...row, token };
 
         $("studentForm").style.display = "";
         $("studentSessionChip").textContent = `${studentLesson.session_no}차시`;
@@ -1041,7 +950,7 @@
 
       async function submitStudent(e) {
         e.preventDefault();
-        if (!studentLesson) return;
+        if (!studentLesson || !sb) return;
         const student_no = $("studentNo").value.trim();
         const student_name = $("studentName").value.trim();
         const content = $("studentContent").value.trim();
@@ -1053,32 +962,16 @@
         const btn = $("btnStudentSubmit");
         btn.disabled = true;
         try {
-          const row = {
-            id: cryptoRandomToken(),
+          const { error } = await sb.from("submissions").insert({
             lesson_id: studentLesson.id,
             student_no,
             student_name,
-            content,
-            created_at: new Date().toISOString()
-          };
-
-          if (studentLesson.demo || studentLesson.id.startsWith("demo-")) {
-            addDemoSub(studentLesson.id, row);
-            setMsg($("studentMsg"), "제출되었습니다. 감사합니다!", "ok");
-            toast("제출 완료");
-            $("studentContent").value = "";
-          } else {
-            const { error } = await sb.from("submissions").insert({
-              lesson_id: studentLesson.id,
-              student_no,
-              student_name,
-              content
-            });
-            if (error) throw error;
-            setMsg($("studentMsg"), "제출되었습니다. 감사합니다!", "ok");
-            toast("제출 완료");
-            $("studentContent").value = "";
-          }
+            content
+          });
+          if (error) throw error;
+          setMsg($("studentMsg"), "제출되었습니다. 감사합니다!", "ok");
+          toast("제출 완료");
+          $("studentContent").value = "";
         } catch (err) {
           console.error(err);
           setMsg($("studentMsg"), err.message || "제출에 실패했습니다.", "error");
@@ -1087,56 +980,55 @@
         }
       }
 
+      async function restoreSession() {
+        if (!sb) return null;
+        const { data: { session: authSession } } = await sb.auth.getSession();
+        return applyAuthUser(authSession?.user || null);
+      }
+
       // Events
       $("loginForm").addEventListener("submit", (e) => {
         e.preventDefault();
-        login();
+        loginTeacher();
       });
-      $("btnSignup").addEventListener("click", () => signup());
-      $("btnFindPw").addEventListener("click", () => {
-        toast("비밀번호 찾기는 Supabase 이메일 재설정으로 연결됩니다. 테스트 계정은 TEST/1234 입니다.");
-      });
+      $("btnSignup").addEventListener("click", () => signupTeacher());
+      $("btnFindPw").addEventListener("click", () => findPassword());
       $("btnLogout").addEventListener("click", () => logout());
       $("btnTeacherLogout").addEventListener("click", () => logout());
       $("btnBackLanding").addEventListener("click", () => {
         unsubscribeRealtime();
         showView("landing");
         if (session) showWelcome(session);
+        else showLogin();
       });
       $("btnStart").addEventListener("click", () => openTeacherDashboard());
       $("studentForm").addEventListener("submit", submitStudent);
 
-      window.addEventListener("storage", (e) => {
-        if (e.key === DEMO_SUBS_KEY && session?.demo && selectedLessonId) {
-          selectLesson(selectedLessonId, true);
-          renderLessonList();
+      async function boot() {
+        initSupabase();
+        if (!sb) {
+          showView("landing");
+          setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
+          return;
         }
-      });
 
-      // Demo same-tab sync via custom polling light touch
-      setInterval(() => {
-        if (views.teacher.classList.contains("is-active") && session?.demo && selectedLessonId) {
-          renderDetail(lessons.find((l) => l.id === selectedLessonId));
-          document.querySelectorAll(".lesson-item").forEach(async (el) => {
-            const n = await countSubs(el.dataset.id);
-            const badge = el.querySelector(".lesson-count");
-            if (badge && badge.textContent !== String(n)) badge.textContent = String(n);
-          });
+        sb.auth.onAuthStateChange((_event, authSession) => {
+          applyAuthUser(authSession?.user || null);
+        });
+
+        const token = getQueryToken();
+        if (token) {
+          await openStudent(token);
+          return;
         }
-      }, 2500);
 
-      // Boot
-      initSupabase();
-      session = getSession();
-
-      const token = getQueryToken();
-      if (token) {
-        openStudent(token);
-        return;
+        await restoreSession();
+        showView("landing");
+        if (session) showWelcome(session);
+        else showLogin();
       }
 
-      showView("landing");
-      if (session) showWelcome(session);
+      boot();
     })();
   </script>
 </body>
