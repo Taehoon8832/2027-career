@@ -891,6 +891,50 @@
       background: var(--color-primary-50);
       color: var(--color-primary-700);
     }
+    .setup-type-grade {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: 4px 16px;
+      margin-bottom: 4px;
+      align-items: start;
+    }
+    .setup-type-grade .settings-sub { margin-bottom: 8px; }
+    .setup-type-grade .chip-row { margin-bottom: 12px; }
+    .dept-box {
+      margin: 4px 0 14px;
+      padding: 12px 12px 10px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-subtle);
+    }
+    .dept-box[hidden] { display: none !important; }
+    .dept-box > .settings-sub { margin: 0 0 8px; }
+    .dept-fields { display: grid; gap: 8px; }
+    .dept-row {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+    }
+    .dept-row span {
+      font: 700 12px/1 var(--font-sans);
+      color: var(--text-secondary);
+    }
+    .dept-row input {
+      width: 100%;
+      height: 36px;
+      border: 1px solid var(--border-default);
+      border-radius: 10px;
+      background: #fff;
+      padding: 0 10px;
+      font: 600 13px/1 var(--font-sans);
+      color: var(--text-primary);
+    }
+    .dept-row input:focus {
+      outline: none;
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15);
+    }
     .settings-panel[hidden] { display: none !important; }
     .settings-summary {
       margin-top: 4px; padding: 10px 12px; border-radius: var(--radius-md);
@@ -1010,6 +1054,8 @@
         padding-top: 2px;
       }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
+      .setup-type-grade { grid-template-columns: 1fr; gap: 0; }
+      .dept-row input { height: 40px; font-size: 15px; }
       .class-count-control { flex-wrap: wrap; }
       .class-count-control .count-input,
       .class-count-control .count-btn,
@@ -1205,14 +1251,30 @@
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
           <h2>초기 설정</h2>
-          <p class="settings-sub" style="margin-bottom:8px">학년</p>
-          <div class="chip-row" id="classGradeChips"></div>
+          <div class="setup-type-grade">
+            <div>
+              <p class="settings-sub">고교 유형</p>
+              <div class="chip-row" id="schoolTypeChips" role="group" aria-label="고교 유형">
+                <button type="button" class="chip-toggle" data-school-type="general">일반고</button>
+                <button type="button" class="chip-toggle" data-school-type="vocational">특성화고</button>
+              </div>
+            </div>
+            <div>
+              <p class="settings-sub">학년</p>
+              <div class="chip-row" id="classGradeChips" role="group" aria-label="학년"></div>
+            </div>
+          </div>
           <p class="settings-sub" style="margin-bottom:8px">학급 수</p>
           <div class="class-count-control" id="classCountControl">
             <button type="button" class="count-btn" id="btnClassCountMinus" aria-label="학급 수 줄이기">−</button>
             <input id="classCountInput" class="count-input" type="number" min="1" max="10" step="1" inputmode="numeric" value="1" aria-label="학급 수" />
             <button type="button" class="count-btn" id="btnClassCountPlus" aria-label="학급 수 늘리기">+</button>
             <button type="button" class="btn-save-inline" id="btnSaveClassSettings">학급 저장</button>
+          </div>
+
+          <div class="dept-box" id="deptBox" hidden>
+            <p class="settings-sub">학과 이름 지정</p>
+            <div class="dept-fields" id="deptFields"></div>
           </div>
 
           <div class="roster-box" id="rosterBox">
@@ -1471,49 +1533,124 @@
         return tok ? tok.slice(0, 8).toUpperCase() : "";
       }
 
+      function defaultClassSettings() {
+        return {
+          mode: "class",
+          schoolType: "general",
+          classGrade: 1,
+          classCount: 1,
+          byGrade: {},
+          needsResave: false
+        };
+      }
+
+      function normalizeSchoolType(v) {
+        return v === "vocational" ? "vocational" : "general";
+      }
+
+      function isVocational() {
+        return normalizeSchoolType(classSettings.schoolType) === "vocational";
+      }
+
+      function ensureByGradeBag(grade) {
+        if (!classSettings.byGrade || typeof classSettings.byGrade !== "object") {
+          classSettings.byGrade = {};
+        }
+        const key = String(grade);
+        const cur = classSettings.byGrade[key];
+        if (!cur || typeof cur !== "object") {
+          classSettings.byGrade[key] = { classCount: 1, departments: {} };
+        } else if (!cur.departments || typeof cur.departments !== "object") {
+          cur.departments = {};
+        }
+        return classSettings.byGrade[key];
+      }
+
+      function getDepartmentsMap(grade) {
+        return ensureByGradeBag(grade).departments;
+      }
+
+      function departmentNameFor(grade, classNo, row) {
+        const fromRow = String(row?.department_name || "").trim();
+        if (fromRow) return fromRow;
+        const map = getDepartmentsMap(grade);
+        return String(map[String(classNo)] || "").trim();
+      }
+
+      function setDepartmentName(grade, classNo, name) {
+        const map = getDepartmentsMap(grade);
+        const cleaned = String(name || "").trim();
+        if (cleaned) map[String(classNo)] = cleaned;
+        else delete map[String(classNo)];
+      }
+
+      function persistClassSettingsLocal() {
+        try {
+          localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        } catch {
+          /* ignore */
+        }
+      }
+
       function loadClassSettings() {
         try {
           const raw = JSON.parse(localStorage.getItem(CLASS_SETTINGS_KEY) || "null");
-          if (!raw || typeof raw !== "object") {
-            return { mode: "class", classGrade: 1, classCount: 1, byGrade: {}, needsResave: false };
-          }
+          if (!raw || typeof raw !== "object") return defaultClassSettings();
           let classCount = Number(raw.classCount);
           if (!classCount && Array.isArray(raw.classNos) && raw.classNos.length) {
             classCount = Math.max(...raw.classNos.map(Number).filter((n) => n >= 1));
           }
-          const byGrade = raw.byGrade && typeof raw.byGrade === "object" ? raw.byGrade : {};
+          const byGrade = {};
+          if (raw.byGrade && typeof raw.byGrade === "object") {
+            Object.keys(raw.byGrade).forEach((k) => {
+              const bag = raw.byGrade[k];
+              if (!bag || typeof bag !== "object") return;
+              const deps =
+                bag.departments && typeof bag.departments === "object" ? { ...bag.departments } : {};
+              byGrade[k] = {
+                classCount: clampClassCount(bag.classCount || 1),
+                departments: deps
+              };
+            });
+          }
           return {
             mode: "class",
+            schoolType: normalizeSchoolType(raw.schoolType),
             classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
             classCount: clampClassCount(classCount || 1),
             byGrade,
             needsResave: !!raw.needsResave
           };
         } catch {
-          return { mode: "class", classGrade: 1, classCount: 1, byGrade: {}, needsResave: false };
+          return defaultClassSettings();
         }
       }
 
       function rememberGradeCount() {
-        if (!classSettings.byGrade || typeof classSettings.byGrade !== "object") {
-          classSettings.byGrade = {};
-        }
-        classSettings.byGrade[String(classSettings.classGrade)] = {
-          classCount: clampClassCount(classSettings.classCount)
-        };
+        const bag = ensureByGradeBag(classSettings.classGrade);
+        bag.classCount = clampClassCount(classSettings.classCount);
+        // 학급 수보다 큰 반 학과명은 정리
+        const maxNo = bag.classCount;
+        Object.keys(bag.departments || {}).forEach((k) => {
+          if (Number(k) > maxNo) delete bag.departments[k];
+        });
       }
 
       function saveClassSettings() {
         classSettings.mode = "class";
+        classSettings.schoolType = normalizeSchoolType(classSettings.schoolType);
         classSettings.classCount = clampClassCount(classSettings.classCount);
         classSettings.needsResave = false;
         rememberGradeCount();
-        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        persistClassSettingsLocal();
       }
 
       function unitLabel(row) {
         if (!row) return "";
-        return `${row.grade}학년 ${row.class_no}반`;
+        const base = `${row.grade}학년 ${row.class_no}반`;
+        if (!isVocational()) return base;
+        const dept = departmentNameFor(row.grade, row.class_no, row);
+        return dept ? `${base} · ${dept}` : base;
       }
 
       function activeClassesForGrade(grade) {
@@ -1524,10 +1661,11 @@
       }
 
       function formatClassSettingsSummary() {
+        const typeLabel = isVocational() ? "특성화고" : "일반고";
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!active.length) {
           const n = clampClassCount(classSettings.classCount);
-          return `학급별 · ${classSettings.classGrade}학년 1~${n}반`;
+          return `${typeLabel} · ${classSettings.classGrade}학년 1~${n}반`;
         }
         const byG = new Map();
         active.forEach((c) => {
@@ -1539,7 +1677,7 @@
           const nos = byG.get(g).sort((a, b) => a - b);
           return `${g}학년 1~${Math.max(...nos)}반`;
         });
-        return "학급별 · " + parts.join(" · ");
+        return `${typeLabel} · ` + parts.join(" · ");
       }
 
       function renderTeacherBarSwitcher() {
@@ -1565,7 +1703,13 @@
         const g = Number(gradeSel.value) || curGrade;
         const classes = activeClassesForGrade(g);
         classSel.innerHTML = classes.length
-          ? classes.map((c) => `<option value="${c.id}">${c.class_no}반</option>`).join("")
+          ? classes
+              .map((c) => {
+                const dept = isVocational() ? departmentNameFor(c.grade, c.class_no, c) : "";
+                const label = dept ? `${c.class_no}반 · ${dept}` : `${c.class_no}반`;
+                return `<option value="${c.id}">${label}</option>`;
+              })
+              .join("")
           : `<option value="">학급 없음</option>`;
         classSel.disabled = !classes.length;
         if (classes.length) {
@@ -1622,18 +1766,28 @@
       function getClassPills() {
         const active = activeClassesForGrade(classSettings.classGrade);
         if (active.length) return active.map(unitLabel);
-        return classNosFromCount(classSettings.classCount).map(
-          (n) => `${classSettings.classGrade}학년 ${n}반`
-        );
+        const g = classSettings.classGrade;
+        return classNosFromCount(classSettings.classCount).map((n) => {
+          const base = `${g}학년 ${n}반`;
+          if (!isVocational()) return base;
+          const dept = departmentNameFor(g, n);
+          return dept ? `${base} · ${dept}` : base;
+        });
       }
 
       function desiredUnitsFromSettings() {
-        return classNosFromCount(classSettings.classCount).map((class_no) => ({
-          mode: "class",
-          grade: classSettings.classGrade,
-          class_no,
-          title: `${classSettings.classGrade}학년 ${class_no}반 · AI와 함께 하는 고교학점제 진로설계`
-        }));
+        const g = Number(classSettings.classGrade) || 1;
+        return classNosFromCount(classSettings.classCount).map((class_no) => {
+          const dept = isVocational() ? departmentNameFor(g, class_no) : "";
+          const head = dept ? `${g}학년 ${class_no}반 (${dept})` : `${g}학년 ${class_no}반`;
+          return {
+            mode: "class",
+            grade: g,
+            class_no,
+            department_name: dept,
+            title: `${head} · AI와 함께 하는 고교학점제 진로설계`
+          };
+        });
       }
 
       function unitKey(mode, grade, classNo) {
@@ -1715,20 +1869,106 @@
         return text.slice(0, maxLen).trim() + "…";
       }
 
+      function syncSchoolTypeChips() {
+        const root = $("schoolTypeChips");
+        if (!root) return;
+        const type = normalizeSchoolType(classSettings.schoolType);
+        root.querySelectorAll("[data-school-type]").forEach((btn) => {
+          btn.classList.toggle("is-on", btn.getAttribute("data-school-type") === type);
+        });
+      }
+
+      function renderDeptFields() {
+        const box = $("deptBox");
+        const root = $("deptFields");
+        if (!box || !root) return;
+
+        if (!isVocational()) {
+          box.hidden = true;
+          root.replaceChildren();
+          return;
+        }
+
+        box.hidden = false;
+        const grade = classSettings.classGrade;
+        const count = clampClassCount(classSettings.classCount);
+        const deps = getDepartmentsMap(grade);
+        const activeEl = document.activeElement;
+        const activeClassNo =
+          activeEl && root.contains(activeEl) && activeEl.dataset?.classNo
+            ? activeEl.dataset.classNo
+            : "";
+        const activePos =
+          activeEl && root.contains(activeEl) && typeof activeEl.selectionStart === "number"
+            ? activeEl.selectionStart
+            : null;
+
+        const frag = document.createDocumentFragment();
+        for (let n = 1; n <= count; n++) {
+          const row = document.createElement("label");
+          row.className = "dept-row";
+          const tag = document.createElement("span");
+          tag.textContent = `${n}반`;
+          const input = document.createElement("input");
+          input.type = "text";
+          input.autocomplete = "off";
+          input.placeholder = "예: 조리과, 미용과";
+          input.dataset.classNo = String(n);
+          input.value = String(deps[String(n)] || "");
+          input.setAttribute("aria-label", `${grade}학년 ${n}반 학과 이름`);
+          row.append(tag, input);
+          frag.appendChild(row);
+        }
+        root.replaceChildren(frag);
+
+        if (activeClassNo) {
+          const again = root.querySelector(`input[data-class-no="${activeClassNo}"]`);
+          if (again) {
+            again.focus();
+            if (activePos != null) {
+              try {
+                again.setSelectionRange(activePos, activePos);
+              } catch {
+                /* ignore */
+              }
+            }
+          }
+        }
+      }
+
+      function setSchoolType(type) {
+        const next = normalizeSchoolType(type);
+        if (normalizeSchoolType(classSettings.schoolType) === next) return;
+        classSettings.schoolType = next;
+        classSettings.needsResave = true;
+        persistClassSettingsLocal();
+        syncSchoolTypeChips();
+        renderDeptFields();
+        renderRosterClassChips();
+        updateSetupLaunchHint();
+      }
+
       function renderClassSettingsUI() {
         classSettings.mode = "class";
+        classSettings.schoolType = normalizeSchoolType(classSettings.schoolType);
         classSettings.classCount = clampClassCount(classSettings.classCount);
         const classGradeRoot = $("classGradeChips");
         if (!classGradeRoot) return;
 
-        classGradeRoot.innerHTML = "";
-        [1, 2, 3].forEach((g) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "chip-toggle" + (classSettings.classGrade === g ? " is-on" : "");
-          btn.textContent = `${g}학년`;
-          btn.addEventListener("click", () => changeClassGrade(g));
-          classGradeRoot.appendChild(btn);
+        syncSchoolTypeChips();
+
+        // 학년 칩: 이벤트 위임용으로 한 번만 구성·갱신
+        if (!classGradeRoot.dataset.ready) {
+          classGradeRoot.dataset.ready = "1";
+          classGradeRoot.innerHTML = [1, 2, 3]
+            .map((g) => `<button type="button" class="chip-toggle" data-grade="${g}">${g}학년</button>`)
+            .join("");
+        }
+        classGradeRoot.querySelectorAll("[data-grade]").forEach((btn) => {
+          btn.classList.toggle(
+            "is-on",
+            Number(btn.getAttribute("data-grade")) === classSettings.classGrade
+          );
         });
 
         const input = $("classCountInput");
@@ -1736,6 +1976,7 @@
           input.value = String(classSettings.classCount);
         }
 
+        renderDeptFields();
         updateSetupLaunchHint();
         renderRosterClassChips();
       }
@@ -1747,8 +1988,10 @@
         classSettings.classCount = next;
         classSettings.needsResave = true;
         rememberGradeCount();
-        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        persistClassSettingsLocal();
         input.value = String(next);
+        renderDeptFields();
+        renderRosterClassChips();
       }
 
       function changeClassGrade(g) {
@@ -1761,13 +2004,17 @@
         const remembered = Number(classSettings.byGrade?.[String(g)]?.classCount);
         if (fromDb.length) {
           classSettings.classCount = clampClassCount(Math.max(...fromDb.map((c) => Number(c.class_no))));
+          fromDb.forEach((c) => {
+            const dept = String(c.department_name || "").trim();
+            if (dept) setDepartmentName(g, c.class_no, dept);
+          });
         } else if (remembered) {
           classSettings.classCount = clampClassCount(remembered);
         } else {
           classSettings.classCount = 1;
         }
         classSettings.needsResave = false;
-        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        persistClassSettingsLocal();
 
         const first = fromDb[0];
         if (first) {
@@ -1805,18 +2052,20 @@
         classSettings.classCount = next;
         classSettings.needsResave = true;
         rememberGradeCount();
-        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        persistClassSettingsLocal();
         const input = $("classCountInput");
         if (input) input.value = String(next);
+        renderDeptFields();
       }
 
       function renderRosterClassChips() {
         const root = $("rosterClassChips");
         if (!root) return;
         const active = activeClassesForGrade(classSettings.classGrade);
-        root.innerHTML = "";
         if (!active.length) {
-          $("rosterList").innerHTML = "";
+          root.replaceChildren();
+          const list = $("rosterList");
+          if (list) list.innerHTML = "";
           rosterStudents = [];
           syncStudentCountInput(0);
           return;
@@ -1827,13 +2076,15 @@
             : active[0].id;
         }
 
-        active.forEach((c) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
-          btn.textContent = `${c.class_no}반`;
-          btn.addEventListener("click", () => {
-            if (c.id === rosterClassId) return;
+        if (!root.dataset.delegated) {
+          root.dataset.delegated = "1";
+          root.addEventListener("click", (e) => {
+            const btn = e.target.closest("[data-class-id]");
+            if (!btn || !root.contains(btn)) return;
+            const id = btn.getAttribute("data-class-id");
+            if (!id || id === rosterClassId) return;
+            const c = teacherClasses.find((x) => x.id === id);
+            if (!c) return;
             rosterClassId = c.id;
             activeClassId = c.id;
             teacherClass = c;
@@ -1847,8 +2098,19 @@
               })
               .catch(() => {});
           });
-          root.appendChild(btn);
+        }
+
+        const frag = document.createDocumentFragment();
+        active.forEach((c) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
+          btn.dataset.classId = c.id;
+          const dept = isVocational() ? departmentNameFor(c.grade, c.class_no, c) : "";
+          btn.textContent = dept ? `${c.class_no}반 · ${dept}` : `${c.class_no}반`;
+          frag.appendChild(btn);
         });
+        root.replaceChildren(frag);
       }
 
       async function seedDefaultStudents(classId) {
@@ -2633,12 +2895,25 @@ ${built.html}
 
       async function enrichSessionFromProfile() {
         if (!sb || !session?.userId) return session;
-        const { data } = await sb
+        let data = null;
+        let error = null;
+        ({ data, error } = await sb
           .from("profiles")
-          .select("login_id, email, school_name, display_name")
+          .select("login_id, email, school_name, display_name, school_type")
           .eq("id", session.userId)
-          .maybeSingle();
+          .maybeSingle());
+        if (error && /school_type/i.test(error.message || "")) {
+          ({ data, error } = await sb
+            .from("profiles")
+            .select("login_id, email, school_name, display_name")
+            .eq("id", session.userId)
+            .maybeSingle());
+        }
         if (!data) return session;
+        if (data.school_type) {
+          classSettings.schoolType = normalizeSchoolType(data.school_type);
+          persistClassSettingsLocal();
+        }
         session = {
           ...session,
           loginId: data.login_id || session.loginId,
@@ -2961,28 +3236,48 @@ ${built.html}
 
       async function loadTeacherClassesFromDb() {
         if (!sb || !session) return [];
-        const { data, error } = await sb
+        let data = null;
+        let error = null;
+        ({ data, error } = await sb
           .from("classes")
-          .select("id, class_code, title, mode, grade, class_no, is_active, created_at")
+          .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name")
           .eq("teacher_id", session.userId)
           .eq("mode", "class")
           .order("grade", { ascending: true })
-          .order("class_no", { ascending: true });
+          .order("class_no", { ascending: true }));
+        if (error && /department_name/i.test(error.message || "")) {
+          ({ data, error } = await sb
+            .from("classes")
+            .select("id, class_code, title, mode, grade, class_no, is_active, created_at")
+            .eq("teacher_id", session.userId)
+            .eq("mode", "class")
+            .order("grade", { ascending: true })
+            .order("class_no", { ascending: true }));
+        }
         if (error) throw error;
         teacherClasses = data || [];
 
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!classSettings.byGrade) classSettings.byGrade = {};
-        // 학년별 학급 수를 DB에서 기억 (다른 학년 설정 유지)
+        let hasDept = false;
+        // 학년별 학급 수·학과명을 DB에서 기억 (다른 학년 설정 유지)
         [1, 2, 3].forEach((g) => {
-          const nos = active
-            .filter((c) => Number(c.grade) === g)
+          const rows = active.filter((c) => Number(c.grade) === g);
+          const nos = rows
             .map((c) => Number(c.class_no))
             .filter((n) => n >= 1 && n <= MAX_CLASS_COUNT);
-          if (nos.length) {
-            classSettings.byGrade[String(g)] = { classCount: clampClassCount(Math.max(...nos)) };
-          }
+          if (!nos.length) return;
+          const bag = ensureByGradeBag(g);
+          bag.classCount = clampClassCount(Math.max(...nos));
+          rows.forEach((c) => {
+            const dept = String(c.department_name || "").trim();
+            if (dept) {
+              bag.departments[String(c.class_no)] = dept;
+              hasDept = true;
+            }
+          });
         });
+        if (hasDept) classSettings.schoolType = "vocational";
 
         if (!classSettings.needsResave) {
           const cur = activeClassesForGrade(classSettings.classGrade);
@@ -2994,7 +3289,7 @@ ${built.html}
             );
           }
           rememberGradeCount();
-          localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+          persistClassSettingsLocal();
         }
 
         const prefer = activeClassesForGrade(classSettings.classGrade);
@@ -3017,10 +3312,18 @@ ${built.html}
         const desired = desiredUnitsFromSettings();
         if (!desired.length) throw new Error("선택된 학급이 없습니다.");
 
-        const { data: existing, error } = await sb
+        let existing = null;
+        let error = null;
+        ({ data: existing, error } = await sb
           .from("classes")
-          .select("id, mode, grade, class_no, class_code, is_active")
-          .eq("teacher_id", session.userId);
+          .select("id, mode, grade, class_no, class_code, is_active, department_name")
+          .eq("teacher_id", session.userId));
+        if (error && /department_name/i.test(error.message || "")) {
+          ({ data: existing, error } = await sb
+            .from("classes")
+            .select("id, mode, grade, class_no, class_code, is_active")
+            .eq("teacher_id", session.userId));
+        }
         if (error) throw error;
 
         const map = new Map();
@@ -3051,40 +3354,66 @@ ${built.html}
           .eq("teacher_id", session.userId)
           .eq("mode", "grade");
 
-        for (const unit of desired) {
-          const key = unitKey("class", unit.grade, unit.class_no);
-          const found = map.get(key);
+        async function upsertClassUnit(unit, found) {
+          const base = {
+            is_active: true,
+            mode: "class",
+            grade: unit.grade,
+            class_no: unit.class_no,
+            title: unit.title
+          };
+          const withDept = {
+            ...base,
+            department_name: isVocational() ? unit.department_name || "" : ""
+          };
           if (found) {
-            const { error: onErr } = await sb
-              .from("classes")
-              .update({
-                is_active: true,
-                mode: "class",
-                grade: unit.grade,
-                class_no: unit.class_no,
-                title: unit.title
-              })
-              .eq("id", found.id);
+            let { error: onErr } = await sb.from("classes").update(withDept).eq("id", found.id);
+            if (onErr && /department_name/i.test(onErr.message || "")) {
+              ({ error: onErr } = await sb.from("classes").update(base).eq("id", found.id));
+            }
             if (onErr) throw onErr;
             await seedLessonsForClass(found.id);
             try { await seedDefaultStudents(found.id); } catch (e) { console.warn(e); }
-          } else {
-            const { data: created, error: cErr } = await sb
+            return found.id;
+          }
+
+          const insertRow = {
+            teacher_id: session.userId,
+            class_code: generateClassCode(),
+            ...withDept
+          };
+          let { data: created, error: cErr } = await sb
+            .from("classes")
+            .insert(insertRow)
+            .select("id")
+            .single();
+          if (cErr && /department_name/i.test(cErr.message || "")) {
+            const { department_name: _d, ...noDept } = insertRow;
+            ({ data: created, error: cErr } = await sb
               .from("classes")
-              .insert({
-                teacher_id: session.userId,
-                title: unit.title,
-                class_code: generateClassCode(),
-                mode: "class",
-                grade: unit.grade,
-                class_no: unit.class_no,
-                is_active: true
-              })
+              .insert(noDept)
               .select("id")
-              .single();
-            if (cErr) throw cErr;
-            await seedLessonsForClass(created.id);
-            try { await seedDefaultStudents(created.id); } catch (e) { console.warn(e); }
+              .single());
+          }
+          if (cErr) throw cErr;
+          await seedLessonsForClass(created.id);
+          try { await seedDefaultStudents(created.id); } catch (e) { console.warn(e); }
+          return created.id;
+        }
+
+        for (const unit of desired) {
+          const key = unitKey("class", unit.grade, unit.class_no);
+          await upsertClassUnit(unit, map.get(key));
+        }
+
+        // 고교 유형을 프로필에 저장 (컬럼 없으면 무시)
+        {
+          const { error: stErr } = await sb
+            .from("profiles")
+            .update({ school_type: normalizeSchoolType(classSettings.schoolType) })
+            .eq("id", session.userId);
+          if (stErr && !/school_type/i.test(stErr.message || "")) {
+            console.warn("school_type 저장:", stErr.message);
           }
         }
 
@@ -3559,14 +3888,8 @@ ${built.html}
           submissionById = new Map();
           selectedLessonId = null;
           detailFilterGrade = null;
-          classSettings = {
-            mode: "class",
-            classGrade: 1,
-            classCount: 1,
-            byGrade: {},
-            needsResave: false
-          };
-          localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+          classSettings = defaultClassSettings();
+          persistClassSettingsLocal();
 
           await loadTeacherClassesFromDb();
           lessons = [];
@@ -4077,6 +4400,32 @@ ${built.html}
         }
       });
       $("btnClassCountMinus")?.addEventListener("click", () => adjustClassCount(-1));
+      $("schoolTypeChips")?.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-school-type]");
+        if (!btn) return;
+        setSchoolType(btn.getAttribute("data-school-type"));
+      });
+      $("classGradeChips")?.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-grade]");
+        if (!btn) return;
+        changeClassGrade(Number(btn.getAttribute("data-grade")));
+      });
+      {
+        let deptTimer = 0;
+        $("deptFields")?.addEventListener("input", (e) => {
+          const input = e.target.closest("input[data-class-no]");
+          if (!input) return;
+          setDepartmentName(classSettings.classGrade, input.dataset.classNo, input.value);
+          classSettings.needsResave = true;
+          clearTimeout(deptTimer);
+          deptTimer = setTimeout(() => {
+            rememberGradeCount();
+            persistClassSettingsLocal();
+            renderRosterClassChips();
+            updateSetupLaunchHint();
+          }, 160);
+        });
+      }
       $("btnClassCountPlus")?.addEventListener("click", () => adjustClassCount(1));
       $("classCountInput")?.addEventListener("change", () => applyClassCountInput());
       $("classCountInput")?.addEventListener("keydown", (e) => {
