@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light" />
+  <meta name="theme-color" content="#F0EEE6" />
+  <title>AI와 함께 하는 고교학점제 진로설계</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <style>
+    :root {
+      --color-primary-50:  #FBEFE7;
+      --color-primary-100: #F2D4BF;
+      --color-primary-300: #D88861;
+      --color-primary-500: #C96442;
+      --color-primary-600: #B05231;
+      --color-primary-700: #8C4022;
+      --bg-base:     #F0EEE6;
+      --bg-subtle:   #FAF9F5;
+      --bg-elevated: #FFFFFF;
+      --text-primary:    #1F1E1D;
+      --text-secondary:  #4A4845;
+      --text-tertiary:   #807D75;
+      --text-on-primary: #F0EEE6;
+      --text-disabled:   #ABA597;
+      --border-default: #E5E0D5;
+      --border-strong:  #D4CFC4;
+      --border-focus:   #C96442;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+      --radius-xl: 24px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 2px rgba(31,30,29,0.04);
+      --shadow-md: 0 4px 12px rgba(31,30,29,0.06);
+      --shadow-lg: 0 12px 28px rgba(31,30,29,0.10);
+      --shadow-clay: 0 4px 16px rgba(201,100,66,0.22);
+      --duration-fast: 150ms;
+      --duration-base: 280ms;
+      --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
+      --ease-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
+      --font-serif: "Noto Serif KR", "Source Serif 4", "Tiempos Text", ui-serif, Georgia, serif;
+      --font-sans: "Pretendard", "Noto Sans KR", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; height: 100dvh; }
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-base);
+      background-image: radial-gradient(rgba(31, 30, 29, 0.055) 1px, transparent 1px);
+      background-size: 18px 18px;
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+    }
+
+    .view { display: none; flex: 1; min-height: 0; flex-direction: column; }
+    .view.is-active { display: flex; }
+
+    .topbar {
+      flex-shrink: 0; height: 52px; padding: 0 16px;
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.78);
+      border-bottom: 1px solid var(--border-default);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 10;
+    }
+    .brand-mark {
+      width: 28px; height: 28px; border-radius: 8px;
+      background: var(--color-primary-500); color: var(--text-on-primary);
+      display: grid; place-items: center; font: 700 16px/1 Georgia, serif;
+      transform: rotate(8deg); flex-shrink: 0;
+      animation: spark-bob 2.8s var(--ease-out) infinite;
+    }
+    .year-chip, .chip {
+      display: inline-flex; align-items: center; gap: 4px; height: 30px; padding: 0 11px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-full);
+      background: var(--bg-elevated); color: var(--text-secondary);
+      font: 500 12px/1 var(--font-sans);
+    }
+    .topbar-title {
+      min-width: 0; color: var(--text-tertiary);
+      font: 500 12px/1.3 var(--font-sans);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .topbar-spacer { flex: 1; }
+    .topbar .btn-tiny {
+      height: 32px; padding: 0 12px; border: 1px solid var(--border-default);
+      border-radius: var(--radius-full); background: var(--bg-elevated);
+      color: var(--text-secondary); font: 600 12px/1 var(--font-sans); cursor: pointer;
+    }
+    .topbar .btn-tiny:hover { background: var(--bg-subtle); }
+
+    /* Landing */
+    .stage {
+      flex: 1; min-height: 0; display: grid; place-items: center;
+      padding: 20px 16px 28px; overflow-y: auto;
+    }
+    .hero {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(300px, 0.85fr);
+      align-items: stretch; gap: clamp(24px, 4vw, 56px);
+      padding: clamp(28px, 4vw, 48px);
+      border: 1px solid var(--border-default); border-radius: var(--radius-xl);
+      background:
+        radial-gradient(ellipse 70% 80% at 18% 40%, rgba(201, 100, 66, 0.10) 0%, transparent 55%),
+        var(--bg-elevated);
+      box-shadow: var(--shadow-md); overflow: hidden;
+      opacity: 0; transform: translateY(22px) scale(0.98);
+      animation: enter-bounce 0.72s var(--ease-bounce) 0.05s forwards;
+    }
+    .hero-copy {
+      min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: 8px 0;
+      opacity: 0; transform: translateY(18px);
+      animation: enter-bounce 0.7s var(--ease-bounce) 0.18s forwards;
+    }
+    .kicker {
+      display: inline-flex; align-items: center; gap: 7px; align-self: flex-start;
+      margin-bottom: 18px; padding: 6px 12px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-full);
+      background: rgba(255,255,255,0.76); color: var(--text-secondary);
+      font: 600 12px/1 var(--font-sans);
+    }
+    .kicker::before {
+      content: ""; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--color-primary-500);
+      box-shadow: 0 0 0 4px rgba(201, 100, 66, 0.14);
+    }
+    .hero-copy h1 {
+      margin: 0 0 14px;
+      font: 500 clamp(28px, 4.6vw, 48px)/1.18 var(--font-serif);
+      letter-spacing: -0.03em;
+    }
+    .hero-copy h1 .accent { color: var(--color-primary-500); }
+    .hero-copy .lede {
+      margin: 0; max-width: 34em; color: var(--text-secondary);
+      font: 400 16px/1.7 var(--font-serif);
+    }
+    .auth-panel {
+      min-width: 0; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: translateY(22px) scale(0.96);
+      animation: enter-bounce 0.75s var(--ease-bounce) 0.32s forwards;
+    }
+    .auth-card {
+      width: min(100%, 380px); padding: 22px 20px 18px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      background: var(--bg-elevated); box-shadow: var(--shadow-sm);
+    }
+    .auth-head { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 18px; }
+    .auth-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: var(--color-primary-50); color: var(--color-primary-600);
+      border: 1px solid var(--color-primary-100);
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .auth-icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+    .auth-head h2 { margin: 2px 0 4px; font: 600 18px/1.3 var(--font-serif); letter-spacing: -0.015em; }
+    .auth-head p { color: var(--text-tertiary); font: 500 12px/1.45 var(--font-sans); }
+    .field { display: grid; gap: 6px; margin-bottom: 12px; }
+    .field label { font: 500 12px/1.3 var(--font-sans); color: var(--text-secondary); }
+    .field input, .field textarea {
+      width: 100%; padding: 0 14px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      background: var(--bg-subtle); color: var(--text-primary);
+      font: 400 16px/1.4 var(--font-sans); outline: none;
+      transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+    }
+    .field input { height: 46px; }
+    .field textarea { min-height: 140px; padding: 12px 14px; resize: vertical; font-family: var(--font-serif); line-height: 1.65; }
+    .field input:focus, .field textarea:focus {
+      border-color: var(--border-focus); background: #fff;
+      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
+    }
+    .auth-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+    .btn {
+      height: 44px; padding: 0 16px; border: 0; border-radius: var(--radius-full);
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      font: 600 14px/1 var(--font-sans); letter-spacing: -0.005em; cursor: pointer;
+      transition: background var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-bounce);
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .btn-primary { background: var(--color-primary-500); color: var(--text-on-primary); box-shadow: var(--shadow-clay); }
+    .btn-primary:hover:not(:disabled) { background: var(--color-primary-600); }
+    .btn-secondary { background: var(--bg-subtle); color: var(--text-primary); border: 1px solid var(--border-default); }
+    .btn-secondary:hover:not(:disabled) { background: #E5E0D5; }
+    .btn-ghost {
+      background: transparent; color: var(--color-primary-600); height: auto; padding: 10px;
+      border-radius: var(--radius-md); font-weight: 500; font-size: 12px;
+    }
+    .btn-ghost:hover { background: var(--color-primary-50); }
+    .auth-foot { margin-top: 8px; text-align: center; }
+    .demo-hint {
+      margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-md);
+      background: var(--color-primary-50); border: 1px solid var(--color-primary-100);
+      color: var(--color-primary-700); font: 500 12px/1.45 var(--font-sans); text-align: center;
+    }
+    .auth-msg { min-height: 18px; margin: 8px 0 0; font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary); text-align: center; }
+    .auth-msg.is-error { color: #B23A2C; }
+    .auth-msg.is-ok { color: #4F7A35; }
+    .welcome { display: none; text-align: center; padding: 8px 4px 2px; }
+    .welcome.is-visible { display: block; }
+    .auth-form.is-hidden { display: none; }
+    .welcome-avatar {
+      width: 52px; height: 52px; margin: 0 auto 14px; border-radius: 50%;
+      background: var(--color-primary-500); color: var(--text-on-primary);
+      display: grid; place-items: center; font: 600 18px/1 var(--font-sans);
+      animation: spark-bob 2.6s var(--ease-out) infinite;
+    }
+    .welcome h3 { margin: 0 0 6px; font: 600 20px/1.3 var(--font-serif); }
+    .welcome p { margin: 0 0 18px; color: var(--text-tertiary); font: 500 13px/1.5 var(--font-sans); word-break: break-all; }
+    .welcome .btn { width: 100%; margin-bottom: 8px; }
+
+    /* Teacher dashboard */
+    .dash {
+      flex: 1; min-height: 0; display: grid;
+      grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+      gap: 0; overflow: hidden;
+    }
+    .dash-list, .dash-detail {
+      min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
+      padding: 16px;
+    }
+    .dash-list { border-right: 1px solid var(--border-default); background: rgba(250,249,245,0.7); }
+    .dash-head {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+      margin-bottom: 14px;
+    }
+    .dash-head h2 { font: 600 20px/1.3 var(--font-serif); letter-spacing: -0.02em; }
+    .dash-head span { color: var(--text-tertiary); font: 500 12px/1 var(--font-sans); }
+    .lesson-item {
+      width: 100%; text-align: left; display: grid;
+      grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center;
+      padding: 12px; margin-bottom: 8px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      background: var(--bg-elevated); cursor: pointer;
+      transition: border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce);
+    }
+    .lesson-item:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .lesson-item.is-active {
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
+      box-shadow: var(--shadow-sm);
+    }
+    .lesson-qr {
+      width: 56px; height: 56px; border-radius: 8px; background: #fff;
+      border: 1px solid var(--border-default); display: grid; place-items: center; overflow: hidden;
+    }
+    .lesson-qr canvas, .lesson-qr img { width: 52px !important; height: 52px !important; }
+    .lesson-meta strong {
+      display: block; font: 600 14px/1.3 var(--font-sans); margin-bottom: 4px;
+    }
+    .lesson-meta small { color: var(--text-tertiary); font: 500 11px/1.3 var(--font-sans); }
+    .lesson-count {
+      min-width: 28px; height: 28px; padding: 0 8px; border-radius: var(--radius-full);
+      background: var(--color-primary-500); color: var(--text-on-primary);
+      display: grid; place-items: center; font: 700 12px/1 var(--font-sans);
+    }
+    .detail-card {
+      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      background: var(--bg-elevated); padding: 18px; box-shadow: var(--shadow-sm);
+    }
+    .detail-top {
+      display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;
+      margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border-default);
+    }
+    .detail-qr-lg {
+      width: 160px; height: 160px; border-radius: var(--radius-md);
+      border: 1px solid var(--border-default); background: #fff;
+      display: grid; place-items: center; flex-shrink: 0;
+    }
+    .detail-qr-lg canvas, .detail-qr-lg img { width: 148px !important; height: 148px !important; }
+    .detail-info { flex: 1; min-width: 200px; }
+    .detail-info h3 { font: 600 22px/1.3 var(--font-serif); margin-bottom: 8px; }
+    .detail-info p { color: var(--text-secondary); font: 400 14px/1.6 var(--font-serif); margin-bottom: 12px; word-break: break-all; }
+    .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sub-list { display: grid; gap: 10px; }
+    .sub-empty {
+      padding: 28px 16px; text-align: center; color: var(--text-tertiary);
+      font: 500 14px/1.5 var(--font-sans); border: 1px dashed var(--border-default);
+      border-radius: var(--radius-md);
+    }
+    .sub-card {
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      padding: 14px 16px; background: var(--bg-subtle);
+      animation: enter-bounce 0.45s var(--ease-bounce);
+    }
+    .sub-card header {
+      display: flex; justify-content: space-between; gap: 10px; margin-bottom: 8px;
+      font: 600 13px/1.3 var(--font-sans);
+    }
+    .sub-card header time { color: var(--text-tertiary); font-weight: 500; font-size: 11px; }
+    .sub-card .body {
+      color: var(--text-secondary); font: 400 14px/1.65 var(--font-serif);
+      white-space: pre-wrap; word-break: break-word;
+    }
+
+    /* Student */
+    .student-wrap {
+      flex: 1; min-height: 0; overflow-y: auto; padding: 20px 16px 32px;
+      display: grid; place-items: start center;
+    }
+    .student-card {
+      width: min(560px, 100%); padding: 24px 20px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-xl);
+      background: var(--bg-elevated); box-shadow: var(--shadow-md);
+      opacity: 0; animation: enter-bounce 0.7s var(--ease-bounce) 0.08s forwards;
+    }
+    .student-card h1 {
+      font: 600 clamp(22px, 5vw, 28px)/1.25 var(--font-serif);
+      letter-spacing: -0.02em; margin: 10px 0 8px;
+    }
+    .student-card .sub { color: var(--text-secondary); font: 400 14px/1.65 var(--font-serif); margin-bottom: 18px; }
+
+    .toast {
+      position: fixed; left: 50%; bottom: calc(24px + var(--safe-bottom));
+      transform: translateX(-50%) translateY(16px); z-index: 50;
+      max-width: min(420px, calc(100% - 32px)); padding: 12px 16px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      background: var(--bg-elevated); color: var(--text-primary);
+      font: 500 13px/1.45 var(--font-sans); box-shadow: var(--shadow-lg);
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--duration-base) var(--ease-out), transform var(--duration-base) var(--ease-bounce);
+    }
+    .toast.is-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    @keyframes enter-bounce {
+      from { opacity: 0; transform: translateY(22px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes spark-bob {
+      0%, 100% { transform: rotate(8deg) translateY(0); }
+      50% { transform: rotate(12deg) translateY(-3px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .hero, .hero-copy, .auth-panel, .brand-mark, .welcome-avatar, .student-card, .sub-card {
+        animation: none !important; opacity: 1 !important; transform: none !important;
+      }
+    }
+    @media (max-width: 899px) {
+      .hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 18px 20px; border-radius: var(--radius-lg); }
+      .hero-copy h1 { font-size: clamp(26px, 7vw, 34px); }
+      .dash { grid-template-columns: 1fr; }
+      .dash-list { border-right: 0; border-bottom: 1px solid var(--border-default); max-height: 42vh; }
+    }
+    @media (max-width: 420px) {
+      .topbar-title { display: none; }
+      .auth-actions { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Landing -->
+  <div class="view is-active" id="viewLanding">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">✳</div>
+      <span class="year-chip">2027</span>
+      <span class="topbar-title">고교학점제 진로설계 워크북</span>
+    </header>
+    <main class="stage">
+      <section class="hero" aria-label="진로설계 시작">
+        <div class="hero-copy">
+          <span class="kicker">진로·학업설계 워크북</span>
+          <h1>AI와 함께 하는 고교학점제 <span class="accent">진로설계</span></h1>
+          <p class="lede">30차시 프로젝트로 완성하는 진로·학업설계 워크북</p>
+        </div>
+        <div class="auth-panel">
+          <div class="auth-card">
+            <div class="auth-form" id="authForm">
+              <div class="auth-head">
+                <div class="auth-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                </div>
+                <div>
+                  <h2>교사 로그인</h2>
+                  <p>아이디 또는 이메일로 로그인해 주세요.</p>
+                </div>
+              </div>
+              <form id="loginForm" novalidate>
+                <div class="field">
+                  <label for="loginId">아이디 또는 이메일</label>
+                  <input id="loginId" name="loginId" type="text" autocomplete="username" placeholder="TEST 또는 teacher@school.kr" required />
+                </div>
+                <div class="field">
+                  <label for="password">비밀번호</label>
+                  <input id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호" required />
+                </div>
+                <div class="auth-actions">
+                  <button type="submit" class="btn btn-primary" id="btnLogin">로그인</button>
+                  <button type="button" class="btn btn-secondary" id="btnSignup">회원가입</button>
+                </div>
+                <div class="auth-foot">
+                  <button type="button" class="btn btn-ghost" id="btnFindPw">비밀번호 찾기</button>
+                </div>
+                <p class="demo-hint">테스트 계정 · 아이디 <strong>TEST</strong> / 비밀번호 <strong>1234</strong></p>
+                <p class="auth-msg" id="authMsg" role="status" aria-live="polite"></p>
+              </form>
+            </div>
+            <div class="welcome" id="welcome">
+              <div class="welcome-avatar" id="welcomeAvatar">T</div>
+              <h3 id="welcomeTitle">환영합니다</h3>
+              <p id="welcomeEmail"></p>
+              <button type="button" class="btn btn-primary" id="btnStart">워크북 시작</button>
+              <button type="button" class="btn btn-secondary" id="btnLogout">로그아웃</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Teacher -->
+  <div class="view" id="viewTeacher">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">✳</div>
+      <span class="chip">교사</span>
+      <span class="topbar-title" id="teacherBarTitle">30차시 QR · 제출 현황</span>
+      <span class="topbar-spacer"></span>
+      <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
+      <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
+    </header>
+    <div class="dash">
+      <aside class="dash-list">
+        <div class="dash-head">
+          <h2>차시 QR</h2>
+          <span id="lessonCountLabel">30차시</span>
+        </div>
+        <div id="lessonList"></div>
+      </aside>
+      <section class="dash-detail">
+        <div class="detail-card" id="detailCard">
+          <p class="sub-empty">왼쪽에서 차시를 선택하면 QR과 제출 목록이 표시됩니다.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Student -->
+  <div class="view" id="viewStudent">
+    <header class="topbar">
+      <div class="brand-mark" aria-hidden="true">✳</div>
+      <span class="chip" id="studentSessionChip">차시</span>
+      <span class="topbar-title">자료 제출</span>
+    </header>
+    <div class="student-wrap">
+      <div class="student-card" id="studentCard">
+        <span class="kicker">학생 제출</span>
+        <h1 id="studentTitle">자료 제출</h1>
+        <p class="sub" id="studentSub">학번·이름과 함께 이번 차시 자료를 제출해 주세요.</p>
+        <form id="studentForm">
+          <div class="field">
+            <label for="studentNo">학번</label>
+            <input id="studentNo" required placeholder="예: 30101" />
+          </div>
+          <div class="field">
+            <label for="studentName">이름</label>
+            <input id="studentName" required placeholder="홍길동" />
+          </div>
+          <div class="field">
+            <label for="studentContent">제출 내용 (텍스트/HTML)</label>
+            <textarea id="studentContent" required placeholder="이번 차시 활동 내용을 작성해 주세요."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="btnStudentSubmit" style="width:100%">제출하기</button>
+          <p class="auth-msg" id="studentMsg" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      /** Supabase 연동 시 아래 값을 채워 주세요. 비어 있으면 TEST/1234 데모 모드로 동작합니다. */
+      const CONFIG = {
+        SUPABASE_URL: "",
+        SUPABASE_ANON_KEY: ""
+      };
+
+      const SESSION_KEY = "career-workbook-session-v2";
+      const DEMO_SUBS_KEY = "career-workbook-demo-subs-v1";
+      const DEMO_ID = "TEST";
+      const DEMO_PW = "1234";
+
+      const $ = (id) => document.getElementById(id);
+      const views = {
+        landing: $("viewLanding"),
+        teacher: $("viewTeacher"),
+        student: $("viewStudent")
+      };
+
+      let sb = null;
+      let session = null;
+      let lessons = [];
+      let selectedLessonId = null;
+      let realtimeChannel = null;
+      let toastTimer = 0;
+      let studentLesson = null;
+
+      const hasSupabase = () =>
+        !!(CONFIG.SUPABASE_URL && CONFIG.SUPABASE_ANON_KEY && window.supabase);
+
+      function initSupabase() {
+        if (!hasSupabase()) return null;
+        sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+          auth: { persistSession: true, autoRefreshToken: true }
+        });
+        return sb;
+      }
+
+      function toast(message) {
+        const el = $("toast");
+        el.textContent = message;
+        el.classList.add("is-show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.classList.remove("is-show"), 2800);
+      }
+
+      function setMsg(el, text, type) {
+        el.textContent = text || "";
+        el.classList.remove("is-error", "is-ok");
+        if (type) el.classList.add(type === "error" ? "is-error" : "is-ok");
+      }
+
+      function showView(name) {
+        Object.entries(views).forEach(([key, el]) => {
+          el.classList.toggle("is-active", key === name);
+        });
+      }
+
+      function getQueryToken() {
+        const params = new URLSearchParams(location.search);
+        const t = params.get("t");
+        if (t) return t.trim();
+        const hash = location.hash || "";
+        const m = hash.match(/^#\/s\/([^/?#]+)/);
+        return m ? decodeURIComponent(m[1]) : "";
+      }
+
+      function studentUrl(token) {
+        const u = new URL(location.href);
+        u.search = "";
+        u.hash = "";
+        u.searchParams.set("t", token);
+        return u.toString();
+      }
+
+      function demoToken(n) {
+        return "demo-" + String(n).padStart(2, "0") + "-career2027";
+      }
+
+      function buildDemoLessons() {
+        return Array.from({ length: 30 }, (_, i) => {
+          const session_no = i + 1;
+          return {
+            id: "demo-lesson-" + session_no,
+            session_no,
+            token: demoToken(session_no),
+            class_id: "demo-class"
+          };
+        });
+      }
+
+      function loadDemoSubs() {
+        try {
+          return JSON.parse(localStorage.getItem(DEMO_SUBS_KEY) || "{}") || {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveDemoSubs(map) {
+        localStorage.setItem(DEMO_SUBS_KEY, JSON.stringify(map));
+      }
+
+      function getDemoSubsForLesson(lessonId) {
+        const map = loadDemoSubs();
+        return Array.isArray(map[lessonId]) ? map[lessonId] : [];
+      }
+
+      function addDemoSub(lessonId, row) {
+        const map = loadDemoSubs();
+        const list = Array.isArray(map[lessonId]) ? map[lessonId] : [];
+        list.unshift(row);
+        map[lessonId] = list;
+        saveDemoSubs(map);
+      }
+
+      function getSession() {
+        try {
+          return JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+        } catch {
+          return null;
+        }
+      }
+
+      function setSession(next) {
+        session = next;
+        if (!next) localStorage.removeItem(SESSION_KEY);
+        else localStorage.setItem(SESSION_KEY, JSON.stringify(next));
+      }
+
+      function showWelcome(s) {
+        $("authForm").classList.add("is-hidden");
+        $("welcome").classList.add("is-visible");
+        const label = s.demo ? s.name : (s.email || s.name || "교사");
+        const local = String(label).split("@")[0];
+        $("welcomeAvatar").textContent = (local[0] || "T").toUpperCase();
+        $("welcomeTitle").textContent = `${local} 님, 환영합니다`;
+        $("welcomeEmail").textContent = s.demo
+          ? "테스트 교사 계정 (데모 모드)"
+          : (s.email || "");
+        setMsg($("authMsg"), "");
+      }
+
+      function showLogin() {
+        $("welcome").classList.remove("is-visible");
+        $("authForm").classList.remove("is-hidden");
+        $("password").value = "";
+      }
+
+      function isDemoLogin(id, pw) {
+        return id.trim().toUpperCase() === DEMO_ID && pw === DEMO_PW;
+      }
+
+      function validateLogin(id, password) {
+        if (!id.trim()) return "아이디 또는 이메일을 입력해 주세요.";
+        if (!password) return "비밀번호를 입력해 주세요.";
+        if (isDemoLogin(id, password)) return "";
+        if (id.includes("@") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(id.trim())) {
+          return "올바른 이메일 형식을 입력해 주세요.";
+        }
+        if (password.length < 4) return "비밀번호는 4자 이상으로 입력해 주세요.";
+        return "";
+      }
+
+      async function ensureTeacherClassSeeded() {
+        if (!sb || !session || session.demo) return;
+        const { data: classes, error } = await sb
+          .from("classes")
+          .select("id")
+          .eq("teacher_id", session.userId)
+          .limit(1);
+        if (error) throw error;
+        if (classes && classes.length) return classes[0].id;
+
+        const { data: created, error: cErr } = await sb
+          .from("classes")
+          .insert({ teacher_id: session.userId, title: "AI와 함께 하는 고교학점제 진로설계" })
+          .select("id")
+          .single();
+        if (cErr) throw cErr;
+
+        const rows = Array.from({ length: 30 }, (_, i) => ({
+          class_id: created.id,
+          session_no: i + 1,
+          token: cryptoRandomToken()
+        }));
+        const { error: lErr } = await sb.from("lessons").insert(rows);
+        if (lErr) throw lErr;
+        return created.id;
+      }
+
+      function cryptoRandomToken() {
+        const arr = new Uint8Array(16);
+        crypto.getRandomValues(arr);
+        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      async function loadLessons() {
+        if (!session) return;
+        if (session.demo) {
+          lessons = buildDemoLessons();
+          return;
+        }
+        await ensureTeacherClassSeeded();
+        const { data: classes, error: cErr } = await sb
+          .from("classes")
+          .select("id")
+          .eq("teacher_id", session.userId)
+          .limit(1);
+        if (cErr) throw cErr;
+        if (!classes?.length) {
+          lessons = [];
+          return;
+        }
+        const { data, error } = await sb
+          .from("lessons")
+          .select("id, class_id, session_no, token")
+          .eq("class_id", classes[0].id)
+          .order("session_no", { ascending: true });
+        if (error) throw error;
+        lessons = data || [];
+      }
+
+      async function countSubs(lessonId) {
+        if (session?.demo) return getDemoSubsForLesson(lessonId).length;
+        const { count, error } = await sb
+          .from("submissions")
+          .select("id", { count: "exact", head: true })
+          .eq("lesson_id", lessonId);
+        if (error) return 0;
+        return count || 0;
+      }
+
+      async function renderLessonList() {
+        const root = $("lessonList");
+        root.innerHTML = "";
+        $("lessonCountLabel").textContent = `${lessons.length}차시`;
+
+        for (const lesson of lessons) {
+          const count = await countSubs(lesson.id);
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
+          btn.dataset.id = lesson.id;
+          btn.innerHTML = `
+            <div class="lesson-qr" data-qr="${lesson.token}"></div>
+            <div class="lesson-meta">
+              <strong>${lesson.session_no}차시</strong>
+              <small>QR 스캔으로 제출</small>
+            </div>
+            <span class="lesson-count">${count}</span>`;
+          btn.addEventListener("click", () => selectLesson(lesson.id));
+          root.appendChild(btn);
+          paintQr(btn.querySelector("[data-qr]"), studentUrl(lesson.token), 52);
+        }
+      }
+
+      function paintQr(el, text, size) {
+        if (!el || !window.QRCode) return;
+        el.innerHTML = "";
+        QRCode.toCanvas(text, { width: size, margin: 1, color: { dark: "#1F1E1D", light: "#FFFFFF" } }, (err, canvas) => {
+          if (err) {
+            el.textContent = "QR";
+            return;
+          }
+          el.appendChild(canvas);
+        });
+      }
+
+      async function fetchSubmissions(lessonId) {
+        if (session?.demo) {
+          return getDemoSubsForLesson(lessonId).slice().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
+        }
+        const { data, error } = await sb
+          .from("submissions")
+          .select("id, student_no, student_name, content, created_at")
+          .eq("lesson_id", lessonId)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        return data || [];
+      }
+
+      function formatTime(iso) {
+        try {
+          const d = new Date(iso);
+          return d.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+        } catch {
+          return "";
+        }
+      }
+
+      async function renderDetail(lesson) {
+        const card = $("detailCard");
+        if (!lesson) {
+          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 QR과 제출 목록이 표시됩니다.</p>`;
+          return;
+        }
+        const url = studentUrl(lesson.token);
+        const subs = await fetchSubmissions(lesson.id);
+        card.innerHTML = `
+          <div class="detail-top">
+            <div class="detail-qr-lg" id="detailQr"></div>
+            <div class="detail-info">
+              <h3>${lesson.session_no}차시 QR</h3>
+              <p>${url}</p>
+              <div class="detail-actions">
+                <button type="button" class="btn btn-primary" id="btnCopyLink">링크 복사</button>
+                <button type="button" class="btn btn-secondary" id="btnRefreshSubs">새로고침</button>
+              </div>
+            </div>
+          </div>
+          <div class="dash-head" style="margin-top:4px">
+            <h2 style="font-size:18px">제출 목록</h2>
+            <span id="subCountLabel">${subs.length}건</span>
+          </div>
+          <div class="sub-list" id="subList"></div>`;
+
+        paintQr($("detailQr"), url, 148);
+        $("btnCopyLink").addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(url);
+            toast("제출 링크를 복사했습니다.");
+          } catch {
+            toast(url);
+          }
+        });
+        $("btnRefreshSubs").addEventListener("click", () => selectLesson(lesson.id, true));
+
+        const list = $("subList");
+        if (!subs.length) {
+          list.innerHTML = `<p class="sub-empty">아직 제출이 없습니다. 학생 QR을 스캔해 제출하면 여기에 자동으로 나타납니다.</p>`;
+          return;
+        }
+        list.innerHTML = subs.map((s) => `
+          <article class="sub-card">
+            <header>
+              <span>${escapeHtml(s.student_no)} · ${escapeHtml(s.student_name)}</span>
+              <time>${formatTime(s.created_at)}</time>
+            </header>
+            <div class="body">${escapeHtml(s.content)}</div>
+          </article>`).join("");
+      }
+
+      function escapeHtml(str) {
+        return String(str ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      async function selectLesson(lessonId, silent) {
+        selectedLessonId = lessonId;
+        const lesson = lessons.find((l) => l.id === lessonId);
+        document.querySelectorAll(".lesson-item").forEach((el) => {
+          el.classList.toggle("is-active", el.dataset.id === lessonId);
+        });
+        await renderDetail(lesson);
+        if (!silent) {
+          const countEls = document.querySelectorAll(".lesson-item");
+          for (const el of countEls) {
+            const id = el.dataset.id;
+            const n = await countSubs(id);
+            const badge = el.querySelector(".lesson-count");
+            if (badge) badge.textContent = String(n);
+          }
+        }
+        subscribeRealtime(lessonId);
+      }
+
+      function unsubscribeRealtime() {
+        if (realtimeChannel && sb) {
+          sb.removeChannel(realtimeChannel);
+          realtimeChannel = null;
+        }
+      }
+
+      function subscribeRealtime(lessonId) {
+        unsubscribeRealtime();
+        if (!sb || session?.demo || !lessonId) return;
+        realtimeChannel = sb
+          .channel("subs-" + lessonId)
+          .on(
+            "postgres_changes",
+            { event: "INSERT", schema: "public", table: "submissions", filter: `lesson_id=eq.${lessonId}` },
+            () => {
+              selectLesson(lessonId, true);
+              renderLessonList();
+            }
+          )
+          .subscribe();
+      }
+
+      async function openTeacherDashboard() {
+        try {
+          showView("teacher");
+          $("teacherBarTitle").textContent = session.demo
+            ? "테스트 교사 · 30차시 QR"
+            : "30차시 QR · 제출 현황";
+          await loadLessons();
+          await renderLessonList();
+          if (lessons.length) await selectLesson(lessons[0].id);
+        } catch (e) {
+          console.error(e);
+          toast("대시보드를 불러오지 못했습니다: " + (e.message || e));
+        }
+      }
+
+      async function login() {
+        const id = $("loginId").value.trim();
+        const password = $("password").value;
+        const err = validateLogin(id, password);
+        if (err) return setMsg($("authMsg"), err, "error");
+
+        if (isDemoLogin(id, password)) {
+          const next = { demo: true, name: DEMO_ID, email: DEMO_ID, at: Date.now() };
+          setSession(next);
+          showWelcome(next);
+          toast("테스트 계정으로 로그인되었습니다.");
+          return;
+        }
+
+        if (!hasSupabase()) {
+          setMsg($("authMsg"), "Supabase 설정이 없어 테스트 계정(TEST/1234)만 사용할 수 있습니다.", "error");
+          return;
+        }
+
+        if (!id.includes("@")) {
+          setMsg($("authMsg"), "Supabase 로그인은 이메일이 필요합니다. 테스트는 TEST/1234를 사용해 주세요.", "error");
+          return;
+        }
+
+        const { data, error } = await sb.auth.signInWithPassword({
+          email: id.toLowerCase(),
+          password
+        });
+        if (error) {
+          setMsg($("authMsg"), error.message || "로그인에 실패했습니다.", "error");
+          return;
+        }
+        const next = {
+          demo: false,
+          userId: data.user.id,
+          email: data.user.email,
+          name: data.user.email,
+          at: Date.now()
+        };
+        setSession(next);
+        showWelcome(next);
+        toast("로그인되었습니다.");
+      }
+
+      async function signup() {
+        const id = $("loginId").value.trim();
+        const password = $("password").value;
+
+        if (isDemoLogin(id, password)) {
+          return login();
+        }
+
+        if (!hasSupabase()) {
+          setMsg($("authMsg"), "회원가입은 Supabase URL/키 설정 후 이용할 수 있습니다. 테스트는 TEST/1234.", "error");
+          return;
+        }
+        if (!id.includes("@")) {
+          setMsg($("authMsg"), "회원가입은 이메일 주소를 입력해 주세요.", "error");
+          return;
+        }
+        if (password.length < 4) {
+          setMsg($("authMsg"), "비밀번호는 4자 이상으로 입력해 주세요.", "error");
+          return;
+        }
+
+        const { data, error } = await sb.auth.signUp({
+          email: id.toLowerCase(),
+          password,
+          options: { data: { display_name: id.split("@")[0] } }
+        });
+        if (error) {
+          setMsg($("authMsg"), error.message || "회원가입에 실패했습니다.", "error");
+          return;
+        }
+        if (!data.session) {
+          setMsg($("authMsg"), "가입 확인 메일을 확인해 주세요. (이메일 확인이 켜져 있는 경우)", "ok");
+          toast("회원가입 요청이 접수되었습니다.");
+          return;
+        }
+        const next = {
+          demo: false,
+          userId: data.user.id,
+          email: data.user.email,
+          name: data.user.email,
+          at: Date.now()
+        };
+        setSession(next);
+        try { await ensureTeacherClassSeeded(); } catch (e) { console.warn(e); }
+        showWelcome(next);
+        toast("회원가입 완료 · 30차시 QR이 준비됩니다.");
+      }
+
+      async function logout() {
+        unsubscribeRealtime();
+        if (sb && !session?.demo) {
+          try { await sb.auth.signOut(); } catch (_) {}
+        }
+        setSession(null);
+        lessons = [];
+        selectedLessonId = null;
+        showLogin();
+        showView("landing");
+        toast("로그아웃되었습니다.");
+      }
+
+      async function openStudent(token) {
+        showView("student");
+        studentLesson = null;
+        setMsg($("studentMsg"), "");
+
+        if (token.startsWith("demo-")) {
+          const m = token.match(/^demo-(\d{2})-career2027$/);
+          const no = m ? parseInt(m[1], 10) : NaN;
+          if (!no || no < 1 || no > 30) {
+            $("studentTitle").textContent = "유효하지 않은 QR";
+            $("studentSub").textContent = "교사에게 새 QR을 요청해 주세요.";
+            $("studentForm").style.display = "none";
+            return;
+          }
+          studentLesson = {
+            id: "demo-lesson-" + no,
+            session_no: no,
+            token,
+            demo: true
+          };
+        } else if (hasSupabase()) {
+          const { data, error } = await sb.rpc("get_lesson_by_token", { p_token: token });
+          const row = Array.isArray(data) ? data[0] : data;
+          if (error || !row) {
+            $("studentTitle").textContent = "유효하지 않은 QR";
+            $("studentSub").textContent = "교사에게 새 QR을 요청해 주세요.";
+            $("studentForm").style.display = "none";
+            return;
+          }
+          studentLesson = { ...row, token, demo: false };
+        } else {
+          $("studentTitle").textContent = "서버 미연결";
+          $("studentSub").textContent = "데모 QR(demo-01-…)만 사용할 수 있습니다.";
+          $("studentForm").style.display = "none";
+          return;
+        }
+
+        $("studentForm").style.display = "";
+        $("studentSessionChip").textContent = `${studentLesson.session_no}차시`;
+        $("studentTitle").textContent = `${studentLesson.session_no}차시 자료 제출`;
+        $("studentSub").textContent = "학번·이름과 함께 이번 차시 자료를 제출해 주세요. 제출 즉시 교사 화면에 표시됩니다.";
+      }
+
+      async function submitStudent(e) {
+        e.preventDefault();
+        if (!studentLesson) return;
+        const student_no = $("studentNo").value.trim();
+        const student_name = $("studentName").value.trim();
+        const content = $("studentContent").value.trim();
+        if (!student_no || !student_name || !content) {
+          setMsg($("studentMsg"), "모든 항목을 입력해 주세요.", "error");
+          return;
+        }
+
+        const btn = $("btnStudentSubmit");
+        btn.disabled = true;
+        try {
+          const row = {
+            id: cryptoRandomToken(),
+            lesson_id: studentLesson.id,
+            student_no,
+            student_name,
+            content,
+            created_at: new Date().toISOString()
+          };
+
+          if (studentLesson.demo || studentLesson.id.startsWith("demo-")) {
+            addDemoSub(studentLesson.id, row);
+            setMsg($("studentMsg"), "제출되었습니다. 감사합니다!", "ok");
+            toast("제출 완료");
+            $("studentContent").value = "";
+          } else {
+            const { error } = await sb.from("submissions").insert({
+              lesson_id: studentLesson.id,
+              student_no,
+              student_name,
+              content
+            });
+            if (error) throw error;
+            setMsg($("studentMsg"), "제출되었습니다. 감사합니다!", "ok");
+            toast("제출 완료");
+            $("studentContent").value = "";
+          }
+        } catch (err) {
+          console.error(err);
+          setMsg($("studentMsg"), err.message || "제출에 실패했습니다.", "error");
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      // Events
+      $("loginForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        login();
+      });
+      $("btnSignup").addEventListener("click", () => signup());
+      $("btnFindPw").addEventListener("click", () => {
+        toast("비밀번호 찾기는 Supabase 이메일 재설정으로 연결됩니다. 테스트 계정은 TEST/1234 입니다.");
+      });
+      $("btnLogout").addEventListener("click", () => logout());
+      $("btnTeacherLogout").addEventListener("click", () => logout());
+      $("btnBackLanding").addEventListener("click", () => {
+        unsubscribeRealtime();
+        showView("landing");
+        if (session) showWelcome(session);
+      });
+      $("btnStart").addEventListener("click", () => openTeacherDashboard());
+      $("studentForm").addEventListener("submit", submitStudent);
+
+      window.addEventListener("storage", (e) => {
+        if (e.key === DEMO_SUBS_KEY && session?.demo && selectedLessonId) {
+          selectLesson(selectedLessonId, true);
+          renderLessonList();
+        }
+      });
+
+      // Demo same-tab sync via custom polling light touch
+      setInterval(() => {
+        if (views.teacher.classList.contains("is-active") && session?.demo && selectedLessonId) {
+          renderDetail(lessons.find((l) => l.id === selectedLessonId));
+          document.querySelectorAll(".lesson-item").forEach(async (el) => {
+            const n = await countSubs(el.dataset.id);
+            const badge = el.querySelector(".lesson-count");
+            if (badge && badge.textContent !== String(n)) badge.textContent = String(n);
+          });
+        }
+      }, 2500);
+
+      // Boot
+      initSupabase();
+      session = getSession();
+
+      const token = getQueryToken();
+      if (token) {
+        openStudent(token);
+        return;
+      }
+
+      showView("landing");
+      if (session) showWelcome(session);
+    })();
+  </script>
+</body>
+</html>
