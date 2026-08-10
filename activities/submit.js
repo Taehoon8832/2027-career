@@ -16,6 +16,18 @@
       auth: { persistSession: false, autoRefreshToken: false }
     });
 
+  function prefillCodeFromUrl() {
+    try {
+      const code = new URLSearchParams(location.search).get("code");
+      if (code) {
+        const input = document.getElementById("submitCodeInput");
+        if (input) input.value = String(code).trim().toUpperCase();
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
   function ensureUi() {
     if (document.getElementById("submitOverlay")) return;
 
@@ -48,14 +60,14 @@
     overlay.innerHTML = `
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="submitTitle">
         <h3 id="submitTitle">활동 제출</h3>
-        <p class="sub">${sessionNo}차시 결과물을 교사용 수업코드로 전송합니다.</p>
+        <p class="sub">${sessionNo}차시 전용 제출코드를 입력해 주세요. (차시마다 코드가 다릅니다)</p>
         <div class="field">
-          <label for="classCodeInput">수업 코드</label>
-          <input id="classCodeInput" type="text" autocomplete="off" placeholder="교사가 알려준 수업코드" />
+          <label for="submitCodeInput">제출 코드</label>
+          <input id="submitCodeInput" type="text" autocomplete="off" placeholder="교사가 알려준 이 차시 제출코드" maxlength="16" />
         </div>
         <div class="field">
-          <label for="studentNoInput">학번</label>
-          <input id="studentNoInput" type="text" autocomplete="off" placeholder="예: 30101" />
+          <label for="studentNoInput">번호(명단)</label>
+          <input id="studentNoInput" type="text" autocomplete="off" placeholder="예: 7 (학급 명단 번호)" />
         </div>
         <div class="field">
           <label for="studentNameInput">이름</label>
@@ -71,7 +83,8 @@
 
     fab.addEventListener("click", () => {
       overlay.classList.add("is-open");
-      document.getElementById("classCodeInput")?.focus();
+      prefillCodeFromUrl();
+      document.getElementById("submitCodeInput")?.focus();
     });
     document.getElementById("btnCancelSubmit").addEventListener("click", () => {
       overlay.classList.remove("is-open");
@@ -84,6 +97,7 @@
       }
     });
     document.getElementById("btnConfirmSubmit").addEventListener("click", submitActivity);
+    prefillCodeFromUrl();
   }
 
   function setMsg(text, type) {
@@ -141,12 +155,12 @@
       return;
     }
 
-    const classCode = document.getElementById("classCodeInput").value.trim();
+    const submitCode = document.getElementById("submitCodeInput").value.trim();
     const studentNo = document.getElementById("studentNoInput").value.trim();
     const studentName = document.getElementById("studentNameInput").value.trim();
     const content = collectActivityHtml();
 
-    if (!classCode) return setMsg("수업 코드를 입력해 주세요.", "error");
+    if (!submitCode) return setMsg("제출 코드를 입력해 주세요.", "error");
     if (!studentNo) return setMsg("학번을 입력해 주세요.", "error");
     if (!studentName) return setMsg("이름을 입력해 주세요.", "error");
     if (!content) return setMsg("제출할 활동 내용이 없습니다.", "error");
@@ -156,24 +170,18 @@
     setMsg("전송 중…");
 
     try {
-      const { data, error } = await sb.rpc("get_lesson_by_class_code", {
-        p_class_code: classCode,
-        p_session_no: sessionNo
+      const { data, error } = await sb.rpc("submit_activity_by_code", {
+        p_submit_code: submitCode,
+        p_session_no: sessionNo,
+        p_student_no: studentNo,
+        p_student_name: studentName,
+        p_content: content
       });
       if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      if (!row?.id) {
-        setMsg("수업 코드가 올바르지 않거나 해당 차시를 찾을 수 없습니다.", "error");
+      if (!data) {
+        setMsg("제출에 실패했습니다. 제출 코드를 확인해 주세요.", "error");
         return;
       }
-
-      const { error: insertError } = await sb.from("submissions").insert({
-        lesson_id: row.id,
-        student_no: studentNo,
-        student_name: studentName,
-        content
-      });
-      if (insertError) throw insertError;
 
       setMsg("제출되었습니다. 교사 화면에 전송되었습니다.", "ok");
       setTimeout(() => {
@@ -182,7 +190,12 @@
       }, 1200);
     } catch (err) {
       console.error(err);
-      setMsg(err.message || "제출에 실패했습니다.", "error");
+      const msg = err.message || "제출에 실패했습니다.";
+      if (/schema cache|Could not find the function/i.test(msg)) {
+        setMsg("서버 함수가 없습니다. 교사에게 supabase-activity-submit.sql 실행을 요청해 주세요.", "error");
+      } else {
+        setMsg(msg, "error");
+      }
     } finally {
       btn.disabled = false;
     }

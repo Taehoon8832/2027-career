@@ -164,7 +164,7 @@ begin
     insert into public.students (class_id, student_no, student_name, sort_order)
     values (
       p_class_id,
-      lpad(i::text, 2, '0'),
+      i::text,
       '',
       i
     )

@@ -238,33 +238,91 @@
       background: var(--color-primary-50);
       color: var(--color-primary-700);
     }
+    .class-count-control {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      margin: 4px 0 12px;
+    }
+    .class-count-control .count-btn {
+      width: 40px; height: 40px; border-radius: 10px;
+      border: 1px solid var(--border-default); background: var(--bg-elevated);
+      color: var(--text-primary); font: 700 18px/1 var(--font-sans); cursor: pointer;
+    }
+    .class-count-control .count-btn:hover { border-color: var(--color-primary-300); }
+    .class-count-control .count-value {
+      min-width: 48px; text-align: center;
+      font: 700 22px/1 var(--font-sans); color: var(--color-primary-700);
+    }
+    .class-count-control .count-hint {
+      font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary);
+    }
     .roster-box { margin-top: 8px; }
     .roster-list {
-      display: grid; gap: 6px; max-height: 280px; overflow-y: auto;
-      margin: 8px 0 10px; padding-right: 2px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+      max-height: min(52vh, 420px);
+      overflow-y: auto;
+      margin: 8px 0 10px;
+      padding: 2px;
     }
-    .roster-item {
-      display: grid; grid-template-columns: 64px 1fr auto; gap: 8px; align-items: center;
-      padding: 8px 10px; border: 1px solid var(--border-default);
-      border-radius: var(--radius-md); background: var(--bg-subtle);
+    .roster-cell {
+      display: flex; flex-direction: column; gap: 6px;
+      padding: 8px;
+      border: 1px solid var(--border-default);
+      border-radius: 10px;
+      background: var(--bg-subtle);
+      min-height: 96px;
     }
-    .roster-item input {
-      width: 100%; height: 36px; border: 1px solid var(--border-default);
-      border-radius: 8px; padding: 0 10px; background: #fff;
-      font: 500 13px/1 var(--font-sans); color: var(--text-primary);
+    .roster-cell.has-sub {
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
     }
-    .roster-item .no {
-      font: 700 12px/1 var(--font-sans); color: var(--color-primary-700); text-align: center;
+    .roster-cell .no {
+      font: 700 12px/1 var(--font-sans); color: var(--color-primary-700);
     }
-    .roster-add {
-      display: grid; grid-template-columns: 88px 1fr auto; gap: 8px;
+    .roster-cell input {
+      width: 100%; height: 32px; border: 1px solid var(--border-default);
+      border-radius: 8px; padding: 0 8px; background: #fff;
+      font: 500 12px/1 var(--font-sans); color: var(--text-primary);
     }
-    .roster-add input {
-      height: 42px; border: 1px solid var(--border-default); border-radius: 10px;
-      padding: 0 12px; background: #fff; font: 500 13px/1 var(--font-sans);
+    .roster-cell .sub-meta {
+      display: flex; align-items: center; justify-content: space-between; gap: 4px;
+      font: 600 10px/1.2 var(--font-sans); color: var(--text-tertiary);
     }
-    @media (max-width: 640px) {
-      .roster-add { grid-template-columns: 1fr; }
+    .roster-cell .sub-meta button {
+      border: 0; background: transparent; color: var(--color-primary-700);
+      font: 700 10px/1 var(--font-sans); cursor: pointer; padding: 0;
+    }
+    .roster-cell .del {
+      align-self: flex-end; border: 0; background: transparent;
+      color: var(--text-tertiary); font: 600 10px/1 var(--font-sans); cursor: pointer;
+    }
+    .roster-actions {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .roster-preview {
+      margin-top: 12px; padding: 12px;
+      border: 1px solid var(--border-default);
+      border-radius: 12px; background: var(--bg-elevated);
+    }
+    .roster-preview[hidden] { display: none !important; }
+    .roster-preview h3 {
+      margin: 0 0 8px; font: 700 14px/1.3 var(--font-sans); color: var(--text-primary);
+    }
+    .roster-preview-list { display: grid; gap: 8px; max-height: 220px; overflow-y: auto; }
+    .roster-preview-item {
+      padding: 10px; border-radius: 10px; background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+    }
+    .roster-preview-item strong { font: 700 12px/1.3 var(--font-sans); }
+    .roster-preview-item p {
+      margin: 6px 0 0; font: 500 12px/1.45 var(--font-sans); color: var(--text-secondary);
+    }
+    @media (max-width: 720px) {
+      .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+    @media (max-width: 480px) {
+      .roster-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     }
     .auth-msg { min-height: 18px; margin: 8px 0 0; font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary); text-align: center; }
     .auth-msg.is-error { color: #B23A2C; }
@@ -732,13 +790,18 @@
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
           <h2>초기 설정 · 학급별</h2>
-          <p class="settings-sub">학년과 반을 고르면 학급마다 수업코드·30차시·기본 학생 30명이 만들어집니다.</p>
+          <p class="settings-sub">학년을 정하고 학급 수를 늘리거나 줄인 뒤 저장하세요. 반마다 별도 DB(수업코드·30차시·명단)가 만들어집니다. 학년을 바꾸면 다시 설정·저장해야 합니다.</p>
           <p class="settings-sub" style="margin-bottom:8px">학년</p>
           <div class="chip-row" id="classGradeChips"></div>
-          <p class="settings-sub" style="margin-bottom:8px">학급(반)</p>
-          <div class="chip-row" id="classNoChips"></div>
+          <p class="settings-sub" style="margin-bottom:8px">학급 수</p>
+          <div class="class-count-control" id="classCountControl">
+            <button type="button" class="count-btn" id="btnClassCountMinus" aria-label="학급 수 줄이기">−</button>
+            <span class="count-value" id="classCountValue">1</span>
+            <button type="button" class="count-btn" id="btnClassCountPlus" aria-label="학급 수 늘리기">+</button>
+            <span class="count-hint" id="classCountHint">1반만 사용</span>
+          </div>
           <button type="button" class="btn btn-primary" id="btnSaveClassSettings" style="width:100%">학급 저장</button>
-          <p class="settings-summary" id="classSettingsSummary">선택된 반이 없습니다.</p>
+          <p class="settings-summary" id="classSettingsSummary">학급을 저장해 주세요.</p>
 
           <div class="roster-box" id="rosterBox">
             <div class="dash-head" style="margin-top:18px">
@@ -748,10 +811,13 @@
             <p class="settings-sub" id="rosterClassLabel">저장된 학급을 선택한 뒤 명단을 관리하세요.</p>
             <div class="chip-row" id="rosterClassChips"></div>
             <div class="roster-list" id="rosterList"></div>
-            <div class="roster-add">
-              <input id="newStudentNo" type="text" placeholder="학번/번호" />
-              <input id="newStudentName" type="text" placeholder="이름" />
-              <button type="button" class="btn btn-secondary" id="btnAddStudent">추가</button>
+            <div class="roster-actions">
+              <button type="button" class="btn btn-secondary" id="btnAddStudent">+1명 추가</button>
+              <button type="button" class="btn btn-secondary" id="btnAddStudentRow">+5명(한 줄) 추가</button>
+            </div>
+            <div class="roster-preview" id="rosterPreview" hidden>
+              <h3 id="rosterPreviewTitle">제출 내용</h3>
+              <div class="roster-preview-list" id="rosterPreviewList"></div>
             </div>
           </div>
         </div>
@@ -884,25 +950,44 @@
       let classSettings = loadClassSettings();
       let rosterStudents = [];
       let rosterClassId = null;
+      let rosterSubMap = new Map();
+      const MAX_CLASS_COUNT = 10;
+
+      function clampClassCount(n) {
+        const v = Number(n) || 1;
+        return Math.min(MAX_CLASS_COUNT, Math.max(1, Math.floor(v)));
+      }
+
+      function classNosFromCount(count) {
+        const n = clampClassCount(count);
+        return Array.from({ length: n }, (_, i) => i + 1);
+      }
 
       function loadClassSettings() {
         try {
           const raw = JSON.parse(localStorage.getItem(CLASS_SETTINGS_KEY) || "null");
           if (!raw || typeof raw !== "object") {
-            return { mode: "class", classGrade: 1, classNos: [1] };
+            return { mode: "class", classGrade: 1, classCount: 1, needsResave: false };
+          }
+          let classCount = Number(raw.classCount);
+          if (!classCount && Array.isArray(raw.classNos) && raw.classNos.length) {
+            classCount = Math.max(...raw.classNos.map(Number).filter((n) => n >= 1));
           }
           return {
             mode: "class",
             classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
-            classNos: Array.isArray(raw.classNos) ? raw.classNos.map(Number).filter((n) => n >= 1 && n <= 10) : [1]
+            classCount: clampClassCount(classCount || 1),
+            needsResave: !!raw.needsResave
           };
         } catch {
-          return { mode: "class", classGrade: 1, classNos: [1] };
+          return { mode: "class", classGrade: 1, classCount: 1, needsResave: false };
         }
       }
 
       function saveClassSettings() {
         classSettings.mode = "class";
+        classSettings.classCount = clampClassCount(classSettings.classCount);
+        classSettings.needsResave = false;
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
       }
 
@@ -912,24 +997,27 @@
       }
 
       function formatClassSettingsSummary() {
-        const active = teacherClasses.filter((c) => c.is_active);
-        if (active.length) return "학급별 · " + active.map(unitLabel).join(", ");
-        const nos = (classSettings.classNos || []).slice().sort((a, b) => a - b);
-        if (!nos.length) return "선택된 학급이 없습니다.";
-        return `학급별 · ${classSettings.classGrade}학년 ` + nos.map((n) => `${n}반`).join(", ");
+        const active = teacherClasses.filter((c) => c.is_active && c.class_no);
+        if (active.length && !classSettings.needsResave) {
+          return "학급별 · " + active.map(unitLabel).join(", ");
+        }
+        const n = clampClassCount(classSettings.classCount);
+        if (classSettings.needsResave) {
+          return `${classSettings.classGrade}학년 · ${n}개 반(재저장 필요)`;
+        }
+        return `학급별 · ${classSettings.classGrade}학년 1~${n}반`;
       }
 
       function getClassPills() {
-        const active = teacherClasses.filter((c) => c.is_active);
+        const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (active.length) return active.map(unitLabel);
-        return (classSettings.classNos || [])
-          .slice()
-          .sort((a, b) => a - b)
-          .map((n) => `${classSettings.classGrade}학년 ${n}반`);
+        return classNosFromCount(classSettings.classCount).map(
+          (n) => `${classSettings.classGrade}학년 ${n}반`
+        );
       }
 
       function desiredUnitsFromSettings() {
-        return (classSettings.classNos || []).map((class_no) => ({
+        return classNosFromCount(classSettings.classCount).map((class_no) => ({
           mode: "class",
           grade: classSettings.classGrade,
           class_no,
@@ -941,9 +1029,18 @@
         return `class:${grade}:${classNo == null ? 0 : classNo}`;
       }
 
+      function normalizeStudentNo(no) {
+        const s = String(no ?? "").trim();
+        if (!s) return "";
+        const n = Number(s);
+        if (Number.isFinite(n) && String(n) === String(parseInt(s, 10))) return String(n);
+        return s.replace(/^0+(\d)/, "$1");
+      }
+
       function isClassSettingsReady() {
+        if (classSettings.needsResave) return false;
         if (teacherClasses.some((c) => c.is_active && c.class_no)) return true;
-        return (classSettings.classNos || []).length > 0;
+        return clampClassCount(classSettings.classCount) >= 1;
       }
 
       function updateSetupLaunchHint() {
@@ -976,9 +1073,9 @@
 
       function renderClassSettingsUI() {
         classSettings.mode = "class";
+        classSettings.classCount = clampClassCount(classSettings.classCount);
         const classGradeRoot = $("classGradeChips");
-        const classNoRoot = $("classNoChips");
-        if (!classGradeRoot || !classNoRoot) return;
+        if (!classGradeRoot) return;
 
         classGradeRoot.innerHTML = "";
         [1, 2, 3].forEach((g) => {
@@ -986,28 +1083,18 @@
           btn.type = "button";
           btn.className = "chip-toggle" + (classSettings.classGrade === g ? " is-on" : "");
           btn.textContent = `${g}학년`;
-          btn.addEventListener("click", () => {
-            classSettings.classGrade = g;
-            renderClassSettingsUI();
-          });
+          btn.addEventListener("click", () => changeClassGrade(g));
           classGradeRoot.appendChild(btn);
         });
 
-        classNoRoot.innerHTML = "";
-        for (let n = 1; n <= 10; n += 1) {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "chip-toggle" + (classSettings.classNos.includes(n) ? " is-on" : "");
-          btn.textContent = `${n}반`;
-          btn.addEventListener("click", () => {
-            if (classSettings.classNos.includes(n)) {
-              classSettings.classNos = classSettings.classNos.filter((x) => x !== n);
-            } else {
-              classSettings.classNos = [...classSettings.classNos, n].sort((a, b) => a - b);
-            }
-            renderClassSettingsUI();
-          });
-          classNoRoot.appendChild(btn);
+        const countEl = $("classCountValue");
+        const hintEl = $("classCountHint");
+        if (countEl) countEl.textContent = String(classSettings.classCount);
+        if (hintEl) {
+          const n = classSettings.classCount;
+          hintEl.textContent = n === 1
+            ? `${classSettings.classGrade}학년 1반만 사용`
+            : `${classSettings.classGrade}학년 1반~${n}반 (반마다 별도 DB)`;
         }
 
         $("classSettingsSummary").textContent = formatClassSettingsSummary();
@@ -1015,15 +1102,54 @@
         renderRosterClassChips();
       }
 
+      function changeClassGrade(g) {
+        if (classSettings.classGrade === g) return;
+        const savedGrade = teacherClasses.find((c) => c.is_active)?.grade;
+        const changingSaved = savedGrade != null && Number(savedGrade) !== g;
+        if (changingSaved) {
+          const ok = confirm(
+            `${g}학년으로 바꾸면 기존 학급 설정은 비활성되고 다시 저장해야 합니다. 계속할까요?`
+          );
+          if (!ok) {
+            renderClassSettingsUI();
+            return;
+          }
+        }
+        classSettings.classGrade = g;
+        classSettings.classCount = 1;
+        classSettings.needsResave = true;
+        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        $("rosterPreview")?.setAttribute("hidden", "");
+        toast("학년을 바꿨습니다. 학급 수를 정한 뒤 [학급 저장]을 눌러 주세요.");
+        renderClassSettingsUI();
+      }
+
+      function adjustClassCount(delta) {
+        const next = clampClassCount(classSettings.classCount + delta);
+        if (next === classSettings.classCount) {
+          if (delta > 0) toast(`학급은 최대 ${MAX_CLASS_COUNT}개까지입니다.`);
+          return;
+        }
+        classSettings.classCount = next;
+        classSettings.needsResave = true;
+        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        renderClassSettingsUI();
+      }
+
       function renderRosterClassChips() {
         const root = $("rosterClassChips");
         if (!root) return;
-        const active = teacherClasses.filter((c) => c.is_active && c.class_no);
+        const active = teacherClasses
+          .filter((c) => c.is_active && c.class_no && Number(c.grade) === Number(classSettings.classGrade))
+          .sort((a, b) => a.class_no - b.class_no);
         root.innerHTML = "";
         if (!active.length) {
-          $("rosterClassLabel").textContent = "학급을 저장하면 명단(기본 30명)을 관리할 수 있습니다.";
+          $("rosterClassLabel").textContent = classSettings.needsResave
+            ? "학년/학급 수를 바꾼 뒤 [학급 저장]을 눌러 주세요."
+            : "학급을 저장하면 명단(기본 30명 · 5열)을 관리할 수 있습니다.";
           $("rosterList").innerHTML = "";
           $("rosterCountLabel").textContent = "0명";
+          $("rosterPreview")?.setAttribute("hidden", "");
           return;
         }
         if (!rosterClassId || !active.some((c) => c.id === rosterClassId)) {
@@ -1033,16 +1159,19 @@
         }
         const current = active.find((c) => c.id === rosterClassId);
         $("rosterClassLabel").textContent = current
-          ? `${unitLabel(current)} 명단 · 기본 30명, 추가/삭제 가능`
-          : "명단을 관리할 학급을 선택하세요.";
+          ? `${unitLabel(current)} · 가로 5명씩 배치 · 차시 제출이 번호에 연결됩니다`
+          : "명단을 볼 학급을 선택하세요.";
 
         active.forEach((c) => {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
-          btn.textContent = unitLabel(c);
+          btn.textContent = `${c.class_no}반`;
           btn.addEventListener("click", () => {
             rosterClassId = c.id;
+            activeClassId = c.id;
+            teacherClass = c;
+            renderClassCode();
             loadRoster(c.id);
             renderRosterClassChips();
           });
@@ -1064,12 +1193,39 @@
 
         const rows = Array.from({ length: 30 }, (_, i) => ({
           class_id: classId,
-          student_no: String(i + 1).padStart(2, "0"),
+          student_no: String(i + 1),
           student_name: "",
           sort_order: i + 1
         }));
         const { error: insErr } = await sb.from("students").insert(rows);
         if (insErr) throw insErr;
+      }
+
+      async function loadRosterSubmissionMap(classId) {
+        rosterSubMap = new Map();
+        const { data: lessonRows, error: lErr } = await sb
+          .from("lessons")
+          .select("id, session_no")
+          .eq("class_id", classId);
+        if (lErr || !lessonRows?.length) return rosterSubMap;
+        const lessonMap = new Map(lessonRows.map((l) => [l.id, l.session_no]));
+        const ids = lessonRows.map((l) => l.id);
+        const { data: subs, error: sErr } = await sb
+          .from("submissions")
+          .select("id, lesson_id, student_no, student_name, content, created_at")
+          .in("lesson_id", ids)
+          .order("created_at", { ascending: false });
+        if (sErr) return rosterSubMap;
+        for (const s of subs || []) {
+          const key = normalizeStudentNo(s.student_no);
+          if (!key) continue;
+          if (!rosterSubMap.has(key)) rosterSubMap.set(key, []);
+          rosterSubMap.get(key).push({
+            ...s,
+            session_no: lessonMap.get(s.lesson_id) || null
+          });
+        }
+        return rosterSubMap;
       }
 
       async function loadRoster(classId) {
@@ -1083,7 +1239,22 @@
             .eq("class_id", classId)
             .order("sort_order", { ascending: true });
           if (error) throw error;
-          rosterStudents = data || [];
+          rosterStudents = (data || []).slice().sort((a, b) => {
+            const na = Number(normalizeStudentNo(a.student_no)) || a.sort_order;
+            const nb = Number(normalizeStudentNo(b.student_no)) || b.sort_order;
+            return na - nb;
+          });
+          await loadRosterSubmissionMap(classId);
+          // 제출된 이름이 있고 명단 이름이 비어 있으면 자동 반영
+          for (const s of rosterStudents) {
+            if (s.student_name) continue;
+            const subs = rosterSubMap.get(normalizeStudentNo(s.student_no)) || [];
+            const named = subs.find((x) => x.student_name);
+            if (named?.student_name) {
+              s.student_name = named.student_name;
+              await sb.from("students").update({ student_name: named.student_name }).eq("id", s.id);
+            }
+          }
           renderRosterList();
           renderRosterClassChips();
         } catch (e) {
@@ -1101,16 +1272,26 @@
         const root = $("rosterList");
         if (!root) return;
         $("rosterCountLabel").textContent = `${rosterStudents.length}명`;
+        $("rosterPreview")?.setAttribute("hidden", "");
         if (!rosterStudents.length) {
-          root.innerHTML = `<p class="settings-sub">학생이 없습니다. 아래에서 추가해 주세요.</p>`;
+          root.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">학생이 없습니다. 아래에서 추가해 주세요.</p>`;
           return;
         }
-        root.innerHTML = rosterStudents.map((s) => `
-          <div class="roster-item" data-id="${s.id}">
-            <div class="no">${escapeHtml(s.student_no)}</div>
-            <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name)}" placeholder="이름" />
-            <button type="button" class="btn-tiny" data-del="${s.id}">삭제</button>
-          </div>`).join("");
+        root.innerHTML = rosterStudents.map((s) => {
+          const key = normalizeStudentNo(s.student_no);
+          const subs = rosterSubMap.get(key) || [];
+          const labelNo = key || s.student_no;
+          return `
+          <div class="roster-cell${subs.length ? " has-sub" : ""}" data-id="${s.id}" data-no="${escapeHtml(key)}">
+            <div class="no">${escapeHtml(labelNo)}번</div>
+            <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" />
+            <div class="sub-meta">
+              <span>${subs.length ? `제출 ${subs.length}건` : "미제출"}</span>
+              ${subs.length ? `<button type="button" data-view="${escapeHtml(key)}">보기</button>` : ""}
+            </div>
+            <button type="button" class="del" data-del="${s.id}">삭제</button>
+          </div>`;
+        }).join("");
 
         root.querySelectorAll("input[data-name]").forEach((input) => {
           input.addEventListener("change", async () => {
@@ -1129,25 +1310,63 @@
             toast("학생을 삭제했습니다.");
           });
         });
+        root.querySelectorAll("button[data-view]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            showRosterStudentSubs(btn.getAttribute("data-view"));
+          });
+        });
+      }
+
+      function showRosterStudentSubs(studentNoKey) {
+        const preview = $("rosterPreview");
+        const list = $("rosterPreviewList");
+        const title = $("rosterPreviewTitle");
+        if (!preview || !list) return;
+        const subs = rosterSubMap.get(normalizeStudentNo(studentNoKey)) || [];
+        const student = rosterStudents.find(
+          (s) => normalizeStudentNo(s.student_no) === normalizeStudentNo(studentNoKey)
+        );
+        title.textContent = `${studentNoKey}번 ${student?.student_name || ""} · 제출 ${subs.length}건`.trim();
+        if (!subs.length) {
+          list.innerHTML = `<p class="settings-sub">아직 제출이 없습니다.</p>`;
+        } else {
+          list.innerHTML = subs.map((s) => `
+            <article class="roster-preview-item">
+              <strong>${s.session_no ? `${s.session_no}차시` : "차시"} · ${escapeHtml(s.student_name || "")}</strong>
+              <p>${escapeHtml(previewText(s.content, 160))}</p>
+              <p style="color:var(--text-tertiary)">${formatTime(s.created_at)}</p>
+            </article>`).join("");
+        }
+        preview.hidden = false;
+        preview.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+
+      async function addRosterStudents(count) {
+        if (!rosterClassId) return toast("먼저 학급을 저장·선택해 주세요.");
+        const used = new Set(rosterStudents.map((s) => normalizeStudentNo(s.student_no)));
+        let next = 1;
+        while (used.has(String(next))) next += 1;
+        const maxOrder = rosterStudents.reduce((m, s) => Math.max(m, Number(s.sort_order) || 0), 0);
+        const rows = [];
+        for (let i = 0; i < count; i += 1) {
+          while (used.has(String(next))) next += 1;
+          rows.push({
+            class_id: rosterClassId,
+            student_no: String(next),
+            student_name: "",
+            sort_order: maxOrder + i + 1
+          });
+          used.add(String(next));
+          next += 1;
+        }
+        const { error } = await sb.from("students").insert(rows);
+        if (error) return toast("추가 실패: " + (error.message || "중복 번호일 수 있습니다."));
+        await loadRoster(rosterClassId);
+        toast(`${count}명을 추가했습니다.`);
       }
 
       async function addRosterStudent() {
-        if (!rosterClassId) return toast("먼저 학급을 저장·선택해 주세요.");
-        const no = ($("newStudentNo").value || "").trim();
-        const name = ($("newStudentName").value || "").trim();
-        if (!no) return toast("학번/번호를 입력해 주세요.");
-        const maxOrder = rosterStudents.reduce((m, s) => Math.max(m, Number(s.sort_order) || 0), 0);
-        const { error } = await sb.from("students").insert({
-          class_id: rosterClassId,
-          student_no: no,
-          student_name: name,
-          sort_order: maxOrder + 1
-        });
-        if (error) return toast("추가 실패: " + (error.message || "중복 번호일 수 있습니다."));
-        $("newStudentNo").value = "";
-        $("newStudentName").value = "";
-        await loadRoster(rosterClassId);
-        toast("학생을 추가했습니다.");
+        return addRosterStudents(1);
       }
 
       function setDashPanel(panel) {
@@ -1289,11 +1508,19 @@
         return u.toString();
       }
 
-      function activityUrl(sessionNo) {
+      function activityUrl(sessionNo, submitCode) {
         const file = String(sessionNo).padStart(2, "0") + ".html";
         const path = location.pathname.replace(/index\.html$/i, "");
         const root = path.endsWith("/") ? path : path.replace(/[^/]+$/, "");
-        return `${location.origin}${root}activities/${file}`;
+        let url = `${location.origin}${root}activities/${file}`;
+        if (submitCode) url += `?code=${encodeURIComponent(String(submitCode).toUpperCase())}`;
+        return url;
+      }
+
+      function generateSubmitCode() {
+        const arr = new Uint8Array(5);
+        crypto.getRandomValues(arr);
+        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 8).toUpperCase();
       }
 
       function looksLikeHtml(content) {
@@ -1400,14 +1627,44 @@
           .select("id", { count: "exact", head: true })
           .eq("class_id", classId);
         if (error) throw error;
-        if (count && count >= 30) return;
-        const rows = Array.from({ length: 30 }, (_, i) => ({
-          class_id: classId,
-          session_no: i + 1,
-          token: cryptoRandomToken()
-        }));
-        const { error: lErr } = await sb.from("lessons").insert(rows);
-        if (lErr && !/duplicate|unique/i.test(lErr.message || "")) throw lErr;
+        if (!count || count < 30) {
+          const rows = Array.from({ length: 30 }, (_, i) => ({
+            class_id: classId,
+            session_no: i + 1,
+            token: cryptoRandomToken(),
+            submit_code: generateSubmitCode()
+          }));
+          const { error: lErr } = await sb.from("lessons").insert(rows);
+          if (lErr && !/duplicate|unique/i.test(lErr.message || "")) throw lErr;
+        }
+        await ensureLessonSubmitCodes(classId);
+      }
+
+      async function ensureLessonSubmitCodes(classId) {
+        if (!sb || !classId) return;
+        const { data, error } = await sb
+          .from("lessons")
+          .select("id, token, submit_code")
+          .eq("class_id", classId);
+        if (error) {
+          // submit_code 컬럼이 아직 없으면 SQL 실행 필요
+          if (/submit_code/i.test(error.message || "")) {
+            console.warn("lessons.submit_code 없음 → supabase-activity-submit.sql 실행 필요");
+          }
+          return;
+        }
+        const missing = (data || []).filter((l) => !l.submit_code);
+        for (const row of missing) {
+          const code = (row.token || generateSubmitCode()).slice(0, 8).toUpperCase();
+          const { error: uErr } = await sb
+            .from("lessons")
+            .update({ submit_code: code })
+            .eq("id", row.id);
+          if (uErr) {
+            const retry = generateSubmitCode();
+            await sb.from("lessons").update({ submit_code: retry }).eq("id", row.id);
+          }
+        }
       }
 
       async function loadTeacherClassesFromDb() {
@@ -1423,17 +1680,14 @@
         teacherClasses = data || [];
 
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
-        if (active.length) {
+        if (active.length && !classSettings.needsResave) {
           classSettings.mode = "class";
           classSettings.classGrade = Number(active[0].grade) || 1;
-          classSettings.classNos = active
+          const nos = active
             .filter((c) => Number(c.grade) === classSettings.classGrade)
             .map((c) => Number(c.class_no))
-            .filter((n) => n >= 1 && n <= 10)
-            .sort((a, b) => a - b);
-          if (!classSettings.classNos.length) {
-            classSettings.classNos = active.map((c) => Number(c.class_no)).filter((n) => n >= 1 && n <= 10);
-          }
+            .filter((n) => n >= 1 && n <= MAX_CLASS_COUNT);
+          classSettings.classCount = clampClassCount(nos.length ? Math.max(...nos) : 1);
           saveClassSettings();
         }
 
@@ -1476,12 +1730,17 @@
           }
         }
 
-        // 예전 학년별 레코드는 비활성
+        // 예전 학년별·다른 학년 학급은 비활성
         await sb
           .from("classes")
           .update({ is_active: false })
           .eq("teacher_id", session.userId)
           .eq("mode", "grade");
+        await sb
+          .from("classes")
+          .update({ is_active: false })
+          .eq("teacher_id", session.userId)
+          .neq("grade", classSettings.classGrade);
 
         for (const unit of desired) {
           const key = unitKey("class", unit.grade, unit.class_no);
@@ -1595,7 +1854,7 @@
         if (teacherClass?.id) await seedLessonsForClass(teacherClass.id);
         const { data, error } = await sb
           .from("lessons")
-          .select("id, class_id, session_no, token")
+          .select("id, class_id, session_no, token, submit_code")
           .eq("class_id", classId)
           .order("session_no", { ascending: true });
         if (error) throw error;
@@ -1648,7 +1907,7 @@
               if (window.matchMedia("(max-width: 899px)").matches) setDashPanel("detail");
             });
             group.appendChild(btn);
-            paintQr(btn.querySelector("[data-qr]"), activityUrl(lesson.session_no), 44);
+            paintQr(btn.querySelector("[data-qr]"), activityUrl(lesson.session_no, lesson.submit_code), 44);
           }
           root.appendChild(group);
         }
@@ -1701,7 +1960,8 @@
         }
 
         const meta = getLessonMeta(lesson.session_no);
-        const url = activityUrl(lesson.session_no);
+        const submitCode = (lesson.submit_code || "").toUpperCase() || "--------";
+        const url = activityUrl(lesson.session_no, lesson.submit_code);
         const subs = await fetchSubmissions(lesson.id);
         const pills = getClassPills();
         card.innerHTML = `
@@ -1711,13 +1971,19 @@
           <span class="lesson-theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
           <h2 class="lesson-title">${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
           <p class="lesson-summary">${escapeHtml(meta.summary)}</p>
+          <div class="class-code-bar" style="margin:0 0 14px">
+            <span class="label">이 차시 제출코드</span>
+            <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
+            <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
+            <span class="hint">차시마다 다른 코드</span>
+          </div>
           <div class="detail-top">
             <div class="detail-qr-lg" id="detailQr"></div>
             <div class="detail-info">
               <h3>학생 활동 HTML</h3>
               <p>${escapeHtml(url)}</p>
               <p style="margin-top:-6px;color:var(--text-tertiary);font-size:12px">
-                학생이 활동지 우측 상단 <strong>제출하기</strong>에서 수업코드 <strong>${escapeHtml(teacherClass?.class_code || "--------")}</strong> 를 입력하면 이 화면에 전송됩니다.
+                QR을 찍거나 링크를 열면 제출코드가 자동 입력됩니다. 수동 제출 시에도 <strong>${escapeHtml(submitCode)}</strong> 를 입력하세요.
               </p>
               <div class="detail-actions">
                 <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
@@ -1742,11 +2008,19 @@
             toast(url);
           }
         });
+        $("btnCopySubmitCode")?.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(submitCode);
+            toast("제출코드를 복사했습니다.");
+          } catch {
+            toast(submitCode);
+          }
+        });
         $("btnRefreshSubs").addEventListener("click", () => selectLesson(lesson.id, true));
 
         const list = $("subList");
         if (!subs.length) {
-          list.outerHTML = `<p class="sub-empty">아직 제출이 없습니다. 학생이 활동지에서 수업코드로 제출하면 카드뉴스처럼 여기에 쌓입니다.</p>`;
+          list.outerHTML = `<p class="sub-empty">아직 제출이 없습니다. 학생이 이 차시 제출코드로 제출하면 여기에 표시됩니다.</p>`;
           return;
         }
         list.innerHTML = subs.map((s) => {
@@ -2049,10 +2323,13 @@
           console.warn(e);
         }
       });
+      $("btnClassCountMinus")?.addEventListener("click", () => adjustClassCount(-1));
+      $("btnClassCountPlus")?.addEventListener("click", () => adjustClassCount(1));
       $("btnAddStudent").addEventListener("click", () => addRosterStudent());
+      $("btnAddStudentRow")?.addEventListener("click", () => addRosterStudents(5));
       $("btnSaveClassSettings").addEventListener("click", async () => {
-        if (!classSettings.classNos.length) {
-          return toast("학급(반)을 하나 이상 선택해 주세요.");
+        if (!clampClassCount(classSettings.classCount)) {
+          return toast("학급 수를 1개 이상으로 설정해 주세요.");
         }
         const btn = $("btnSaveClassSettings");
         btn.disabled = true;
@@ -2068,7 +2345,7 @@
           await loadLessons();
           await renderLessonList();
           showRightPanel("setup");
-          toast("학급을 저장했습니다. 학급마다 수업코드·기본 학생 30명이 준비됩니다.");
+          toast(`학급 ${classSettings.classCount}개를 저장했습니다. 반마다 명단·차시 DB가 준비됩니다.`);
         } catch (e) {
           console.error(e);
           toast("저장 실패: " + (e.message || e) + " (supabase-students.sql 실행 여부 확인)");

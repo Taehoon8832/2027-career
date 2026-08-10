@@ -75,6 +75,7 @@ create table if not exists public.lessons (
   class_id uuid not null references public.classes (id) on delete cascade,
   session_no int not null check (session_no between 1 and 30),
   token text not null unique,
+  submit_code text unique,
   created_at timestamptz not null default now(),
   unique (class_id, session_no)
 );
