@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="./vendor/qrcode.min.js"></script>
   <!-- xlsx는 다운로드 시에만 지연 로드 -->
   <style>
     :root {
@@ -468,7 +468,7 @@
     }
     .detail-action-strip {
       display: grid;
-      grid-template-columns: 88px 1fr auto;
+      grid-template-columns: 148px 1fr auto;
       gap: 12px; align-items: center;
       margin-bottom: 12px; padding: 12px;
       border-radius: 14px;
@@ -479,10 +479,10 @@
     }
     .detail-action-strip .qr,
     .detail-action-strip a.qr {
-      width: 88px; height: 88px; border-radius: 10px;
+      width: 148px; height: 148px; border-radius: 12px;
       border: 2px solid #1f1e1d; background: #fff;
       display: grid; place-items: center; overflow: hidden;
-      padding: 6px; flex-shrink: 0;
+      padding: 12px; flex-shrink: 0;
       text-decoration: none; color: inherit;
       cursor: pointer; touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -496,10 +496,9 @@
     .detail-action-strip .qr img,
     .detail-action-strip .qr table,
     .detail-action-strip .qr .qr-img {
-      width: 100% !important; height: 100% !important;
       max-width: 100%; max-height: 100%;
       display: block; object-fit: contain;
-      pointer-events: none; /* 클릭은 링크가 받음 */
+      pointer-events: none;
       image-rendering: pixelated;
       image-rendering: crisp-edges;
     }
@@ -622,9 +621,9 @@
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .detail-action-strip { grid-template-columns: 88px 1fr; }
+      .detail-action-strip { grid-template-columns: 160px 1fr; }
       .detail-action-strip .qr,
-      .detail-action-strip a.qr { width: 88px; height: 88px; }
+      .detail-action-strip a.qr { width: 160px; height: 160px; padding: 12px; }
       .detail-action-strip .btns { grid-column: 1 / -1; flex-direction: row; }
     }
     @media (max-width: 560px) {
@@ -949,9 +948,9 @@
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
       .topbar-switcher select { height: 40px; font-size: 14px; }
-      .detail-action-strip { grid-template-columns: 96px 1fr auto; }
+      .detail-action-strip { grid-template-columns: 168px 1fr auto; }
       .detail-action-strip .qr,
-      .detail-action-strip a.qr { width: 96px; height: 96px; }
+      .detail-action-strip a.qr { width: 168px; height: 168px; padding: 12px; }
       .detail-action-strip .btns .btn { min-height: 46px; font-size: 14px; }
     }
     /* 폰·좁은 태블릿: 단일 패널 */
@@ -997,13 +996,14 @@
       .detail-filter { gap: 6px; padding: 8px; }
       .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
       .detail-action-strip {
-        grid-template-columns: 88px 1fr;
+        grid-template-columns: 160px 1fr;
         gap: 10px;
         padding: 12px;
       }
       .detail-action-strip .qr,
       .detail-action-strip a.qr {
-        width: 88px; height: 88px; min-width: 88px; min-height: 88px;
+        width: 160px; height: 160px; min-width: 160px; min-height: 160px;
+        padding: 12px;
       }
       .detail-action-strip .code-row strong { font-size: 16px; word-break: break-all; }
       .detail-action-strip .btns {
@@ -2652,17 +2652,88 @@ ${built.html}
           : `${location.origin}${base}activities/${file}`;
       }
 
-      /** 스캔 잘 되는 고해상도 QR (교사·활동지 동일 방식) */
-      function qrImageSrc(url, genPx) {
-        const px = Math.max(160, Number(genPx) || 200);
-        return (
-          "https://api.qrserver.com/v1/create-qr-code/?size=" +
-          px +
-          "x" +
-          px +
-          "&margin=14&ecc=H&qzone=2&data=" +
-          encodeURIComponent(String(url))
-        );
+      /**
+       * 스캔 가능한 선명 QR (로컬 qrcodejs 모듈 → 스트로크 없이 fill만 렌더)
+       * 외부 API 미사용 (학교망 차단·흐린 이미지 문제 방지)
+       */
+      function paintScannableQr(el, text, displaySize) {
+        if (!el || !text) return false;
+        const url = String(text).trim();
+        if (!url) return false;
+        if (typeof window.QRCode !== "function") return false;
+
+        // 표시 영역(패딩 제외)에 맞춰 정수 모듈로만 그려 카메라 인식률 확보
+        const boxPx = Math.max(140, Number(displaySize) || 148);
+        const pad = 12;
+        const quiet = 4;
+        const avail = Math.max(116, boxPx - pad * 2);
+
+        const host = document.createElement("div");
+        host.setAttribute("aria-hidden", "true");
+        host.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+        document.body.appendChild(host);
+
+        try {
+          const qr = new window.QRCode(host, {
+            text: url,
+            width: 256,
+            height: 256,
+            colorDark: "#000000",
+            colorLight: "#ffffff",
+            correctLevel: window.QRCode.CorrectLevel.M
+          });
+          const code = qr._oQRCode;
+          if (!code || typeof code.getModuleCount !== "function") {
+            throw new Error("QR modules unavailable");
+          }
+          const n = code.getModuleCount();
+          const modulePx = Math.max(4, Math.floor(avail / (n + quiet * 2)));
+          const canvasSize = modulePx * (n + quiet * 2);
+          const canvas = document.createElement("canvas");
+          canvas.width = canvasSize;
+          canvas.height = canvasSize;
+          canvas.setAttribute("role", "img");
+          canvas.setAttribute("aria-label", "활동지 QR");
+          const ctx = canvas.getContext("2d");
+          ctx.imageSmoothingEnabled = false;
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, canvasSize, canvasSize);
+          ctx.fillStyle = "#000000";
+          for (let r = 0; r < n; r++) {
+            for (let c = 0; c < n; c++) {
+              if (code.isDark(r, c)) {
+                ctx.fillRect(
+                  (c + quiet) * modulePx,
+                  (r + quiet) * modulePx,
+                  modulePx,
+                  modulePx
+                );
+              }
+            }
+          }
+          if (el.tagName === "A") {
+            el.href = url;
+            el.target = "_blank";
+            el.rel = "noopener noreferrer";
+          }
+          el.innerHTML = "";
+          el.title = "탭하여 활동지 열기";
+          el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+          el.dataset.qrUrl = url;
+          el.dataset.painted = "1";
+          canvas.className = "qr-img";
+          // CSS 스트레치 없이 픽셀 단위로 표시 → 흐림/안티앨리어싱 방지
+          canvas.style.cssText =
+            `display:block;width:${canvasSize}px;height:${canvasSize}px;max-width:100%;max-height:100%;image-rendering:pixelated;image-rendering:crisp-edges`;
+          el.appendChild(canvas);
+          try { qr.clear(); } catch { /* ignore */ }
+          return true;
+        } catch (e) {
+          console.warn("paintScannableQr failed", e);
+          return false;
+        } finally {
+          host.remove();
+        }
       }
 
       function generateSubmitCode() {
@@ -3123,53 +3194,26 @@ ${built.html}
 
       function paintQr(el, text, size) {
         if (!el || !text) return;
-        const displayPx = Math.max(72, Number(size) || 88);
-        const genPx = Math.max(220, displayPx * 2); // 고해상도 생성 → 축소 표시(스캔 선명)
+        const displayPx = Math.max(140, Number(size) || 148);
         const url = String(text).trim();
         if (el.tagName === "A") {
           el.href = url;
           el.target = "_blank";
           el.rel = "noopener noreferrer";
         }
-        el.innerHTML = "";
-        el.title = "탭하여 활동지 열기 · " + url;
+        el.title = "탭하여 활동지 열기";
         el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
         el.dataset.qrUrl = url;
 
-        const img = document.createElement("img");
-        img.alt = "활동지 QR";
-        img.width = genPx;
-        img.height = genPx;
-        img.decoding = "async";
-        img.referrerPolicy = "no-referrer";
-        img.draggable = false;
-        img.className = "qr-img";
-        img.src = qrImageSrc(url, genPx);
-        img.onerror = () => {
-          if (typeof window.QRCode !== "function") return;
-          try {
-            el.innerHTML = "";
-            // eslint-disable-next-line no-new
-            new window.QRCode(el, {
-              text: url,
-              width: genPx,
-              height: genPx,
-              colorDark: "#000000",
-              colorLight: "#ffffff",
-              correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.H : 2
-            });
-            const node = el.querySelector("canvas, img, table");
-            if (node) {
-              node.classList.add("qr-img");
-              node.style.width = "100%";
-              node.style.height = "100%";
-              node.style.display = "block";
-            }
-          } catch (e) {
-            console.warn("QR fallback failed", e);
-          }
-        };
-        el.appendChild(img);
+        const ok = paintScannableQr(el, url, displayPx);
+        if (ok) return;
+
+        // 라이브러리 지연 로드 대비 재시도
+        let tries = 0;
+        const timer = setInterval(() => {
+          tries += 1;
+          if (paintScannableQr(el, url, displayPx) || tries > 40) clearInterval(timer);
+        }, 80);
       }
 
       function formatTime(iso) {
@@ -3657,10 +3701,10 @@ ${built.html}
         if (qrEl) {
           qrEl.innerHTML = "";
           const qrSize = window.matchMedia("(max-width: 768px)").matches
-            ? 96
+            ? 160
             : window.matchMedia("(max-width: 1024px)").matches
-              ? 104
-              : 88;
+              ? 168
+              : 148;
           requestAnimationFrame(() => paintQr(qrEl, url, qrSize));
         }
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));

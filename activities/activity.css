@@ -107,13 +107,13 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 .hero-card .hero-qr,
 .hero-card a.hero-qr {
-  width: 108px; height: 108px;
+  width: 160px; height: 160px;
   border: 2px solid #111110;
   border-radius: 12px;
   background: #fff;
   display: grid; place-items: center;
   overflow: hidden;
-  padding: 8px;
+  padding: 12px;
   margin: 0 auto;
   text-decoration: none; color: inherit;
   cursor: pointer; touch-action: manipulation;
@@ -126,8 +126,8 @@ button, .submit-fab, a { touch-action: manipulation; }
 .hero-card .hero-qr img,
 .hero-card .hero-qr table,
 .hero-card .hero-qr .qr-img {
-  width: 100% !important;
-  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
   display: block;
   border: 0 !important;
   border-collapse: collapse;
@@ -167,7 +167,7 @@ button, .submit-fab, a { touch-action: manipulation; }
   body { font-size: 16px; }
   .field input, .field textarea, .field select { font-size: 16px; }
   .hero-card .hero-qr,
-  .hero-card a.hero-qr { width: 108px; height: 108px; }
+  .hero-card a.hero-qr { width: 168px; height: 168px; padding: 14px; }
   .submit-fab { min-height: 46px; font-size: 14px; padding: 0 16px; }
   .btn { min-height: 48px; }
 }
@@ -199,8 +199,8 @@ button, .submit-fab, a { touch-action: manipulation; }
   .hero-card p { font-size: 15px; line-height: 1.65; }
   .hero-card .hero-qr,
   .hero-card a.hero-qr {
-    width: 100px; height: 100px; min-width: 100px; min-height: 100px;
-    padding: 8px;
+    width: 160px; height: 160px; min-width: 160px; min-height: 160px;
+    padding: 12px;
   }
   .hero-card .hero-qr-cap { font-size: 10px; }
   .activity-card h2 { font-size: 17px; }
