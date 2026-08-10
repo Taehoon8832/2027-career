@@ -241,27 +241,55 @@
     .welcome .btn { width: 100%; margin-bottom: 8px; }
 
     /* Teacher dashboard */
+    .dash-mobile-tabs {
+      display: none; flex-shrink: 0; gap: 6px; padding: 10px 12px 0;
+      background: rgba(255,255,255,0.78);
+    }
+    .dash-mobile-tabs button {
+      flex: 1; height: 40px; border: 1px solid var(--border-default);
+      border-radius: var(--radius-md); background: var(--bg-elevated);
+      color: var(--text-secondary); font: 600 13px/1 var(--font-sans); cursor: pointer;
+    }
+    .dash-mobile-tabs button.is-active {
+      background: var(--color-primary-500); border-color: var(--color-primary-500);
+      color: var(--text-on-primary);
+    }
     .dash {
       flex: 1; min-height: 0; display: grid;
-      grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
       gap: 0; overflow: hidden;
     }
     .dash-list, .dash-detail {
       min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch;
-      padding: 16px;
+      padding: 14px 16px 20px;
     }
     .dash-list { border-right: 1px solid var(--border-default); background: rgba(250,249,245,0.7); }
     .dash-head {
       display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .dash-head h2 { font: 600 20px/1.3 var(--font-serif); letter-spacing: -0.02em; }
     .dash-head span { color: var(--text-tertiary); font: 500 12px/1 var(--font-sans); }
+    .month-group { margin-bottom: 14px; }
+    .month-label {
+      display: flex; flex-direction: column; gap: 2px;
+      margin: 4px 0 8px; padding: 8px 10px;
+      border-left: 3px solid var(--color-primary-500);
+      background: linear-gradient(90deg, var(--color-primary-50), transparent);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    }
+    .month-label strong {
+      font: 700 12px/1.3 var(--font-sans); color: var(--color-primary-700);
+      letter-spacing: 0.02em;
+    }
+    .month-label span {
+      font: 500 11px/1.35 var(--font-sans); color: var(--text-secondary);
+    }
     .lesson-item {
       width: 100%; text-align: left; display: grid;
-      grid-template-columns: 56px 1fr auto; gap: 12px; align-items: center;
-      padding: 12px; margin-bottom: 8px;
-      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      grid-template-columns: 48px 1fr auto; gap: 10px; align-items: center;
+      padding: 10px; margin-bottom: 6px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
       background: var(--bg-elevated); cursor: pointer;
       transition: border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce);
     }
@@ -272,36 +300,96 @@
       box-shadow: var(--shadow-sm);
     }
     .lesson-qr {
-      width: 56px; height: 56px; border-radius: 8px; background: #fff;
+      width: 48px; height: 48px; border-radius: 8px; background: #fff;
       border: 1px solid var(--border-default); display: grid; place-items: center; overflow: hidden;
     }
-    .lesson-qr canvas, .lesson-qr img { width: 52px !important; height: 52px !important; }
+    .lesson-qr canvas, .lesson-qr img { width: 44px !important; height: 44px !important; }
     .lesson-meta strong {
-      display: block; font: 600 14px/1.3 var(--font-sans); margin-bottom: 4px;
+      display: block; font: 600 13px/1.3 var(--font-sans); margin-bottom: 3px;
     }
-    .lesson-meta small { color: var(--text-tertiary); font: 500 11px/1.3 var(--font-sans); }
+    .lesson-meta small {
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+      overflow: hidden; color: var(--text-tertiary); font: 500 11px/1.35 var(--font-sans);
+    }
     .lesson-count {
-      min-width: 28px; height: 28px; padding: 0 8px; border-radius: var(--radius-full);
+      min-width: 26px; height: 26px; padding: 0 7px; border-radius: var(--radius-full);
       background: var(--color-primary-500); color: var(--text-on-primary);
-      display: grid; place-items: center; font: 700 12px/1 var(--font-sans);
+      display: grid; place-items: center; font: 700 11px/1 var(--font-sans);
+    }
+    .class-settings {
+      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      background: var(--bg-elevated); padding: 16px; margin-bottom: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+    .class-settings h2 {
+      font: 600 18px/1.3 var(--font-serif); margin-bottom: 4px;
+    }
+    .class-settings .settings-sub {
+      color: var(--text-tertiary); font: 500 12px/1.45 var(--font-sans); margin-bottom: 12px;
+    }
+    .seg {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+      padding: 4px; margin-bottom: 14px;
+      border-radius: var(--radius-md); background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+    }
+    .seg button {
+      height: 38px; border: 0; border-radius: 8px; background: transparent;
+      color: var(--text-secondary); font: 600 13px/1 var(--font-sans); cursor: pointer;
+    }
+    .seg button.is-active {
+      background: var(--color-primary-500); color: var(--text-on-primary);
+      box-shadow: var(--shadow-clay);
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .chip-toggle {
+      height: 36px; padding: 0 12px; border-radius: var(--radius-full);
+      border: 1px solid var(--border-default); background: var(--bg-elevated);
+      color: var(--text-secondary); font: 600 12px/1 var(--font-sans); cursor: pointer;
+    }
+    .chip-toggle.is-on {
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
+    }
+    .settings-panel[hidden] { display: none !important; }
+    .settings-summary {
+      margin-top: 4px; padding: 10px 12px; border-radius: var(--radius-md);
+      background: var(--bg-subtle); border: 1px dashed var(--border-default);
+      color: var(--text-secondary); font: 500 12px/1.45 var(--font-sans);
     }
     .detail-card {
       border: 1px solid var(--border-default); border-radius: var(--radius-lg);
       background: var(--bg-elevated); padding: 18px; box-shadow: var(--shadow-sm);
+    }
+    .lesson-theme {
+      display: inline-flex; align-items: center; gap: 6px;
+      margin-bottom: 8px; padding: 5px 10px;
+      border-radius: var(--radius-full);
+      background: var(--color-primary-50); color: var(--color-primary-700);
+      font: 600 11px/1.3 var(--font-sans);
+    }
+    .lesson-title {
+      font: 600 clamp(20px, 3vw, 26px)/1.3 var(--font-serif);
+      letter-spacing: -0.02em; margin: 0 0 10px;
+    }
+    .lesson-summary {
+      color: var(--text-secondary); font: 400 14px/1.7 var(--font-serif);
+      margin-bottom: 16px;
     }
     .detail-top {
       display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;
       margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border-default);
     }
     .detail-qr-lg {
-      width: 160px; height: 160px; border-radius: var(--radius-md);
+      width: 148px; height: 148px; border-radius: var(--radius-md);
       border: 1px solid var(--border-default); background: #fff;
       display: grid; place-items: center; flex-shrink: 0;
     }
-    .detail-qr-lg canvas, .detail-qr-lg img { width: 148px !important; height: 148px !important; }
-    .detail-info { flex: 1; min-width: 200px; }
-    .detail-info h3 { font: 600 22px/1.3 var(--font-serif); margin-bottom: 8px; }
-    .detail-info p { color: var(--text-secondary); font: 400 14px/1.6 var(--font-serif); margin-bottom: 12px; word-break: break-all; }
+    .detail-qr-lg canvas, .detail-qr-lg img { width: 136px !important; height: 136px !important; }
+    .detail-info { flex: 1; min-width: 180px; }
+    .detail-info h3 { font: 600 18px/1.3 var(--font-serif); margin-bottom: 8px; }
+    .detail-info p { color: var(--text-secondary); font: 400 13px/1.55 var(--font-sans); margin-bottom: 12px; word-break: break-all; }
     .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
     .sub-list { display: grid; gap: 10px; }
     .sub-empty {
@@ -366,15 +454,24 @@
         animation: none !important; opacity: 1 !important; transform: none !important;
       }
     }
+    @media (max-width: 1024px) {
+      .dash { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); }
+    }
     @media (max-width: 899px) {
       .hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 18px 20px; border-radius: var(--radius-lg); }
       .hero-copy h1 { font-size: clamp(26px, 7vw, 34px); }
+      .dash-mobile-tabs { display: flex; }
       .dash { grid-template-columns: 1fr; }
-      .dash-list { border-right: 0; border-bottom: 1px solid var(--border-default); max-height: 42vh; }
+      .dash-list, .dash-detail { border: 0; max-height: none; }
+      .dash[data-panel="list"] .dash-detail { display: none; }
+      .dash[data-panel="detail"] .dash-list { display: none; }
+      .detail-qr-lg { width: 132px; height: 132px; }
+      .detail-qr-lg canvas, .detail-qr-lg img { width: 120px !important; height: 120px !important; }
     }
     @media (max-width: 420px) {
       .topbar-title { display: none; }
       .auth-actions { grid-template-columns: 1fr; }
+      .class-code-bar .hint { display: none; }
     }
   </style>
 </head>
@@ -464,23 +561,46 @@
       <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
       <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
     </header>
-    <div class="dash">
+    <div class="dash-mobile-tabs" role="tablist" aria-label="대시보드 패널">
+      <button type="button" class="is-active" id="tabDashList" data-panel="list">차시 목록</button>
+      <button type="button" id="tabDashDetail" data-panel="detail">반 설정 · 콘텐츠</button>
+    </div>
+    <div class="dash" id="dashRoot" data-panel="list">
       <aside class="dash-list">
         <div class="class-code-bar" id="classCodeBar">
           <span class="label">수업코드</span>
           <strong id="classCodeValue">--------</strong>
           <button type="button" class="btn-tiny" id="btnCopyClassCode">복사</button>
-          <span class="hint">교사용 공유 코드 · 학생 제출은 차시별 QR</span>
+          <span class="hint">학생 제출은 차시별 QR</span>
         </div>
         <div class="dash-head">
-          <h2>차시 QR</h2>
+          <h2>30차시 워크북</h2>
           <span id="lessonCountLabel">30차시</span>
         </div>
         <div id="lessonList"></div>
       </aside>
       <section class="dash-detail">
+        <div class="class-settings" id="classSettings">
+          <h2>반 설정</h2>
+          <p class="settings-sub">수업 대상 반을 학년별 또는 학급별로 지정합니다.</p>
+          <div class="seg" role="tablist" aria-label="반 설정 방식">
+            <button type="button" class="is-active" id="btnModeGrade" data-mode="grade">학년별</button>
+            <button type="button" id="btnModeClass" data-mode="class">학급별</button>
+          </div>
+          <div class="settings-panel" id="panelGrade">
+            <p class="settings-sub" style="margin-bottom:8px">운영할 학년을 선택하세요.</p>
+            <div class="chip-row" id="gradeChips"></div>
+          </div>
+          <div class="settings-panel" id="panelClass" hidden>
+            <p class="settings-sub" style="margin-bottom:8px">학년을 고른 뒤 학급(반)을 선택하세요.</p>
+            <div class="chip-row" id="classGradeChips"></div>
+            <div class="chip-row" id="classNoChips"></div>
+          </div>
+          <button type="button" class="btn btn-primary" id="btnSaveClassSettings" style="width:100%">설정 저장</button>
+          <p class="settings-summary" id="classSettingsSummary">선택된 반이 없습니다.</p>
+        </div>
         <div class="detail-card" id="detailCard">
-          <p class="sub-empty">왼쪽에서 차시를 선택하면 QR과 제출 목록이 표시됩니다.</p>
+          <p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출 목록이 표시됩니다.</p>
         </div>
       </section>
     </div>
@@ -528,6 +648,64 @@
       };
       /** 예전 합성 이메일 계정 호환용 */
       const AUTH_EMAIL_DOMAIN = "id.2027career.local";
+      const CLASS_SETTINGS_KEY = "career-class-settings-v1";
+
+      const MONTH_THEMES = [
+        { month: 3, label: "3월", theme: "진로 탐색과 AI 기초 역량 빌드업", sessions: [1, 2, 3, 4, 5] },
+        { month: 4, label: "4월", theme: "데이터 기반 진학 진단과 AI 노코딩 시각화", sessions: [6, 7, 8, 9] },
+        { month: 5, label: "5월", theme: "AI 대입 전략 진단과 데이터 분석 역량", sessions: [10, 11, 12] },
+        { month: 6, label: "6월", theme: "AI 융합 심화 탐구와 강력한 세특 빌드업", sessions: [13, 14, 15, 16] },
+        { month: 7, label: "7월", theme: "AI 모의 학종 진단과 방학 진로 플래닝", sessions: [17, 18, 19] },
+        { month: 8, label: "8월", theme: "진로 데이터 아카이빙과 대입 수시 매칭", sessions: [20, 21] },
+        { month: 9, label: "9월", theme: "디지털 진로 포트폴리오와 AI 웹 완성", sessions: [22, 23, 24, 25] },
+        { month: 10, label: "10월", theme: "AI 생기부 기반 대입 면접과 실전 스피치", sessions: [26, 27, 28] },
+        { month: 11, label: "11~12월", theme: "종합 성과 공유와 전인적 진로 회고", sessions: [29, 30] }
+      ];
+
+      const LESSON_CONTENT = {
+        1: { title: "디지털 나 사용 설명서", summary: "QR 스캔 한 번으로 학생들이 온라인 양식에 자아 탐색 데이터를 채우는 첫 시간 수업 치트키." },
+        2: { title: "내 손으로 짜는 교육과정 맵", summary: "우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습." },
+        3: { title: "전공 빙고 & 직업 월드컵", summary: "게임을 통해 1순위 관심 학과와 2순위 차순위 학과를 자연스럽게 도출하는 교실 흥미 유발 차시." },
+        4: { title: "목표 대학 입결 스캔", summary: "3대 AI와 대입 포털을 활용해 목표 학과의 전형, 전년도 등급 컷, 경쟁률을 직접 찾아 지도에 박아넣는 시간." },
+        5: { title: "3대 AI 프롬프트 치트키", summary: "챗GPT, 제미나이, 클로드의 출력을 '1등급 세특용'으로 바꿔줄 만능 프롬프트 복붙 매뉴얼 전수." },
+        6: { title: "3월 모평 분석과 수시 상담 신청", summary: "3월 모의고사 성적과 내신을 AI에 넣어 수시/정시 유리도를 진단하고, 담임교사 제출용 상담 신청서 초안 자동 완성." },
+        7: { title: "제미나이×캔바 카드뉴스", summary: "AI가 요약해 준 나의 롤모델과 전공 비전을 캔바 디자인 템플릿에 얹어 시각화하는 활동." },
+        8: { title: "K-MOOC 전공 스펙 쌓기", summary: "목표 학과 연계 온라인 고등 교육 강좌를 AI로 3줄 요약하며 생기부에 넣을 전공 배경지식 축적." },
+        9: { title: "AI 파트너십 HTML 디지털 명함", summary: "3대 AI 엔진이 실시간으로 짜주는 HTML 코드를 조립해 나만의 첫 웹 프로필 페이지 오픈." },
+        10: { title: "클로드 진로 SWOT 분석", summary: "내 학업 성향과 목표 대학을 클로드에 입력해 개인 맞춤형 대입 돌파 전략과 약점 보완책 진단." },
+        11: { title: "공공데이터 직업 분석", summary: "챗GPT에 산업 통계 데이터를 던져 내 전공 시장의 트렌드 변화를 보여주는 시각화 그래프 자동 생성 실습." },
+        12: { title: "오프라인 논리력 토론", summary: "스마트폰을 끄고 오직 인간 고유의 논리와 상식으로 시사 이슈의 딜레마를 해결하는 생각 훈련 템플릿." },
+        13: { title: "계열별 주제 탐구 기획", summary: "챗GPT·제미나이로 가설을 세우고 수학(SIR 모델), 과학(기후 데이터), 인문(AI 윤리) 등 계열별 묵직한 탐구 주제 셋팅." },
+        14: { title: "노트북LM 초고속 논문 고찰", summary: "구글 노트북LM에 관련 문헌을 넣고 클로드와 대화하며 탐구 보고서에 들어갈 선행 연구 핵심 요약." },
+        15: { title: "3대 AI 융합 보고서 교열", summary: "학생이 쓴 탐구 보고서 초안의 논리적 허점과 오타를 AI와 상호작용하며 완벽하게 다듬는 과정." },
+        16: { title: "3분 전공 스피치 발표", summary: "워크북 내 수행평가 채점 기준표를 활용해 학생들이 서로 평가하고 교사의 세특 기록 소스를 확보하는 시간." },
+        17: { title: "AI 학생부 스크리닝", summary: "1학기 활동 기록을 AI 평가 툴에 넣어 현재 학종 경쟁력을 확인하고 부족한 세특 보완점 진단." },
+        18: { title: "만다라트 방학 몰입 계획", summary: "여름방학 동안 부족한 과목 학습과 탐구를 채울 주간·월간 계획을 만다라트 양식으로 직관적 시각화." },
+        19: { title: "전공 연계 봉사 기획", summary: "6월에 탐구한 주제의 사회적 실천을 위해 방학 중 실행 가능한 봉사활동 기획서 양식지 작성." },
+        20: { title: "노션 진로 데이터베이스", summary: "방학 중 성과와 누적된 입시 스펙을 노션 템플릿에 드래그 앤 드롭으로 깔끔하게 마스터 대시보드화." },
+        21: { title: "대입 수시 모의 지원", summary: "3월에 탐색한 대학 데이터를 기반으로 수시 6장 카드 조합 및 사관학교 등 특수대 전형 최종 매칭." },
+        22: { title: "진로 다각화 플랜 B 설계", summary: "중위권 이하 학생들을 위한 현실적인 대안 전공 및 학생부 틈새 전략을 열어주는 반전 플랜 수립." },
+        23: { title: "바이브코딩 나만의 홈페이지 디자인하기", summary: "클로드 아티팩트나 v0 같은 AI 툴과 대화하며, 코딩 없이 세련된 포트폴리오 레이아웃을 만드는 실습." },
+        24: { title: "원클릭 무료 홈페이지 호스팅하기", summary: "23차시에서 완성한 디자인 코드를 깃허브 페이지나 넷리파이에 드래그 앤 드롭하여 실제 웹 주소로 배포하는 실습." },
+        25: { title: "3대 AI 자기소개서 치트키", summary: "선택 과목 이력과 활동 데이터를 기반으로 AI와 함께 나만의 핵심 스토리라인 뼈대 빌드업." },
+        26: { title: "내 생기부 기반 AI 면접 문항 생성", summary: "실제 학교 생활기록부를 클로드·챗GPT에 복붙하여 전공적합성, 세특 연계 맞춤형 예상 질문 리스트 추출." },
+        27: { title: "AI 튜터 1:1 실전 압박 면접", summary: "26차시 질문을 바탕으로 챗GPT 보이스 모드를 켜고 예상 꼬리 질문에 실시간 대응하는 말하기 트레이닝." },
+        28: { title: "미래 10년 커리어 발표", summary: "면접 훈련으로 빌드업된 스피치 역량을 활용해 내 전공 분야의 최종 커리어 로드맵 3분 스피치." },
+        29: { title: "디지털 포트폴리오 시연회", summary: "1년간 완성한 나만의 진로 웹사이트를 띄우고 친구들과 QR코드로 상호 피드백 및 리뷰 공유." },
+        30: { title: "진로 스타트업 모의 투자 유치전", summary: "29차시의 웹사이트를 부스로 삼아 교실을 투자 박람회로 바꾸고, 친구들의 미래 가능성에 가상 화폐를 실시간 펀딩하는 게임형 축제." }
+      };
+
+      function getLessonMeta(sessionNo) {
+        const content = LESSON_CONTENT[sessionNo] || { title: `${sessionNo}차시`, summary: "" };
+        const month = MONTH_THEMES.find((m) => m.sessions.includes(sessionNo));
+        return {
+          sessionNo,
+          title: content.title,
+          summary: content.summary,
+          monthLabel: month ? month.label : "",
+          theme: month ? month.theme : ""
+        };
+      }
 
       const $ = (id) => document.getElementById(id);
       const views = {
@@ -545,6 +723,108 @@
       let studentLesson = null;
       let teacherClass = null;
       let authMode = "login";
+      let classSettings = loadClassSettings();
+
+      function loadClassSettings() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(CLASS_SETTINGS_KEY) || "null");
+          if (!raw || typeof raw !== "object") {
+            return { mode: "grade", grades: [1], classGrade: 1, classNos: [1] };
+          }
+          return {
+            mode: raw.mode === "class" ? "class" : "grade",
+            grades: Array.isArray(raw.grades) ? raw.grades.map(Number).filter((n) => n >= 1 && n <= 3) : [1],
+            classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
+            classNos: Array.isArray(raw.classNos) ? raw.classNos.map(Number).filter((n) => n >= 1 && n <= 10) : [1]
+          };
+        } catch {
+          return { mode: "grade", grades: [1], classGrade: 1, classNos: [1] };
+        }
+      }
+
+      function saveClassSettings() {
+        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+      }
+
+      function formatClassSettingsSummary() {
+        if (classSettings.mode === "grade") {
+          const g = (classSettings.grades || []).slice().sort((a, b) => a - b);
+          if (!g.length) return "선택된 학년이 없습니다.";
+          return "학년별 · " + g.map((n) => `${n}학년`).join(", ");
+        }
+        const nos = (classSettings.classNos || []).slice().sort((a, b) => a - b);
+        if (!nos.length) return "선택된 학급이 없습니다.";
+        return `학급별 · ${classSettings.classGrade}학년 ` + nos.map((n) => `${n}반`).join(", ");
+      }
+
+      function renderClassSettingsUI() {
+        const gradeRoot = $("gradeChips");
+        const classGradeRoot = $("classGradeChips");
+        const classNoRoot = $("classNoChips");
+        if (!gradeRoot || !classGradeRoot || !classNoRoot) return;
+
+        $("btnModeGrade").classList.toggle("is-active", classSettings.mode === "grade");
+        $("btnModeClass").classList.toggle("is-active", classSettings.mode === "class");
+        $("panelGrade").hidden = classSettings.mode !== "grade";
+        $("panelClass").hidden = classSettings.mode !== "class";
+
+        gradeRoot.innerHTML = "";
+        [1, 2, 3].forEach((g) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip-toggle" + (classSettings.grades.includes(g) ? " is-on" : "");
+          btn.textContent = `${g}학년`;
+          btn.addEventListener("click", () => {
+            if (classSettings.grades.includes(g)) {
+              classSettings.grades = classSettings.grades.filter((x) => x !== g);
+            } else {
+              classSettings.grades = [...classSettings.grades, g].sort((a, b) => a - b);
+            }
+            renderClassSettingsUI();
+          });
+          gradeRoot.appendChild(btn);
+        });
+
+        classGradeRoot.innerHTML = "";
+        [1, 2, 3].forEach((g) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip-toggle" + (classSettings.classGrade === g ? " is-on" : "");
+          btn.textContent = `${g}학년`;
+          btn.addEventListener("click", () => {
+            classSettings.classGrade = g;
+            renderClassSettingsUI();
+          });
+          classGradeRoot.appendChild(btn);
+        });
+
+        classNoRoot.innerHTML = "";
+        for (let n = 1; n <= 10; n += 1) {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "chip-toggle" + (classSettings.classNos.includes(n) ? " is-on" : "");
+          btn.textContent = `${n}반`;
+          btn.addEventListener("click", () => {
+            if (classSettings.classNos.includes(n)) {
+              classSettings.classNos = classSettings.classNos.filter((x) => x !== n);
+            } else {
+              classSettings.classNos = [...classSettings.classNos, n].sort((a, b) => a - b);
+            }
+            renderClassSettingsUI();
+          });
+          classNoRoot.appendChild(btn);
+        }
+
+        $("classSettingsSummary").textContent = formatClassSettingsSummary();
+      }
+
+      function setDashPanel(panel) {
+        const root = $("dashRoot");
+        if (!root) return;
+        root.dataset.panel = panel === "detail" ? "detail" : "list";
+        $("tabDashList")?.classList.toggle("is-active", root.dataset.panel === "list");
+        $("tabDashDetail")?.classList.toggle("is-active", root.dataset.panel === "detail");
+      }
 
       function initSupabase() {
         if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || !window.supabase) return null;
@@ -839,22 +1119,41 @@
         root.innerHTML = "";
         $("lessonCountLabel").textContent = `${lessons.length}차시`;
 
-        for (const lesson of lessons) {
-          const count = await countSubs(lesson.id);
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
-          btn.dataset.id = lesson.id;
-          btn.innerHTML = `
-            <div class="lesson-qr" data-qr="${lesson.token}"></div>
-            <div class="lesson-meta">
-              <strong>${lesson.session_no}차시</strong>
-              <small>QR 스캔으로 제출</small>
-            </div>
-            <span class="lesson-count">${count}</span>`;
-          btn.addEventListener("click", () => selectLesson(lesson.id));
-          root.appendChild(btn);
-          paintQr(btn.querySelector("[data-qr]"), studentUrl(lesson.token), 52);
+        const byNo = new Map(lessons.map((l) => [l.session_no, l]));
+
+        for (const month of MONTH_THEMES) {
+          const group = document.createElement("div");
+          group.className = "month-group";
+          group.innerHTML = `
+            <div class="month-label">
+              <strong>${month.label} 테마</strong>
+              <span>${escapeHtml(month.theme)}</span>
+            </div>`;
+
+          for (const sessionNo of month.sessions) {
+            const lesson = byNo.get(sessionNo);
+            if (!lesson) continue;
+            const meta = getLessonMeta(sessionNo);
+            const count = await countSubs(lesson.id);
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
+            btn.dataset.id = lesson.id;
+            btn.innerHTML = `
+              <div class="lesson-qr" data-qr="${lesson.token}"></div>
+              <div class="lesson-meta">
+                <strong>${sessionNo}차시 · ${escapeHtml(meta.title)}</strong>
+                <small>${escapeHtml(meta.summary)}</small>
+              </div>
+              <span class="lesson-count">${count}</span>`;
+            btn.addEventListener("click", () => {
+              selectLesson(lesson.id);
+              if (window.matchMedia("(max-width: 899px)").matches) setDashPanel("detail");
+            });
+            group.appendChild(btn);
+            paintQr(btn.querySelector("[data-qr]"), studentUrl(lesson.token), 44);
+          }
+          root.appendChild(group);
         }
       }
 
@@ -892,17 +1191,22 @@
       async function renderDetail(lesson) {
         const card = $("detailCard");
         if (!lesson) {
-          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 QR과 제출 목록이 표시됩니다.</p>`;
+          card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출 목록이 표시됩니다.</p>`;
           return;
         }
+        const meta = getLessonMeta(lesson.session_no);
         const url = studentUrl(lesson.token);
         const subs = await fetchSubmissions(lesson.id);
         card.innerHTML = `
+          <span class="lesson-theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
+          <h2 class="lesson-title">${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
+          <p class="lesson-summary">${escapeHtml(meta.summary)}</p>
           <div class="detail-top">
             <div class="detail-qr-lg" id="detailQr"></div>
             <div class="detail-info">
-              <h3>${lesson.session_no}차시 QR</h3>
-              <p>${url}</p>
+              <h3>학생 제출 QR</h3>
+              <p>${escapeHtml(url)}</p>
+              <p style="margin-top:-6px;color:var(--text-tertiary);font-size:12px">${escapeHtml(formatClassSettingsSummary())}</p>
               <div class="detail-actions">
                 <button type="button" class="btn btn-primary" id="btnCopyLink">링크 복사</button>
                 <button type="button" class="btn btn-secondary" id="btnRefreshSubs">새로고침</button>
@@ -915,7 +1219,7 @@
           </div>
           <div class="sub-list" id="subList"></div>`;
 
-        paintQr($("detailQr"), url, 148);
+        paintQr($("detailQr"), url, 136);
         $("btnCopyLink").addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(url);
@@ -1000,7 +1304,9 @@
         try {
           showView("teacher");
           const label = session.name || session.loginId || "교사";
-          $("teacherBarTitle").textContent = `${label} · 30차시 QR`;
+          $("teacherBarTitle").textContent = `${label} · ${formatClassSettingsSummary()}`;
+          renderClassSettingsUI();
+          setDashPanel(window.matchMedia("(max-width: 899px)").matches ? "list" : "list");
           await loadLessons();
           await renderLessonList();
           if (lessons.length) await selectLesson(lessons[0].id);
@@ -1135,11 +1441,14 @@
           return;
         }
         studentLesson = { ...row, token };
+        const meta = getLessonMeta(studentLesson.session_no);
 
         $("studentForm").style.display = "";
         $("studentSessionChip").textContent = `${studentLesson.session_no}차시`;
-        $("studentTitle").textContent = `${studentLesson.session_no}차시 자료 제출`;
-        $("studentSub").textContent = "학번·이름과 함께 이번 차시 자료를 제출해 주세요. 제출 즉시 교사 화면에 표시됩니다.";
+        $("studentTitle").textContent = `${studentLesson.session_no}차시 · ${meta.title}`;
+        $("studentSub").textContent = meta.summary
+          ? `${meta.summary} 학번·이름과 함께 제출해 주세요.`
+          : "학번·이름과 함께 이번 차시 자료를 제출해 주세요. 제출 즉시 교사 화면에 표시됩니다.";
       }
 
       async function submitStudent(e) {
@@ -1203,6 +1512,33 @@
           toast(code);
         }
       });
+      $("btnModeGrade").addEventListener("click", () => {
+        classSettings.mode = "grade";
+        renderClassSettingsUI();
+      });
+      $("btnModeClass").addEventListener("click", () => {
+        classSettings.mode = "class";
+        renderClassSettingsUI();
+      });
+      $("btnSaveClassSettings").addEventListener("click", () => {
+        if (classSettings.mode === "grade" && !classSettings.grades.length) {
+          return toast("학년을 하나 이상 선택해 주세요.");
+        }
+        if (classSettings.mode === "class" && !classSettings.classNos.length) {
+          return toast("학급(반)을 하나 이상 선택해 주세요.");
+        }
+        saveClassSettings();
+        if (session) {
+          $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
+        }
+        if (selectedLessonId) {
+          const lesson = lessons.find((l) => l.id === selectedLessonId);
+          if (lesson) renderDetail(lesson);
+        }
+        toast("반 설정을 저장했습니다.");
+      });
+      $("tabDashList").addEventListener("click", () => setDashPanel("list"));
+      $("tabDashDetail").addEventListener("click", () => setDashPanel("detail"));
       $("btnLogout").addEventListener("click", () => logout());
       $("btnTeacherLogout").addEventListener("click", () => logout());
       $("btnBackLanding").addEventListener("click", () => {
