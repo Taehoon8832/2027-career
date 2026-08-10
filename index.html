@@ -790,7 +790,7 @@
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
           <h2>초기 설정 · 학급별</h2>
-          <p class="settings-sub">학년을 정하고 학급 수를 늘리거나 줄인 뒤 저장하세요. 반마다 별도 DB(수업코드·30차시·명단)가 만들어집니다. 학년을 바꾸면 다시 설정·저장해야 합니다.</p>
+          <p class="settings-sub">학년을 전환해도 기존 학급 설정은 유지됩니다. 학년별로 학급 수를 정한 뒤 저장하면 반마다 별도 DB(수업코드·30차시·명단)가 만들어집니다.</p>
           <p class="settings-sub" style="margin-bottom:8px">학년</p>
           <div class="chip-row" id="classGradeChips"></div>
           <p class="settings-sub" style="margin-bottom:8px">학급 수</p>
@@ -952,6 +952,7 @@
       let rosterClassId = null;
       let rosterSubMap = new Map();
       const MAX_CLASS_COUNT = 10;
+      let lessonsHaveSubmitCode = null; // null=미확인, true/false
 
       function clampClassCount(n) {
         const v = Number(n) || 1;
@@ -963,31 +964,50 @@
         return Array.from({ length: n }, (_, i) => i + 1);
       }
 
+      function lessonSubmitCode(lesson) {
+        const code = (lesson?.submit_code || "").toString().trim();
+        if (code) return code.toUpperCase();
+        const tok = (lesson?.token || "").toString();
+        return tok ? tok.slice(0, 8).toUpperCase() : "";
+      }
+
       function loadClassSettings() {
         try {
           const raw = JSON.parse(localStorage.getItem(CLASS_SETTINGS_KEY) || "null");
           if (!raw || typeof raw !== "object") {
-            return { mode: "class", classGrade: 1, classCount: 1, needsResave: false };
+            return { mode: "class", classGrade: 1, classCount: 1, byGrade: {}, needsResave: false };
           }
           let classCount = Number(raw.classCount);
           if (!classCount && Array.isArray(raw.classNos) && raw.classNos.length) {
             classCount = Math.max(...raw.classNos.map(Number).filter((n) => n >= 1));
           }
+          const byGrade = raw.byGrade && typeof raw.byGrade === "object" ? raw.byGrade : {};
           return {
             mode: "class",
             classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
             classCount: clampClassCount(classCount || 1),
+            byGrade,
             needsResave: !!raw.needsResave
           };
         } catch {
-          return { mode: "class", classGrade: 1, classCount: 1, needsResave: false };
+          return { mode: "class", classGrade: 1, classCount: 1, byGrade: {}, needsResave: false };
         }
+      }
+
+      function rememberGradeCount() {
+        if (!classSettings.byGrade || typeof classSettings.byGrade !== "object") {
+          classSettings.byGrade = {};
+        }
+        classSettings.byGrade[String(classSettings.classGrade)] = {
+          classCount: clampClassCount(classSettings.classCount)
+        };
       }
 
       function saveClassSettings() {
         classSettings.mode = "class";
         classSettings.classCount = clampClassCount(classSettings.classCount);
         classSettings.needsResave = false;
+        rememberGradeCount();
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
       }
 
@@ -996,20 +1016,34 @@
         return `${row.grade}학년 ${row.class_no}반`;
       }
 
+      function activeClassesForGrade(grade) {
+        const g = Number(grade);
+        return teacherClasses
+          .filter((c) => c.is_active && c.class_no && Number(c.grade) === g)
+          .sort((a, b) => Number(a.class_no) - Number(b.class_no));
+      }
+
       function formatClassSettingsSummary() {
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
-        if (active.length && !classSettings.needsResave) {
-          return "학급별 · " + active.map(unitLabel).join(", ");
+        if (!active.length) {
+          const n = clampClassCount(classSettings.classCount);
+          return `학급별 · ${classSettings.classGrade}학년 1~${n}반`;
         }
-        const n = clampClassCount(classSettings.classCount);
-        if (classSettings.needsResave) {
-          return `${classSettings.classGrade}학년 · ${n}개 반(재저장 필요)`;
-        }
-        return `학급별 · ${classSettings.classGrade}학년 1~${n}반`;
+        const byG = new Map();
+        active.forEach((c) => {
+          const g = Number(c.grade) || 1;
+          if (!byG.has(g)) byG.set(g, []);
+          byG.get(g).push(Number(c.class_no));
+        });
+        const parts = [...byG.keys()].sort((a, b) => a - b).map((g) => {
+          const nos = byG.get(g).sort((a, b) => a - b);
+          return `${g}학년 1~${Math.max(...nos)}반`;
+        });
+        return "학급별 · " + parts.join(" · ");
       }
 
       function getClassPills() {
-        const active = teacherClasses.filter((c) => c.is_active && c.class_no);
+        const active = activeClassesForGrade(classSettings.classGrade);
         if (active.length) return active.map(unitLabel);
         return classNosFromCount(classSettings.classCount).map(
           (n) => `${classSettings.classGrade}학년 ${n}반`
@@ -1038,7 +1072,6 @@
       }
 
       function isClassSettingsReady() {
-        if (classSettings.needsResave) return false;
         if (teacherClasses.some((c) => c.is_active && c.class_no)) return true;
         return clampClassCount(classSettings.classCount) >= 1;
       }
@@ -1104,24 +1137,37 @@
 
       function changeClassGrade(g) {
         if (classSettings.classGrade === g) return;
-        const savedGrade = teacherClasses.find((c) => c.is_active)?.grade;
-        const changingSaved = savedGrade != null && Number(savedGrade) !== g;
-        if (changingSaved) {
-          const ok = confirm(
-            `${g}학년으로 바꾸면 기존 학급 설정은 비활성되고 다시 저장해야 합니다. 계속할까요?`
-          );
-          if (!ok) {
-            renderClassSettingsUI();
-            return;
-          }
-        }
+        rememberGradeCount();
         classSettings.classGrade = g;
-        classSettings.classCount = 1;
-        classSettings.needsResave = true;
+
+        const fromDb = activeClassesForGrade(g);
+        const remembered = Number(classSettings.byGrade?.[String(g)]?.classCount);
+        if (fromDb.length) {
+          classSettings.classCount = clampClassCount(Math.max(...fromDb.map((c) => Number(c.class_no))));
+        } else if (remembered) {
+          classSettings.classCount = clampClassCount(remembered);
+        } else {
+          classSettings.classCount = 1;
+        }
+        classSettings.needsResave = false;
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+
+        const first = fromDb[0];
+        if (first) {
+          activeClassId = first.id;
+          teacherClass = first;
+          rosterClassId = first.id;
+        }
         $("rosterPreview")?.setAttribute("hidden", "");
-        toast("학년을 바꿨습니다. 학급 수를 정한 뒤 [학급 저장]을 눌러 주세요.");
         renderClassSettingsUI();
+        renderClassCode();
+        renderCohortRow();
+        if (first) {
+          loadRoster(first.id).catch(() => {});
+          toast(`${g}학년으로 전환했습니다. 기존 학급 설정을 유지합니다.`);
+        } else {
+          toast(`${g}학년입니다. 학급 수를 정한 뒤 저장하면 새 학급이 만들어집니다.`);
+        }
       }
 
       function adjustClassCount(delta) {
@@ -1132,6 +1178,7 @@
         }
         classSettings.classCount = next;
         classSettings.needsResave = true;
+        rememberGradeCount();
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
         renderClassSettingsUI();
       }
@@ -1139,14 +1186,10 @@
       function renderRosterClassChips() {
         const root = $("rosterClassChips");
         if (!root) return;
-        const active = teacherClasses
-          .filter((c) => c.is_active && c.class_no && Number(c.grade) === Number(classSettings.classGrade))
-          .sort((a, b) => a.class_no - b.class_no);
+        const active = activeClassesForGrade(classSettings.classGrade);
         root.innerHTML = "";
         if (!active.length) {
-          $("rosterClassLabel").textContent = classSettings.needsResave
-            ? "학년/학급 수를 바꾼 뒤 [학급 저장]을 눌러 주세요."
-            : "학급을 저장하면 명단(기본 30명 · 5열)을 관리할 수 있습니다.";
+          $("rosterClassLabel").textContent = "이 학년에 저장된 학급이 없습니다. 학급 수를 정한 뒤 [학급 저장]을 눌러 주세요.";
           $("rosterList").innerHTML = "";
           $("rosterCountLabel").textContent = "0명";
           $("rosterPreview")?.setAttribute("hidden", "");
@@ -1628,31 +1671,41 @@
           .eq("class_id", classId);
         if (error) throw error;
         if (!count || count < 30) {
-          const rows = Array.from({ length: 30 }, (_, i) => ({
+          const baseRows = Array.from({ length: 30 }, (_, i) => ({
             class_id: classId,
             session_no: i + 1,
-            token: cryptoRandomToken(),
-            submit_code: generateSubmitCode()
+            token: cryptoRandomToken()
           }));
-          const { error: lErr } = await sb.from("lessons").insert(rows);
+          let rows = baseRows;
+          if (lessonsHaveSubmitCode !== false) {
+            rows = baseRows.map((r) => ({ ...r, submit_code: generateSubmitCode() }));
+          }
+          let { error: lErr } = await sb.from("lessons").insert(rows);
+          if (lErr && /submit_code/i.test(lErr.message || "")) {
+            lessonsHaveSubmitCode = false;
+            ({ error: lErr } = await sb.from("lessons").insert(baseRows));
+          } else if (!lErr && lessonsHaveSubmitCode == null) {
+            lessonsHaveSubmitCode = true;
+          }
           if (lErr && !/duplicate|unique/i.test(lErr.message || "")) throw lErr;
         }
         await ensureLessonSubmitCodes(classId);
       }
 
       async function ensureLessonSubmitCodes(classId) {
-        if (!sb || !classId) return;
+        if (!sb || !classId || lessonsHaveSubmitCode === false) return;
         const { data, error } = await sb
           .from("lessons")
           .select("id, token, submit_code")
           .eq("class_id", classId);
         if (error) {
-          // submit_code 컬럼이 아직 없으면 SQL 실행 필요
           if (/submit_code/i.test(error.message || "")) {
-            console.warn("lessons.submit_code 없음 → supabase-activity-submit.sql 실행 필요");
+            lessonsHaveSubmitCode = false;
+            console.warn("lessons.submit_code 없음 → supabase-activity-submit.sql 실행 권장");
           }
           return;
         }
+        lessonsHaveSubmitCode = true;
         const missing = (data || []).filter((l) => !l.submit_code);
         for (const row of missing) {
           const code = (row.token || generateSubmitCode()).slice(0, 8).toUpperCase();
@@ -1680,18 +1733,37 @@
         teacherClasses = data || [];
 
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
-        if (active.length && !classSettings.needsResave) {
-          classSettings.mode = "class";
-          classSettings.classGrade = Number(active[0].grade) || 1;
+        if (!classSettings.byGrade) classSettings.byGrade = {};
+        // 학년별 학급 수를 DB에서 기억 (다른 학년 설정 유지)
+        [1, 2, 3].forEach((g) => {
           const nos = active
-            .filter((c) => Number(c.grade) === classSettings.classGrade)
+            .filter((c) => Number(c.grade) === g)
             .map((c) => Number(c.class_no))
             .filter((n) => n >= 1 && n <= MAX_CLASS_COUNT);
-          classSettings.classCount = clampClassCount(nos.length ? Math.max(...nos) : 1);
-          saveClassSettings();
+          if (nos.length) {
+            classSettings.byGrade[String(g)] = { classCount: clampClassCount(Math.max(...nos)) };
+          }
+        });
+
+        if (!classSettings.needsResave) {
+          const cur = activeClassesForGrade(classSettings.classGrade);
+          if (cur.length) {
+            classSettings.classCount = clampClassCount(Math.max(...cur.map((c) => Number(c.class_no))));
+          } else if (classSettings.byGrade[String(classSettings.classGrade)]?.classCount) {
+            classSettings.classCount = clampClassCount(
+              classSettings.byGrade[String(classSettings.classGrade)].classCount
+            );
+          }
+          rememberGradeCount();
+          localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
         }
 
-        if (!activeClassId || !teacherClasses.some((c) => c.id === activeClassId)) {
+        const prefer = activeClassesForGrade(classSettings.classGrade);
+        if (prefer.length) {
+          if (!activeClassId || !prefer.some((c) => c.id === activeClassId)) {
+            activeClassId = prefer[0].id;
+          }
+        } else if (!activeClassId || !teacherClasses.some((c) => c.id === activeClassId && c.is_active)) {
           activeClassId = (active[0] || teacherClasses[0] || {}).id || null;
         }
         teacherClass = teacherClasses.find((c) => c.id === activeClassId) || null;
@@ -1702,6 +1774,7 @@
         if (!sb || !session) throw new Error("로그인이 필요합니다.");
         await ensureTeacherProfile();
         classSettings.mode = "class";
+        const grade = Number(classSettings.classGrade) || 1;
         const desired = desiredUnitsFromSettings();
         if (!desired.length) throw new Error("선택된 학급이 없습니다.");
 
@@ -1719,7 +1792,9 @@
         }
         const desiredKeys = new Set(desired.map((u) => unitKey("class", u.grade, u.class_no)));
 
+        // 현재 학년에서만 초과 학급 비활성 (다른 학년 설정은 유지)
         for (const row of existing || []) {
+          if (Number(row.grade) !== grade) continue;
           const key = unitKey("class", row.grade || 1, row.class_no);
           if (!desiredKeys.has(key) && row.is_active) {
             const { error: offErr } = await sb
@@ -1730,17 +1805,12 @@
           }
         }
 
-        // 예전 학년별·다른 학년 학급은 비활성
+        // 예전 학년별(mode=grade) 레코드만 비활성
         await sb
           .from("classes")
           .update({ is_active: false })
           .eq("teacher_id", session.userId)
           .eq("mode", "grade");
-        await sb
-          .from("classes")
-          .update({ is_active: false })
-          .eq("teacher_id", session.userId)
-          .neq("grade", classSettings.classGrade);
 
         for (const unit of desired) {
           const key = unitKey("class", unit.grade, unit.class_no);
@@ -1779,8 +1849,10 @@
           }
         }
 
+        saveClassSettings();
         await loadTeacherClassesFromDb();
-        const firstActive = teacherClasses.find((c) => c.is_active);
+        const firstActive = activeClassesForGrade(grade)[0]
+          || teacherClasses.find((c) => c.is_active);
         activeClassId = firstActive?.id || null;
         teacherClass = firstActive || null;
         rosterClassId = activeClassId;
@@ -1830,9 +1902,17 @@
           btn.addEventListener("click", async () => {
             activeClassId = c.id;
             teacherClass = c;
+            classSettings.classGrade = Number(c.grade) || classSettings.classGrade;
+            const nos = activeClassesForGrade(classSettings.classGrade).map((x) => Number(x.class_no));
+            if (nos.length) {
+              classSettings.classCount = clampClassCount(Math.max(...nos));
+              rememberGradeCount();
+              localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+            }
             selectedLessonId = null;
             renderClassCode();
             renderCohortRow();
+            renderClassSettingsUI();
             await loadLessons();
             await renderLessonList();
             if (lessons.length) await selectLesson(lessons[0].id);
@@ -1852,13 +1932,34 @@
           return;
         }
         if (teacherClass?.id) await seedLessonsForClass(teacherClass.id);
-        const { data, error } = await sb
-          .from("lessons")
-          .select("id, class_id, session_no, token, submit_code")
-          .eq("class_id", classId)
-          .order("session_no", { ascending: true });
+
+        let data = null;
+        let error = null;
+        if (lessonsHaveSubmitCode !== false) {
+          ({ data, error } = await sb
+            .from("lessons")
+            .select("id, class_id, session_no, token, submit_code")
+            .eq("class_id", classId)
+            .order("session_no", { ascending: true }));
+          if (error && /submit_code/i.test(error.message || "")) {
+            lessonsHaveSubmitCode = false;
+            error = null;
+          } else if (!error) {
+            lessonsHaveSubmitCode = true;
+          }
+        }
+        if (lessonsHaveSubmitCode === false || error) {
+          ({ data, error } = await sb
+            .from("lessons")
+            .select("id, class_id, session_no, token")
+            .eq("class_id", classId)
+            .order("session_no", { ascending: true }));
+        }
         if (error) throw error;
-        lessons = data || [];
+        lessons = (data || []).map((l) => ({
+          ...l,
+          submit_code: l.submit_code || lessonSubmitCode(l)
+        }));
       }
 
       async function countSubs(lessonId) {
@@ -1907,7 +2008,7 @@
               if (window.matchMedia("(max-width: 899px)").matches) setDashPanel("detail");
             });
             group.appendChild(btn);
-            paintQr(btn.querySelector("[data-qr]"), activityUrl(lesson.session_no, lesson.submit_code), 44);
+            paintQr(btn.querySelector("[data-qr]"), activityUrl(lesson.session_no, lessonSubmitCode(lesson)), 44);
           }
           root.appendChild(group);
         }
@@ -1960,8 +2061,8 @@
         }
 
         const meta = getLessonMeta(lesson.session_no);
-        const submitCode = (lesson.submit_code || "").toUpperCase() || "--------";
-        const url = activityUrl(lesson.session_no, lesson.submit_code);
+        const submitCode = lessonSubmitCode(lesson) || "--------";
+        const url = activityUrl(lesson.session_no, lessonSubmitCode(lesson));
         const subs = await fetchSubmissions(lesson.id);
         const pills = getClassPills();
         card.innerHTML = `
