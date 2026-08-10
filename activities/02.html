@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>2차시 · 내 손으로 짜는 교육과정 맵</title>
+  <title>2차시 · 나를 소개하는 100문 100답</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css" />
+  <link rel="stylesheet" href="./activity.css?v=sess2" />
   <script>window.ACTIVITY_SESSION = 2;</script>
 </head>
 <body>
@@ -14,40 +14,431 @@
     <div class="brand" aria-hidden="true">✳</div>
     <div class="top-meta">
       <span class="chip">2차시 활동</span>
-      <strong>내 손으로 짜는 교육과정 맵</strong>
+      <strong>나를 소개하는 100문 100답</strong>
     </div>
   </div>
   <div class="shell">
     <section class="hero-card">
       <div class="hero-copy">
         <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
-        <h1>2차시 · 내 손으로 짜는 교육과정 맵</h1>
-        <p>우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습.</p>
+        <h1>2차시 · 나를 소개하는 100문 100답</h1>
+        <p>우리 반 친구들에게 나를 당당하게 알려보는 시간!</p>
       </div>
       <div class="hero-qr-wrap">
         <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
         <span class="hero-qr-cap">눌러서 열기</span>
       </div>
     </section>
+
     <section class="activity-card" id="activity-root">
       <h2>학생 활동지</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="f1">1학년 선택 과목</label>
-          <input id="f1" name="f1" type="text" placeholder="과목명" />
+      <div class="q100">
+        <header class="q100-head">
+          <strong>나를 소개하는 100문 100답</strong>
+          <span>우리 반 친구들에게 나를 당당하게 알려보는 시간!</span>
+        </header>
+        <div class="questions-grid">
+          <div class="q-item">
+            <label class="q-title" for="q1">1. 내 이름 / 별명</label>
+            <input id="q1" name="q1" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q2">2. 생일 / 띠</label>
+            <input id="q2" name="q2" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q3">3. 혈액형 / MBTI</label>
+            <input id="q3" name="q3" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q4">4. 좌우명</label>
+            <input id="q4" name="q4" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q5">5. 나의 장점</label>
+            <input id="q5" name="q5" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q6">6. 나의 단점</label>
+            <input id="q6" name="q6" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q7">7. 요즘 나의 최대 관심사</label>
+            <input id="q7" name="q7" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q8">8. 나의 취미</label>
+            <input id="q8" name="q8" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q9">9. 나의 특기</label>
+            <input id="q9" name="q9" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q10">10. 나를 표현하는 단어</label>
+            <input id="q10" name="q10" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q11">11. 가장 좋아하는 색</label>
+            <input id="q11" name="q11" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q12">12. 좋아하는 음식</label>
+            <input id="q12" name="q12" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q13">13. 싫어하는 음식</label>
+            <input id="q13" name="q13" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q14">14. 가장 좋아하는 계절</label>
+            <input id="q14" name="q14" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q15">15. 좋아하는 동/식물</label>
+            <input id="q15" name="q15" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q16">16. 인생 영화/드라마</label>
+            <input id="q16" name="q16" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q17">17. 요즘 듣는 노래</label>
+            <input id="q17" name="q17" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q18">18. 좋아하는 과목</label>
+            <input id="q18" name="q18" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q19">19. 싫어하는 과목</label>
+            <input id="q19" name="q19" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q20">20. 가장 좋아하는 운동</label>
+            <input id="q20" name="q20" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q21">21. 가고 싶은 여행지</label>
+            <input id="q21" name="q21" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q22">22. 보물 1호</label>
+            <input id="q22" name="q22" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q23">23. 좋아하는 브랜드/옷스타일</label>
+            <input id="q23" name="q23" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q24">24. 즐겨하는 게임</label>
+            <input id="q24" name="q24" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q25">25. 자주 쓰는 앱</label>
+            <input id="q25" name="q25" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q26">26. 나의 장래희망</label>
+            <input id="q26" name="q26" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q27">27. 관심 있는 직업 분야</label>
+            <input id="q27" name="q27" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q28">28. 롤모델 / 존경하는 사람</label>
+            <input id="q28" name="q28" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q29">29. 배우고 싶은 스킬</label>
+            <input id="q29" name="q29" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q30">30. 10년 후 나의 모습</label>
+            <input id="q30" name="q30" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q31">31. 가보고 싶은 대학/회사</label>
+            <input id="q31" name="q31" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q32">32. 이루고 싶은 버킷리스트</label>
+            <input id="q32" name="q32" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q33">33. 가장 보람찼던 경험</label>
+            <input id="q33" name="q33" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q34">34. 나의 학업 성향</label>
+            <input id="q34" name="q34" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q35">35. 내가 생각하는 '성공'이란</label>
+            <input id="q35" name="q35" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q36">36. 스트레스 해소법</label>
+            <input id="q36" name="q36" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q37">37. 나의 기분 전환법</label>
+            <input id="q37" name="q37" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q38">38. 나의 수면 시간</label>
+            <input id="q38" name="q38" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q39">39. 나의 버릇/습관</label>
+            <input id="q39" name="q39" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q40">40. 신발 사이즈</label>
+            <input id="q40" name="q40" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q41">41. 내가 무서워하는 것</label>
+            <input id="q41" name="q41" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q42">42. 최근에 크게 웃었던 일</label>
+            <input id="q42" name="q42" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q43">43. 최근에 운 경험</label>
+            <input id="q43" name="q43" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q44">44. 내 삶의 활력소</label>
+            <input id="q44" name="q44" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q45">45. 나의 말버릇</label>
+            <input id="q45" name="q45" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q46">46. 화날 때 하는 행동</label>
+            <input id="q46" name="q46" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q47">47. 슬플 때 하는 행동</label>
+            <input id="q47" name="q47" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q48">48. 혼자 있을 때 하는 것</label>
+            <input id="q48" name="q48" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q49">49. 주말을 보내는 방법</label>
+            <input id="q49" name="q49" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q50">50. 나의 하루 평균 스마트폰 시간</label>
+            <input id="q50" name="q50" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q51">51. 나와 친해지는 방법</label>
+            <input id="q51" name="q51" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q52">52. 이런 행동은 싫어요</label>
+            <input id="q52" name="q52" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q53">53. 첫인상 vs 실제 성격</label>
+            <input id="q53" name="q53" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q54">54. 친구에게 들었을 때 기분 좋은 말</label>
+            <input id="q54" name="q54" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q55">55. 친구 관계에서 중요한 것</label>
+            <input id="q55" name="q55" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q56">56. 내가 좋아하는 친구 타입</label>
+            <input id="q56" name="q56" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q57">57. 내가 먼저 연락하는 편?</label>
+            <input id="q57" name="q57" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q58">58. 친구와 갈등 해결법</label>
+            <input id="q58" name="q58" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q59">59. 약속 시간 잘 지키나요?</label>
+            <input id="q59" name="q59" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q60">60. 인싸 vs 아싸</label>
+            <input id="q60" name="q60" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q61">61. 외향형(E) vs 내향형(I)</label>
+            <input id="q61" name="q61" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q62">62. 계획파(J) vs 자율파(P)</label>
+            <input id="q62" name="q62" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q63">63. 이성적인(T) vs 감성적인(F)</label>
+            <input id="q63" name="q63" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q64">64. 나의 연락 스타일(카톡/전화)</label>
+            <input id="q64" name="q64" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q65">65. 고마운 마음 표현법</label>
+            <input id="q65" name="q65" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q66">66. 내가 원하는 우정 모습</label>
+            <input id="q66" name="q66" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q67">67. 학급에서 나의 역할</label>
+            <input id="q67" name="q67" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q68">68. 학급 분위기 만들고 싶은 모습</label>
+            <input id="q68" name="q68" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q69">69. 칭찬받았을 때 반응</label>
+            <input id="q69" name="q69" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q70">70. 고민 상담을 잘해주는 편인가요?</label>
+            <input id="q70" name="q70" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q71">71. 비밀 유지를 잘하나요?</label>
+            <input id="q71" name="q71" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q72">72. 선의의 거짓말에 대한 생각</label>
+            <input id="q72" name="q72" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q73">73. 내가 선물받고 싶은 것</label>
+            <input id="q73" name="q73" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q74">74. 친구에게 주고 싶은 선물</label>
+            <input id="q74" name="q74" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q75">75. 우리 반 친구들에게 한마디</label>
+            <input id="q75" name="q75" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q76">76. 요즘 가장 감사한 일</label>
+            <input id="q76" name="q76" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q77">77. 만약 10억이 생긴다면?</label>
+            <input id="q77" name="q77" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q78">78. 타임머신이 있다면 가고 싶은 때</label>
+            <input id="q78" name="q78" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q79">79. 초능력을 얻는다면?</label>
+            <input id="q79" name="q79" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q80">80. 무인도에 가져갈 3가지</label>
+            <input id="q80" name="q80" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q81">81. 내일 지구가 멸망한다면?</label>
+            <input id="q81" name="q81" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q82">82. 다시 태어난다면 무엇으로?</label>
+            <input id="q82" name="q82" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q83">83. 내 삶의 슬로건</label>
+            <input id="q83" name="q83" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q84">84. 가장 소중한 추억</label>
+            <input id="q84" name="q84" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q85">85. 최근에 도전한 일</label>
+            <input id="q85" name="q85" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q86">86. 내가 가진 매력 포인트</label>
+            <input id="q86" name="q86" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q87">87. 내가 고치고 싶은 점</label>
+            <input id="q87" name="q87" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q88">88. 내가 생각하는 나의 에너지 수준</label>
+            <input id="q88" name="q88" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q89">89. 아침에 일어날 때 드는 생각</label>
+            <input id="q89" name="q89" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q90">90. 자기 전 주로 하는 생각</label>
+            <input id="q90" name="q90" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q91">91. 내 인생 최고의 날</label>
+            <input id="q91" name="q91" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q92">92. 용기를 주는 말 한마디</label>
+            <input id="q92" name="q92" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q93">93. 행복이란 무엇일까?</label>
+            <input id="q93" name="q93" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q94">94. 이번 학기 나의 목표</label>
+            <input id="q94" name="q94" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q95">95. 나만의 힐링 스팟</label>
+            <input id="q95" name="q95" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q96">96. 내가 칭찬받았을 때 느낌</label>
+            <input id="q96" name="q96" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q97">97. 나 자신에게 주고 싶은 상</label>
+            <input id="q97" name="q97" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q98">98. 나와 가장 잘 어울리는 단어</label>
+            <input id="q98" name="q98" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q99">99. 미래의 나에게 한마디</label>
+            <input id="q99" name="q99" type="text" autocomplete="off" />
+          </div>
+          <div class="q-item">
+            <label class="q-title" for="q100">100. 작성 완료 소감!</label>
+            <input id="q100" name="q100" type="text" autocomplete="off" />
+          </div>
         </div>
-        <div class="field">
-          <label for="f2">2학년 선택 과목</label>
-          <input id="f2" name="f2" type="text" placeholder="과목명" />
-        </div>
-      </div>
-      <div class="field">
-        <label for="f3">3학년 선택 과목</label>
-        <textarea id="f3" name="f3" placeholder="과목명"></textarea>
-      </div>
-      <div class="field">
-        <label for="f4">추가로 남기고 싶은 내용</label>
-        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
       </div>
     </section>
   </div>

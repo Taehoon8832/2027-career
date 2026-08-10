@@ -1304,11 +1304,11 @@
       ];
 
       const LESSON_CONTENT = {
-        1: { title: "디지털 나 사용 설명서(1) · 100문100답(2)", summary: "나 사용 설명서와 나를 소개하는 100문 100답" },
-        2: { title: "내 손으로 짜는 교육과정 맵", summary: "우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습." },
+        1: { title: "디지털 나 사용 설명서", summary: "" },
+        2: { title: "나를 소개하는 100문 100답", summary: "우리 반 친구들에게 나를 당당하게 알려보는 시간!" },
         3: { title: "전공 빙고 & 직업 월드컵", summary: "게임을 통해 1순위 관심 학과와 2순위 차순위 학과를 자연스럽게 도출하는 교실 흥미 유발 차시." },
         4: { title: "목표 대학 입결 스캔", summary: "3대 AI와 대입 포털을 활용해 목표 학과의 전형, 전년도 등급 컷, 경쟁률을 직접 찾아 지도에 박아넣는 시간." },
-        5: { title: "3대 AI 프롬프트 치트키", summary: "챗GPT, 제미나이, 클로드의 출력을 '1등급 세특용'으로 바꿔줄 만능 프롬프트 복붙 매뉴얼 전수." },
+        5: { title: "내 손으로 짜는 교육과정 맵", summary: "우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습." },
         6: { title: "3월 모평 분석과 수시 상담 신청", summary: "3월 모의고사 성적과 내신을 AI에 넣어 수시/정시 유리도를 진단하고, 담임교사 제출용 상담 신청서 초안 자동 완성." },
         7: { title: "제미나이×캔바 카드뉴스", summary: "AI가 요약해 준 나의 롤모델과 전공 비전을 캔바 디자인 템플릿에 얹어 시각화하는 활동." },
         8: { title: "K-MOOC 전공 스펙 쌓기", summary: "목표 학과 연계 온라인 고등 교육 강좌를 AI로 3줄 요약하며 생기부에 넣을 전공 배경지식 축적." },
@@ -2282,13 +2282,27 @@ ${css}
 .na-manual-info,.na-info-box,.student-info,.info-box,#sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
 .student-activity-export .topbar{position:sticky}
-body{padding-top:calc(12px + var(--safe-top))}
+body{padding:calc(56px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom,0px))}
 .eval-card{
   margin:0 0 14px;padding:16px 16px 14px;border:2.5px solid #111110;border-radius:16px;
   background:linear-gradient(180deg,#fff 0%,#fbefe7 100%);
 }
 .eval-para{margin:0;padding:0;border:0;font:500 14px/1.7 var(--serif);color:#1f1e1d}
 .eval-para strong{display:block;margin-bottom:8px;font:700 14px/1.2 var(--sans);color:#8c4022}
+.report-close{
+  position:fixed;top:max(10px,var(--safe-top,0px));right:max(10px,var(--safe-right,0px));
+  z-index:100;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-width:44px;min-height:44px;padding:0 14px;border:2px solid #1f1e1d;border-radius:999px;
+  background:#fff;color:#1f1e1d;font:700 14px/1 Pretendard,sans-serif;cursor:pointer;
+  box-shadow:0 4px 14px rgba(31,30,29,0.16);touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.report-close svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
+.report-close:active{transform:scale(0.96)}
+@media (max-width:720px){
+  .report-close{padding:0;width:46px;height:46px}
+  .report-close span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+}
 `;
           const doc = `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"/>
@@ -2298,6 +2312,10 @@ body{padding-top:calc(12px + var(--safe-top))}
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap"/>
 <style>${reportCss}</style>
 </head><body>
+<button type="button" class="report-close" onclick="window.close()" aria-label="닫기" title="닫기">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  <span>닫기</span>
+</button>
 ${built.html}
 </body></html>`;
           win.document.open();
@@ -3446,8 +3464,7 @@ ${built.html}
                   학번: no,
                   이름: (s.student_name || "").trim(),
                   차시: sessionNo,
-                  육하원칙: yukha.sheetText || "",
-                  세특초안: yukha.paragraph || summarizeSubmissionText(s.content, hint)
+                  요약: yukha.paragraph || summarizeSubmissionText(s.content, hint)
                 });
               });
             }));
@@ -3463,9 +3480,9 @@ ${built.html}
           );
           const book = XLSX.utils.book_new();
           const sheet = XLSX.utils.json_to_sheet(rows, {
-            header: ["학번", "이름", "차시", "육하원칙", "세특초안"]
+            header: ["학번", "이름", "차시", "요약"]
           });
-          sheet["!cols"] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 56 }, { wch: 70 }];
+          sheet["!cols"] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 80 }];
           XLSX.utils.book_append_sheet(book, sheet, "제출요약");
           const stamp = new Date().toISOString().slice(0, 10);
           XLSX.writeFile(book, `제출요약_${stamp}.xlsx`);
