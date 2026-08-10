@@ -138,7 +138,7 @@
       el.dataset.painted = "1";
       canvas.className = "qr-img";
       canvas.style.cssText =
-        `display:block;width:${canvasSize}px;height:${canvasSize}px;max-width:100%;max-height:100%;image-rendering:pixelated;image-rendering:crisp-edges`;
+        "display:block;width:100%;height:100%;object-fit:contain;image-rendering:pixelated;image-rendering:crisp-edges";
       el.appendChild(canvas);
       try {
         qr.clear();
@@ -221,11 +221,11 @@
       return;
     }
 
-    const size = window.matchMedia("(max-width: 640px)").matches
-      ? 112
+    const size = window.matchMedia("(max-width: 720px)").matches
+      ? 128
       : window.matchMedia("(max-width: 1024px)").matches
-        ? 120
-        : 116;
+        ? 112
+        : 104;
     paintQrInto(el, url, size);
   }
 
