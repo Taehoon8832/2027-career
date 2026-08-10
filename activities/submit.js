@@ -28,6 +28,21 @@
     }
   }
 
+  /** 교사 대시보드 activityUrl 과 동일한 절대 URL (제출코드 포함) */
+  function activityPageUrl() {
+    try {
+      const u = new URL(location.href);
+      u.hash = "";
+      const code = (u.searchParams.get("code") || "").trim().toUpperCase();
+      if (code) u.searchParams.set("code", code);
+      else u.searchParams.delete("code");
+      // 경로 정규화: .../activities/01.html
+      return u.toString();
+    } catch {
+      return String(location.href || "").split("#")[0];
+    }
+  }
+
   function loadQrLib() {
     if (typeof window.QRCode === "function") {
       return Promise.resolve(window.QRCode);
@@ -35,8 +50,13 @@
     return new Promise((resolve) => {
       const existing = document.querySelector("script[data-qrcode-lib]");
       if (existing) {
-        existing.addEventListener("load", () => resolve(typeof window.QRCode === "function" ? window.QRCode : null));
+        if (typeof window.QRCode === "function") return resolve(window.QRCode);
+        existing.addEventListener("load", () =>
+          resolve(typeof window.QRCode === "function" ? window.QRCode : null)
+        );
         existing.addEventListener("error", () => resolve(null));
+        // 이미 로드 실패/완료된 경우 대비
+        setTimeout(() => resolve(typeof window.QRCode === "function" ? window.QRCode : null), 800);
         return;
       }
       const s = document.createElement("script");
@@ -49,14 +69,82 @@
     });
   }
 
-  function activityPageUrl() {
-    try {
-      const u = new URL(location.href);
-      u.hash = "";
-      return u.toString();
-    } catch {
-      return location.href;
+  function paintQrInto(el, text, size) {
+    if (!el || !text) return;
+    const px = Math.max(64, Number(size) || 88);
+    const url = String(text);
+    if (el.tagName === "A") {
+      el.href = url;
+      el.target = "_blank";
+      el.rel = "noopener noreferrer";
     }
+    el.innerHTML = "";
+    el.title = "탭하여 활동지 열기";
+    el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+
+    const paintImg = () => {
+      el.innerHTML = "";
+      const img = document.createElement("img");
+      img.alt = "활동지 QR";
+      img.width = px;
+      img.height = px;
+      img.decoding = "async";
+      img.referrerPolicy = "no-referrer";
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.display = "block";
+      img.style.objectFit = "contain";
+      img.src =
+        "https://api.qrserver.com/v1/create-qr-code/?size=" +
+        px +
+        "x" +
+        px +
+        "&margin=6&data=" +
+        encodeURIComponent(url);
+      el.appendChild(img);
+      el.dataset.painted = "1";
+      el.dataset.qrUrl = url;
+    };
+
+    // 1) 먼저 이미지로 즉시 표시 (빈 칸 방지)
+    paintImg();
+
+    // 2) qrcodejs 가 있으면 동일 URL로 로컬 렌더(교사 화면과 같은 라이브러리)
+    loadQrLib().then((QR) => {
+      if (typeof QR !== "function") return;
+      if (el.dataset.qrUrl && el.dataset.qrUrl !== url) return;
+      try {
+        el.innerHTML = "";
+        // eslint-disable-next-line no-new
+        new QR(el, {
+          text: url,
+          width: px,
+          height: px,
+          colorDark: "#111110",
+          colorLight: "#ffffff",
+          correctLevel: QR.CorrectLevel ? QR.CorrectLevel.M : 1
+        });
+        const node = el.querySelector("canvas, img, table");
+        if (!node) {
+          paintImg();
+          return;
+        }
+        if (node.tagName === "CANVAS" || node.tagName === "IMG") {
+          node.style.width = "100%";
+          node.style.height = "100%";
+          node.style.display = "block";
+        }
+        if (node.tagName === "TABLE") {
+          node.style.width = "100%";
+          node.style.height = "100%";
+          node.style.border = "0";
+        }
+        el.dataset.painted = "1";
+        el.dataset.qrUrl = url;
+      } catch {
+        paintImg();
+      }
+    });
   }
 
   function ensureHeroQr() {
@@ -75,68 +163,43 @@
       wrap = document.createElement("div");
       wrap.className = "hero-qr-wrap";
       wrap.innerHTML =
-        `<div class="hero-qr" id="activityPageQr" aria-label="이 활동지 QR 코드"></div>` +
-        `<span class="hero-qr-cap">활동지 QR</span>`;
+        `<a class="hero-qr" id="activityPageQr" href="#" target="_blank" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>` +
+        `<span class="hero-qr-cap">눌러서 열기</span>`;
       hero.appendChild(wrap);
     }
 
-    const el = document.getElementById("activityPageQr");
-    if (!el || el.dataset.painted === "1") return;
+    let el = document.getElementById("activityPageQr") || wrap.querySelector(".hero-qr");
+    if (!el) return;
+
     const url = activityPageUrl();
 
-    const size = window.matchMedia("(max-width: 640px)").matches ? 70 : 88;
-    const paintImg = () => {
-      el.innerHTML = "";
-      const img = document.createElement("img");
-      img.alt = "활동지 QR";
-      img.width = size;
-      img.height = size;
-      img.decoding = "async";
-      img.src =
-        "https://api.qrserver.com/v1/create-qr-code/?size=" +
-        size +
-        "x" +
-        size +
-        "&margin=6&data=" +
-        encodeURIComponent(url);
-      el.appendChild(img);
-      el.dataset.painted = "1";
-    };
+    // div → a 로 승격 (클릭으로 활동지 열기)
+    if (el.tagName !== "A") {
+      const a = document.createElement("a");
+      a.id = el.id || "activityPageQr";
+      a.className = el.className || "hero-qr";
+      a.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+      el.replaceWith(a);
+      el = a;
+    }
+    const cap = wrap.querySelector(".hero-qr-cap");
+    if (cap) cap.textContent = "눌러서 열기";
 
-    loadQrLib().then((QR) => {
-      if (!el) return;
-      if (typeof QR === "function") {
-        try {
-          el.innerHTML = "";
-          // eslint-disable-next-line no-new
-          new QR(el, {
-            text: url,
-            width: size,
-            height: size,
-            colorDark: "#111110",
-            colorLight: "#ffffff",
-            correctLevel: QR.CorrectLevel ? QR.CorrectLevel.M : 1
-          });
-          const canvas = el.querySelector("canvas");
-          const img = el.querySelector("img");
-          if (canvas) {
-            canvas.style.width = "100%";
-            canvas.style.height = "100%";
-          }
-          if (img) {
-            img.style.width = "100%";
-            img.style.height = "100%";
-          }
-          if (canvas || img) {
-            el.dataset.painted = "1";
-            return;
-          }
-        } catch {
-          /* fallback */
-        }
-      }
-      paintImg();
-    });
+    el.href = url;
+    el.target = "_blank";
+    el.rel = "noopener noreferrer";
+
+    // 같은 URL이면 다시 그리지 않음
+    if (el.dataset.painted === "1" && el.dataset.qrUrl === url && el.querySelector("canvas, img, table")) {
+      return;
+    }
+
+    const size = window.matchMedia("(max-width: 640px)").matches
+      ? 84
+      : window.matchMedia("(max-width: 1024px)").matches
+        ? 100
+        : 92;
+    paintQrInto(el, url, size);
   }
 
   function ensureUi() {
@@ -248,7 +311,6 @@
     const title = document.querySelector(".hero-card h1")?.textContent?.trim() || `${sessionNo}차시`;
     const theme = document.querySelector(".hero-card .theme")?.textContent?.trim() || "";
     const topTitle = document.querySelector(".top-meta strong")?.textContent?.trim() || title;
-    // 제출 당시 화면과 동일한 구조로 저장 (교사 새 탭 보고서용)
     return `
 <div class="student-activity-export" data-session="${sessionNo}" data-student-no="${escapeHtml(studentNo)}" data-student-name="${escapeHtml(studentName)}">
   <div class="topbar">

@@ -477,17 +477,28 @@
         linear-gradient(135deg, rgba(255,255,255,0.98), rgba(251,239,231,0.85)),
         var(--bg-elevated);
     }
-    .detail-action-strip .qr {
+    .detail-action-strip .qr,
+    .detail-action-strip a.qr {
       width: 76px; height: 76px; border-radius: 10px;
       border: 2px solid #1f1e1d; background: #fff;
       display: grid; place-items: center; overflow: hidden;
       padding: 3px; flex-shrink: 0;
+      text-decoration: none; color: inherit;
+      cursor: pointer; touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
     }
+    .detail-action-strip a.qr:hover {
+      box-shadow: 0 4px 12px rgba(31, 30, 29, 0.14);
+    }
+    .detail-action-strip a.qr:active { transform: scale(0.96); }
     .detail-action-strip .qr canvas,
-    .detail-action-strip .qr img {
+    .detail-action-strip .qr img,
+    .detail-action-strip .qr table {
       width: 100% !important; height: 100% !important;
       max-width: 100%; max-height: 100%;
       display: block; object-fit: contain;
+      pointer-events: none; /* 클릭은 링크가 받음 */
     }
     .detail-action-strip .meta { min-width: 0; }
     .detail-action-strip .code-row {
@@ -608,7 +619,9 @@
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-      .detail-action-strip { grid-template-columns: 64px 1fr; }
+      .detail-action-strip { grid-template-columns: 88px 1fr; }
+      .detail-action-strip .qr,
+      .detail-action-strip a.qr { width: 88px; height: 88px; }
       .detail-action-strip .btns { grid-column: 1 / -1; flex-direction: row; }
     }
     @media (max-width: 560px) {
@@ -933,6 +946,10 @@
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
       .topbar-switcher select { height: 40px; font-size: 14px; }
+      .detail-action-strip { grid-template-columns: 96px 1fr auto; }
+      .detail-action-strip .qr,
+      .detail-action-strip a.qr { width: 96px; height: 96px; }
+      .detail-action-strip .btns .btn { min-height: 46px; font-size: 14px; }
     }
     /* 폰·좁은 태블릿: 단일 패널 */
     @media (max-width: 768px) {
@@ -977,15 +994,22 @@
       .detail-filter { gap: 6px; padding: 8px; }
       .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
       .detail-action-strip {
-        grid-template-columns: 64px 1fr;
-        gap: 8px;
+        grid-template-columns: 88px 1fr;
+        gap: 10px;
+        padding: 12px;
       }
+      .detail-action-strip .qr,
+      .detail-action-strip a.qr {
+        width: 88px; height: 88px; min-width: 88px; min-height: 88px;
+      }
+      .detail-action-strip .code-row strong { font-size: 16px; word-break: break-all; }
       .detail-action-strip .btns {
         grid-column: 1 / -1;
         flex-direction: row;
+        min-width: 0;
       }
       .detail-action-strip .btns .btn {
-        flex: 1; min-height: 44px; font-size: 14px;
+        flex: 1; min-height: 48px; font-size: 15px;
       }
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .detail-roster-cell { padding: 10px; }
@@ -3081,57 +3105,72 @@ ${built.html}
       function paintQr(el, text, size) {
         if (!el || !text) return;
         const px = Math.max(48, Number(size) || 72);
+        const url = String(text);
+        if (el.tagName === "A") {
+          el.href = url;
+          el.target = "_blank";
+          el.rel = "noopener noreferrer";
+        }
         el.innerHTML = "";
-        el.title = String(text);
-        el.setAttribute("aria-label", "활동지 QR 코드");
+        el.title = "탭하여 활동지 열기";
+        el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+        el.dataset.qrUrl = url;
 
         const paintImgFallback = () => {
+          el.innerHTML = "";
           const img = document.createElement("img");
           img.alt = "활동지 QR";
           img.width = px;
           img.height = px;
           img.decoding = "async";
+          img.referrerPolicy = "no-referrer";
+          img.style.width = "100%";
+          img.style.height = "100%";
+          img.style.display = "block";
+          img.style.objectFit = "contain";
           img.src =
             "https://api.qrserver.com/v1/create-qr-code/?size=" +
             px +
             "x" +
             px +
             "&margin=6&data=" +
-            encodeURIComponent(String(text));
+            encodeURIComponent(url);
           el.appendChild(img);
         };
 
-        // qrcodejs: new QRCode(el, { text, width, height })
+        // 활동지와 동일: 이미지 먼저 → qrcodejs로 교체
+        paintImgFallback();
         if (typeof window.QRCode === "function") {
           try {
+            el.innerHTML = "";
             // eslint-disable-next-line no-new
             new window.QRCode(el, {
-              text: String(text),
+              text: url,
               width: px,
               height: px,
               colorDark: "#111110",
               colorLight: "#ffffff",
               correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 1
             });
-            const canvas = el.querySelector("canvas");
-            const img = el.querySelector("img");
-            if (canvas) {
-              canvas.style.width = "100%";
-              canvas.style.height = "100%";
-              canvas.style.display = "block";
+            const node = el.querySelector("canvas, img, table");
+            if (!node) {
+              paintImgFallback();
+              return;
             }
-            if (img) {
-              img.style.width = "100%";
-              img.style.height = "100%";
-              img.style.display = "block";
+            if (node.tagName === "CANVAS" || node.tagName === "IMG") {
+              node.style.width = "100%";
+              node.style.height = "100%";
+              node.style.display = "block";
             }
-            if (!canvas && !img) paintImgFallback();
-            return;
+            if (node.tagName === "TABLE") {
+              node.style.width = "100%";
+              node.style.height = "100%";
+            }
           } catch (e) {
             console.warn("QRCode render failed", e);
+            paintImgFallback();
           }
         }
-        paintImgFallback();
       }
 
       function formatTime(iso) {
@@ -3554,7 +3593,7 @@ ${built.html}
           </div>
 
           <div class="detail-action-strip">
-            <div class="qr" id="detailQr" aria-label="활동지 QR"></div>
+            <a class="qr" id="detailQr" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="탭하여 활동지 열기" aria-label="활동지 QR — 눌러서 열기"></a>
             <div class="meta">
               <div class="code-row">
                 <span class="label">제출코드</span>
@@ -3618,8 +3657,12 @@ ${built.html}
         const qrEl = $("detailQr");
         if (qrEl) {
           qrEl.innerHTML = "";
-          // 활동지 열기 URL과 동일한 QR (제출코드 포함)
-          requestAnimationFrame(() => paintQr(qrEl, url, 68));
+          const qrSize = window.matchMedia("(max-width: 768px)").matches
+            ? 84
+            : window.matchMedia("(max-width: 1024px)").matches
+              ? 92
+              : 68;
+          requestAnimationFrame(() => paintQr(qrEl, url, qrSize));
         }
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {

@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
   <link rel="stylesheet" href="./activity.css" />
   <script>window.ACTIVITY_SESSION = 1;</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="topbar">
@@ -19,8 +20,15 @@
   </div>
   <div class="shell">
     <section class="hero-card">
-      <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
-      <h1>1차시 · 디지털 나 사용 설명서</h1>
+      <div class="hero-copy">
+        <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
+        <h1>1차시 · 디지털 나 사용 설명서</h1>
+        
+      </div>
+      <div class="hero-qr-wrap">
+        <a class="hero-qr" id="activityPageQr" href="#" target="_blank" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
+        <span class="hero-qr-cap">눌러서 열기</span>
+      </div>
     </section>
     <section class="activity-card" id="activity-root">
       <h2>학생 활동지</h2>
@@ -45,6 +53,7 @@
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="./submit.js"></script>
 </body>
 </html>

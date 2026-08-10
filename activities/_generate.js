@@ -46,6 +46,7 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
   <link rel="stylesheet" href="./activity.css" />
   <script>window.ACTIVITY_SESSION = ${n};</script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
   <div class="topbar">
@@ -61,6 +62,10 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
         <div class="theme">${m} · ${theme}</div>
         <h1>${n}차시 · ${title}</h1>
         ${summary ? `<p>${summary}</p>` : ""}
+      </div>
+      <div class="hero-qr-wrap">
+        <a class="hero-qr" id="activityPageQr" href="#" target="_blank" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
+        <span class="hero-qr-cap">눌러서 열기</span>
       </div>
     </section>
     <section class="activity-card" id="activity-root">
@@ -86,6 +91,7 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="./submit.js"></script>
 </body>
 </html>
