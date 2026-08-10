@@ -749,11 +749,28 @@
       function generateClassCode() {
         const arr = new Uint8Array(5);
         crypto.getRandomValues(arr);
-        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 8).toUpperCase();
+        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 8).toLowerCase();
+      }
+
+      async function ensureTeacherProfile(extra) {
+        if (!sb || !session?.userId) return;
+        const row = {
+          id: session.userId,
+          login_id: normalizeLoginId(extra?.loginId || session.loginId || ("t" + session.userId.slice(0, 8))),
+          email: (extra?.email || session.email || "").toLowerCase() || null,
+          school_name: extra?.schoolName || session.schoolName || "",
+          display_name: extra?.name || session.name || "",
+          role: "teacher"
+        };
+        const { error } = await sb.from("profiles").upsert(row, { onConflict: "id" });
+        if (error) console.warn("profiles upsert:", error);
+        await enrichSessionFromProfile();
       }
 
       async function ensureTeacherClassSeeded() {
         if (!sb || !session) return null;
+        await ensureTeacherProfile();
+
         const { data: classes, error } = await sb
           .from("classes")
           .select("id, class_code, title")
@@ -1051,20 +1068,30 @@
             }
           });
           if (error) {
-            const msg = /already|registered|exists/i.test(error.message || "")
-              ? "이미 사용 중인 이메일 또는 아이디입니다."
-              : (error.message || "회원가입에 실패했습니다.");
+            console.error("signup error:", error);
+            const raw = error.message || "회원가입에 실패했습니다.";
+            let msg = raw;
+            if (/already|registered|exists/i.test(raw)) {
+              msg = "이미 사용 중인 이메일입니다. Authentication → Users에서 삭제 후 다시 시도해 주세요.";
+            } else if (/database error saving new user/i.test(raw)) {
+              msg = "DB 트리거 오류입니다. supabase-disable-trigger.sql 을 실행한 뒤 Users에서 해당 이메일을 삭제하고 다시 가입해 주세요.";
+            }
             setMsg($("authMsg"), "회원가입 실패: " + msg, "error");
             return;
           }
           if (!data.session) {
-            setMsg($("authMsg"), "회원가입이 완료되었습니다. 이메일 인증이 켜져 있으면 인증 후 로그인해 주세요.", "ok");
+            setMsg($("authMsg"), "회원가입이 완료되었습니다. 이메일 인증이 켜져 있으면 Authentication → Providers → Email에서 Confirm email을 끄고 다시 로그인해 주세요.", "ok");
             toast("회원가입이 완료되었습니다.");
             setAuthMode("login");
             return;
           }
           applyAuthUser(data.user);
-          await enrichSessionFromProfile();
+          await ensureTeacherProfile({
+            loginId,
+            email,
+            schoolName,
+            name: teacherName
+          });
           try { await ensureTeacherClassSeeded(); } catch (e) { console.warn(e); }
           showWelcome(session);
           toast("회원가입이 완료되었습니다.");
