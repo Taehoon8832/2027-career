@@ -63,7 +63,7 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
         ${summary ? `<p>${summary}</p>` : ""}
       </div>
       <div class="hero-qr-wrap">
-        <a class="hero-qr" id="activityPageQr" href="#" target="_blank" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
+        <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
         <span class="hero-qr-cap">눌러서 열기</span>
       </div>
     </section>

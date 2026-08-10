@@ -124,7 +124,7 @@
       }
       if (el.tagName === "A") {
         el.href = url;
-        el.target = "_blank";
+        el.removeAttribute("target");
         el.rel = "noopener noreferrer";
       }
       el.innerHTML = "";
@@ -156,7 +156,7 @@
     const url = String(text).trim();
     if (el.tagName === "A") {
       el.href = url;
-      el.target = "_blank";
+      el.removeAttribute("target");
       el.rel = "noopener noreferrer";
     }
     el.title = "탭하여 활동지 열기";
@@ -188,7 +188,7 @@
       wrap = document.createElement("div");
       wrap.className = "hero-qr-wrap";
       wrap.innerHTML =
-        `<a class="hero-qr" id="activityPageQr" href="#" target="_blank" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>` +
+        `<a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>` +
         `<span class="hero-qr-cap">눌러서 열기</span>`;
       hero.appendChild(wrap);
     }
@@ -210,7 +210,7 @@
     if (cap) cap.textContent = "눌러서 열기";
 
     el.href = url;
-    el.target = "_blank";
+    el.removeAttribute("target");
     el.rel = "noopener noreferrer";
 
     if (el.dataset.painted === "1" && el.dataset.qrUrl === url && el.querySelector("canvas")) {

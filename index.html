@@ -250,6 +250,7 @@
       height: 44px; padding: 0 16px; border: 0; border-radius: var(--radius-full);
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
       font: 600 14px/1 var(--font-sans); letter-spacing: -0.005em; cursor: pointer;
+      text-decoration: none; box-sizing: border-box;
       transition: background var(--duration-base) var(--ease-out), transform var(--duration-fast) var(--ease-bounce);
     }
     .btn:active { transform: scale(0.97); }
@@ -2133,7 +2134,7 @@
         if (!sub) {
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
-        const cacheKey = opts.where || "";
+        const cacheKey = "v3|" + (opts.where || "");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const filled = extractActivityAnswersFast(sub.content).filter((a) => a.value);
@@ -2170,7 +2171,7 @@
           { k: "왜", v: whyCore }
         ];
         const paragraph =
-          `${who}은(는) ${where}에서 '${lessonTitle}' 활동에 참여하여 ${whatCore} 등을 정리하였고, ` +
+          `진로 시간에 '${lessonTitle}' 활동에 참여하여 ${whatCore} 등을 정리하였고, ` +
           `${howCore} 방식으로 탐구·표현하였다. ${whyCore}`.replace(/\s+/g, " ").trim();
         const oneLine = previewText(`${whoName} · ${lessonTitle} · ${whatCore}`, 72);
         const sheetText = lines.map((l) => `${l.k}: ${l.v}`).join(" / ");
@@ -2255,9 +2256,25 @@
       async function openSubmissionInNewTab(submissionId) {
         const sub = findSubmissionById(submissionId);
         if (!sub) return;
-        const css = await loadActivityCssText();
-        const built = buildSubmissionReportBody(sub);
-        const reportCss = `
+        // 클릭 직후 동기 오픈 → 팝업 차단 방지 (async 이후 window.open 금지)
+        const win = window.open("about:blank", "_blank");
+        if (!win) {
+          toast("새 탭을 열 수 없습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        try {
+          win.document.write(
+            "<!DOCTYPE html><html lang=\"ko\"><head><meta charset=\"UTF-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><title>불러오는 중</title></head>" +
+              "<body style=\"margin:0;padding:24px;font:600 15px/1.5 sans-serif;color:#4a4845;background:#f7f4ee\">불러오는 중…</body></html>"
+          );
+          win.document.close();
+        } catch {
+          /* ignore */
+        }
+        try {
+          const css = await loadActivityCssText();
+          const built = buildSubmissionReportBody(sub);
+          const reportCss = `
 ${css}
 .submit-fab,.overlay,.hero-qr-wrap{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
@@ -2270,7 +2287,7 @@ body{padding-top:calc(12px + var(--safe-top))}
 .eval-para{margin:0;padding:0;border:0;font:500 14px/1.7 var(--serif);color:#1f1e1d}
 .eval-para strong{display:block;margin-bottom:8px;font:700 14px/1.2 var(--sans);color:#8c4022}
 `;
-        const doc = `<!DOCTYPE html><html lang="ko"><head>
+          const doc = `<!DOCTYPE html><html lang="ko"><head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>${escapeHtml(built.title || "제출 보고서")}</title>
@@ -2280,15 +2297,25 @@ body{padding-top:calc(12px + var(--safe-top))}
 </head><body>
 ${built.html}
 </body></html>`;
-        const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const win = window.open(url, "_blank", "noopener");
-        if (!win) {
-          URL.revokeObjectURL(url);
-          toast("팝업이 차단되었습니다. 브라우저에서 새 탭을 허용해 주세요.");
-          return;
+          win.document.open();
+          win.document.write(doc);
+          win.document.close();
+          try {
+            win.opener = null;
+          } catch {
+            /* ignore */
+          }
+        } catch (e) {
+          console.warn(e);
+          try {
+            win.document.write(
+              "<!DOCTYPE html><body style=\"padding:24px;font:600 15px sans-serif\">보고서를 열지 못했습니다.</body></html>"
+            );
+            win.document.close();
+          } catch {
+            /* ignore */
+          }
         }
-        setTimeout(() => URL.revokeObjectURL(url), 180000);
       }
 
       function closeSubViewer() {
@@ -3651,7 +3678,7 @@ ${built.html}
           <div class="detail-action-strip">
             <a class="qr" id="detailQr" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="탭하여 활동지 열기" aria-label="활동지 QR — 눌러서 열기"></a>
             <div class="btns">
-              <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
+              <a class="btn btn-primary" id="btnOpenActivity" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">활동지 열기</a>
               <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
             </div>
             <div class="meta">
@@ -3716,7 +3743,6 @@ ${built.html}
           const qrSize = window.matchMedia("(max-width: 1024px)").matches ? 128 : 120;
           paintQr(qrEl, url, qrSize);
         }
-        $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(url);
