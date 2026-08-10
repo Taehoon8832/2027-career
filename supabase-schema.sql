@@ -1,28 +1,69 @@
--- 고교학점제 진로설계: 교사·30차시 QR·학생 제출
--- Supabase SQL Editor에서 실행하세요.
+-- 고교학점제 진로설계: 교사(아이디) · 수업코드 · 30차시 QR · 학생 제출
+-- Supabase SQL Editor에서 전체 실행하세요.
+-- Authentication → Providers → Email → Confirm email: OFF 권장
 
--- Extensions
 create extension if not exists "pgcrypto";
 
 -- Profiles (1:1 with auth.users)
 create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
-  display_name text,
+  login_id text not null unique,
+  school_name text not null default '',
+  display_name text not null default '',
   role text not null default 'teacher' check (role in ('teacher')),
   created_at timestamptz not null default now()
 );
+
+-- 기존 테이블이 있을 때 컬럼 보강
+alter table public.profiles add column if not exists login_id text;
+alter table public.profiles add column if not exists school_name text not null default '';
+alter table public.profiles add column if not exists display_name text;
+alter table public.profiles alter column display_name set default '';
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint
+    where conname = 'profiles_login_id_key'
+  ) then
+    -- null login_id가 있으면 임시값으로 채운 뒤 unique 적용
+    update public.profiles
+    set login_id = 'user_' || substr(replace(id::text, '-', ''), 1, 12)
+    where login_id is null or login_id = '';
+    alter table public.profiles alter column login_id set not null;
+    alter table public.profiles add constraint profiles_login_id_key unique (login_id);
+  end if;
+end $$;
 
 -- Classes
 create table if not exists public.classes (
   id uuid primary key default gen_random_uuid(),
   teacher_id uuid not null references public.profiles (id) on delete cascade,
   title text not null default 'AI와 함께 하는 고교학점제 진로설계',
+  class_code text not null unique,
   created_at timestamptz not null default now()
 );
 
-create index if not exists classes_teacher_id_idx on public.classes (teacher_id);
+alter table public.classes add column if not exists class_code text;
 
--- Lessons (1–30 per class, QR token)
+do $$
+begin
+  update public.classes
+  set class_code = upper(substr(encode(gen_random_bytes(5), 'hex'), 1, 8))
+  where class_code is null or class_code = '';
+
+  if not exists (
+    select 1 from pg_constraint where conname = 'classes_class_code_key'
+  ) then
+    alter table public.classes alter column class_code set not null;
+    alter table public.classes add constraint classes_class_code_key unique (class_code);
+  end if;
+end $$;
+
+create index if not exists classes_teacher_id_idx on public.classes (teacher_id);
+create index if not exists classes_class_code_idx on public.classes (class_code);
+
+-- Lessons (1–30 per class, unique QR token — hex only, never login_id)
 create table if not exists public.lessons (
   id uuid primary key default gen_random_uuid(),
   class_id uuid not null references public.classes (id) on delete cascade,
@@ -48,6 +89,45 @@ create table if not exists public.submissions (
 create index if not exists submissions_lesson_id_idx on public.submissions (lesson_id);
 create index if not exists submissions_created_at_idx on public.submissions (created_at desc);
 
+-- Helpers
+create or replace function public.generate_class_code()
+returns text
+language plpgsql
+as $$
+declare
+  code text;
+  tries int := 0;
+begin
+  loop
+    -- 8자리 대문자 hex (수업코드). 로그인 아이디와 네임스페이스가 다름
+    code := upper(substr(encode(gen_random_bytes(5), 'hex'), 1, 8));
+    exit when not exists (select 1 from public.classes where class_code = code);
+    tries := tries + 1;
+    exit when tries > 20;
+  end loop;
+  return code;
+end;
+$$;
+
+create or replace function public.generate_lesson_token()
+returns text
+language plpgsql
+as $$
+declare
+  tok text;
+  tries int := 0;
+begin
+  loop
+    -- 32자 hex 난수 QR 토큰 (회원 login_id와 절대 동일 형식/용도로 쓰지 않음)
+    tok := encode(gen_random_bytes(16), 'hex');
+    exit when not exists (select 1 from public.lessons where token = tok);
+    tries := tries + 1;
+    exit when tries > 20;
+  end loop;
+  return tok;
+end;
+$$;
+
 -- Auto profile + class + 30 lessons on signup
 create or replace function public.handle_new_teacher()
 returns trigger
@@ -58,25 +138,39 @@ as $$
 declare
   new_class_id uuid;
   i int;
+  v_login_id text;
+  v_school text;
+  v_name text;
 begin
-  insert into public.profiles (id, display_name, role)
-  values (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'display_name', split_part(new.email, '@', 1)),
-    'teacher'
+  v_login_id := nullif(trim(coalesce(new.raw_user_meta_data->>'login_id', '')), '');
+  if v_login_id is null then
+    -- fallback: local-part of synthetic email (id@id.2027career.local)
+    v_login_id := split_part(coalesce(new.email, ''), '@', 1);
+  end if;
+  if v_login_id is null or v_login_id = '' then
+    v_login_id := 'user_' || substr(replace(new.id::text, '-', ''), 1, 12);
+  end if;
+
+  v_school := coalesce(nullif(trim(new.raw_user_meta_data->>'school_name'), ''), '');
+  v_name := coalesce(
+    nullif(trim(new.raw_user_meta_data->>'display_name'), ''),
+    v_login_id
   );
 
-  insert into public.classes (teacher_id, title)
-  values (new.id, 'AI와 함께 하는 고교학점제 진로설계')
+  insert into public.profiles (id, login_id, school_name, display_name, role)
+  values (new.id, v_login_id, v_school, v_name, 'teacher')
+  on conflict (id) do update
+    set login_id = excluded.login_id,
+        school_name = excluded.school_name,
+        display_name = excluded.display_name;
+
+  insert into public.classes (teacher_id, title, class_code)
+  values (new.id, 'AI와 함께 하는 고교학점제 진로설계', public.generate_class_code())
   returning id into new_class_id;
 
   for i in 1..30 loop
     insert into public.lessons (class_id, session_no, token)
-    values (
-      new_class_id,
-      i,
-      encode(gen_random_bytes(16), 'hex')
-    );
+    values (new_class_id, i, public.generate_lesson_token());
   end loop;
 
   return new;
@@ -178,7 +272,7 @@ create policy "submissions_insert_public" on public.submissions
     exists (select 1 from public.lessons l where l.id = lesson_id)
   );
 
--- Realtime (이미 추가된 경우 무시)
+-- Realtime
 do $$
 begin
   alter publication supabase_realtime add table public.submissions;

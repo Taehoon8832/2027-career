@@ -204,6 +204,26 @@
     }
     .btn-ghost:hover { background: var(--color-primary-50); }
     .auth-foot { margin-top: 8px; text-align: center; }
+    .signup-only { display: none; }
+    .auth-form.is-signup .signup-only { display: grid; }
+    .auth-form.is-signup .login-only { display: none; }
+    .class-code-bar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 10px 14px; margin-bottom: 12px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      background: var(--color-primary-50);
+    }
+    .class-code-bar .label {
+      font: 500 12px/1 var(--font-sans); color: var(--color-primary-700);
+    }
+    .class-code-bar strong {
+      font: 700 15px/1 var(--font-sans); letter-spacing: 0.06em;
+      color: var(--text-primary);
+    }
+    .class-code-bar .hint {
+      flex: 1; min-width: 140px;
+      font: 500 12px/1.35 var(--font-sans); color: var(--text-tertiary);
+    }
     .auth-msg { min-height: 18px; margin: 8px 0 0; font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary); text-align: center; }
     .auth-msg.is-error { color: #B23A2C; }
     .auth-msg.is-ok { color: #4F7A35; }
@@ -381,25 +401,34 @@
                   <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
                 </div>
                 <div>
-                  <h2>교사 로그인</h2>
-                  <p>이메일로 로그인해 주세요.</p>
+                  <h2 id="authTitle">교사 로그인</h2>
+                  <p id="authSub">아이디와 비밀번호로 로그인해 주세요.</p>
                 </div>
               </div>
               <form id="loginForm" novalidate>
+                <div class="field signup-only">
+                  <label for="schoolName">재직교</label>
+                  <input id="schoolName" name="schoolName" type="text" autocomplete="organization" placeholder="예: ○○고등학교" />
+                </div>
+                <div class="field signup-only">
+                  <label for="teacherName">성명</label>
+                  <input id="teacherName" name="teacherName" type="text" autocomplete="name" placeholder="홍길동" />
+                </div>
                 <div class="field">
-                  <label for="email">이메일</label>
-                  <input id="email" name="email" type="email" autocomplete="username" placeholder="teacher@school.kr" required />
+                  <label for="loginId">아이디</label>
+                  <input id="loginId" name="loginId" type="text" autocomplete="username" placeholder="아이디" required />
                 </div>
                 <div class="field">
                   <label for="password">비밀번호</label>
-                  <input id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호" required />
+                  <input id="password" name="password" type="password" autocomplete="current-password" placeholder="비밀번호 (6자 이상)" required />
                 </div>
-                <div class="auth-actions">
+                <div class="auth-actions login-only">
                   <button type="submit" class="btn btn-primary" id="btnLogin">로그인</button>
-                  <button type="button" class="btn btn-secondary" id="btnSignup">회원가입</button>
+                  <button type="button" class="btn btn-secondary" id="btnShowSignup">회원가입</button>
                 </div>
-                <div class="auth-foot">
-                  <button type="button" class="btn btn-ghost" id="btnFindPw">비밀번호 찾기</button>
+                <div class="auth-actions signup-only">
+                  <button type="button" class="btn btn-primary" id="btnSignup">가입하기</button>
+                  <button type="button" class="btn btn-secondary" id="btnShowLogin">로그인으로</button>
                 </div>
                 <p class="auth-msg" id="authMsg" role="status" aria-live="polite"></p>
               </form>
@@ -429,6 +458,12 @@
     </header>
     <div class="dash">
       <aside class="dash-list">
+        <div class="class-code-bar" id="classCodeBar">
+          <span class="label">수업코드</span>
+          <strong id="classCodeValue">--------</strong>
+          <button type="button" class="btn-tiny" id="btnCopyClassCode">복사</button>
+          <span class="hint">교사용 공유 코드 · 학생 제출은 차시별 QR</span>
+        </div>
         <div class="dash-head">
           <h2>차시 QR</h2>
           <span id="lessonCountLabel">30차시</span>
@@ -483,6 +518,8 @@
         SUPABASE_URL: "https://wdpohasgttifsxjqblhf.supabase.co",
         SUPABASE_ANON_KEY: "sb_publishable_JDkkbUVPruBg33cvLEh11A_ipF3VPCv"
       };
+      /** Supabase Auth용 합성 이메일 도메인 (화면에는 아이디만 사용) */
+      const AUTH_EMAIL_DOMAIN = "id.2027career.local";
 
       const $ = (id) => document.getElementById(id);
       const views = {
@@ -498,6 +535,8 @@
       let realtimeChannel = null;
       let toastTimer = 0;
       let studentLesson = null;
+      let teacherClass = null;
+      let authMode = "login";
 
       function initSupabase() {
         if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_ANON_KEY || !window.supabase) return null;
@@ -512,12 +551,24 @@
         return sb;
       }
 
+      function normalizeLoginId(id) {
+        return String(id || "").trim().toLowerCase();
+      }
+
+      function idToAuthEmail(loginId) {
+        return `${normalizeLoginId(loginId)}@${AUTH_EMAIL_DOMAIN}`;
+      }
+
       function userFromAuth(user) {
         if (!user) return null;
+        const meta = user.user_metadata || {};
+        const loginId = meta.login_id || (user.email || "").split("@")[0] || "";
         return {
           userId: user.id,
+          loginId,
+          schoolName: meta.school_name || "",
+          name: meta.display_name || loginId || "교사",
           email: user.email || "",
-          name: user.user_metadata?.display_name || user.email || "교사",
           at: Date.now()
         };
       }
@@ -525,6 +576,35 @@
       function applyAuthUser(user) {
         session = userFromAuth(user);
         return session;
+      }
+
+      async function enrichSessionFromProfile() {
+        if (!sb || !session?.userId) return session;
+        const { data } = await sb
+          .from("profiles")
+          .select("login_id, school_name, display_name")
+          .eq("id", session.userId)
+          .maybeSingle();
+        if (!data) return session;
+        session = {
+          ...session,
+          loginId: data.login_id || session.loginId,
+          schoolName: data.school_name || session.schoolName,
+          name: data.display_name || session.name
+        };
+        return session;
+      }
+
+      function setAuthMode(mode) {
+        authMode = mode === "signup" ? "signup" : "login";
+        const form = $("authForm");
+        form.classList.toggle("is-signup", authMode === "signup");
+        $("authTitle").textContent = authMode === "signup" ? "교사 회원가입" : "교사 로그인";
+        $("authSub").textContent = authMode === "signup"
+          ? "재직교·성명·아이디·비밀번호를 입력해 주세요."
+          : "아이디와 비밀번호로 로그인해 주세요.";
+        $("password").autocomplete = authMode === "signup" ? "new-password" : "current-password";
+        setMsg($("authMsg"), "");
       }
 
       function toast(message) {
@@ -567,11 +647,13 @@
       function showWelcome(s) {
         $("authForm").classList.add("is-hidden");
         $("welcome").classList.add("is-visible");
-        const label = s.email || s.name || "교사";
-        const local = String(label).split("@")[0];
-        $("welcomeAvatar").textContent = (local[0] || "T").toUpperCase();
-        $("welcomeTitle").textContent = `${local} 님, 환영합니다`;
-        $("welcomeEmail").textContent = s.email || "";
+        const label = s.name || s.loginId || "교사";
+        $("welcomeAvatar").textContent = (String(label)[0] || "T").toUpperCase();
+        $("welcomeTitle").textContent = `${label} 님, 환영합니다`;
+        const bits = [];
+        if (s.schoolName) bits.push(s.schoolName);
+        if (s.loginId) bits.push("@" + s.loginId);
+        $("welcomeEmail").textContent = bits.join(" · ");
         setMsg($("authMsg"), "");
       }
 
@@ -579,35 +661,69 @@
         $("welcome").classList.remove("is-visible");
         $("authForm").classList.remove("is-hidden");
         $("password").value = "";
+        setAuthMode("login");
         setMsg($("authMsg"), "");
       }
 
-      function validateLogin(email, password) {
-        if (!email.trim()) return "이메일을 입력해 주세요.";
-        if (!password) return "비밀번호를 입력해 주세요.";
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-          return "올바른 이메일 형식을 입력해 주세요.";
+      function validateLoginId(loginId) {
+        const id = normalizeLoginId(loginId);
+        if (!id) return "아이디를 입력해 주세요.";
+        if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(id)) {
+          return "아이디는 영문·숫자·._- 조합 3~32자로 입력해 주세요.";
         }
+        return "";
+      }
+
+      function validateLogin(loginId, password) {
+        const idErr = validateLoginId(loginId);
+        if (idErr) return idErr;
+        if (!password) return "비밀번호를 입력해 주세요.";
         if (password.length < 6) return "비밀번호는 6자 이상으로 입력해 주세요.";
         return "";
       }
 
+      function validateSignup(schoolName, teacherName, loginId, password) {
+        if (!schoolName.trim()) return "재직교를 입력해 주세요.";
+        if (!teacherName.trim()) return "성명을 입력해 주세요.";
+        return validateLogin(loginId, password);
+      }
+
+      function cryptoRandomToken() {
+        const arr = new Uint8Array(16);
+        crypto.getRandomValues(arr);
+        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      function generateClassCode() {
+        const arr = new Uint8Array(5);
+        crypto.getRandomValues(arr);
+        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 8).toUpperCase();
+      }
+
       async function ensureTeacherClassSeeded() {
-        if (!sb || !session) return;
+        if (!sb || !session) return null;
         const { data: classes, error } = await sb
           .from("classes")
-          .select("id")
+          .select("id, class_code, title")
           .eq("teacher_id", session.userId)
           .limit(1);
         if (error) throw error;
-        if (classes && classes.length) return classes[0].id;
+        if (classes && classes.length) {
+          teacherClass = classes[0];
+          return classes[0].id;
+        }
 
         const { data: created, error: cErr } = await sb
           .from("classes")
-          .insert({ teacher_id: session.userId, title: "AI와 함께 하는 고교학점제 진로설계" })
-          .select("id")
+          .insert({
+            teacher_id: session.userId,
+            title: "AI와 함께 하는 고교학점제 진로설계",
+            class_code: generateClassCode()
+          })
+          .select("id, class_code, title")
           .single();
         if (cErr) throw cErr;
+        teacherClass = created;
 
         const rows = Array.from({ length: 30 }, (_, i) => ({
           class_id: created.id,
@@ -619,29 +735,22 @@
         return created.id;
       }
 
-      function cryptoRandomToken() {
-        const arr = new Uint8Array(16);
-        crypto.getRandomValues(arr);
-        return Array.from(arr, (b) => b.toString(16).padStart(2, "0")).join("");
+      function renderClassCode() {
+        $("classCodeValue").textContent = teacherClass?.class_code || "--------";
       }
 
       async function loadLessons() {
         if (!session || !sb) return;
-        await ensureTeacherClassSeeded();
-        const { data: classes, error: cErr } = await sb
-          .from("classes")
-          .select("id")
-          .eq("teacher_id", session.userId)
-          .limit(1);
-        if (cErr) throw cErr;
-        if (!classes?.length) {
+        const classId = await ensureTeacherClassSeeded();
+        renderClassCode();
+        if (!classId) {
           lessons = [];
           return;
         }
         const { data, error } = await sb
           .from("lessons")
           .select("id, class_id, session_no, token")
-          .eq("class_id", classes[0].id)
+          .eq("class_id", classId)
           .order("session_no", { ascending: true });
         if (error) throw error;
         lessons = data || [];
@@ -821,7 +930,8 @@
         }
         try {
           showView("teacher");
-          $("teacherBarTitle").textContent = "30차시 QR · 제출 현황";
+          const label = session.name || session.loginId || "교사";
+          $("teacherBarTitle").textContent = `${label} · 30차시 QR`;
           await loadLessons();
           await renderLessonList();
           if (lessons.length) await selectLesson(lessons[0].id);
@@ -832,9 +942,9 @@
       }
 
       async function loginTeacher() {
-        const email = $("email").value.trim();
+        const loginId = $("loginId").value;
         const password = $("password").value;
-        const err = validateLogin(email, password);
+        const err = validateLogin(loginId, password);
         if (err) return setMsg($("authMsg"), err, "error");
         if (!sb) return setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
 
@@ -842,14 +952,15 @@
         btn.disabled = true;
         try {
           const { data, error } = await sb.auth.signInWithPassword({
-            email: email.toLowerCase(),
+            email: idToAuthEmail(loginId),
             password
           });
           if (error) {
-            setMsg($("authMsg"), "로그인 실패: " + (error.message || "로그인에 실패했습니다."), "error");
+            setMsg($("authMsg"), "로그인 실패: " + (error.message || "아이디 또는 비밀번호를 확인해 주세요."), "error");
             return;
           }
           applyAuthUser(data.user);
+          await enrichSessionFromProfile();
           showWelcome(session);
           toast("로그인되었습니다.");
         } finally {
@@ -858,9 +969,11 @@
       }
 
       async function signupTeacher() {
-        const email = $("email").value.trim();
+        const schoolName = $("schoolName").value.trim();
+        const teacherName = $("teacherName").value.trim();
+        const loginId = normalizeLoginId($("loginId").value);
         const password = $("password").value;
-        const err = validateLogin(email, password);
+        const err = validateSignup(schoolName, teacherName, loginId, password);
         if (err) return setMsg($("authMsg"), err, "error");
         if (!sb) return setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
 
@@ -868,43 +981,37 @@
         btn.disabled = true;
         try {
           const { data, error } = await sb.auth.signUp({
-            email: email.toLowerCase(),
+            email: idToAuthEmail(loginId),
             password,
-            options: { data: { display_name: email.split("@")[0] } }
+            options: {
+              data: {
+                login_id: loginId,
+                school_name: schoolName,
+                display_name: teacherName
+              }
+            }
           });
           if (error) {
-            setMsg($("authMsg"), "회원가입 실패: " + (error.message || "회원가입에 실패했습니다."), "error");
+            const msg = /already|registered|exists/i.test(error.message || "")
+              ? "이미 사용 중인 아이디입니다."
+              : (error.message || "회원가입에 실패했습니다.");
+            setMsg($("authMsg"), "회원가입 실패: " + msg, "error");
             return;
           }
           if (!data.session) {
-            setMsg($("authMsg"), "회원가입이 완료되었습니다. 이메일 인증 후 로그인해 주세요.", "ok");
+            setMsg($("authMsg"), "회원가입이 완료되었습니다. 이메일 인증이 켜져 있으면 인증 후 로그인해 주세요.", "ok");
             toast("회원가입이 완료되었습니다.");
+            setAuthMode("login");
             return;
           }
           applyAuthUser(data.user);
+          await enrichSessionFromProfile();
           try { await ensureTeacherClassSeeded(); } catch (e) { console.warn(e); }
           showWelcome(session);
           toast("회원가입이 완료되었습니다.");
         } finally {
           btn.disabled = false;
         }
-      }
-
-      async function findPassword() {
-        const email = $("email").value.trim();
-        if (!sb) return toast("Supabase 연결에 실패했습니다.");
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-          setMsg($("authMsg"), "비밀번호 재설정을 위해 이메일을 입력해 주세요.", "error");
-          return;
-        }
-        const { error } = await sb.auth.resetPasswordForEmail(email.toLowerCase(), {
-          redirectTo: location.href.split("?")[0].split("#")[0]
-        });
-        if (error) {
-          setMsg($("authMsg"), error.message || "재설정 메일 발송에 실패했습니다.", "error");
-          return;
-        }
-        setMsg($("authMsg"), "비밀번호 재설정 메일을 보냈습니다. 이메일을 확인해 주세요.", "ok");
       }
 
       async function logout() {
@@ -915,6 +1022,7 @@
         applyAuthUser(null);
         lessons = [];
         selectedLessonId = null;
+        teacherClass = null;
         showLogin();
         showView("landing");
         toast("로그아웃되었습니다.");
@@ -983,16 +1091,30 @@
       async function restoreSession() {
         if (!sb) return null;
         const { data: { session: authSession } } = await sb.auth.getSession();
-        return applyAuthUser(authSession?.user || null);
+        applyAuthUser(authSession?.user || null);
+        if (session) await enrichSessionFromProfile();
+        return session;
       }
 
       // Events
       $("loginForm").addEventListener("submit", (e) => {
         e.preventDefault();
-        loginTeacher();
+        if (authMode === "signup") signupTeacher();
+        else loginTeacher();
       });
       $("btnSignup").addEventListener("click", () => signupTeacher());
-      $("btnFindPw").addEventListener("click", () => findPassword());
+      $("btnShowSignup").addEventListener("click", () => setAuthMode("signup"));
+      $("btnShowLogin").addEventListener("click", () => setAuthMode("login"));
+      $("btnCopyClassCode").addEventListener("click", async () => {
+        const code = teacherClass?.class_code;
+        if (!code) return toast("수업코드를 불러오지 못했습니다.");
+        try {
+          await navigator.clipboard.writeText(code);
+          toast("수업코드를 복사했습니다.");
+        } catch {
+          toast(code);
+        }
+      });
       $("btnLogout").addEventListener("click", () => logout());
       $("btnTeacherLogout").addEventListener("click", () => logout());
       $("btnBackLanding").addEventListener("click", () => {
