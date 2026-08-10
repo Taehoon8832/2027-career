@@ -28,3 +28,27 @@ alter table public.classes
 update public.classes
 set department_name = coalesce(department_name, '')
 where department_name is null;
+
+-- 학번 유형: type1(10101) / type2(1101)
+alter table public.profiles
+  add column if not exists student_no_format text default 'type1';
+
+update public.profiles
+set student_no_format = 'type1'
+where student_no_format is null or btrim(student_no_format) = '';
+
+do $$
+begin
+  begin
+    alter table public.profiles drop constraint if exists profiles_student_no_format_check;
+  exception when others then null;
+  end;
+  begin
+    alter table public.profiles
+      add constraint profiles_student_no_format_check
+      check (student_no_format in ('type1', 'type2'));
+  exception when others then null;
+  end;
+end $$;
+
+notify pgrst, 'reload schema';

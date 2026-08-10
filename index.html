@@ -708,6 +708,25 @@
     }
     .dash-head h2 { font: 600 20px/1.3 var(--font-serif); letter-spacing: -0.02em; }
     .dash-head span { color: var(--text-tertiary); font: 500 12px/1 var(--font-sans); }
+    .roster-head {
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin-bottom: 10px;
+    }
+    .roster-head h2 { margin: 0; flex: 0 0 auto; }
+    .roster-head .hakbun-type-chips {
+      margin: 0 0 0 auto;
+      justify-content: flex-end;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+    .hakbun-type-chips .chip-toggle {
+      height: 32px;
+      padding: 0 10px;
+      font-size: 11px;
+      white-space: nowrap;
+    }
     .setup-launch {
       width: 100%; display: flex; align-items: center; gap: 12px;
       margin: 0 0 14px; padding: 12px 14px;
@@ -1056,6 +1075,16 @@
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
       .setup-type-grade { grid-template-columns: 1fr; gap: 0; }
       .dept-row input { height: 40px; font-size: 15px; }
+      .roster-head .hakbun-type-chips {
+        margin-left: 0;
+        justify-content: flex-start;
+        width: 100%;
+      }
+      .hakbun-type-chips .chip-toggle {
+        height: 36px;
+        font-size: 12px;
+        padding: 0 12px;
+      }
       .class-count-control { flex-wrap: wrap; }
       .class-count-control .count-input,
       .class-count-control .count-btn,
@@ -1278,8 +1307,12 @@
           </div>
 
           <div class="roster-box" id="rosterBox">
-            <div class="dash-head" style="margin-top:8px; margin-bottom:0">
+            <div class="dash-head roster-head" style="margin-top:8px">
               <h2 style="font-size:16px">학급 명단</h2>
+              <div class="chip-row hakbun-type-chips" id="studentNoFormatChips" role="group" aria-label="학번 유형">
+                <button type="button" class="chip-toggle" data-no-format="type1" title="학년+반(2)+번호(2)">학번 유형1 (10101)</button>
+                <button type="button" class="chip-toggle" data-no-format="type2" title="학년+반(1)+번호(2)">학번 유형2 (1101)</button>
+              </div>
             </div>
             <div class="chip-row" id="rosterClassChips"></div>
             <p class="settings-sub" style="margin:10px 0 8px">학생 수</p>
@@ -1537,6 +1570,7 @@
         return {
           mode: "class",
           schoolType: "general",
+          studentNoFormat: "type1",
           classGrade: 1,
           classCount: 1,
           byGrade: {},
@@ -1548,8 +1582,20 @@
         return v === "vocational" ? "vocational" : "general";
       }
 
+      function normalizeStudentNoFormat(v) {
+        return v === "type2" ? "type2" : "type1";
+      }
+
+      function getStudentNoFormat() {
+        return normalizeStudentNoFormat(classSettings.studentNoFormat);
+      }
+
       function isVocational() {
         return normalizeSchoolType(classSettings.schoolType) === "vocational";
+      }
+
+      function hakbunExample(format) {
+        return normalizeStudentNoFormat(format) === "type2" ? "1101" : "10101";
       }
 
       function ensureByGradeBag(grade) {
@@ -1616,6 +1662,7 @@
           return {
             mode: "class",
             schoolType: normalizeSchoolType(raw.schoolType),
+            studentNoFormat: normalizeStudentNoFormat(raw.studentNoFormat),
             classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
             classCount: clampClassCount(classCount || 1),
             byGrade,
@@ -1639,6 +1686,7 @@
       function saveClassSettings() {
         classSettings.mode = "class";
         classSettings.schoolType = normalizeSchoolType(classSettings.schoolType);
+        classSettings.studentNoFormat = normalizeStudentNoFormat(classSettings.studentNoFormat);
         classSettings.classCount = clampClassCount(classSettings.classCount);
         classSettings.needsResave = false;
         rememberGradeCount();
@@ -1802,11 +1850,18 @@
         return s.replace(/^0+(\d)/, "$1");
       }
 
-      /** 학번: 학년 + 반(2) + 번호(2) → 예: 1학년 1반 1번 = 10101 */
-      function formatHakbun(grade, classNo, seat) {
+      /**
+       * 학번 유형1: 학년 + 반(2) + 번호(2) → 10101
+       * 학번 유형2: 학년 + 반(자릿수 그대로) + 번호(2) → 1101
+       */
+      function formatHakbun(grade, classNo, seat, format) {
         const g = Math.max(1, Math.min(3, Number(grade) || 1));
         const c = Math.max(1, Math.min(99, Number(classNo) || 1));
         const n = Math.max(1, Math.min(99, Number(seat) || 1));
+        const fmt = normalizeStudentNoFormat(format || getStudentNoFormat());
+        if (fmt === "type2") {
+          return `${g}${c}${String(n).padStart(2, "0")}`;
+        }
         return `${g}${String(c).padStart(2, "0")}${String(n).padStart(2, "0")}`;
       }
 
@@ -1817,22 +1872,45 @@
       function seatFromStudentNo(no, grade, classNo) {
         const key = normalizeStudentNo(no);
         if (!key) return 0;
+        if (/^\d{1,2}$/.test(key)) return Number(key);
         const g = Number(grade) || 1;
         const c = Number(classNo) || 1;
-        const prefix = `${g}${String(c).padStart(2, "0")}`;
-        if (key.length >= 5 && key.startsWith(prefix)) {
-          return Number(key.slice(prefix.length)) || 0;
+        const p1 = `${g}${String(c).padStart(2, "0")}`;
+        if (key.startsWith(p1) && key.length > p1.length) {
+          const rest = key.slice(p1.length);
+          if (/^\d{1,2}$/.test(rest)) return Number(rest) || 0;
         }
-        if (/^\d{1,2}$/.test(key)) return Number(key);
+        const p2 = `${g}${c}`;
+        if (key.startsWith(p2) && key.length > p2.length) {
+          const rest = key.slice(p2.length);
+          if (/^\d{1,2}$/.test(rest)) return Number(rest) || 0;
+        }
+        // 끝 2자리를 번호로 추정
+        if (key.length >= 3 && /^\d+$/.test(key)) {
+          return Number(key.slice(-2)) || 0;
+        }
         return Number(key) || 0;
       }
 
-      /** 제출/명단 번호를 학급 학번 키로 통일 (1 → 10101) */
+      /** 제출/명단 번호를 학급 학번 키로 통일 (1 → 10101/1101) */
       function resolveRosterStudentKey(rawNo, grade, classNo) {
         const key = normalizeStudentNo(rawNo);
         if (!key) return "";
         if (/^\d{1,2}$/.test(key)) {
           return formatHakbun(grade, classNo, Number(key));
+        }
+        const seat = seatFromStudentNo(key, grade, classNo);
+        if (seat > 0) {
+          const normalized = formatHakbun(grade, classNo, seat);
+          // 이미 현재 형식이면 그대로, 다른 형식이면 변환 키로 맞춤
+          if (key === normalized) return key;
+          const alt = formatHakbun(
+            grade,
+            classNo,
+            seat,
+            getStudentNoFormat() === "type1" ? "type2" : "type1"
+          );
+          if (key === alt) return normalized;
         }
         return key;
       }
@@ -1876,6 +1954,156 @@
         root.querySelectorAll("[data-school-type]").forEach((btn) => {
           btn.classList.toggle("is-on", btn.getAttribute("data-school-type") === type);
         });
+      }
+
+      function syncStudentNoFormatChips() {
+        const root = $("studentNoFormatChips");
+        if (!root) return;
+        const fmt = getStudentNoFormat();
+        root.querySelectorAll("[data-no-format]").forEach((btn) => {
+          btn.classList.toggle("is-on", btn.getAttribute("data-no-format") === fmt);
+        });
+      }
+
+      function syncStudentNoPlaceholders() {
+        const ex = hakbunExample(getStudentNoFormat());
+        const rosterHint = $("studentCountInput");
+        if (rosterHint) rosterHint.title = `학번 예시: ${ex}`;
+        const studentNo = $("studentNo");
+        if (studentNo) {
+          studentNo.placeholder = `예: ${ex}`;
+          studentNo.maxLength = getStudentNoFormat() === "type2" ? 6 : 8;
+        }
+      }
+
+      async function convertClassHakbunFormat(classId, format) {
+        if (!sb || !classId) return 0;
+        const meta = classMetaById(classId);
+        if (!meta?.grade || !meta?.class_no) return 0;
+        const fmt = normalizeStudentNoFormat(format);
+        const { data, error } = await sb
+          .from("students")
+          .select("id, student_no, sort_order")
+          .eq("class_id", classId);
+        if (error || !data?.length) return 0;
+
+        const updates = [];
+        for (const row of data) {
+          const seat =
+            seatFromStudentNo(row.student_no, meta.grade, meta.class_no) ||
+            Number(row.sort_order) ||
+            0;
+          if (!seat) continue;
+          const next = formatHakbun(meta.grade, meta.class_no, seat, fmt);
+          const cur = String(row.student_no || "").trim();
+          if (next && next !== cur) updates.push({ id: row.id, student_no: next });
+        }
+        if (!updates.length) return 0;
+
+        // 충돌 방지: 임시 번호 → 최종 번호 (2단계)
+        const stamp = `t${Date.now().toString(36)}`;
+        for (let i = 0; i < updates.length; i++) {
+          const { error: tmpErr } = await sb
+            .from("students")
+            .update({ student_no: `${stamp}_${i}` })
+            .eq("id", updates[i].id);
+          if (tmpErr) throw tmpErr;
+        }
+        for (const u of updates) {
+          const { error: upErr } = await sb
+            .from("students")
+            .update({ student_no: u.student_no })
+            .eq("id", u.id);
+          if (upErr) throw upErr;
+        }
+        studentsCache.delete(classId);
+        return updates.length;
+      }
+
+      async function convertAllClassesHakbunFormat(format, preferClassId) {
+        const fmt = normalizeStudentNoFormat(format);
+        const ids = teacherClasses
+          .filter((c) => c.is_active && c.class_no)
+          .map((c) => c.id)
+          .filter(Boolean);
+        if (!ids.length) return 0;
+
+        // 현재 보고 있는 학급 먼저
+        const ordered = preferClassId
+          ? [preferClassId, ...ids.filter((id) => id !== preferClassId)]
+          : ids;
+
+        let total = 0;
+        for (const id of ordered) {
+          total += await convertClassHakbunFormat(id, fmt);
+          if (id === preferClassId || id === rosterClassId) {
+            // 즉시 화면 반영
+            if (rosterClassId === id) {
+              try {
+                await loadRoster(id);
+              } catch (e) {
+                console.warn(e);
+              }
+            }
+          }
+        }
+        return total;
+      }
+
+      async function setStudentNoFormat(format) {
+        const next = normalizeStudentNoFormat(format);
+        if (getStudentNoFormat() === next) return;
+        const prev = getStudentNoFormat();
+        const chipRoot = $("studentNoFormatChips");
+        const chips = chipRoot ? [...chipRoot.querySelectorAll("button")] : [];
+        chips.forEach((b) => {
+          b.disabled = true;
+        });
+
+        classSettings.studentNoFormat = next;
+        persistClassSettingsLocal();
+        syncStudentNoFormatChips();
+        syncStudentNoPlaceholders();
+
+        const prefer = rosterClassId || activeClassId;
+        if (!prefer || !teacherClasses.some((c) => c.is_active)) {
+          chips.forEach((b) => {
+            b.disabled = false;
+          });
+          toast(`학번 유형이 ${hakbunExample(next)} 형식으로 설정되었습니다.`);
+          return;
+        }
+
+        toast("학번 형식을 변환하는 중…");
+        try {
+          const n = await convertAllClassesHakbunFormat(next, prefer);
+          if (sb && session?.userId) {
+            const { error: stErr } = await sb
+              .from("profiles")
+              .update({ student_no_format: next })
+              .eq("id", session.userId);
+            if (stErr && !/student_no_format/i.test(stErr.message || "")) {
+              console.warn(stErr);
+            }
+          }
+          toast(
+            n
+              ? `학번 유형${next === "type2" ? "2" : "1"} (${hakbunExample(next)})로 변환 완료`
+              : `학번 유형${next === "type2" ? "2" : "1"} (${hakbunExample(next)}) 적용`
+          );
+        } catch (e) {
+          console.error(e);
+          classSettings.studentNoFormat = prev;
+          persistClassSettingsLocal();
+          syncStudentNoFormatChips();
+          syncStudentNoPlaceholders();
+          toast("학번 변환 실패: " + (e.message || e));
+        } finally {
+          chips.forEach((b) => {
+            b.disabled = false;
+          });
+          syncStudentNoFormatChips();
+        }
       }
 
       function renderDeptFields() {
@@ -1951,11 +2179,14 @@
       function renderClassSettingsUI() {
         classSettings.mode = "class";
         classSettings.schoolType = normalizeSchoolType(classSettings.schoolType);
+        classSettings.studentNoFormat = normalizeStudentNoFormat(classSettings.studentNoFormat);
         classSettings.classCount = clampClassCount(classSettings.classCount);
         const classGradeRoot = $("classGradeChips");
         if (!classGradeRoot) return;
 
         syncSchoolTypeChips();
+        syncStudentNoFormatChips();
+        syncStudentNoPlaceholders();
 
         // 학년 칩: 이벤트 위임용으로 한 번만 구성·갱신
         if (!classGradeRoot.dataset.ready) {
@@ -2144,32 +2375,14 @@
         if (insErr) throw insErr;
       }
 
-      /** 기존 1·2자리 번호 명단을 학번(10101) 형식으로 승격 */
+      /** 기존 1·2자리 번호·다른 유형 학번을 현재 학번 형식으로 맞춤 */
       async function migrateRosterToHakbun(classId) {
         if (!sb || !classId) return;
-        const meta = classMetaById(classId);
-        if (!meta?.grade || !meta?.class_no) return;
-        const { data, error } = await sb
-          .from("students")
-          .select("id, student_no")
-          .eq("class_id", classId);
-        if (error || !data?.length) return;
-        const updates = [];
-        for (const row of data) {
-          const raw = String(row.student_no || "").trim();
-          if (!/^\d{1,2}$/.test(raw)) continue;
-          const hakbun = formatHakbun(meta.grade, meta.class_no, Number(raw));
-          if (hakbun === raw) continue;
-          updates.push({ id: row.id, student_no: hakbun });
+        try {
+          await convertClassHakbunFormat(classId, getStudentNoFormat());
+        } catch (e) {
+          console.warn(e);
         }
-        for (const u of updates) {
-          const { error: upErr } = await sb
-            .from("students")
-            .update({ student_no: u.student_no })
-            .eq("id", u.id);
-          if (upErr) console.warn(upErr);
-        }
-        if (updates.length) studentsCache.delete(classId);
       }
 
       async function loadRosterSubmissionMap(classId) {
@@ -2899,9 +3112,16 @@ ${built.html}
         let error = null;
         ({ data, error } = await sb
           .from("profiles")
-          .select("login_id, email, school_name, display_name, school_type")
+          .select("login_id, email, school_name, display_name, school_type, student_no_format")
           .eq("id", session.userId)
           .maybeSingle());
+        if (error && /school_type|student_no_format/i.test(error.message || "")) {
+          ({ data, error } = await sb
+            .from("profiles")
+            .select("login_id, email, school_name, display_name, school_type")
+            .eq("id", session.userId)
+            .maybeSingle());
+        }
         if (error && /school_type/i.test(error.message || "")) {
           ({ data, error } = await sb
             .from("profiles")
@@ -2912,6 +3132,11 @@ ${built.html}
         if (!data) return session;
         if (data.school_type) {
           classSettings.schoolType = normalizeSchoolType(data.school_type);
+        }
+        if (data.student_no_format) {
+          classSettings.studentNoFormat = normalizeStudentNoFormat(data.student_no_format);
+        }
+        if (data.school_type || data.student_no_format) {
           persistClassSettingsLocal();
         }
         session = {
@@ -3406,14 +3631,26 @@ ${built.html}
           await upsertClassUnit(unit, map.get(key));
         }
 
-        // 고교 유형을 프로필에 저장 (컬럼 없으면 무시)
+        // 고교 유형·학번 유형을 프로필에 저장 (컬럼 없으면 무시)
         {
-          const { error: stErr } = await sb
+          const payload = {
+            school_type: normalizeSchoolType(classSettings.schoolType),
+            student_no_format: getStudentNoFormat()
+          };
+          let { error: stErr } = await sb
             .from("profiles")
-            .update({ school_type: normalizeSchoolType(classSettings.schoolType) })
+            .update(payload)
             .eq("id", session.userId);
-          if (stErr && !/school_type/i.test(stErr.message || "")) {
-            console.warn("school_type 저장:", stErr.message);
+          if (stErr && /student_no_format/i.test(stErr.message || "")) {
+            ({ error: stErr } = await sb
+              .from("profiles")
+              .update({ school_type: payload.school_type })
+              .eq("id", session.userId));
+          }
+          if (stErr && /school_type/i.test(stErr.message || "")) {
+            /* ignore */
+          } else if (stErr) {
+            console.warn("profile 설정 저장:", stErr.message);
           }
         }
 
@@ -4404,6 +4641,11 @@ ${built.html}
         const btn = e.target.closest("[data-school-type]");
         if (!btn) return;
         setSchoolType(btn.getAttribute("data-school-type"));
+      });
+      $("studentNoFormatChips")?.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-no-format]");
+        if (!btn) return;
+        void setStudentNoFormat(btn.getAttribute("data-no-format"));
       });
       $("classGradeChips")?.addEventListener("click", (e) => {
         const btn = e.target.closest("[data-grade]");
