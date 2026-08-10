@@ -851,10 +851,11 @@ button, .submit-fab, a { touch-action: manipulation; }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Ctrl+P 등 직접 인쇄 시 — 상단·히어로 숨기고 본문만 연속 흐름 */
 @media print {
   @page {
     size: A4;
-    margin: 8mm 7mm;
+    margin: 5mm 6mm;
   }
 
   html, body {
@@ -862,13 +863,9 @@ button, .submit-fab, a { touch-action: manipulation; }
     padding: 0 !important;
     margin: 0 !important;
     min-height: 0 !important;
+    height: auto !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-  }
-
-  body::before,
-  body::after {
-    display: none !important;
   }
 
   .topbar,
@@ -877,8 +874,10 @@ button, .submit-fab, a { touch-action: manipulation; }
   .zoom-controls,
   .submit-fab,
   .overlay,
+  .hero-card,
   .hero-qr-wrap,
-  .hero-qr-cap {
+  .hero-qr-cap,
+  #activityPrintFrame {
     display: none !important;
   }
 
@@ -886,111 +885,76 @@ button, .submit-fab, a { touch-action: manipulation; }
     width: 100% !important;
     max-width: none !important;
     margin: 0 !important;
+    padding: 0 !important;
     zoom: 1 !important;
     transform: none !important;
   }
 
-  .hero-card,
   .activity-card {
-    break-inside: avoid;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
-    border-width: 1.5px !important;
-  }
-
-  .hero-card {
-    grid-template-columns: 1fr !important;
-    margin-bottom: 8px !important;
-    padding: 10px 12px !important;
-  }
-
-  .hero-card h1 {
-    font-size: 18px !important;
-  }
-
-  .hero-card p {
-    font-size: 11px !important;
-  }
-
-  .activity-card {
-    padding: 10px 10px 12px !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
   }
 
   .activity-card > h2 {
-    margin-bottom: 8px !important;
-    font-size: 14px !important;
+    display: none !important;
+  }
+
+  .q100-head,
+  .na-manual-head,
+  .bingo-head {
+    margin: 0 0 6px !important;
+    padding: 0 0 5px !important;
   }
 
   .questions-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
 
   .q-item {
     break-inside: avoid;
-    padding: 5px 6px !important;
+    page-break-inside: avoid;
+    padding: 4px 5px !important;
   }
 
   .q-item .q-title {
-    font-size: 9.5px !important;
+    font-size: 9px !important;
     white-space: normal !important;
     -webkit-line-clamp: unset !important;
   }
 
   .q-item input,
   .activity-card .q-item input {
-    height: 22px !important;
-    min-height: 22px !important;
+    height: 18px !important;
+    min-height: 18px !important;
     font-size: 10px !important;
-    padding: 2px 4px !important;
+    padding: 0 2px !important;
   }
 
   .na-manual-grid {
     grid-template-columns: 1fr 1fr !important;
-    gap: 6px !important;
+    gap: 5px !important;
   }
 
   .na-card {
     break-inside: avoid;
-    padding: 8px !important;
-  }
-
-  .na-card textarea,
-  .activity-card .na-card textarea {
-    min-height: 56px !important;
-    height: auto !important;
-    font-size: 11px !important;
+    page-break-inside: avoid;
   }
 
   .bingo-board {
     grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-    gap: 4px !important;
+    gap: 3px !important;
   }
 
   .bingo-cell {
     break-inside: avoid;
-    min-height: 72px !important;
-    padding: 5px !important;
-  }
-
-  .bingo-cell .cell-title {
-    font-size: 9px !important;
-  }
-
-  .bingo-cell textarea.cell-input,
-  .activity-card .bingo-cell textarea.cell-input {
-    min-height: 36px !important;
-    font-size: 10px !important;
-  }
-
-  .bingo-guide,
-  .bingo-reflection {
-    break-inside: avoid;
-  }
-
-  .field input,
-  .field textarea,
-  .field select {
-    font-size: 11px !important;
+    page-break-inside: avoid;
+    min-height: 58px !important;
   }
 
   .grid-2 {

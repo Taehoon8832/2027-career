@@ -539,27 +539,263 @@ body{padding:16px!important;background:#fff!important}
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  function printActivitySheet() {
-    const prevZoom = pageZoom;
-    applyPageZoom(1);
-    document.body.classList.add("is-printing");
+  function buildPrintDocument(filledRoot) {
+    const meta = activityMeta();
+    const title = meta.title || `${sessionNo}차시 활동지`;
+    const hasInnerHead = !!filledRoot.querySelector(".q100-head, .na-manual-head, .bingo-head");
+    const headHtml = hasInnerHead
+      ? ""
+      : `<header class="print-head">
+      <strong>${escapeHtml(title)}</strong>
+      ${meta.summary ? `<span>${escapeHtml(meta.summary)}</span>` : ""}
+    </header>`;
+    return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<title>${escapeHtml(title)}</title>
+<style>
+  @page { size: A4; margin: 5mm 6mm; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    color: #1f1e1d;
+    font-family: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .print-sheet { margin: 0; padding: 0; }
+  .print-head {
+    margin: 0 0 6px;
+    padding: 0 0 6px;
+    border-bottom: 1.5px solid #312e81;
+  }
+  .print-head strong {
+    display: block;
+    font: 700 14px/1.25 Pretendard, sans-serif;
+    color: #312e81;
+    letter-spacing: -0.02em;
+  }
+  .print-head span {
+    display: block;
+    margin-top: 2px;
+    font: 500 10px/1.35 Pretendard, sans-serif;
+    color: #64748b;
+  }
+  .activity-card > h2 { display: none !important; }
+  .q100-head { margin: 0 0 6px; }
+  .q100-head strong {
+    display: block;
+    font: 700 13px/1.25 Pretendard, sans-serif;
+    color: #312e81;
+  }
+  .q100-head span {
+    display: block;
+    margin-top: 1px;
+    font: 500 10px/1.35 Pretendard, sans-serif;
+    color: #64748b;
+  }
+  .questions-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .q-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #c7d2fe;
+    border-radius: 6px;
+    padding: 4px 5px;
+    background: #fafafe;
+  }
+  .q-item .q-title {
+    display: block;
+    margin: 0 0 2px;
+    font: 700 9px/1.25 Pretendard, sans-serif;
+    color: #3730a3;
+  }
+  .q-item input {
+    width: 100%;
+    height: 18px;
+    border: 0;
+    border-bottom: 1px dashed #cbd5e1;
+    border-radius: 0;
+    background: transparent;
+    padding: 0 2px;
+    font: 500 10px/1.2 Pretendard, sans-serif;
+    color: #1f1e1d;
+  }
+  .na-manual-head, .bingo-head {
+    margin: 0 0 6px;
+  }
+  .na-manual-head strong, .bingo-head strong {
+    display: block;
+    font: 700 13px/1.25 Pretendard, sans-serif;
+    color: #1e293b;
+  }
+  .na-manual-head span, .bingo-head span {
+    display: block;
+    margin-top: 1px;
+    font: 500 10px/1.35 Pretendard, sans-serif;
+    color: #64748b;
+  }
+  .na-manual-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+  }
+  .na-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #94a3b8;
+    border-radius: 8px;
+    padding: 6px 7px;
+  }
+  .na-card-head {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 4px;
+    font: 700 11px/1.25 Pretendard, sans-serif;
+  }
+  .na-card-icon { font-size: 12px; }
+  .na-card textarea {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 5px 6px;
+    font: 500 10px/1.4 Pretendard, sans-serif;
+    resize: none;
+    background: #fff;
+  }
+  .bingo-guide {
+    margin: 0 0 6px;
+    font: 500 10px/1.4 Pretendard, sans-serif;
+    color: #475569;
+  }
+  .bingo-guide ol { margin: 4px 0 0; padding-left: 16px; }
+  .bingo-board {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 3px;
+  }
+  .bingo-cell {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    border: 1px solid #93c5fd;
+    border-radius: 6px;
+    padding: 4px;
+    min-height: 58px;
+  }
+  .bingo-cell .cell-number {
+    font: 700 8px/1 Pretendard, sans-serif;
+    color: #64748b;
+  }
+  .bingo-cell .cell-title {
+    display: block;
+    margin: 2px 0 3px;
+    font: 700 8.5px/1.25 Pretendard, sans-serif;
+    color: #1d4ed8;
+  }
+  .bingo-cell textarea {
+    width: 100%;
+    min-height: 28px;
+    border: 0;
+    border-bottom: 1px dashed #cbd5e1;
+    background: transparent;
+    padding: 0;
+    font: 500 9px/1.3 Pretendard, sans-serif;
+    resize: none;
+  }
+  .bingo-reflection { margin-top: 8px; }
+  .bingo-reflection label {
+    display: block;
+    margin-bottom: 3px;
+    font: 700 11px/1.3 Pretendard, sans-serif;
+  }
+  .bingo-reflection textarea {
+    width: 100%;
+    min-height: 48px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px;
+    font: 500 10px/1.4 Pretendard, sans-serif;
+  }
+  .field { margin: 0 0 6px; }
+  .field label {
+    display: block;
+    margin-bottom: 2px;
+    font: 700 10px/1.3 Pretendard, sans-serif;
+  }
+  .field input, .field textarea, .field select {
+    width: 100%;
+    border: 1px solid #e5e0d5;
+    border-radius: 6px;
+    padding: 5px 7px;
+    font: 500 10px/1.4 Pretendard, sans-serif;
+    background: #fff;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+</style>
+</head>
+<body>
+  <div class="print-sheet">
+    ${headHtml}
+    <div class="activity-card">
+      ${filledRoot.innerHTML}
+    </div>
+  </div>
+</body>
+</html>`;
+  }
 
-    let cleaned = false;
-    const cleanup = () => {
-      if (cleaned) return;
-      cleaned = true;
-      document.body.classList.remove("is-printing");
-      applyPageZoom(prevZoom);
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    setTimeout(() => {
+  function printActivitySheet() {
+    const filled = snapshotFilledRoot();
+    if (!filled) return;
+    const html = buildPrintDocument(filled);
+
+    const prev = document.getElementById("activityPrintFrame");
+    if (prev) prev.remove();
+
+    const iframe = document.createElement("iframe");
+    iframe.id = "activityPrintFrame";
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.cssText =
+      "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) {
+      iframe.remove();
+      return;
+    }
+
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    const runPrint = () => {
       try {
-        window.print();
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
       } finally {
-        setTimeout(cleanup, 800);
+        setTimeout(() => iframe.remove(), 1200);
       }
-    }, 40);
+    };
+
+    if (iframe.contentDocument?.readyState === "complete") {
+      setTimeout(runPrint, 40);
+    } else {
+      iframe.onload = () => setTimeout(runPrint, 40);
+      setTimeout(runPrint, 200);
+    }
   }
 
   function ensureSheetTools(actionsHost) {
