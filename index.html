@@ -150,6 +150,18 @@
       background: var(--color-primary-50);
     }
     .topbar .btn-tiny:disabled { opacity: 0.55; cursor: wait; }
+    .topbar .btn-icon {
+      width: 36px; min-width: 36px; min-height: 36px; padding: 0;
+      display: inline-grid; place-items: center;
+    }
+    .topbar .btn-icon svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .topbar .btn-icon:disabled {
+      opacity: 0.35; cursor: not-allowed;
+    }
     .detail-roster-grid.is-loading { opacity: 0.55; pointer-events: none; }
 
     /* Landing */
@@ -366,14 +378,28 @@
       display: block; font: 700 10px/1.2 var(--font-sans); color: var(--text-primary);
     }
     .roster-sub-item .sub-actions {
-      display: flex; gap: 6px; margin-top: 2px;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; margin-top: 6px;
     }
     .roster-sub-item .sub-actions button {
-      border: 0; background: transparent; padding: 0;
-      font: 700 10px/1 var(--font-sans); cursor: pointer;
+      flex: 1; min-height: 30px; padding: 0 10px;
+      border: 1.5px solid var(--border-default); border-radius: 999px;
+      background: #fff; cursor: pointer;
+      font: 700 11px/1 var(--font-sans);
       color: var(--color-primary-700);
     }
-    .roster-sub-item .sub-actions button.is-danger { color: #B23A2C; }
+    .roster-sub-item .sub-actions button:hover { background: var(--color-primary-50); }
+    .roster-sub-item .sub-actions button.is-danger {
+      color: #B23A2C;
+      border-color: rgba(178, 58, 44, 0.4);
+      margin-left: auto;
+      max-width: 42%;
+    }
+    .roster-sub-item .sub-actions button.is-danger:hover { background: #fdf1ef; }
+    .roster-sub-item .sub-actions button.is-view {
+      max-width: 54%;
+      border-color: var(--color-primary-300);
+    }
     .roster-actions {
       display: flex; gap: 8px; flex-wrap: wrap;
     }
@@ -442,7 +468,7 @@
     }
     .detail-action-strip {
       display: grid;
-      grid-template-columns: 72px 1fr auto;
+      grid-template-columns: 76px 1fr auto;
       gap: 12px; align-items: center;
       margin-bottom: 12px; padding: 12px;
       border-radius: 14px;
@@ -452,12 +478,17 @@
         var(--bg-elevated);
     }
     .detail-action-strip .qr {
-      width: 72px; height: 72px; border-radius: 10px;
+      width: 76px; height: 76px; border-radius: 10px;
       border: 2px solid #1f1e1d; background: #fff;
       display: grid; place-items: center; overflow: hidden;
+      padding: 3px; flex-shrink: 0;
     }
     .detail-action-strip .qr canvas,
-    .detail-action-strip .qr img { width: 64px !important; height: 64px !important; }
+    .detail-action-strip .qr img {
+      width: 100% !important; height: 100% !important;
+      max-width: 100%; max-height: 100%;
+      display: block; object-fit: contain;
+    }
     .detail-action-strip .meta { min-width: 0; }
     .detail-action-strip .code-row {
       display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -555,18 +586,24 @@
     }
     .detail-sub-preview .plain-mini.is-empty { color: var(--text-tertiary); font-weight: 600; }
     .detail-sub-actions {
-      display: flex; gap: 6px; flex-wrap: wrap;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 10px; flex-wrap: nowrap;
     }
     .detail-sub-actions button {
-      flex: 1; min-height: 28px; padding: 0 8px;
+      flex: 1; min-height: 30px; padding: 0 10px;
       border: 1.5px solid var(--border-default); border-radius: 999px;
       background: #fff; cursor: pointer;
       font: 700 11px/1 var(--font-sans);
       color: var(--color-primary-700);
     }
     .detail-sub-actions button:hover { background: var(--color-primary-50); }
+    .detail-sub-actions button:first-child {
+      border-color: var(--color-primary-300);
+      max-width: 58%;
+    }
     .detail-sub-actions button.is-danger {
-      color: #B23A2C; border-color: rgba(178, 58, 44, 0.35);
+      color: #B23A2C; border-color: rgba(178, 58, 44, 0.4);
+      max-width: 40%;
     }
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
     @media (max-width: 900px) {
@@ -1076,7 +1113,10 @@
       <span class="topbar-spacer"></span>
       <div class="topbar-actions">
         <button type="button" class="btn-tiny" id="btnResetDashboard" title="모든 학급·제출 데이터 삭제 후 다시 시작">초기화</button>
-        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 제출 보고서">XLSX</button>
+        <button type="button" class="btn-tiny btn-icon" id="btnUndoAction" title="되돌리기 (최근 삭제 복구)" aria-label="되돌리기" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+        </button>
+        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="학번·이름·내용 요약 엑셀">XLSX</button>
         <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
         <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
       </div>
@@ -1120,16 +1160,18 @@
           </div>
 
           <div class="roster-box" id="rosterBox">
-            <div class="dash-head" style="margin-top:8px">
+            <div class="dash-head" style="margin-top:8px; margin-bottom:0">
               <h2 style="font-size:16px">학급 명단</h2>
-              <span id="rosterCountLabel">0명</span>
             </div>
             <div class="chip-row" id="rosterClassChips"></div>
-            <div class="roster-list" id="rosterList"></div>
-            <div class="roster-actions">
-              <button type="button" class="btn btn-secondary" id="btnAddStudent">+1명 추가</button>
-              <button type="button" class="btn btn-secondary" id="btnAddStudentRow">+5명(한 줄) 추가</button>
+            <p class="settings-sub" style="margin:10px 0 8px">학생 수</p>
+            <div class="class-count-control" id="studentCountControl" style="margin-bottom:10px">
+              <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
+              <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
+              <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
+              <button type="button" class="btn-save-inline" id="btnApplyStudentCount">적용</button>
             </div>
+            <div class="roster-list" id="rosterList"></div>
           </div>
         </div>
         <div class="sub-viewer" id="subViewer" aria-hidden="true">
@@ -1277,6 +1319,9 @@
       let detailExportRows = [];
       let detailFilterGrade = null;
       const MAX_CLASS_COUNT = 10;
+      const MIN_STUDENT_COUNT = 1;
+      const MAX_STUDENT_COUNT = 50;
+      let studentCountBusy = false;
       let lessonsHaveSubmitCode = null; // null=미확인, true/false
       const lessonsCache = new Map(); // classId -> lessons[]
       const studentsCache = new Map(); // classId -> students[]
@@ -1285,7 +1330,21 @@
       let listRenderSeq = 0;
       let topbarSwitchTimer = 0;
       let xlsxLoadPromise = null;
+      let undoStack = [];
+      let activityCssCache = null;
+      let activityCssPromise = null;
       const MOBILE_MQ = "(max-width: 768px)";
+
+      function syncUndoButton() {
+        const btn = $("btnUndoAction");
+        if (btn) btn.disabled = !undoStack.length;
+      }
+
+      function pushUndo(entry) {
+        undoStack.push(entry);
+        if (undoStack.length > 20) undoStack.shift();
+        syncUndoButton();
+      }
 
       function isCompactDash() {
         return window.matchMedia(MOBILE_MQ).matches;
@@ -1326,6 +1385,22 @@
       function clampClassCount(n) {
         const v = Number(n) || 1;
         return Math.min(MAX_CLASS_COUNT, Math.max(1, Math.floor(v)));
+      }
+
+      function clampStudentCount(n) {
+        const raw = String(n ?? "").trim();
+        if (!raw) return null;
+        const v = Number(raw);
+        if (!Number.isFinite(v)) return null;
+        return Math.min(MAX_STUDENT_COUNT, Math.max(MIN_STUDENT_COUNT, Math.floor(v)));
+      }
+
+      function syncStudentCountInput(forceValue) {
+        const input = $("studentCountInput");
+        if (!input) return;
+        if (document.activeElement === input && forceValue == null) return;
+        const v = forceValue != null ? forceValue : rosterStudents.length;
+        input.value = String(v);
       }
 
       function classNosFromCount(count) {
@@ -1686,7 +1761,8 @@
         root.innerHTML = "";
         if (!active.length) {
           $("rosterList").innerHTML = "";
-          $("rosterCountLabel").textContent = "0명";
+          rosterStudents = [];
+          syncStudentCountInput(0);
           return;
         }
         if (!rosterClassId || !active.some((c) => c.id === rosterClassId)) {
@@ -1843,16 +1919,16 @@
           if (root) {
             root.innerHTML = `<p class="settings-sub">명단을 불러오지 못했습니다. Supabase에서 <code>supabase-students.sql</code> 을 실행해 주세요.</p>`;
           }
-          $("rosterCountLabel").textContent = "0명";
+          syncStudentCountInput(0);
         }
       }
 
       function renderRosterList() {
         const root = $("rosterList");
         if (!root) return;
-        $("rosterCountLabel").textContent = `${rosterStudents.length}명`;
+        syncStudentCountInput();
         if (!rosterStudents.length) {
-          root.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">학생이 없습니다. 아래에서 추가해 주세요.</p>`;
+          root.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">학생이 없습니다. 학생 수를 설정해 주세요.</p>`;
           return;
         }
         root.innerHTML = rosterStudents.map((s) => {
@@ -1866,11 +1942,11 @@
           const labelNo = key || s.student_no;
           const subListHtml = subs.length
             ? `<div class="roster-sub-list">${subs.map((sub) => `
-                <div class="roster-sub-item" data-open="${sub.id}">
+                <div class="roster-sub-item">
                   <strong>${sub.session_no ? `${sub.session_no}차시` : "차시"}</strong>
-                  <span>${escapeHtml(previewText(sub.content, 42))}</span>
+                  <span>${escapeHtml(previewText(htmlToPlainTextFast(sub.content), 48))}</span>
                   <div class="sub-actions">
-                    <button type="button" data-open="${sub.id}">크게 보기</button>
+                    <button type="button" class="is-view" data-tab-sub="${sub.id}">크게 보기</button>
                     <button type="button" class="is-danger" data-del-sub="${sub.id}">삭제</button>
                   </div>
                 </div>`).join("")}</div>`
@@ -1903,11 +1979,11 @@
             toast("학생을 삭제했습니다.");
           });
         });
-        root.querySelectorAll(".roster-sub-item[data-open]").forEach((el) => {
-          el.addEventListener("click", (e) => {
-            if (e.target.closest("[data-del-sub]")) return;
-            const id = el.getAttribute("data-open");
-            if (id) openSubViewer(id);
+        root.querySelectorAll("button[data-tab-sub]").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = btn.getAttribute("data-tab-sub");
+            if (id) void openSubmissionInNewTab(id);
           });
         });
         root.querySelectorAll("button[data-del-sub]").forEach((btn) => {
@@ -1964,18 +2040,102 @@
         viewer.setAttribute("aria-hidden", "false");
       }
 
-      function openSubmissionInNewTab(submissionId) {
+      async function loadActivityCssText() {
+        if (activityCssCache) return activityCssCache;
+        if (activityCssPromise) return activityCssPromise;
+        activityCssPromise = fetch("activities/activity.css", { cache: "force-cache" })
+          .then((r) => (r.ok ? r.text() : ""))
+          .then((css) => {
+            activityCssCache = css || "";
+            return activityCssCache;
+          })
+          .catch(() => {
+            activityCssCache = "";
+            return "";
+          });
+        return activityCssPromise;
+      }
+
+      function buildSubmissionReportBody(sub) {
+        const raw = String(sub.content || "");
+        const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
+        const studentLine = `${sub.student_no || ""} · ${sub.student_name || ""}`.trim();
+        if (!looksLikeHtml(raw)) {
+          return {
+            title: `${sessionLabel} 제출 보고서`,
+            html: `<div class="shell"><section class="activity-card"><h2>제출 내용</h2><pre style="white-space:pre-wrap;margin:0;font:500 14px/1.65 var(--serif)">${escapeHtml(raw || "(내용 없음)")}</pre></section></div>`
+          };
+        }
+        // 신규 포맷: 활동지와 동일한 shell 구조
+        if (raw.includes("student-activity-export") && raw.includes("activity-card")) {
+          return { title: `${sessionLabel} · ${studentLine}`.trim(), html: raw };
+        }
+        // 구 포맷 호환
+        try {
+          const parsed = new DOMParser().parseFromString(raw, "text/html");
+          const root = parsed.querySelector(".student-activity-export") || parsed.body;
+          const theme = root.querySelector(".theme")?.textContent?.trim() || "";
+          const title = root.querySelector("h1")?.textContent?.trim() || `${sessionLabel}`;
+          const header = root.querySelector("header");
+          let inner = "";
+          if (header) {
+            let n = header.nextSibling;
+            while (n) {
+              if (n.nodeType === 1) inner += n.outerHTML;
+              else if (n.nodeType === 3 && n.textContent.trim()) inner += n.textContent;
+              n = n.nextSibling;
+            }
+          } else {
+            inner = root.innerHTML;
+          }
+          return {
+            title: `${sessionLabel} · ${studentLine}`.trim(),
+            html: `
+<div class="student-activity-export" data-session="${escapeHtml(sub.session_no || "")}">
+  <div class="topbar">
+    <div class="brand" aria-hidden="true">✳</div>
+    <div class="top-meta">
+      <span class="chip">${escapeHtml(sessionLabel)} 활동</span>
+      <strong>${escapeHtml(title)}</strong>
+    </div>
+  </div>
+  <div class="shell">
+    <section class="hero-card">
+      ${theme ? `<div class="theme">${escapeHtml(theme)}</div>` : ""}
+      <h1>${escapeHtml(title)}</h1>
+      <p>${escapeHtml(studentLine)}</p>
+    </section>
+    <section class="activity-card">${inner}</section>
+  </div>
+</div>`
+          };
+        } catch {
+          return { title: `${sessionLabel} 제출 보고서`, html: raw };
+        }
+      }
+
+      async function openSubmissionInNewTab(submissionId) {
         const sub = findSubmissionById(submissionId);
         if (!sub) return;
-        const heading = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${sub.student_no} ${sub.student_name || ""}`.trim();
-        const body = looksLikeHtml(sub.content)
-          ? String(sub.content || "")
-          : `<pre style="white-space:pre-wrap;font:14px/1.6 sans-serif">${escapeHtml(sub.content || "(내용 없음)")}</pre>`;
-        const doc = `<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>${escapeHtml(heading)}</title>
-<style>body{margin:0;padding:20px;font-family:Pretendard,Noto Sans KR,sans-serif;background:#f7f4ee;color:#1f1e1d}
-header{margin:0 0 16px;padding-bottom:12px;border-bottom:2px solid #111}
-header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
-<body><header><h1>${escapeHtml(heading)}</h1></header>${body}</body></html>`;
+        const css = await loadActivityCssText();
+        const built = buildSubmissionReportBody(sub);
+        const reportCss = `
+${css}
+.submit-fab,.overlay{display:none!important}
+input,textarea,select{pointer-events:none;caret-color:transparent}
+.student-activity-export .topbar{position:sticky}
+body{padding-top:calc(12px + var(--safe-top))}
+`;
+        const doc = `<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>${escapeHtml(built.title || "제출 보고서")}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap"/>
+<style>${reportCss}</style>
+</head><body>
+${built.html}
+</body></html>`;
         const blob = new Blob([doc], { type: "text/html;charset=utf-8" });
         const url = URL.createObjectURL(blob);
         const win = window.open(url, "_blank", "noopener");
@@ -1984,7 +2144,7 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
           toast("팝업이 차단되었습니다. 브라우저에서 새 탭을 허용해 주세요.");
           return;
         }
-        setTimeout(() => URL.revokeObjectURL(url), 120000);
+        setTimeout(() => URL.revokeObjectURL(url), 180000);
       }
 
       function closeSubViewer() {
@@ -1999,16 +2159,28 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
 
       async function deleteSubmission(submissionId) {
         if (!sb || !submissionId) return;
+        const removed = submissionById.get(submissionId) || findSubmissionById(submissionId);
         const { error } = await sb.from("submissions").delete().eq("id", submissionId);
         if (error) {
           toast("제출 삭제 실패: " + (error.message || "권한/정책을 확인해 주세요."));
           return;
         }
         if (viewingSubmissionId === submissionId) closeSubViewer();
-        const removed = submissionById.get(submissionId);
+        if (removed) {
+          pushUndo({
+            type: "submission",
+            data: {
+              lesson_id: removed.lesson_id,
+              student_no: removed.student_no,
+              student_name: removed.student_name,
+              content: removed.content,
+              session_no: removed.session_no || null
+            }
+          });
+        }
         submissionById.delete(submissionId);
         if (removed?.lesson_id) subCountCache.delete(removed.lesson_id);
-        toast("제출 보고서를 삭제했습니다.");
+        toast("제출 보고서를 삭제했습니다. 되돌리기로 복구할 수 있습니다.");
         if (rosterClassId) await loadRoster(rosterClassId);
         renderLessonList();
         const current = lessons.find((l) => l.id === selectedLessonId);
@@ -2017,8 +2189,52 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
         }
       }
 
-      async function addRosterStudents(count) {
-        if (!rosterClassId) return toast("먼저 학급을 저장·선택해 주세요.");
+      async function undoLastAction() {
+        const entry = undoStack.pop();
+        syncUndoButton();
+        if (!entry) {
+          toast("되돌릴 작업이 없습니다.");
+          return;
+        }
+        if (entry.type !== "submission" || !entry.data?.lesson_id) {
+          toast("되돌릴 수 없는 작업입니다.");
+          return;
+        }
+        const btn = $("btnUndoAction");
+        if (btn) btn.disabled = true;
+        try {
+          const payload = {
+            lesson_id: entry.data.lesson_id,
+            student_no: entry.data.student_no,
+            student_name: entry.data.student_name,
+            content: entry.data.content
+          };
+          const { error } = await sb.from("submissions").insert(payload);
+          if (error) throw error;
+          if (payload.lesson_id) subCountCache.delete(payload.lesson_id);
+          toast("삭제한 제출을 되돌렸습니다.");
+          if (rosterClassId) await loadRoster(rosterClassId);
+          renderLessonList();
+          const current = lessons.find((l) => l.id === selectedLessonId);
+          if (current && $("detailCard") && !$("detailCard").hidden) {
+            await renderDetail(current);
+          }
+        } catch (e) {
+          console.error(e);
+          pushUndo(entry);
+          toast("되돌리기 실패: " + (e.message || e));
+        } finally {
+          syncUndoButton();
+        }
+      }
+
+      async function addRosterStudents(count, opts = {}) {
+        if (!rosterClassId) {
+          if (!opts.quiet) toast("먼저 학급을 저장·선택해 주세요.");
+          return false;
+        }
+        const n = Math.max(0, Math.floor(Number(count) || 0));
+        if (!n) return true;
         const meta = classMetaById(rosterClassId);
         const grade = meta?.grade || classSettings.classGrade || 1;
         const classNo = meta?.class_no || 1;
@@ -2029,7 +2245,7 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
         }
         const maxOrder = rosterStudents.reduce((m, s) => Math.max(m, Number(s.sort_order) || 0), 0);
         const rows = [];
-        for (let i = 0; i < count; i += 1) {
+        for (let i = 0; i < n; i += 1) {
           while (used.has(formatHakbun(grade, classNo, nextSeat)) || used.has(String(nextSeat))) {
             nextSeat += 1;
           }
@@ -2044,14 +2260,112 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
           nextSeat += 1;
         }
         const { error } = await sb.from("students").insert(rows);
-        if (error) return toast("추가 실패: " + (error.message || "중복 학번일 수 있습니다."));
+        if (error) {
+          if (!opts.quiet) toast("추가 실패: " + (error.message || "중복 학번일 수 있습니다."));
+          return false;
+        }
         studentsCache.delete(rosterClassId);
-        await loadRoster(rosterClassId);
-        toast(`${count}명을 추가했습니다.`);
+        if (!opts.skipReload) await loadRoster(rosterClassId);
+        if (!opts.quiet) toast(`${n}명을 추가했습니다.`);
+        return true;
       }
 
-      async function addRosterStudent() {
-        return addRosterStudents(1);
+      async function removeRosterStudentsFromEnd(count) {
+        if (!rosterClassId) return false;
+        const n = Math.max(0, Math.floor(Number(count) || 0));
+        if (!n) return true;
+        const meta = classMetaById(rosterClassId);
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
+        const sorted = rosterStudents.slice().sort((a, b) => {
+          const sa = seatFromStudentNo(a.student_no, grade, classNo) || Number(a.sort_order) || 0;
+          const sb_ = seatFromStudentNo(b.student_no, grade, classNo) || Number(b.sort_order) || 0;
+          return sb_ - sa;
+        });
+        const toRemove = sorted.slice(0, Math.min(n, sorted.length));
+        if (!toRemove.length) return true;
+        const risky = toRemove.filter((s) => {
+          const key = resolveRosterStudentKey(s.student_no, grade, classNo);
+          const hasSub = (rosterSubMap.get(key) || []).length > 0;
+          return !!(s.student_name || hasSub);
+        });
+        if (risky.length) {
+          const ok = confirm(
+            `학생 ${toRemove.length}명을 줄입니다.\n이름·제출이 있는 학생 ${risky.length}명이 포함될 수 있습니다. 계속할까요?`
+          );
+          if (!ok) return false;
+        }
+        const ids = toRemove.map((s) => s.id).filter(Boolean);
+        for (let i = 0; i < ids.length; i += 40) {
+          const chunk = ids.slice(i, i + 40);
+          const { error } = await sb.from("students").delete().in("id", chunk);
+          if (error) {
+            toast("삭제 실패: " + (error.message || error));
+            return false;
+          }
+        }
+        studentsCache.delete(rosterClassId);
+        return true;
+      }
+
+      async function applyStudentCount(rawTarget, opts = {}) {
+        if (!rosterClassId) {
+          toast("먼저 학급을 저장·선택해 주세요.");
+          syncStudentCountInput();
+          return;
+        }
+        if (studentCountBusy) return;
+        const target = clampStudentCount(rawTarget);
+        if (target == null) {
+          if (!opts.allowEmpty) {
+            toast(`학생 수는 ${MIN_STUDENT_COUNT}~${MAX_STUDENT_COUNT}명으로 입력해 주세요.`);
+            syncStudentCountInput();
+          }
+          return;
+        }
+        const current = rosterStudents.length;
+        if (target === current) {
+          syncStudentCountInput(target);
+          return;
+        }
+        studentCountBusy = true;
+        const btn = $("btnApplyStudentCount");
+        if (btn) btn.disabled = true;
+        try {
+          if (target > current) {
+            const ok = await addRosterStudents(target - current, { quiet: true, skipReload: true });
+            if (!ok) return;
+          } else {
+            const ok = await removeRosterStudentsFromEnd(current - target);
+            if (!ok) {
+              syncStudentCountInput();
+              return;
+            }
+          }
+          await loadRoster(rosterClassId);
+          syncStudentCountInput(target);
+          toast(`학생 수 ${target}명으로 적용했습니다.`);
+        } catch (e) {
+          console.error(e);
+          toast("학생 수 변경 실패: " + (e.message || e));
+          syncStudentCountInput();
+        } finally {
+          studentCountBusy = false;
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      function adjustStudentCount(delta) {
+        const input = $("studentCountInput");
+        const base = clampStudentCount(input?.value) ?? rosterStudents.length ?? 30;
+        const next = clampStudentCount(base + delta);
+        if (next == null) return;
+        if (next === base && delta > 0) {
+          toast(`학생은 최대 ${MAX_STUDENT_COUNT}명까지입니다.`);
+          return;
+        }
+        if (input) input.value = String(next);
+        void applyStudentCount(next);
       }
 
       function setDashPanel(panel) {
@@ -2195,9 +2509,13 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
 
       function activityUrl(sessionNo, submitCode) {
         const file = String(sessionNo).padStart(2, "0") + ".html";
-        const path = location.pathname.replace(/index\.html$/i, "");
-        const root = path.endsWith("/") ? path : path.replace(/[^/]+$/, "");
-        let url = `${location.origin}${root}activities/${file}`;
+        let base = location.pathname.replace(/\/index\.html$/i, "");
+        const last = base.split("/").filter(Boolean).pop() || "";
+        if (last && /\.[a-z0-9]+$/i.test(last)) {
+          base = base.replace(/\/[^/]+$/, "");
+        }
+        if (!base.endsWith("/")) base += "/";
+        let url = `${location.origin}${base}activities/${file}`;
         if (submitCode) url += `?code=${encodeURIComponent(String(submitCode).toUpperCase())}`;
         return url;
       }
@@ -2659,15 +2977,52 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
       }
 
       function paintQr(el, text, size) {
-        if (!el || !window.QRCode) return;
+        if (!el || !text) return;
+        const px = Math.max(48, Number(size) || 72);
         el.innerHTML = "";
-        QRCode.toCanvas(text, { width: size, margin: 1, color: { dark: "#1F1E1D", light: "#FFFFFF" } }, (err, canvas) => {
-          if (err) {
-            el.textContent = "QR";
-            return;
+        el.title = text;
+
+        const draw = () => {
+          if (!window.QRCode || typeof QRCode.toCanvas !== "function") {
+            el.innerHTML = `<span style="font:700 10px/1.2 var(--font-sans);color:var(--text-tertiary)">QR</span>`;
+            return false;
           }
-          el.appendChild(canvas);
-        });
+          QRCode.toCanvas(
+            text,
+            { width: px, margin: 1, errorCorrectionLevel: "M", color: { dark: "#111110", light: "#FFFFFF" } },
+            (err, canvas) => {
+              if (err || !canvas) {
+                QRCode.toDataURL(text, { width: px, margin: 1 }, (e2, url) => {
+                  if (e2 || !url) {
+                    el.textContent = "QR";
+                    return;
+                  }
+                  const img = document.createElement("img");
+                  img.src = url;
+                  img.alt = "활동지 QR";
+                  img.width = px;
+                  img.height = px;
+                  el.appendChild(img);
+                });
+                return;
+              }
+              canvas.style.width = "100%";
+              canvas.style.height = "100%";
+              canvas.style.display = "block";
+              el.appendChild(canvas);
+            }
+          );
+          return true;
+        };
+
+        if (!draw()) {
+          // CDN 지연 시 짧게 재시도
+          let tries = 0;
+          const timer = setInterval(() => {
+            tries += 1;
+            if (draw() || tries > 20) clearInterval(timer);
+          }, 100);
+        }
       }
 
       function formatTime(iso) {
@@ -2806,48 +3161,50 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
         }
       }
 
+      function summarizeSubmissionText(content) {
+        const text = htmlToPlainTextFast(content);
+        if (!text) return "";
+        // 보고서 한눈 요약: 잡음 줄이고 문장 간격만 정리
+        return text
+          .replace(/\s*·\s*/g, " · ")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+      }
+
       async function exportAllSubmissionsXlsx() {
         const btn = $("btnExportAllXlsx");
         if (btn) btn.disabled = true;
         toast("엑셀 준비 중…");
         try {
           await loadXlsxLib();
-          toast("전체 제출 보고서를 모으는 중…");
           const active = teacherClasses.filter((c) => c.is_active && c.class_no);
           if (!active.length) {
             toast("저장된 학급이 없습니다.");
             return;
           }
           const rows = [];
-          // 학급별 병렬 수집 (과한 요청 방지: 3개씩)
-          for (let i = 0; i < active.length; i += 3) {
-            const chunk = active.slice(i, i + 3);
+          // 학급별 병렬 수집 (속도: 5개씩, 텍스트만)
+          for (let i = 0; i < active.length; i += 5) {
+            const chunk = active.slice(i, i + 5);
             await Promise.all(chunk.map(async (cls) => {
               const classLessons = await fetchLessonsForClass(cls.id, { seed: false });
-              const students = await fetchStudentsForClass(cls.id);
-              const studentNameByNo = new Map(
-                students.map((s) => [normalizeStudentNo(s.student_no), s.student_name || ""])
-              );
               const lessonIds = classLessons.map((l) => l.id);
               if (!lessonIds.length) return;
               const sessionByLesson = new Map(classLessons.map((l) => [l.id, l.session_no]));
+              const grade = cls.grade || 1;
+              const classNo = cls.class_no || 1;
               const { data: subs } = await sb
                 .from("submissions")
-                .select("id, lesson_id, student_no, student_name, content, created_at")
+                .select("lesson_id, student_no, student_name, content")
                 .in("lesson_id", lessonIds)
                 .order("created_at", { ascending: false });
               (subs || []).forEach((s) => {
-                const no = normalizeStudentNo(s.student_no);
+                const no = resolveRosterStudentKey(s.student_no, grade, classNo);
                 rows.push({
-                  학년: cls.grade,
-                  반: cls.class_no,
-                  학급: unitLabel(cls),
                   학번: no,
-                  이름: s.student_name || studentNameByNo.get(no) || "",
+                  이름: (s.student_name || "").trim(),
                   차시: sessionByLesson.get(s.lesson_id) || "",
-                  제출시각: formatTime(s.created_at),
-                  내용: htmlToPlainText(s.content),
-                  HTML: String(s.content || "")
+                  내용: summarizeSubmissionText(s.content)
                 });
               });
             }));
@@ -2857,31 +3214,17 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
             return;
           }
           rows.sort((a, b) =>
-            a.학년 - b.학년 ||
-            a.반 - b.반 ||
+            Number(a.차시) - Number(b.차시) ||
             Number(a.학번) - Number(b.학번) ||
-            Number(a.차시) - Number(b.차시)
+            String(a.이름).localeCompare(String(b.이름), "ko")
           );
           const book = XLSX.utils.book_new();
-          const allSheet = XLSX.utils.json_to_sheet(rows);
-          XLSX.utils.book_append_sheet(book, allSheet, "전체제출");
-
-          // 학년·반별 시트 (한눈에 필터용)
-          const byClass = new Map();
-          rows.forEach((r) => {
-            const key = `${r.학년}-${r.반}`;
-            if (!byClass.has(key)) byClass.set(key, []);
-            byClass.get(key).push(r);
-          });
-          [...byClass.keys()].sort().forEach((key) => {
-            const list = byClass.get(key);
-            const name = `${list[0].학년}학년${list[0].반}반`.slice(0, 31);
-            XLSX.utils.book_append_sheet(book, XLSX.utils.json_to_sheet(list), name);
-          });
-
+          const sheet = XLSX.utils.json_to_sheet(rows, { header: ["학번", "이름", "차시", "내용"] });
+          sheet["!cols"] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 80 }];
+          XLSX.utils.book_append_sheet(book, sheet, "제출요약");
           const stamp = new Date().toISOString().slice(0, 10);
-          XLSX.writeFile(book, `전체제출보고서_${stamp}.xlsx`);
-          toast(`xlsx 저장 완료 · 제출 ${rows.length}건`);
+          XLSX.writeFile(book, `제출요약_${stamp}.xlsx`);
+          toast(`xlsx 저장 완료 · ${rows.length}건`);
         } catch (e) {
           console.error(e);
           toast("xlsx 다운로드 실패: " + (e.message || e));
@@ -2939,6 +3282,8 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
         try {
           await wipeAllTeacherDataOnServer();
 
+          undoStack = [];
+          syncUndoButton();
           invalidateClassCache();
           lessons = [];
           teacherClasses = [];
@@ -2968,7 +3313,7 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
           renderClassSettingsUI();
           const rosterRoot = $("rosterList");
           if (rosterRoot) rosterRoot.innerHTML = "";
-          $("rosterCountLabel") && ($("rosterCountLabel").textContent = "0명");
+          syncStudentCountInput(0);
           $("detailCard").innerHTML =
             `<p class="sub-empty">데이터가 없습니다. <strong>초기 설정</strong>에서 학년·학급을 다시 저장해 주세요.</p>`;
 
@@ -3041,7 +3386,7 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
             }
             const tab = e.target.closest("[data-tab-detail]");
             if (tab) {
-              openSubmissionInNewTab(tab.getAttribute("data-tab-detail"));
+              void openSubmissionInNewTab(tab.getAttribute("data-tab-detail"));
               return;
             }
           });
@@ -3151,7 +3496,12 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
           });
         }
 
-        requestAnimationFrame(() => paintQr($("detailQr"), url, 64));
+        const qrEl = $("detailQr");
+        if (qrEl) {
+          qrEl.innerHTML = "";
+          // 활동지 열기 URL과 동일한 QR (제출코드 포함)
+          requestAnimationFrame(() => paintQr(qrEl, url, 68));
+        }
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {
           try {
@@ -3244,7 +3594,7 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
         }
         try {
           showView("teacher");
-          const label = session.name || session.loginId || "교사";
+          void loadActivityCssText(); // 새 탭 보고서용 CSS 미리 캐시
           renderTeacherBarSwitcher();
           updateSetupLaunchHint();
           showRightPanel(isClassSettingsReady() ? "lesson" : "setup");
@@ -3476,8 +3826,30 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
           $("btnSaveClassSettings")?.click();
         }
       });
-      $("btnAddStudent").addEventListener("click", () => addRosterStudent());
-      $("btnAddStudentRow")?.addEventListener("click", () => addRosterStudents(5));
+      $("btnStudentCountMinus")?.addEventListener("click", () => adjustStudentCount(-1));
+      $("btnStudentCountPlus")?.addEventListener("click", () => adjustStudentCount(1));
+      $("btnApplyStudentCount")?.addEventListener("click", () => {
+        void applyStudentCount($("studentCountInput")?.value);
+      });
+      $("studentCountInput")?.addEventListener("input", (e) => {
+        const el = e.target;
+        const cleaned = String(el.value || "").replace(/[^\d]/g, "");
+        if (el.value !== cleaned) el.value = cleaned;
+      });
+      $("studentCountInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          void applyStudentCount($("studentCountInput")?.value);
+        }
+      });
+      $("studentCountInput")?.addEventListener("blur", () => {
+        const raw = String($("studentCountInput")?.value || "").trim();
+        if (!raw) {
+          syncStudentCountInput();
+          return;
+        }
+        void applyStudentCount(raw);
+      });
       $("btnSaveClassSettings").addEventListener("click", async () => {
         applyClassCountInput();
         if (!clampClassCount(classSettings.classCount)) {
@@ -3522,7 +3894,9 @@ header h1{margin:0;font:700 20px/1.3 Georgia,serif}</style></head>
       });
       $("topClassSelect")?.addEventListener("change", () => queueSwitchFromTopbar());
       $("btnResetDashboard")?.addEventListener("click", () => resetTeacherDashboard());
+      $("btnUndoAction")?.addEventListener("click", () => undoLastAction());
       $("btnExportAllXlsx")?.addEventListener("click", () => exportAllSubmissionsXlsx());
+      syncUndoButton();
       $("btnBackLanding").addEventListener("click", () => {
         unsubscribeRealtime();
         showView("landing");

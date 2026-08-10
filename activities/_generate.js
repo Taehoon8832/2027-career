@@ -57,9 +57,11 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
   </div>
   <div class="shell">
     <section class="hero-card">
-      <div class="theme">${m} · ${theme}</div>
-      <h1>${n}차시 · ${title}</h1>
-      <p>${summary}</p>
+      <div class="hero-copy">
+        <div class="theme">${m} · ${theme}</div>
+        <h1>${n}차시 · ${title}</h1>
+        ${summary ? `<p>${summary}</p>` : ""}
+      </div>
     </section>
     <section class="activity-card" id="activity-root">
       <h2>학생 활동지</h2>

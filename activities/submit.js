@@ -28,7 +28,94 @@
     }
   }
 
+  function loadQrLib() {
+    if (window.QRCode && typeof window.QRCode.toCanvas === "function") {
+      return Promise.resolve(window.QRCode);
+    }
+    return new Promise((resolve) => {
+      const existing = document.querySelector("script[data-qrcode-lib]");
+      if (existing) {
+        existing.addEventListener("load", () => resolve(window.QRCode || null));
+        existing.addEventListener("error", () => resolve(null));
+        return;
+      }
+      const s = document.createElement("script");
+      s.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js";
+      s.async = true;
+      s.dataset.qrcodeLib = "1";
+      s.onload = () => resolve(window.QRCode || null);
+      s.onerror = () => resolve(null);
+      document.head.appendChild(s);
+    });
+  }
+
+  function activityPageUrl() {
+    try {
+      const u = new URL(location.href);
+      u.hash = "";
+      return u.toString();
+    } catch {
+      return location.href;
+    }
+  }
+
+  function ensureHeroQr() {
+    const hero = document.querySelector(".hero-card");
+    if (!hero) return;
+
+    if (!hero.querySelector(".hero-copy")) {
+      const copy = document.createElement("div");
+      copy.className = "hero-copy";
+      while (hero.firstChild) copy.appendChild(hero.firstChild);
+      hero.appendChild(copy);
+    }
+
+    let wrap = hero.querySelector(".hero-qr-wrap");
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.className = "hero-qr-wrap";
+      wrap.innerHTML =
+        `<div class="hero-qr" id="activityPageQr" aria-label="이 활동지 QR 코드"></div>` +
+        `<span class="hero-qr-cap">활동지 QR</span>`;
+      hero.appendChild(wrap);
+    }
+
+    const el = document.getElementById("activityPageQr");
+    if (!el || el.dataset.painted === "1") return;
+    const url = activityPageUrl();
+
+    loadQrLib().then((QR) => {
+      if (!QR || !el) return;
+      const size = window.matchMedia("(max-width: 640px)").matches ? 70 : 88;
+      QR.toCanvas(
+        url,
+        { width: size, margin: 1, errorCorrectionLevel: "M", color: { dark: "#111110", light: "#FFFFFF" } },
+        (err, canvas) => {
+          if (err || !canvas) {
+            QR.toDataURL(url, { width: size, margin: 1 }, (e2, dataUrl) => {
+              if (e2 || !dataUrl) return;
+              el.innerHTML = "";
+              const img = document.createElement("img");
+              img.src = dataUrl;
+              img.alt = "활동지 QR";
+              el.appendChild(img);
+              el.dataset.painted = "1";
+            });
+            return;
+          }
+          el.innerHTML = "";
+          canvas.style.width = "100%";
+          canvas.style.height = "100%";
+          canvas.style.display = "block";
+          el.appendChild(canvas);
+          el.dataset.painted = "1";
+        }
+      );
+    });
+  }
+
   function ensureUi() {
+    ensureHeroQr();
     if (document.getElementById("submitOverlay")) return;
 
     const fab = document.createElement("button");
@@ -108,7 +195,7 @@
     if (type) el.classList.add(type === "error" ? "is-error" : "is-ok");
   }
 
-  function collectActivityHtml() {
+  function collectActivityHtml(studentNo, studentName) {
     const root = document.getElementById("activity-root");
     if (!root) return "";
 
@@ -128,17 +215,37 @@
         el.setAttribute("value", el.value);
       }
     });
+    clone.querySelectorAll("input, textarea, select").forEach((el) => {
+      el.setAttribute("readonly", "readonly");
+      if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
+    });
 
     const title = document.querySelector(".hero-card h1")?.textContent?.trim() || `${sessionNo}차시`;
     const theme = document.querySelector(".hero-card .theme")?.textContent?.trim() || "";
+    const topTitle = document.querySelector(".top-meta strong")?.textContent?.trim() || title;
+    // 제출 당시 화면과 동일한 구조로 저장 (교사 새 탭 보고서용)
     return `
-<section class="student-activity-export" data-session="${sessionNo}">
-  <header>
-    <div class="theme">${escapeHtml(theme)}</div>
-    <h1>${escapeHtml(title)}</h1>
-  </header>
-  ${clone.innerHTML}
-</section>`.trim();
+<div class="student-activity-export" data-session="${sessionNo}" data-student-no="${escapeHtml(studentNo)}" data-student-name="${escapeHtml(studentName)}">
+  <div class="topbar">
+    <div class="brand" aria-hidden="true">✳</div>
+    <div class="top-meta">
+      <span class="chip">${sessionNo}차시 활동</span>
+      <strong>${escapeHtml(topTitle)}</strong>
+    </div>
+  </div>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="hero-copy">
+        <div class="theme">${escapeHtml(theme)}</div>
+        <h1>${escapeHtml(title)}</h1>
+        <p>${escapeHtml(studentNo)} · ${escapeHtml(studentName)}</p>
+      </div>
+    </section>
+    <section class="activity-card" id="activity-root">
+      ${clone.innerHTML}
+    </section>
+  </div>
+</div>`.trim();
   }
 
   function escapeHtml(str) {
@@ -158,11 +265,12 @@
     const submitCode = document.getElementById("submitCodeInput").value.trim();
     const studentNo = document.getElementById("studentNoInput").value.trim();
     const studentName = document.getElementById("studentNameInput").value.trim();
-    const content = collectActivityHtml();
 
     if (!submitCode) return setMsg("제출 코드를 입력해 주세요.", "error");
     if (!studentNo) return setMsg("학번을 입력해 주세요.", "error");
     if (!studentName) return setMsg("이름을 입력해 주세요.", "error");
+
+    const content = collectActivityHtml(studentNo, studentName);
     if (!content) return setMsg("제출할 활동 내용이 없습니다.", "error");
 
     const btn = document.getElementById("btnConfirmSubmit");
