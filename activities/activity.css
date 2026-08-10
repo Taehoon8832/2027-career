@@ -80,6 +80,56 @@ button, .submit-fab, a { touch-action: manipulation; }
   stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
 }
 
+.sheet-tools {
+  flex-shrink: 0;
+  height: 40px;
+  display: inline-flex;
+  align-items: stretch;
+  border: 1.5px solid #1f1e1d;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(31, 30, 29, 0.08);
+  overflow: hidden;
+}
+.tool-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #1f1e1d;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  min-width: 40px;
+  padding: 0;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.tool-btn + .tool-btn {
+  border-left: 1px solid rgba(31, 30, 29, 0.12);
+}
+.tool-btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.tool-btn:hover {
+  background: #f7f4ee;
+  color: var(--accent-deep);
+}
+.tool-btn:active {
+  background: #efe8dc;
+}
+.tool-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  z-index: 1;
+}
+
 .zoom-controls {
   flex-shrink: 0;
   height: 40px;
@@ -591,6 +641,8 @@ button, .submit-fab, a { touch-action: manipulation; }
   .hero-card .hero-qr,
   .hero-card a.hero-qr { width: 112px; height: 112px; padding: 8px; }
   .submit-fab { min-height: 46px; font-size: 14px; padding: 0 16px; }
+  .sheet-tools { height: 46px; }
+  .tool-btn { width: 42px; min-width: 42px; }
   .zoom-controls { height: 46px; }
   .zoom-btn { width: 42px; min-width: 42px; }
   .btn { min-height: 48px; }
@@ -733,6 +785,9 @@ button, .submit-fab, a { touch-action: manipulation; }
     font-size: 16px !important;
   }
   .topbar-actions { gap: 6px; }
+  .sheet-tools { height: 48px; }
+  .tool-btn { width: 44px; min-width: 44px; }
+  .tool-btn svg { width: 20px; height: 20px; }
   .zoom-controls { height: 48px; }
   .zoom-btn { width: 44px; min-width: 44px; }
   .zoom-btn svg { width: 20px; height: 20px; }
@@ -794,4 +849,151 @@ button, .submit-fab, a { touch-action: manipulation; }
 @keyframes rise {
   from { opacity: 0; transform: translateY(10px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 8mm 7mm;
+  }
+
+  html, body {
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    min-height: 0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body::before,
+  body::after {
+    display: none !important;
+  }
+
+  .topbar,
+  .topbar-actions,
+  .sheet-tools,
+  .zoom-controls,
+  .submit-fab,
+  .overlay,
+  .hero-qr-wrap,
+  .hero-qr-cap {
+    display: none !important;
+  }
+
+  .shell {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    zoom: 1 !important;
+    transform: none !important;
+  }
+
+  .hero-card,
+  .activity-card {
+    break-inside: avoid;
+    box-shadow: none !important;
+    border-width: 1.5px !important;
+  }
+
+  .hero-card {
+    grid-template-columns: 1fr !important;
+    margin-bottom: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .hero-card h1 {
+    font-size: 18px !important;
+  }
+
+  .hero-card p {
+    font-size: 11px !important;
+  }
+
+  .activity-card {
+    padding: 10px 10px 12px !important;
+  }
+
+  .activity-card > h2 {
+    margin-bottom: 8px !important;
+    font-size: 14px !important;
+  }
+
+  .questions-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .q-item {
+    break-inside: avoid;
+    padding: 5px 6px !important;
+  }
+
+  .q-item .q-title {
+    font-size: 9.5px !important;
+    white-space: normal !important;
+    -webkit-line-clamp: unset !important;
+  }
+
+  .q-item input,
+  .activity-card .q-item input {
+    height: 22px !important;
+    min-height: 22px !important;
+    font-size: 10px !important;
+    padding: 2px 4px !important;
+  }
+
+  .na-manual-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
+
+  .na-card {
+    break-inside: avoid;
+    padding: 8px !important;
+  }
+
+  .na-card textarea,
+  .activity-card .na-card textarea {
+    min-height: 56px !important;
+    height: auto !important;
+    font-size: 11px !important;
+  }
+
+  .bingo-board {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 4px !important;
+  }
+
+  .bingo-cell {
+    break-inside: avoid;
+    min-height: 72px !important;
+    padding: 5px !important;
+  }
+
+  .bingo-cell .cell-title {
+    font-size: 9px !important;
+  }
+
+  .bingo-cell textarea.cell-input,
+  .activity-card .bingo-cell textarea.cell-input {
+    min-height: 36px !important;
+    font-size: 10px !important;
+  }
+
+  .bingo-guide,
+  .bingo-reflection {
+    break-inside: avoid;
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    font-size: 11px !important;
+  }
+
+  .grid-2 {
+    grid-template-columns: 1fr 1fr !important;
+  }
 }

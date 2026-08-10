@@ -354,6 +354,17 @@
     applyPageZoom(next);
   }
 
+  function insertInActions(actionsHost, el, beforeIds) {
+    for (const id of beforeIds) {
+      const ref = document.getElementById(id);
+      if (ref && ref.parentNode === actionsHost) {
+        actionsHost.insertBefore(el, ref);
+        return;
+      }
+    }
+    actionsHost.appendChild(el);
+  }
+
   function ensureZoomControls(actionsHost) {
     if (document.getElementById("zoomControls")) {
       applyPageZoom(pageZoom !== 1 ? pageZoom : readStoredZoom());
@@ -383,23 +394,215 @@
         </svg>
       </button>`;
 
-    const submitBtn = document.getElementById("btnSubmitActivity");
-    if (submitBtn && submitBtn.parentNode === actionsHost) {
-      actionsHost.insertBefore(zoom, submitBtn);
-    } else {
-      actionsHost.appendChild(zoom);
-    }
+    insertInActions(actionsHost, zoom, ["btnSubmitActivity"]);
     document.getElementById("btnZoomOut")?.addEventListener("click", () => stepZoom(-1));
     document.getElementById("btnZoomIn")?.addEventListener("click", () => stepZoom(1));
     document.getElementById("zoomLevelLabel")?.addEventListener("click", () => applyPageZoom(1));
     applyPageZoom(readStoredZoom());
   }
 
+  function snapshotFilledRoot() {
+    const root = document.getElementById("activity-root");
+    if (!root) return null;
+
+    const clone = root.cloneNode(true);
+    clone.querySelectorAll("input, textarea, select").forEach((el) => {
+      if (el.tagName === "TEXTAREA") {
+        el.textContent = el.value;
+      } else if (el.tagName === "SELECT") {
+        [...el.options].forEach((opt) => {
+          if (opt.value === el.value) opt.setAttribute("selected", "selected");
+          else opt.removeAttribute("selected");
+        });
+      } else if (el.type === "checkbox" || el.type === "radio") {
+        if (el.checked) el.setAttribute("checked", "checked");
+        else el.removeAttribute("checked");
+      } else {
+        el.setAttribute("value", el.value);
+      }
+    });
+    clone.querySelectorAll("input, textarea, select").forEach((el) => {
+      el.setAttribute("readonly", "readonly");
+      if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
+    });
+    return clone;
+  }
+
+  function activityMeta() {
+    return {
+      title: document.querySelector(".hero-card h1")?.textContent?.trim() || `${sessionNo}차시`,
+      theme: document.querySelector(".hero-card .theme")?.textContent?.trim() || "",
+      summary: document.querySelector(".hero-card p")?.textContent?.trim() || "",
+      topTitle: document.querySelector(".top-meta strong")?.textContent?.trim() || ""
+    };
+  }
+
+  const EXPORT_FALLBACK_CSS = `
+*{box-sizing:border-box}body{margin:0;padding:16px;font-family:Pretendard,"Noto Sans KR",sans-serif;color:#1f1e1d;background:#fff}
+.shell{width:min(980px,100%);margin:0 auto}
+.hero-card,.activity-card{border:2px solid #111;border-radius:14px;background:#fff;padding:14px 16px;margin-bottom:12px}
+.hero-card h1{margin:0;font:700 22px/1.3 "Noto Serif KR",serif}
+.hero-card .theme{display:inline-block;margin-bottom:6px;padding:3px 8px;border-radius:999px;background:#fbefe7;color:#8c4022;font:600 11px/1.3 sans-serif}
+.hero-card p{margin:6px 0 0;color:#807d75;font:400 13px/1.5 serif}
+.activity-card h2{margin:0 0 12px;font:600 16px/1.3 "Noto Serif KR",serif}
+.field{display:grid;gap:6px;margin-bottom:10px}
+.field label{font:600 12px/1.3 sans-serif}
+.field input,.field textarea,.field select,.q-item input,.na-card textarea,.bingo-cell textarea{width:100%;border:1px solid #e5e0d5;border-radius:10px;background:#faf9f5;padding:8px 10px;font:500 13px/1.45 sans-serif}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.questions-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.q-item{border:1.5px solid #c7d2fe;border-radius:10px;padding:7px 8px;background:#fafafe}
+.q-title{display:block;font:700 11px/1.3 sans-serif;color:#3730a3;margin-bottom:4px}
+.na-manual-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.na-card{border:1.5px solid #94a3b8;border-radius:12px;padding:10px}
+.na-card-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;font:700 13px/1.3 sans-serif}
+.bingo-board{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.bingo-cell{border:1.5px solid #93c5fd;border-radius:10px;padding:8px;min-height:100px}
+.bingo-cell .cell-title{display:block;font:700 11px/1.3 sans-serif;color:#1d4ed8;margin:2px 0 6px}
+@media (max-width:900px){.questions-grid,.bingo-board,.na-manual-grid,.grid-2{grid-template-columns:1fr 1fr}}
+@media print{
+  @page{size:A4;margin:8mm}
+  body{padding:0}
+  .questions-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important}
+  .bingo-board{grid-template-columns:repeat(5,minmax(0,1fr))!important}
+  .na-manual-grid{grid-template-columns:1fr 1fr!important}
+  .q-item,.na-card,.bingo-cell,.field{break-inside:avoid}
+}
+`.trim();
+
+  async function loadActivityCssText() {
+    try {
+      const link = document.querySelector('link[href*="activity.css"]');
+      if (!link) return EXPORT_FALLBACK_CSS;
+      const res = await fetch(link.href, { cache: "force-cache" });
+      if (!res.ok) return EXPORT_FALLBACK_CSS;
+      return (await res.text()) + "\n" + EXPORT_FALLBACK_CSS;
+    } catch {
+      return EXPORT_FALLBACK_CSS;
+    }
+  }
+
+  function buildExportDocument(filledRoot, cssText) {
+    const meta = activityMeta();
+    const title = meta.title || `${sessionNo}차시 활동지`;
+    return `<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>${escapeHtml(title)}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
+<style>
+${cssText}
+body{padding:16px!important;background:#fff!important}
+.topbar,.topbar-actions,.overlay,.submit-fab,.zoom-controls,.sheet-tools,.hero-qr-wrap{display:none!important}
+.shell{width:min(980px,100%)!important;margin:0 auto!important;zoom:1!important;transform:none!important}
+.hero-card{grid-template-columns:1fr!important}
+</style>
+</head>
+<body>
+  <div class="shell">
+    <section class="hero-card">
+      <div class="hero-copy">
+        ${meta.theme ? `<div class="theme">${escapeHtml(meta.theme)}</div>` : ""}
+        <h1>${escapeHtml(title)}</h1>
+        ${meta.summary ? `<p>${escapeHtml(meta.summary)}</p>` : ""}
+      </div>
+    </section>
+    <section class="activity-card" id="activity-root">
+      ${filledRoot.innerHTML}
+    </section>
+  </div>
+</body>
+</html>`;
+  }
+
+  async function saveActivityHtml() {
+    const filled = snapshotFilledRoot();
+    if (!filled) return;
+    const cssText = await loadActivityCssText();
+    const html = buildExportDocument(filled, cssText);
+    const meta = activityMeta();
+    const safeTitle = (meta.topTitle || meta.title || `${sessionNo}차시`)
+      .replace(/[\\/:*?"<>|]+/g, "_")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 60);
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${safeTitle || sessionNo + "차시_활동지"}.html`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function printActivitySheet() {
+    const prevZoom = pageZoom;
+    applyPageZoom(1);
+    document.body.classList.add("is-printing");
+
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      document.body.classList.remove("is-printing");
+      applyPageZoom(prevZoom);
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    setTimeout(() => {
+      try {
+        window.print();
+      } finally {
+        setTimeout(cleanup, 800);
+      }
+    }, 40);
+  }
+
+  function ensureSheetTools(actionsHost) {
+    if (document.getElementById("sheetTools")) return;
+
+    const tools = document.createElement("div");
+    tools.className = "sheet-tools";
+    tools.id = "sheetTools";
+    tools.setAttribute("role", "group");
+    tools.setAttribute("aria-label", "출력 및 저장");
+    tools.innerHTML = `
+      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기" title="출력하기">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M7 8V4h10v4"/>
+          <path d="M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
+          <path d="M7 14h10v6H7z"/>
+        </svg>
+      </button>
+      <button type="button" class="tool-btn" id="btnSaveSheet" aria-label="저장하기" title="저장하기 (HTML)">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 4v10"/>
+          <path d="M8 10l4 4 4-4"/>
+          <path d="M5 18h14"/>
+        </svg>
+      </button>`;
+
+    insertInActions(actionsHost, tools, ["zoomControls", "btnSubmitActivity"]);
+    document.getElementById("btnPrintSheet")?.addEventListener("click", printActivitySheet);
+    document.getElementById("btnSaveSheet")?.addEventListener("click", () => {
+      saveActivityHtml().catch((err) => console.error(err));
+    });
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
     if (document.getElementById("submitOverlay")) {
-      ensureZoomControls(document.querySelector(".topbar-actions") || document.querySelector(".topbar") || document.body);
+      const host =
+        document.querySelector(".topbar-actions") ||
+        document.querySelector(".topbar") ||
+        document.body;
+      ensureSheetTools(host);
+      ensureZoomControls(host);
       return;
     }
 
@@ -429,7 +632,8 @@
       document.body.appendChild(actions);
     }
 
-    // 왼쪽: 확대·축소 · 오른쪽: 제출하기
+    // 출력·저장 → 확대·축소 → 제출하기
+    ensureSheetTools(actions);
     ensureZoomControls(actions);
     actions.appendChild(fab);
 
@@ -488,33 +692,12 @@
   }
 
   function collectActivityHtml(studentNo, studentName) {
-    const root = document.getElementById("activity-root");
-    if (!root) return "";
+    const clone = snapshotFilledRoot();
+    if (!clone) return "";
 
-    const clone = root.cloneNode(true);
-    clone.querySelectorAll("input, textarea, select").forEach((el) => {
-      if (el.tagName === "TEXTAREA") {
-        el.textContent = el.value;
-      } else if (el.tagName === "SELECT") {
-        [...el.options].forEach((opt) => {
-          if (opt.value === el.value) opt.setAttribute("selected", "selected");
-          else opt.removeAttribute("selected");
-        });
-      } else if (el.type === "checkbox" || el.type === "radio") {
-        if (el.checked) el.setAttribute("checked", "checked");
-        else el.removeAttribute("checked");
-      } else {
-        el.setAttribute("value", el.value);
-      }
-    });
-    clone.querySelectorAll("input, textarea, select").forEach((el) => {
-      el.setAttribute("readonly", "readonly");
-      if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
-    });
-
-    const title = document.querySelector(".hero-card h1")?.textContent?.trim() || `${sessionNo}차시`;
-    const theme = document.querySelector(".hero-card .theme")?.textContent?.trim() || "";
-    const topTitle = document.querySelector(".top-meta strong")?.textContent?.trim() || title;
+    const meta = activityMeta();
+    const title = meta.title || `${sessionNo}차시`;
+    const topTitle = meta.topTitle || title;
     return `
 <div class="student-activity-export" data-session="${sessionNo}" data-student-no="${escapeHtml(studentNo)}" data-student-name="${escapeHtml(studentName)}">
   <div class="topbar">
@@ -527,7 +710,7 @@
   <div class="shell">
     <section class="hero-card">
       <div class="hero-copy">
-        <div class="theme">${escapeHtml(theme)}</div>
+        <div class="theme">${escapeHtml(meta.theme)}</div>
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(studentNo)} · ${escapeHtml(studentName)}</p>
       </div>
