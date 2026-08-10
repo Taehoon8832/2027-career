@@ -46,7 +46,6 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
   <link rel="stylesheet" href="./activity.css" />
   <script>window.ACTIVITY_SESSION = ${n};</script>
-  <script src="../vendor/qrcode.min.js"></script>
 </head>
 <body>
   <div class="topbar">

@@ -467,26 +467,26 @@
       width: 1px; height: 22px; background: var(--border-default); margin: 0 2px;
     }
     .detail-action-strip {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas: "qr meta btns";
       align-items: center;
-      gap: 14px;
+      gap: 12px;
       margin-bottom: 12px;
-      padding: 18px 16px 16px;
+      padding: 10px 12px;
       border-radius: 14px;
       border: 2px solid #1f1e1d;
-      text-align: center;
       background:
         linear-gradient(135deg, rgba(255,255,255,0.98), rgba(251,239,231,0.85)),
         var(--bg-elevated);
     }
     .detail-action-strip .qr,
     .detail-action-strip a.qr {
-      width: 200px; height: 200px; border-radius: 14px;
+      grid-area: qr;
+      width: 120px; height: 120px; border-radius: 12px;
       border: 2px solid #1f1e1d; background: #fff;
       display: grid; place-items: center; overflow: hidden;
-      padding: 14px; flex-shrink: 0;
-      margin: 0 auto;
+      padding: 8px; flex-shrink: 0;
       text-decoration: none; color: inherit;
       cursor: pointer; touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
@@ -508,15 +508,15 @@
       image-rendering: crisp-edges;
     }
     .detail-action-strip .meta {
+      grid-area: meta;
       min-width: 0;
-      width: 100%;
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: flex-start;
       gap: 6px;
     }
     .detail-action-strip .code-row {
-      display: flex; align-items: center; justify-content: center;
+      display: flex; align-items: center; justify-content: flex-start;
       gap: 8px; flex-wrap: wrap;
     }
     .detail-action-strip .code-row .label {
@@ -531,12 +531,12 @@
       font: 600 11px/1 var(--font-sans); color: var(--text-tertiary);
     }
     .detail-action-strip .btns {
-      display: flex; flex-direction: row; gap: 8px;
-      width: 100%; max-width: 420px; min-width: 0;
+      grid-area: btns;
+      display: flex; flex-direction: column; gap: 8px;
+      min-width: 128px;
     }
     .detail-action-strip .btns .btn {
-      flex: 1;
-      height: 44px; padding: 0 16px; font-size: 13px; font-weight: 800;
+      height: 42px; padding: 0 14px; font-size: 13px; font-weight: 800;
       white-space: nowrap; border-radius: 999px;
     }
     .detail-action-strip .btns .btn-primary {
@@ -636,8 +636,16 @@
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .detail-action-strip {
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+          "qr btns"
+          "meta meta";
+        gap: 10px;
+      }
       .detail-action-strip .qr,
-      .detail-action-strip a.qr { width: 220px; height: 220px; padding: 16px; }
+      .detail-action-strip a.qr { width: 128px; height: 128px; padding: 8px; }
+      .detail-action-strip .btns { min-width: 0; width: 100%; }
     }
     @media (max-width: 560px) {
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -962,8 +970,8 @@
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
       .topbar-switcher select { height: 40px; font-size: 14px; }
       .detail-action-strip .qr,
-      .detail-action-strip a.qr { width: 240px; height: 240px; padding: 18px; }
-      .detail-action-strip .btns .btn { min-height: 46px; font-size: 14px; }
+      .detail-action-strip a.qr { width: 132px; height: 132px; padding: 8px; }
+      .detail-action-strip .btns .btn { min-height: 44px; font-size: 14px; }
     }
     /* 폰·좁은 태블릿: 단일 패널 */
     @media (max-width: 768px) {
@@ -1008,24 +1016,27 @@
       .detail-filter { gap: 6px; padding: 8px; }
       .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
       .detail-action-strip {
-        gap: 12px;
-        padding: 16px 12px 14px;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+          "qr btns"
+          "meta meta";
+        gap: 10px;
+        padding: 10px;
       }
       .detail-action-strip .qr,
       .detail-action-strip a.qr {
-        width: min(72vw, 240px);
-        height: min(72vw, 240px);
-        min-width: 200px; min-height: 200px;
-        padding: 16px;
+        width: 128px; height: 128px;
+        min-width: 128px; min-height: 128px;
+        padding: 8px;
       }
-      .detail-action-strip .code-row strong { font-size: 16px; word-break: break-all; }
+      .detail-action-strip .code-row strong { font-size: 15px; word-break: break-all; }
       .detail-action-strip .btns {
-        flex-direction: row;
+        flex-direction: column;
         min-width: 0;
-        max-width: none;
+        width: 100%;
       }
       .detail-action-strip .btns .btn {
-        flex: 1; min-height: 48px; font-size: 15px;
+        width: 100%; min-height: 44px; font-size: 14px;
       }
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .detail-roster-cell { padding: 10px; }
@@ -2675,39 +2686,39 @@ ${built.html}
         if (!url) return false;
         if (typeof window.QRCode !== "function") return false;
 
-        // 표시 영역(패딩 제외)에 맞춰 정수 모듈로만 그려 카메라 인식률 확보
-        const boxPx = Math.max(180, Number(displaySize) || 200);
-        const pad = 14;
-        const quiet = 4;
-        const avail = Math.max(152, boxPx - pad * 2);
+        // 컴팩트 박스에서도 정수 모듈·여백으로 카메라 인식 유지
+        const boxPx = Math.max(112, Number(displaySize) || 120);
+        const pad = 8;
+        const quiet = 2; // 흰 테두리 패딩이 추가 quiet zone 역할
+        const avail = Math.max(96, boxPx - pad * 2);
 
         const host = document.createElement("div");
         host.setAttribute("aria-hidden", "true");
-        host.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+        host.style.cssText = "position:fixed;left:-9999px;top:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none";
         document.body.appendChild(host);
 
         try {
           const qr = new window.QRCode(host, {
             text: url,
-            width: 256,
-            height: 256,
+            width: 128,
+            height: 128,
             colorDark: "#000000",
             colorLight: "#ffffff",
-            correctLevel: window.QRCode.CorrectLevel.M
+            correctLevel: window.QRCode.CorrectLevel.L
           });
           const code = qr._oQRCode;
           if (!code || typeof code.getModuleCount !== "function") {
             throw new Error("QR modules unavailable");
           }
           const n = code.getModuleCount();
-          const modulePx = Math.max(4, Math.floor(avail / (n + quiet * 2)));
+          const modulePx = Math.max(3, Math.floor(avail / (n + quiet * 2)));
           const canvasSize = modulePx * (n + quiet * 2);
           const canvas = document.createElement("canvas");
           canvas.width = canvasSize;
           canvas.height = canvasSize;
           canvas.setAttribute("role", "img");
           canvas.setAttribute("aria-label", "활동지 QR");
-          const ctx = canvas.getContext("2d");
+          const ctx = canvas.getContext("2d", { alpha: false });
           ctx.imageSmoothingEnabled = false;
           ctx.fillStyle = "#FFFFFF";
           ctx.fillRect(0, 0, canvasSize, canvasSize);
@@ -2735,7 +2746,6 @@ ${built.html}
           el.dataset.qrUrl = url;
           el.dataset.painted = "1";
           canvas.className = "qr-img";
-          // CSS 스트레치 없이 픽셀 단위로 표시 → 흐림/안티앨리어싱 방지
           canvas.style.cssText =
             `display:block;width:${canvasSize}px;height:${canvasSize}px;max-width:100%;max-height:100%;image-rendering:pixelated;image-rendering:crisp-edges`;
           el.appendChild(canvas);
@@ -3207,7 +3217,7 @@ ${built.html}
 
       function paintQr(el, text, size) {
         if (!el || !text) return;
-        const displayPx = Math.max(180, Number(size) || 200);
+        const displayPx = Math.max(112, Number(size) || 120);
         const url = String(text).trim();
         if (el.tagName === "A") {
           el.href = url;
@@ -3218,15 +3228,13 @@ ${built.html}
         el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
         el.dataset.qrUrl = url;
 
-        const ok = paintScannableQr(el, url, displayPx);
-        if (ok) return;
+        if (paintScannableQr(el, url, displayPx)) return;
 
-        // 라이브러리 지연 로드 대비 재시도
         let tries = 0;
         const timer = setInterval(() => {
           tries += 1;
-          if (paintScannableQr(el, url, displayPx) || tries > 40) clearInterval(timer);
-        }, 80);
+          if (paintScannableQr(el, url, displayPx) || tries > 20) clearInterval(timer);
+        }, 50);
       }
 
       function formatTime(iso) {
@@ -3650,6 +3658,10 @@ ${built.html}
 
           <div class="detail-action-strip">
             <a class="qr" id="detailQr" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="탭하여 활동지 열기" aria-label="활동지 QR — 눌러서 열기"></a>
+            <div class="btns">
+              <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
+              <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
+            </div>
             <div class="meta">
               <div class="code-row">
                 <span class="label">제출코드</span>
@@ -3657,10 +3669,6 @@ ${built.html}
                 <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
               </div>
               <div class="class-tag">${escapeHtml(classLabel || "학급 선택")}</div>
-            </div>
-            <div class="btns">
-              <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
-              <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
             </div>
           </div>
 
@@ -3713,12 +3721,8 @@ ${built.html}
         const qrEl = $("detailQr");
         if (qrEl) {
           qrEl.innerHTML = "";
-          const qrSize = window.matchMedia("(max-width: 768px)").matches
-            ? 240
-            : window.matchMedia("(max-width: 1024px)").matches
-              ? 240
-              : 200;
-          requestAnimationFrame(() => paintQr(qrEl, url, qrSize));
+          const qrSize = window.matchMedia("(max-width: 1024px)").matches ? 128 : 120;
+          paintQr(qrEl, url, qrSize);
         }
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {

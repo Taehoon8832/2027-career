@@ -85,36 +85,36 @@
     const url = String(text).trim();
     if (!url) return false;
 
-    const boxPx = Math.max(140, Number(displaySize) || 148);
-    const pad = 12;
-    const quiet = 4;
-    const avail = Math.max(116, boxPx - pad * 2);
+    const boxPx = Math.max(100, Number(displaySize) || 108);
+    const pad = 7;
+    const quiet = 2;
+    const avail = Math.max(86, boxPx - pad * 2);
 
     const host = document.createElement("div");
     host.setAttribute("aria-hidden", "true");
     host.style.cssText =
-      "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
+      "position:fixed;left:-9999px;top:0;width:0;height:0;overflow:hidden;opacity:0;pointer-events:none";
     document.body.appendChild(host);
 
     try {
       const qr = new window.QRCode(host, {
         text: url,
-        width: 256,
-        height: 256,
+        width: 128,
+        height: 128,
         colorDark: "#000000",
         colorLight: "#ffffff",
-        correctLevel: window.QRCode.CorrectLevel.M
+        correctLevel: window.QRCode.CorrectLevel.L
       });
       const code = qr._oQRCode;
       if (!code || typeof code.getModuleCount !== "function") throw new Error("no modules");
       const n = code.getModuleCount();
-      const modulePx = Math.max(4, Math.floor(avail / (n + quiet * 2)));
+      const modulePx = Math.max(3, Math.floor(avail / (n + quiet * 2)));
       const canvasSize = modulePx * (n + quiet * 2);
       const canvas = document.createElement("canvas");
       canvas.width = canvasSize;
       canvas.height = canvasSize;
       canvas.setAttribute("aria-label", "활동지 QR");
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.getContext("2d", { alpha: false });
       ctx.imageSmoothingEnabled = false;
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, canvasSize, canvasSize);
@@ -156,7 +156,7 @@
 
   function paintQrInto(el, text, size) {
     if (!el || !text) return;
-    const displayPx = Math.max(148, Number(size) || 160);
+    const displayPx = Math.max(100, Number(size) || 108);
     const url = String(text).trim();
     if (el.tagName === "A") {
       el.href = url;
@@ -222,10 +222,10 @@
     }
 
     const size = window.matchMedia("(max-width: 640px)").matches
-      ? 160
+      ? 112
       : window.matchMedia("(max-width: 1024px)").matches
-        ? 168
-        : 148;
+        ? 120
+        : 116;
     paintQrInto(el, url, size);
   }
 
