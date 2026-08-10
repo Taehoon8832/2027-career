@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- xlsx는 다운로드 시에만 지연 로드 -->
   <style>
     :root {
       --color-primary-50:  #FBEFE7;
@@ -55,9 +55,12 @@
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     html, body { height: 100%; height: 100dvh; }
     body {
       font-family: var(--font-sans);
+      font-size: 15px;
+      line-height: 1.45;
       background-color: var(--bg-base);
       background-image: radial-gradient(rgba(31, 30, 29, 0.055) 1px, transparent 1px);
       background-size: 18px 18px;
@@ -67,17 +70,24 @@
       display: flex;
       flex-direction: column;
       padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+      overscroll-behavior: none;
     }
+    button, input, select, textarea { font: inherit; }
+    button, .chip-toggle, .lesson-item, .setup-launch, a { touch-action: manipulation; }
 
     .view { display: none; flex: 1; min-height: 0; flex-direction: column; }
     .view.is-active { display: flex; }
 
     .topbar {
-      flex-shrink: 0; height: 52px; padding: 0 16px;
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(255,255,255,0.78);
+      flex-shrink: 0; min-height: 52px; padding: 6px 12px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: rgba(255,255,255,0.92);
       border-bottom: 1px solid var(--border-default);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 10;
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10;
+    }
+    .topbar-actions {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      margin-left: auto;
     }
     .brand-mark {
       width: 28px; height: 28px; border-radius: 8px;
@@ -97,11 +107,40 @@
       font: 500 12px/1.3 var(--font-sans);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
+    .topbar-switcher {
+      min-width: 0; flex: 1; display: flex; align-items: center; gap: 8px;
+      overflow: hidden;
+    }
+    .topbar-switcher .name {
+      flex-shrink: 0; max-width: 96px;
+      font: 600 13px/1.2 var(--font-sans); color: var(--text-primary);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .topbar-switcher .dot {
+      color: var(--text-tertiary); font: 600 12px/1 var(--font-sans); flex-shrink: 0;
+    }
+    .topbar-switcher select {
+      height: 36px; min-width: 72px; max-width: 120px; padding: 0 28px 0 10px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-full);
+      background: var(--bg-elevated)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%808075' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+        no-repeat right 10px center;
+      color: var(--text-primary); font: 600 13px/1 var(--font-sans);
+      appearance: none; -webkit-appearance: none; cursor: pointer;
+    }
+    .topbar-switcher select:focus {
+      outline: none; border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15);
+    }
+    .topbar-switcher select:disabled {
+      opacity: 0.55; cursor: not-allowed;
+    }
     .topbar-spacer { flex: 1; }
+    #viewTeacher .topbar-spacer { display: none; }
     .topbar .btn-tiny {
-      height: 32px; padding: 0 10px; border: 1px solid var(--border-default);
+      min-height: 36px; padding: 0 11px; border: 1px solid var(--border-default);
       border-radius: var(--radius-full); background: var(--bg-elevated);
-      color: var(--text-secondary); font: 600 11px/1 var(--font-sans); cursor: pointer;
+      color: var(--text-secondary); font: 600 12px/1 var(--font-sans); cursor: pointer;
       white-space: nowrap;
     }
     .topbar .btn-tiny:hover { background: var(--bg-subtle); }
@@ -248,27 +287,32 @@
       color: var(--color-primary-700);
     }
     .class-count-control {
-      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-      margin: 4px 0 12px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+      margin: 4px 0 14px;
     }
     .class-count-control .count-btn {
-      width: 40px; height: 40px; border-radius: 10px;
+      width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px;
       border: 1px solid var(--border-default); background: var(--bg-elevated);
       color: var(--text-primary); font: 700 18px/1 var(--font-sans); cursor: pointer;
     }
     .class-count-control .count-btn:hover { border-color: var(--color-primary-300); }
-    .class-count-control .count-value {
-      min-width: 48px; text-align: center;
-      font: 700 22px/1 var(--font-sans); color: var(--color-primary-700);
+    .class-count-control .count-input {
+      width: 64px; height: 40px; text-align: center;
+      border: 1px solid var(--border-default); border-radius: 10px;
+      background: #fff; color: var(--color-primary-700);
+      font: 700 18px/1 var(--font-sans);
     }
-    .class-count-control .count-hint {
-      font: 500 12px/1.4 var(--font-sans); color: var(--text-tertiary);
+    .class-count-control .count-input:focus {
+      outline: none; border-color: var(--border-focus);
+      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15);
     }
-    .grade-chip-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-    .grade-chip-meta {
-      font: 600 10px/1 var(--font-sans); color: var(--text-tertiary);
+    .class-count-control .btn-save-inline {
+      height: 40px; flex: 1; min-width: 96px; padding: 0 14px;
+      border: 0; border-radius: 10px; cursor: pointer;
+      background: var(--color-primary-500); color: var(--text-on-primary);
+      font: 700 13px/1 var(--font-sans);
     }
-    .grade-chip-meta.is-saved { color: var(--color-primary-700); }
+    .class-count-control .btn-save-inline:disabled { opacity: 0.6; cursor: wait; }
     .roster-box { margin-top: 8px; }
     .roster-list {
       display: grid;
@@ -366,55 +410,126 @@
       white-space: pre-wrap; font: 500 14px/1.55 var(--font-sans); color: var(--text-primary);
       background: #fff; padding: 16px; border-radius: 10px;
     }
+    .detail-hero {
+      display: flex; align-items: baseline; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .detail-hero h2 {
+      margin: 0; font: 700 clamp(18px, 2.4vw, 22px)/1.25 var(--font-serif);
+      letter-spacing: -0.02em; color: var(--text-primary);
+    }
+    .detail-hero .theme {
+      font: 600 11px/1.3 var(--font-sans); color: var(--color-primary-700);
+      padding: 4px 10px; border-radius: var(--radius-full);
+      background: var(--color-primary-50); white-space: nowrap;
+    }
+    .detail-filter {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+      margin-bottom: 10px; padding: 8px 10px;
+      border: 1px solid var(--border-default); border-radius: 12px;
+      background: var(--bg-subtle);
+    }
+    .detail-filter .lab {
+      font: 700 11px/1 var(--font-sans); color: var(--text-tertiary);
+      margin-right: 2px;
+    }
+    .detail-filter .chip-row { margin: 0; gap: 6px; }
+    .detail-filter .chip-toggle {
+      height: 30px; padding: 0 10px; font-size: 11px;
+    }
+    .detail-filter .sep {
+      width: 1px; height: 22px; background: var(--border-default); margin: 0 2px;
+    }
+    .detail-action-strip {
+      display: grid;
+      grid-template-columns: 72px 1fr auto;
+      gap: 10px; align-items: center;
+      margin-bottom: 12px; padding: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--color-primary-100);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.95), rgba(251,239,231,0.7)),
+        var(--bg-elevated);
+    }
+    .detail-action-strip .qr {
+      width: 72px; height: 72px; border-radius: 10px;
+      border: 1px solid var(--border-default); background: #fff;
+      display: grid; place-items: center; overflow: hidden;
+    }
+    .detail-action-strip .qr canvas,
+    .detail-action-strip .qr img { width: 64px !important; height: 64px !important; }
+    .detail-action-strip .meta { min-width: 0; }
+    .detail-action-strip .code-row {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .detail-action-strip .code-row .label {
+      font: 700 10px/1 var(--font-sans); color: var(--color-primary-700);
+      letter-spacing: 0.04em;
+    }
+    .detail-action-strip .code-row strong {
+      font: 800 18px/1 var(--font-sans); color: var(--text-primary);
+      letter-spacing: 0.04em;
+    }
+    .detail-action-strip .class-tag {
+      font: 600 11px/1 var(--font-sans); color: var(--text-tertiary);
+    }
+    .detail-action-strip .btns {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .detail-action-strip .btns .btn {
+      height: 34px; padding: 0 12px; font-size: 12px; white-space: nowrap;
+    }
     .detail-toolbar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-      margin: 0 0 12px;
+      margin: 0 0 8px;
     }
     .detail-toolbar .grow { flex: 1; min-width: 8px; }
     .detail-section-title {
-      margin: 18px 0 8px;
-      font: 700 15px/1.3 var(--font-sans); color: var(--text-primary);
+      margin: 0;
+      font: 700 14px/1.3 var(--font-sans); color: var(--text-primary);
     }
     .detail-roster-grid {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px;
-      margin-top: 8px;
+      gap: 6px;
     }
     .detail-roster-cell {
-      display: flex; flex-direction: column; gap: 6px;
-      padding: 8px; border: 1px solid var(--border-default);
-      border-radius: 10px; background: var(--bg-subtle); min-height: 110px;
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 7px; border: 1px solid var(--border-default);
+      border-radius: 10px; background: var(--bg-subtle); min-height: 0;
     }
     .detail-roster-cell.has-sub {
       border-color: var(--color-primary-300);
       background: var(--color-primary-50);
     }
-    .detail-roster-cell .no {
-      font: 700 12px/1 var(--font-sans); color: var(--color-primary-700);
+    .detail-roster-cell .head {
+      display: flex; align-items: center; justify-content: space-between; gap: 4px;
     }
+    .detail-roster-cell .no {
+      font: 800 12px/1 var(--font-sans); color: var(--color-primary-700);
+    }
+    .detail-roster-cell .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border-strong); flex-shrink: 0;
+    }
+    .detail-roster-cell.has-sub .dot { background: var(--color-primary-500); }
     .detail-roster-cell .name {
       font: 600 12px/1.2 var(--font-sans); color: var(--text-primary);
-      min-height: 16px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .detail-roster-cell .status {
       font: 600 10px/1.2 var(--font-sans); color: var(--text-tertiary);
     }
     .detail-sub-preview {
       border: 1px solid var(--border-default); border-radius: 8px;
-      background: #fff; overflow: hidden; max-height: 88px;
-    }
-    .detail-sub-preview iframe {
-      width: 100%; height: 88px; border: 0; pointer-events: none;
-      transform: scale(0.55); transform-origin: top left;
-      width: 182%; height: 160px;
+      background: #fff; overflow: hidden; max-height: 54px;
     }
     .detail-sub-preview .plain-mini {
-      padding: 6px; font: 500 10px/1.35 var(--font-sans);
-      color: var(--text-secondary); max-height: 88px; overflow: hidden;
+      padding: 5px 6px; font: 500 10px/1.35 var(--font-sans);
+      color: var(--text-secondary); max-height: 54px; overflow: hidden;
     }
     .detail-sub-actions {
-      display: flex; gap: 6px; flex-wrap: wrap;
+      display: flex; gap: 8px; flex-wrap: wrap;
     }
     .detail-sub-actions button {
       border: 0; background: transparent; padding: 0;
@@ -424,9 +539,12 @@
     .detail-sub-actions button.is-danger { color: #B23A2C; }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .detail-action-strip { grid-template-columns: 64px 1fr; }
+      .detail-action-strip .btns { grid-column: 1 / -1; flex-direction: row; }
     }
     @media (max-width: 560px) {
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .detail-filter .sep { display: none; }
     }
     @media (max-width: 720px) {
       .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -592,12 +710,14 @@
     .lesson-item {
       width: 100%; text-align: left; display: grid;
       grid-template-columns: 1fr auto; gap: 10px; align-items: center;
-      padding: 10px; margin-bottom: 6px;
+      padding: 12px; margin-bottom: 6px;
       border: 1px solid var(--border-default); border-radius: var(--radius-md);
       background: var(--bg-elevated); cursor: pointer;
-      transition: border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce);
+      content-visibility: auto; contain-intrinsic-size: auto 72px;
+      transition: border-color var(--duration-fast) ease;
     }
-    .lesson-item:hover { border-color: var(--border-strong); transform: translateY(-1px); }
+    .lesson-item:hover { border-color: var(--border-strong); }
+    .lesson-item:active { background: var(--color-primary-50); }
     .lesson-item.is-active {
       border-color: var(--color-primary-300);
       background: var(--color-primary-50);
@@ -619,6 +739,11 @@
       min-width: 26px; height: 26px; padding: 0 7px; border-radius: var(--radius-full);
       background: var(--color-primary-500); color: var(--text-on-primary);
       display: grid; place-items: center; font: 700 11px/1 var(--font-sans);
+    }
+    .lesson-count.is-zero {
+      background: transparent; color: var(--text-tertiary);
+      border: 1px solid var(--border-default);
+      font-weight: 600;
     }
     .class-settings {
       border: 1px solid var(--border-default); border-radius: var(--radius-lg);
@@ -664,37 +789,8 @@
     }
     .detail-card {
       border: 1px solid var(--border-default); border-radius: var(--radius-lg);
-      background: var(--bg-elevated); padding: 18px; box-shadow: var(--shadow-sm);
+      background: var(--bg-elevated); padding: 14px 14px 16px; box-shadow: var(--shadow-sm);
     }
-    .lesson-theme {
-      display: inline-flex; align-items: center; gap: 6px;
-      margin-bottom: 8px; padding: 5px 10px;
-      border-radius: var(--radius-full);
-      background: var(--color-primary-50); color: var(--color-primary-700);
-      font: 600 11px/1.3 var(--font-sans);
-    }
-    .lesson-title {
-      font: 600 clamp(20px, 3vw, 26px)/1.3 var(--font-serif);
-      letter-spacing: -0.02em; margin: 0 0 10px;
-    }
-    .lesson-summary {
-      color: var(--text-secondary); font: 400 14px/1.7 var(--font-serif);
-      margin-bottom: 16px;
-    }
-    .detail-top {
-      display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start;
-      margin-bottom: 18px; padding-bottom: 16px; border-bottom: 1px solid var(--border-default);
-    }
-    .detail-qr-lg {
-      width: 148px; height: 148px; border-radius: var(--radius-md);
-      border: 1px solid var(--border-default); background: #fff;
-      display: grid; place-items: center; flex-shrink: 0;
-    }
-    .detail-qr-lg canvas, .detail-qr-lg img { width: 136px !important; height: 136px !important; }
-    .detail-info { flex: 1; min-width: 180px; }
-    .detail-info h3 { font: 600 18px/1.3 var(--font-serif); margin-bottom: 8px; }
-    .detail-info p { color: var(--text-secondary); font: 400 13px/1.55 var(--font-sans); margin-bottom: 12px; word-break: break-all; }
-    .detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
     .sub-list { display: grid; gap: 10px; }
     .sub-empty {
       padding: 28px 16px; text-align: center; color: var(--text-tertiary);
@@ -758,24 +854,99 @@
         animation: none !important; opacity: 1 !important; transform: none !important;
       }
     }
-    @media (max-width: 1024px) {
-      .dash { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); }
+    @media (max-width: 1100px) {
+      .dash { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
+      body { font-size: 15px; }
     }
-    @media (max-width: 899px) {
+    /* 태블릿: 분할 유지, 터치 여유 */
+    @media (max-width: 1024px) and (min-width: 769px) {
+      .chip-toggle { min-height: 40px; padding: 0 14px; font-size: 13px; }
+      .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+      .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
+      .topbar-switcher select { height: 40px; font-size: 14px; }
+    }
+    /* 폰·좁은 태블릿: 단일 패널 */
+    @media (max-width: 768px) {
+      body {
+        font-size: 16px;
+        background-image: none; /* 패턴 제거로 스크롤 부담 감소 */
+      }
       .hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 18px 20px; border-radius: var(--radius-lg); }
       .hero-copy h1 { font-size: clamp(26px, 7vw, 34px); }
       .dash-mobile-tabs { display: flex; }
       .dash { grid-template-columns: 1fr; }
-      .dash-list, .dash-detail { border: 0; max-height: none; }
+      .dash-list, .dash-detail {
+        border: 0; max-height: none;
+        padding: 12px 12px calc(16px + var(--safe-bottom));
+      }
       .dash[data-panel="list"] .dash-detail { display: none; }
       .dash[data-panel="detail"] .dash-list { display: none; }
-      .detail-qr-lg { width: 132px; height: 132px; }
-      .detail-qr-lg canvas, .detail-qr-lg img { width: 120px !important; height: 120px !important; }
+      .topbar { gap: 6px; padding: 8px 10px; }
+      .topbar .chip { display: none; }
+      .topbar-switcher { flex: 1 1 auto; min-width: 0; }
+      .topbar-switcher .name { max-width: 72px; font-size: 14px; }
+      .topbar-switcher select {
+        height: 40px; max-width: none; flex: 1; min-width: 0;
+        font-size: 16px; /* iOS 줌 방지 */
+      }
+      input, select, textarea { font-size: 16px; }
+      .topbar-actions {
+        width: 100%;
+        justify-content: flex-end;
+        order: 3;
+        padding-top: 2px;
+      }
+      .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
+      .class-count-control { flex-wrap: wrap; }
+      .class-count-control .count-input,
+      .class-count-control .count-btn,
+      .class-count-control .btn-save-inline {
+        height: 44px; font-size: 16px;
+      }
+      .class-count-control .count-input { width: 72px; }
+      .class-count-control .btn-save-inline { flex: 1 1 100%; }
+      .detail-filter { gap: 6px; padding: 8px; }
+      .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
+      .detail-action-strip {
+        grid-template-columns: 64px 1fr;
+        gap: 8px;
+      }
+      .detail-action-strip .btns {
+        grid-column: 1 / -1;
+        flex-direction: row;
+      }
+      .detail-action-strip .btns .btn {
+        flex: 1; min-height: 44px; font-size: 14px;
+      }
+      .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .detail-roster-cell { padding: 10px; }
+      .detail-roster-cell .name { font-size: 14px; }
+      .detail-sub-actions button { font-size: 12px; min-height: 28px; }
+      .roster-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
+      .setup-launch { padding: 14px; }
+      .setup-launch-copy strong { font-size: 15px; }
+      .lesson-meta strong { font-size: 14px; }
+      .lesson-meta small { font-size: 12px; -webkit-line-clamp: 2; }
+      .sub-viewer { padding: 8px; align-items: stretch; }
+      .sub-viewer-panel {
+        width: 100%; height: auto; min-height: 70dvh; max-height: 92dvh;
+        border-radius: 14px;
+      }
+      .brand-mark { animation: none; }
+      .dash-mobile-tabs button { min-height: 44px; font-size: 14px; }
     }
     @media (max-width: 420px) {
       .topbar-title { display: none; }
+      .topbar-switcher .name,
+      .topbar-switcher .dot { display: none; }
       .auth-actions { grid-template-columns: 1fr; }
       .class-code-bar .hint { display: none; }
+      .detail-roster-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (hover: none) {
+      .lesson-item:hover,
+      .setup-launch:hover,
+      .topbar .btn-tiny:hover { transform: none; }
     }
   </style>
 </head>
@@ -860,12 +1031,23 @@
     <header class="topbar">
       <div class="brand-mark" aria-hidden="true">✳</div>
       <span class="chip">교사</span>
-      <span class="topbar-title" id="teacherBarTitle">30차시 QR · 제출 현황</span>
+      <div class="topbar-switcher" id="teacherBarSwitcher">
+        <span class="name" id="teacherBarName">교사</span>
+        <span class="dot" aria-hidden="true">·</span>
+        <select id="topGradeSelect" aria-label="학년 선택" title="학년">
+          <option value="">학년</option>
+        </select>
+        <select id="topClassSelect" aria-label="학급 선택" title="학급">
+          <option value="">학급</option>
+        </select>
+      </div>
       <span class="topbar-spacer"></span>
-      <button type="button" class="btn-tiny" id="btnResetDashboard" title="화면·선택 상태 초기화">초기화</button>
-      <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 제출 보고서">XLSX 다운로드</button>
-      <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
-      <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
+      <div class="topbar-actions">
+        <button type="button" class="btn-tiny" id="btnResetDashboard" title="모든 학급·제출 데이터 삭제 후 다시 시작">초기화</button>
+        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 제출 보고서">XLSX</button>
+        <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
+        <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
+      </div>
     </header>
     <div class="dash-mobile-tabs" role="tablist" aria-label="대시보드 패널">
       <button type="button" class="is-active" id="tabDashList" data-panel="list">차시 목록</button>
@@ -894,26 +1076,22 @@
       </aside>
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
-          <h2>초기 설정 · 학급별</h2>
-          <p class="settings-sub">학년별로 학급 수를 따로 설정·저장할 수 있습니다. 1학년 ↔ 2학년을 전환해도 이미 저장한 학년 정보는 유지됩니다. 반마다 제출코드·30차시·명단 DB가 따로 생깁니다.</p>
+          <h2>초기 설정</h2>
           <p class="settings-sub" style="margin-bottom:8px">학년</p>
           <div class="chip-row" id="classGradeChips"></div>
           <p class="settings-sub" style="margin-bottom:8px">학급 수</p>
           <div class="class-count-control" id="classCountControl">
             <button type="button" class="count-btn" id="btnClassCountMinus" aria-label="학급 수 줄이기">−</button>
-            <span class="count-value" id="classCountValue">1</span>
+            <input id="classCountInput" class="count-input" type="number" min="1" max="10" step="1" inputmode="numeric" value="1" aria-label="학급 수" />
             <button type="button" class="count-btn" id="btnClassCountPlus" aria-label="학급 수 늘리기">+</button>
-            <span class="count-hint" id="classCountHint">1반만 사용</span>
+            <button type="button" class="btn-save-inline" id="btnSaveClassSettings">학급 저장</button>
           </div>
-          <button type="button" class="btn btn-primary" id="btnSaveClassSettings" style="width:100%">학급 저장</button>
-          <p class="settings-summary" id="classSettingsSummary">학급을 저장해 주세요.</p>
 
           <div class="roster-box" id="rosterBox">
-            <div class="dash-head" style="margin-top:18px">
+            <div class="dash-head" style="margin-top:8px">
               <h2 style="font-size:16px">학급 명단</h2>
               <span id="rosterCountLabel">0명</span>
             </div>
-            <p class="settings-sub" id="rosterClassLabel">저장된 학급을 선택한 뒤 명단을 관리하세요.</p>
             <div class="chip-row" id="rosterClassChips"></div>
             <div class="roster-list" id="rosterList"></div>
             <div class="roster-actions">
@@ -996,7 +1174,7 @@
       ];
 
       const LESSON_CONTENT = {
-        1: { title: "디지털 나 사용 설명서", summary: "QR 스캔 한 번으로 학생들이 온라인 양식에 자아 탐색 데이터를 채우는 첫 시간 수업 치트키." },
+        1: { title: "디지털 나 사용 설명서", summary: "" },
         2: { title: "내 손으로 짜는 교육과정 맵", summary: "우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습." },
         3: { title: "전공 빙고 & 직업 월드컵", summary: "게임을 통해 1순위 관심 학과와 2순위 차순위 학과를 자연스럽게 도출하는 교실 흥미 유발 차시." },
         4: { title: "목표 대학 입결 스캔", summary: "3대 AI와 대입 포털을 활용해 목표 학과의 전형, 전년도 등급 컷, 경쟁률을 직접 찾아 지도에 박아넣는 시간." },
@@ -1073,6 +1251,45 @@
       const subCountCache = new Map(); // lessonId -> count
       let switchSeq = 0;
       let listRenderSeq = 0;
+      let topbarSwitchTimer = 0;
+      let xlsxLoadPromise = null;
+      const MOBILE_MQ = "(max-width: 768px)";
+
+      function isCompactDash() {
+        return window.matchMedia(MOBILE_MQ).matches;
+      }
+
+      function loadXlsxLib() {
+        if (window.XLSX) return Promise.resolve(window.XLSX);
+        if (xlsxLoadPromise) return xlsxLoadPromise;
+        xlsxLoadPromise = new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+          s.async = true;
+          s.onload = () => (window.XLSX ? resolve(window.XLSX) : reject(new Error("XLSX 로드 실패")));
+          s.onerror = () => reject(new Error("XLSX 스크립트 로드 실패"));
+          document.head.appendChild(s);
+        }).catch((err) => {
+          xlsxLoadPromise = null;
+          throw err;
+        });
+        return xlsxLoadPromise;
+      }
+
+      function htmlToPlainTextFast(html) {
+        return String(html || "")
+          .replace(/<script[\s\S]*?<\/script>/gi, " ")
+          .replace(/<style[\s\S]*?<\/style>/gi, " ")
+          .replace(/<[^>]+>/g, " ")
+          .replace(/&nbsp;/gi, " ")
+          .replace(/&amp;/gi, "&")
+          .replace(/&lt;/gi, "<")
+          .replace(/&gt;/gi, ">")
+          .replace(/&quot;/gi, '"')
+          .replace(/&#39;/g, "'")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
 
       function clampClassCount(n) {
         const v = Number(n) || 1;
@@ -1162,6 +1379,83 @@
         return "학급별 · " + parts.join(" · ");
       }
 
+      function renderTeacherBarSwitcher() {
+        const nameEl = $("teacherBarName");
+        const gradeSel = $("topGradeSelect");
+        const classSel = $("topClassSelect");
+        if (!gradeSel || !classSel) return;
+
+        if (nameEl) {
+          nameEl.textContent = session?.name || session?.loginId || "교사";
+        }
+
+        const grades = [1, 2, 3].filter((g) => activeClassesForGrade(g).length);
+        const curGrade = Number(teacherClass?.grade || classSettings.classGrade || grades[0] || 1);
+        gradeSel.innerHTML = grades.length
+          ? grades.map((g) => `<option value="${g}">${g}학년</option>`).join("")
+          : `<option value="">학년 없음</option>`;
+        gradeSel.disabled = !grades.length;
+        if (grades.length) {
+          gradeSel.value = String(grades.includes(curGrade) ? curGrade : grades[0]);
+        }
+
+        const g = Number(gradeSel.value) || curGrade;
+        const classes = activeClassesForGrade(g);
+        classSel.innerHTML = classes.length
+          ? classes.map((c) => `<option value="${c.id}">${c.class_no}반</option>`).join("")
+          : `<option value="">학급 없음</option>`;
+        classSel.disabled = !classes.length;
+        if (classes.length) {
+          const prefer = classes.find((c) => c.id === activeClassId) || classes[0];
+          classSel.value = prefer.id;
+        }
+      }
+
+      function queueSwitchFromTopbar() {
+        clearTimeout(topbarSwitchTimer);
+        topbarSwitchTimer = setTimeout(() => {
+          switchFromTopbar().catch((e) => console.error(e));
+        }, 60);
+      }
+
+      async function switchFromTopbar() {
+        const gradeSel = $("topGradeSelect");
+        const classSel = $("topClassSelect");
+        if (!gradeSel || !classSel) return;
+        const grade = Number(gradeSel.value);
+        let target = teacherClasses.find((c) => c.id === classSel.value && c.is_active);
+        if (!target || Number(target.grade) !== grade) {
+          target = activeClassesForGrade(grade)[0] || null;
+        }
+        if (!target) {
+          toast("선택한 학급이 없습니다. 초기 설정에서 저장해 주세요.");
+          renderTeacherBarSwitcher();
+          return;
+        }
+        if (target.id === activeClassId) {
+          renderTeacherBarSwitcher();
+          return;
+        }
+
+        const sessionNo = lessons.find((l) => l.id === selectedLessonId)?.session_no
+          || Number(lessons[0]?.session_no)
+          || 1;
+
+        classSettings.classGrade = grade;
+        detailFilterGrade = grade;
+        rosterClassId = target.id;
+
+        // 초기 설정 패널이 열려 있으면 명단도 맞춤
+        const setupOpen = $("classSettings") && !$("classSettings").hidden;
+        await switchDetailClass(target, sessionNo);
+        renderTeacherBarSwitcher();
+        if (setupOpen) {
+          showRightPanel("setup");
+          renderClassSettingsUI();
+          loadRoster(target.id).catch(() => {});
+        }
+      }
+
       function getClassPills() {
         const active = activeClassesForGrade(classSettings.classGrade);
         if (active.length) return active.map(unitLabel);
@@ -1192,8 +1486,7 @@
       }
 
       function isClassSettingsReady() {
-        if (teacherClasses.some((c) => c.is_active && c.class_no)) return true;
-        return clampClassCount(classSettings.classCount) >= 1;
+        return teacherClasses.some((c) => c.is_active && c.class_no);
       }
 
       function updateSetupLaunchHint() {
@@ -1232,52 +1525,32 @@
 
         classGradeRoot.innerHTML = "";
         [1, 2, 3].forEach((g) => {
-          const wrap = document.createElement("div");
-          wrap.className = "grade-chip-wrap";
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip-toggle" + (classSettings.classGrade === g ? " is-on" : "");
           btn.textContent = `${g}학년`;
           btn.addEventListener("click", () => changeClassGrade(g));
-          const meta = document.createElement("span");
-          meta.className = "grade-chip-meta";
-          const saved = activeClassesForGrade(g);
-          const remembered = Number(classSettings.byGrade?.[String(g)]?.classCount) || 0;
-          if (saved.length) {
-            meta.classList.add("is-saved");
-            meta.textContent = `${Math.max(...saved.map((c) => Number(c.class_no)))}반 저장됨`;
-          } else if (remembered) {
-            meta.textContent = `${remembered}반(미저장)`;
-          } else {
-            meta.textContent = "미설정";
-          }
-          wrap.appendChild(btn);
-          wrap.appendChild(meta);
-          classGradeRoot.appendChild(wrap);
+          classGradeRoot.appendChild(btn);
         });
 
-        const countEl = $("classCountValue");
-        const hintEl = $("classCountHint");
-        if (countEl) countEl.textContent = String(classSettings.classCount);
-        if (hintEl) {
-          const n = classSettings.classCount;
-          const others = [1, 2, 3]
-            .filter((g) => g !== classSettings.classGrade && activeClassesForGrade(g).length)
-            .map((g) => {
-              const maxNo = Math.max(...activeClassesForGrade(g).map((c) => Number(c.class_no)));
-              return `${g}학년 1~${maxNo}반`;
-            });
-          const current = n === 1
-            ? `${classSettings.classGrade}학년 1반`
-            : `${classSettings.classGrade}학년 1~${n}반`;
-          hintEl.textContent = others.length
-            ? `${current} 편집 중 · 유지: ${others.join(", ")}`
-            : `${current} (반마다 별도 DB)`;
+        const input = $("classCountInput");
+        if (input && document.activeElement !== input) {
+          input.value = String(classSettings.classCount);
         }
 
-        $("classSettingsSummary").textContent = formatClassSettingsSummary();
         updateSetupLaunchHint();
         renderRosterClassChips();
+      }
+
+      function applyClassCountInput() {
+        const input = $("classCountInput");
+        if (!input) return;
+        const next = clampClassCount(input.value);
+        classSettings.classCount = next;
+        classSettings.needsResave = true;
+        rememberGradeCount();
+        localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+        input.value = String(next);
       }
 
       function changeClassGrade(g) {
@@ -1310,6 +1583,7 @@
         }
         closeSubViewer();
         renderClassSettingsUI();
+        renderTeacherBarSwitcher();
         if (first) {
           loadRoster(first.id).catch(() => {});
           fetchLessonsForClass(first.id, { seed: !lessonsCache.has(first.id) })
@@ -1318,11 +1592,9 @@
               return renderLessonList();
             })
             .catch(() => {});
-          toast(`${g}학년으로 전환했습니다. 다른 학년 학급은 그대로 유지됩니다.`);
         } else {
           lessons = [];
           renderLessonList();
-          toast(`${g}학년입니다. 학급 수를 정한 뒤 저장하면 이 학년 학급이 추가됩니다.`);
         }
       }
 
@@ -1336,7 +1608,8 @@
         classSettings.needsResave = true;
         rememberGradeCount();
         localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
-        renderClassSettingsUI();
+        const input = $("classCountInput");
+        if (input) input.value = String(next);
       }
 
       function renderRosterClassChips() {
@@ -1345,7 +1618,6 @@
         const active = activeClassesForGrade(classSettings.classGrade);
         root.innerHTML = "";
         if (!active.length) {
-          $("rosterClassLabel").textContent = "이 학년에 저장된 학급이 없습니다. 학급 수를 정한 뒤 [학급 저장]을 눌러 주세요.";
           $("rosterList").innerHTML = "";
           $("rosterCountLabel").textContent = "0명";
           return;
@@ -1355,26 +1627,26 @@
             ? activeClassId
             : active[0].id;
         }
-        const current = active.find((c) => c.id === rosterClassId);
-        $("rosterClassLabel").textContent = current
-          ? `${unitLabel(current)} · 가로 5명 · 이름 아래 차시별 제출 보고서`
-          : "명단을 볼 학급을 선택하세요.";
 
         active.forEach((c) => {
           const btn = document.createElement("button");
           btn.type = "button";
           btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
           btn.textContent = `${c.class_no}반`;
-          btn.addEventListener("click", async () => {
+          btn.addEventListener("click", () => {
+            if (c.id === rosterClassId) return;
             rosterClassId = c.id;
             activeClassId = c.id;
             teacherClass = c;
             selectedLessonId = null;
             renderRosterClassChips();
-            await loadRoster(c.id);
-            await loadLessons();
-            await renderLessonList();
-            toast(`${unitLabel(c)} 명단·차시로 전환했습니다.`);
+            loadRoster(c.id).catch(() => {});
+            fetchLessonsForClass(c.id, { seed: !lessonsCache.has(c.id) })
+              .then((rows) => {
+                lessons = rows;
+                return renderLessonList();
+              })
+              .catch(() => {});
           });
           root.appendChild(btn);
         });
@@ -2105,7 +2377,8 @@
         if (teacherClasses.some((c) => c.is_active)) {
           return activeClassId;
         }
-        return syncClassGroupsToDb();
+        // 자동 생성하지 않음 — 초기 설정에서 [학급 저장] 해야 함
+        return null;
       }
 
       function renderClassCode() {
@@ -2198,7 +2471,10 @@
         if (seq !== listRenderSeq) return;
         document.querySelectorAll(".lesson-item .lesson-count").forEach((badge) => {
           const id = badge.closest(".lesson-item")?.dataset?.id;
-          if (id && subCountCache.has(id)) badge.textContent = String(subCountCache.get(id));
+          if (!id || !subCountCache.has(id)) return;
+          const n = Number(subCountCache.get(id)) || 0;
+          badge.textContent = String(n);
+          badge.classList.toggle("is-zero", n <= 0);
         });
       }
 
@@ -2226,7 +2502,7 @@
             if (!lesson) continue;
             lessonIds.push(lesson.id);
             const meta = getLessonMeta(sessionNo);
-            const count = subCountCache.has(lesson.id) ? subCountCache.get(lesson.id) : "·";
+            const count = subCountCache.has(lesson.id) ? subCountCache.get(lesson.id) : 0;
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
@@ -2234,12 +2510,11 @@
             btn.innerHTML = `
               <div class="lesson-meta">
                 <strong>${sessionNo}차시 · ${escapeHtml(meta.title)}</strong>
-                <small>${escapeHtml(meta.summary)}</small>
+                ${meta.summary ? `<small>${escapeHtml(meta.summary)}</small>` : ""}
               </div>
-              <span class="lesson-count">${count}</span>`;
+              ${Number(count) > 0 ? `<span class="lesson-count">${count}</span>` : `<span class="lesson-count is-zero">0</span>`}`;
             btn.addEventListener("click", () => {
               selectLesson(lesson.id);
-              if (window.matchMedia("(max-width: 899px)").matches) setDashPanel("detail");
             });
             group.appendChild(btn);
           }
@@ -2368,6 +2643,7 @@
 
         // 왼쪽 목록은 가볍게 갱신, 상세는 즉시
         renderLessonList();
+        renderTeacherBarSwitcher();
         if (nextLesson) {
           await renderDetail(nextLesson, { switchSeq: seq });
           if (seq === switchSeq) subscribeRealtime(nextLesson.id);
@@ -2377,14 +2653,12 @@
       }
 
       async function exportAllSubmissionsXlsx() {
-        if (!window.XLSX) {
-          toast("엑셀 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.");
-          return;
-        }
         const btn = $("btnExportAllXlsx");
         if (btn) btn.disabled = true;
-        toast("전체 제출 보고서를 모으는 중…");
+        toast("엑셀 준비 중…");
         try {
+          await loadXlsxLib();
+          toast("전체 제출 보고서를 모으는 중…");
           const active = teacherClasses.filter((c) => c.is_active && c.class_no);
           if (!active.length) {
             toast("저장된 학급이 없습니다.");
@@ -2462,41 +2736,101 @@
         }
       }
 
+      async function wipeAllTeacherDataOnServer() {
+        // 1) RPC (권장)
+        const { data, error } = await sb.rpc("wipe_my_teacher_data");
+        if (!error) return data;
+
+        // 2) RPC 없으면 학급 직접 삭제 (cascade)
+        console.warn("wipe_my_teacher_data RPC 없음, 직접 삭제 시도:", error.message);
+        const { data: classes, error: cErr } = await sb
+          .from("classes")
+          .select("id")
+          .eq("teacher_id", session.userId);
+        if (cErr) throw cErr;
+        const ids = (classes || []).map((c) => c.id);
+        if (!ids.length) return { ok: true, deleted_classes: 0 };
+
+        // 제출 → 학생 → 차시 → 학급 순 (정책/cascade 환경 대비)
+        for (const classId of ids) {
+          const { data: lessonRows } = await sb.from("lessons").select("id").eq("class_id", classId);
+          const lessonIds = (lessonRows || []).map((l) => l.id);
+          if (lessonIds.length) {
+            await sb.from("submissions").delete().in("lesson_id", lessonIds);
+            await sb.from("lessons").delete().eq("class_id", classId);
+          }
+          await sb.from("students").delete().eq("class_id", classId);
+        }
+        const { error: dErr } = await sb.from("classes").delete().eq("teacher_id", session.userId);
+        if (dErr) throw dErr;
+        return { ok: true, deleted_classes: ids.length };
+      }
+
       async function resetTeacherDashboard() {
-        if (!confirm("화면과 학급 선택 상태를 초기화하고 서버 데이터를 다시 불러올까요?\n(제출 데이터는 삭제되지 않습니다)")) {
+        if (!confirm(
+          "모든 학급·명단·차시·제출 데이터를 삭제하고 처음부터 다시 설정할까요?\n\n이 작업은 되돌릴 수 없습니다."
+        )) {
           return;
         }
+        if (!confirm("정말 삭제할까요? 제출 보고서(예: 1건)도 모두 사라집니다.")) {
+          return;
+        }
+
+        const btn = $("btnResetDashboard");
+        if (btn) btn.disabled = true;
         closeSubViewer();
         unsubscribeRealtime();
-        invalidateClassCache();
-        selectedLessonId = null;
-        detailFilterGrade = null;
-        detailSubMap = new Map();
-        detailExportRows = [];
-        classSettings.needsResave = false;
-        await loadTeacherClassesFromDb();
-        const first = teacherClasses.find((c) => c.is_active && c.class_no);
-        activeClassId = first?.id || null;
-        teacherClass = first || null;
-        if (first) {
-          classSettings.classGrade = Number(first.grade) || 1;
-          classSettings.classCount = clampClassCount(
-            Math.max(...activeClassesForGrade(classSettings.classGrade).map((c) => Number(c.class_no)))
-          );
-          rememberGradeCount();
+        toast("데이터 삭제 중…");
+
+        try {
+          await wipeAllTeacherDataOnServer();
+
+          invalidateClassCache();
+          lessons = [];
+          teacherClasses = [];
+          teacherClass = null;
+          activeClassId = null;
+          rosterClassId = null;
+          rosterStudents = [];
+          rosterSubMap = new Map();
+          detailSubMap = new Map();
+          detailExportRows = [];
+          submissionById = new Map();
+          selectedLessonId = null;
+          detailFilterGrade = null;
+          classSettings = {
+            mode: "class",
+            classGrade: 1,
+            classCount: 1,
+            byGrade: {},
+            needsResave: false
+          };
           localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(classSettings));
+
+          await loadTeacherClassesFromDb();
+          lessons = [];
+          await renderLessonList();
+          showRightPanel("setup");
+          renderClassSettingsUI();
+          const rosterRoot = $("rosterList");
+          if (rosterRoot) rosterRoot.innerHTML = "";
+          $("rosterCountLabel") && ($("rosterCountLabel").textContent = "0명");
+          $("detailCard").innerHTML =
+            `<p class="sub-empty">데이터가 없습니다. <strong>초기 설정</strong>에서 학년·학급을 다시 저장해 주세요.</p>`;
+
+          renderTeacherBarSwitcher();
+          updateSetupLaunchHint();
+          toast("모든 데이터를 삭제했습니다. 초기 설정부터 다시 해 주세요.");
+        } catch (e) {
+          console.error(e);
+          toast(
+            "삭제 실패: " +
+              (e.message || e) +
+              " → Supabase에서 supabase-wipe-teacher.sql 을 Run 한 뒤 다시 시도해 주세요."
+          );
+        } finally {
+          if (btn) btn.disabled = false;
         }
-        await loadLessons({ seed: true });
-        await renderLessonList();
-        showRightPanel("setup");
-        renderClassSettingsUI();
-        if (rosterClassId || activeClassId) {
-          try { await loadRoster(rosterClassId || activeClassId); } catch (_) {}
-        }
-        if (session) {
-          $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
-        }
-        toast("초기화했습니다.");
       }
 
       function paintDetailRosterGrid(students) {
@@ -2506,41 +2840,50 @@
           grid.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">명단이 없습니다. 초기 설정에서 학급을 저장해 주세요.</p>`;
           return;
         }
-        // iframe 미리보기는 전환 시 버벅임 원인이므로 텍스트 미리보기만 사용
-        grid.innerHTML = students.map((st) => {
+        const parts = new Array(students.length);
+        for (let i = 0; i < students.length; i++) {
+          const st = students[i];
           const key = normalizeStudentNo(st.student_no);
           const list = detailSubMap.get(key) || [];
           const latest = list[0] || null;
           const preview = latest
-            ? `<div class="detail-sub-preview" data-open-detail="${latest.id}" style="cursor:pointer"><div class="plain-mini">${escapeHtml(previewText(htmlToPlainText(latest.content), 90))}</div></div>`
+            ? `<div class="detail-sub-preview" data-open-detail="${latest.id}" style="cursor:pointer" title="크게 보기"><div class="plain-mini">${escapeHtml(previewText(htmlToPlainTextFast(latest.content), 56))}</div></div>`
             : `<div class="detail-sub-preview"><div class="plain-mini">미제출</div></div>`;
           const actions = latest
             ? `<div class="detail-sub-actions">
-                 <button type="button" data-open-detail="${latest.id}">크게 보기</button>
+                 <button type="button" data-open-detail="${latest.id}">보기</button>
                  <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
                </div>`
             : "";
-          return `
+          parts[i] = `
             <div class="detail-roster-cell${latest ? " has-sub" : ""}">
-              <div class="no">${escapeHtml(key || st.student_no)}번</div>
-              <div class="name">${escapeHtml(st.student_name || "이름 없음")}</div>
-              <div class="status">${latest ? `제출 · ${escapeHtml(formatTime(latest.created_at))}` : "미제출"}</div>
+              <div class="head">
+                <span class="no">${escapeHtml(key || st.student_no)}</span>
+                <span class="dot" aria-hidden="true"></span>
+              </div>
+              <div class="name" title="${escapeHtml(st.student_name || "")}">${escapeHtml(st.student_name || "이름 없음")}</div>
+              <div class="status">${latest ? escapeHtml(formatTime(latest.created_at)) : "미제출"}</div>
               ${preview}
               ${actions}
             </div>`;
-        }).join("");
+        }
+        grid.innerHTML = parts.join("");
 
-        grid.querySelectorAll("[data-open-detail]").forEach((el) => {
-          el.addEventListener("click", () => openSubViewer(el.getAttribute("data-open-detail")));
-        });
-        grid.querySelectorAll("[data-del-detail]").forEach((btn) => {
-          btn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute("data-del-detail");
-            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
-            await deleteSubmission(id);
+        if (!grid.dataset.bound) {
+          grid.dataset.bound = "1";
+          grid.addEventListener("click", async (e) => {
+            const del = e.target.closest("[data-del-detail]");
+            if (del) {
+              e.stopPropagation();
+              const id = del.getAttribute("data-del-detail");
+              if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
+              await deleteSubmission(id);
+              return;
+            }
+            const open = e.target.closest("[data-open-detail]");
+            if (open) openSubViewer(open.getAttribute("data-open-detail"));
           });
-        });
+        }
       }
 
       async function renderDetail(lesson, opts = {}) {
@@ -2569,43 +2912,44 @@
         const url = activityUrl(lesson.session_no, lessonSubmitCode(lesson));
         const classId = teacherClass?.id || lesson.class_id;
 
-        // 셸을 먼저 그려 전환 체감 속도를 올림
+        const classLabel = teacherClass ? unitLabel(teacherClass) : "";
         card.innerHTML = `
-          <span class="lesson-theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
-          <h2 class="lesson-title">${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
-          <p class="lesson-summary">${escapeHtml(meta.summary)}</p>
-
-          <p class="settings-sub" style="margin-bottom:6px">학년</p>
-          <div class="chip-row" id="detailGradeChips"></div>
-          <p class="settings-sub" style="margin-bottom:6px">학급(반)</p>
-          <div class="chip-row" id="detailClassChips"></div>
-
-          <div class="class-code-bar" style="margin:4px 0 12px">
-            <span class="label">이 차시 제출코드</span>
-            <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
-            <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
-            <span class="hint">${teacherClass ? escapeHtml(unitLabel(teacherClass)) : "학급"}</span>
+          <div class="detail-hero">
+            <h2>${lesson.session_no}차시 · ${escapeHtml(meta.title)}</h2>
+            <span class="theme">${escapeHtml(meta.monthLabel)} · ${escapeHtml(meta.theme)}</span>
           </div>
-          <div class="detail-top">
-            <div class="detail-qr-lg" id="detailQr"></div>
-            <div class="detail-info">
-              <h3>학생 활동 HTML</h3>
-              <p>${escapeHtml(url)}</p>
-              <div class="detail-actions">
-                <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
-                <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
+
+          <div class="detail-filter">
+            <span class="lab">학년</span>
+            <div class="chip-row" id="detailGradeChips"></div>
+            <span class="sep" aria-hidden="true"></span>
+            <span class="lab">반</span>
+            <div class="chip-row" id="detailClassChips"></div>
+          </div>
+
+          <div class="detail-action-strip">
+            <div class="qr" id="detailQr" aria-label="활동지 QR"></div>
+            <div class="meta">
+              <div class="code-row">
+                <span class="label">제출코드</span>
+                <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
+                <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
               </div>
+              <div class="class-tag" style="margin-top:6px">${escapeHtml(classLabel || "학급 선택")}</div>
+            </div>
+            <div class="btns">
+              <button type="button" class="btn btn-primary" id="btnOpenActivity">활동지 열기</button>
+              <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
             </div>
           </div>
 
           <div class="detail-toolbar">
-            <h3 class="detail-section-title" style="margin:0">번호별 제출 보고서</h3>
-            <span class="settings-sub" style="margin:0" id="detailSubmitCount">불러오는 중…</span>
+            <h3 class="detail-section-title">제출 현황</h3>
+            <span class="settings-sub" style="margin:0" id="detailSubmitCount">…</span>
             <span class="grow"></span>
-            <span class="settings-sub" style="margin:0">전체는 상단 XLSX 다운로드</span>
           </div>
           <div class="detail-roster-grid is-loading" id="detailRosterGrid">
-            <p class="settings-sub" style="grid-column:1/-1">명단·제출을 불러오는 중…</p>
+            <p class="settings-sub" style="grid-column:1/-1">불러오는 중…</p>
           </div>`;
 
         const gradeRoot = $("detailGradeChips");
@@ -2618,7 +2962,7 @@
             if (Number(detailFilterGrade) === g && Number(teacherClass?.grade) === g) return;
             const list = activeClassesForGrade(g);
             if (!list.length) {
-              toast(`${g}학년에 저장된 학급이 없습니다. 초기 설정에서 저장해 주세요.`);
+              toast(`${g}학년에 저장된 학급이 없습니다.`);
               return;
             }
             const prefer = list.find((c) => c.id === activeClassId) || list[0];
@@ -2630,7 +2974,7 @@
         const classRoot = $("detailClassChips");
         const classesForGrade = activeClassesForGrade(detailFilterGrade);
         if (!classesForGrade.length) {
-          classRoot.innerHTML = `<span class="settings-sub">이 학년에 학급이 없습니다.</span>`;
+          classRoot.innerHTML = `<span class="settings-sub" style="margin:0">학급 없음</span>`;
         } else {
           classesForGrade.forEach((c) => {
             const btn = document.createElement("button");
@@ -2645,13 +2989,12 @@
           });
         }
 
-        // QR는 다음 프레임에 (전환 블로킹 방지)
-        requestAnimationFrame(() => paintQr($("detailQr"), url, 120));
+        requestAnimationFrame(() => paintQr($("detailQr"), url, 64));
         $("btnOpenActivity").addEventListener("click", () => window.open(url, "_blank", "noopener"));
         $("btnCopyLink").addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(url);
-            toast("활동지 링크를 복사했습니다.");
+            toast("링크를 복사했습니다.");
           } catch {
             toast(url);
           }
@@ -2692,6 +3035,7 @@
           el.classList.toggle("is-active", el.dataset.id === lessonId);
         });
         showRightPanel("lesson");
+        if (isCompactDash()) setDashPanel("detail");
         await renderDetail(lesson);
         if (!silent && lesson) {
           // 선택 차시 카운트만 갱신 (전체 await 제거)
@@ -2739,12 +3083,13 @@
         try {
           showView("teacher");
           const label = session.name || session.loginId || "교사";
-          $("teacherBarTitle").textContent = `${label} · ${formatClassSettingsSummary()}`;
+          renderTeacherBarSwitcher();
           updateSetupLaunchHint();
           showRightPanel(isClassSettingsReady() ? "lesson" : "setup");
           setDashPanel("list");
           await loadLessons();
           await renderLessonList();
+          renderTeacherBarSwitcher();
           if (isClassSettingsReady() && lessons.length) await selectLesson(lessons[0].id);
         } catch (e) {
           console.error(e);
@@ -2961,9 +3306,18 @@
       });
       $("btnClassCountMinus")?.addEventListener("click", () => adjustClassCount(-1));
       $("btnClassCountPlus")?.addEventListener("click", () => adjustClassCount(1));
+      $("classCountInput")?.addEventListener("change", () => applyClassCountInput());
+      $("classCountInput")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          applyClassCountInput();
+          $("btnSaveClassSettings")?.click();
+        }
+      });
       $("btnAddStudent").addEventListener("click", () => addRosterStudent());
       $("btnAddStudentRow")?.addEventListener("click", () => addRosterStudents(5));
       $("btnSaveClassSettings").addEventListener("click", async () => {
+        applyClassCountInput();
         if (!clampClassCount(classSettings.classCount)) {
           return toast("학급 수를 1개 이상으로 설정해 주세요.");
         }
@@ -2974,14 +3328,12 @@
           await syncClassGroupsToDb();
           updateSetupLaunchHint();
           renderClassSettingsUI();
-          if (session) {
-            $("teacherBarTitle").textContent = `${session.name || session.loginId || "교사"} · ${formatClassSettingsSummary()}`;
-          }
+          renderTeacherBarSwitcher();
           selectedLessonId = null;
-          await loadLessons();
-          await renderLessonList();
+          await loadLessons({ seed: true });
+          renderLessonList();
           showRightPanel("setup");
-          toast(`학급 ${classSettings.classCount}개를 저장했습니다. 반마다 명단·차시 DB가 준비됩니다.`);
+          toast(`학급 ${classSettings.classCount}개 저장 완료`);
         } catch (e) {
           console.error(e);
           toast("저장 실패: " + (e.message || e) + " (supabase-students.sql 실행 여부 확인)");
@@ -2993,6 +3345,20 @@
       $("tabDashDetail").addEventListener("click", () => setDashPanel("detail"));
       $("btnLogout").addEventListener("click", () => logout());
       $("btnTeacherLogout").addEventListener("click", () => logout());
+      $("topGradeSelect")?.addEventListener("change", () => {
+        const g = Number($("topGradeSelect").value);
+        const list = activeClassesForGrade(g);
+        const classSel = $("topClassSelect");
+        if (classSel) {
+          classSel.innerHTML = list.length
+            ? list.map((c) => `<option value="${c.id}">${c.class_no}반</option>`).join("")
+            : `<option value="">학급 없음</option>`;
+          classSel.disabled = !list.length;
+          if (list.length) classSel.value = list[0].id;
+        }
+        queueSwitchFromTopbar();
+      });
+      $("topClassSelect")?.addEventListener("change", () => queueSwitchFromTopbar());
       $("btnResetDashboard")?.addEventListener("click", () => resetTeacherDashboard());
       $("btnExportAllXlsx")?.addEventListener("click", () => exportAllSubmissionsXlsx());
       $("btnBackLanding").addEventListener("click", () => {
