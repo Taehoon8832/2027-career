@@ -225,7 +225,19 @@
     paintQrInto(el, url, size);
   }
 
+  function stripSheetIdentityFields() {
+    document
+      .querySelectorAll(
+        ".na-manual-info, .na-manual .student-info, #sheetStudentNo, #sheetStudentName, #studentId, #studentName"
+      )
+      .forEach((el) => {
+        const wrap = el.closest(".na-manual-info, .student-info") || el;
+        wrap.remove();
+      });
+  }
+
   function ensureUi() {
+    stripSheetIdentityFields();
     ensureHeroQr();
     if (document.getElementById("submitOverlay")) return;
 

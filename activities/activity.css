@@ -182,6 +182,18 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
+/* 학번/이름 입력칸 — 사용 안 함 (구버전·제출본 잔여 숨김) */
+.na-manual-info,
+.na-info-box,
+.na-manual .student-info,
+.na-manual .info-box,
+#sheetStudentNo,
+#sheetStudentName,
+#studentId,
+#studentName {
+  display: none !important;
+}
+
 /* 1차시 · 나 사용 설명서 */
 .activity-card:has(.na-manual) {
   padding: 14px 14px 16px;
