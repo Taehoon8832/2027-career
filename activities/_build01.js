@@ -65,7 +65,7 @@ const html = `<!DOCTYPE html>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./submit.js?v=zoom1"></script>
+  <script src="./submit.js?v=zoom2"></script>
 </body>
 </html>
 `;

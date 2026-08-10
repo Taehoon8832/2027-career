@@ -383,7 +383,12 @@
         </svg>
       </button>`;
 
-    actionsHost.appendChild(zoom);
+    const submitBtn = document.getElementById("btnSubmitActivity");
+    if (submitBtn && submitBtn.parentNode === actionsHost) {
+      actionsHost.insertBefore(zoom, submitBtn);
+    } else {
+      actionsHost.appendChild(zoom);
+    }
     document.getElementById("btnZoomOut")?.addEventListener("click", () => stepZoom(-1));
     document.getElementById("btnZoomIn")?.addEventListener("click", () => stepZoom(1));
     document.getElementById("zoomLevelLabel")?.addEventListener("click", () => applyPageZoom(1));
@@ -413,7 +418,6 @@
 
     const actions = document.createElement("div");
     actions.className = "topbar-actions";
-    actions.appendChild(fab);
 
     const topbar = document.querySelector(".topbar");
     if (topbar) topbar.appendChild(actions);
@@ -425,7 +429,9 @@
       document.body.appendChild(actions);
     }
 
+    // 왼쪽: 확대·축소 · 오른쪽: 제출하기
     ensureZoomControls(actions);
+    actions.appendChild(fab);
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";
