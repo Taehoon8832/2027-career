@@ -777,7 +777,7 @@ body{padding:16px!important;background:#fff!important}
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, calc(-50% - 0.2cm));
     z-index: 0;
     margin: 0;
     text-align: center;
@@ -786,7 +786,7 @@ body{padding:16px!important;background:#fff!important}
   }
   .activity-sheet-bar h2 {
     margin: 0;
-    font: 700 17px/1.25 Pretendard, sans-serif;
+    font: 700 calc(17px + 5pt)/1.25 Pretendard, sans-serif;
     text-align: center;
   }
   .sheet-identity {
@@ -797,11 +797,18 @@ body{padding:16px!important;background:#fff!important}
     display: flex;
     align-items: center;
     gap: 8px;
+    padding-top: 0.1cm;
   }
   @media print {
     .activity-sheet-bar-title {
       left: 50%;
-      transform: translate(-50%, -50%);
+      transform: translate(-50%, calc(-50% - 0.2cm));
+    }
+    .activity-sheet-bar h2 {
+      font-size: calc(17px + 5pt);
+    }
+    .sheet-identity {
+      padding-top: 0.1cm;
     }
   }
   .sheet-identity label {

@@ -478,10 +478,11 @@ body.qr-lightbox-open { overflow: hidden; }
   justify-self: center;
   text-align: center;
   min-width: 0;
+  transform: translateY(-0.2cm);
 }
 .activity-sheet-bar h2 {
   margin: 0 !important;
-  font: 700 22px/1.3 var(--serif);
+  font: 700 calc(22px + 2pt)/1.3 var(--serif);
   letter-spacing: -0.02em;
 }
 .sheet-identity {
@@ -491,6 +492,7 @@ body.qr-lightbox-open { overflow: hidden; }
   flex-shrink: 0;
   align-items: center;
   gap: 8px;
+  padding-top: 0.1cm;
 }
 .sheet-identity label {
   display: grid;
@@ -536,6 +538,7 @@ body.qr-lightbox-open { overflow: hidden; }
   font: 700 17px/1.25 var(--sans);
   color: #2c3e50;
   letter-spacing: -0.02em;
+  padding-left: 2ch; /* 앞에 2칸 */
 }
 .na-manual-head span {
   font: 500 12px/1.4 var(--sans);
@@ -1195,7 +1198,8 @@ body.qr-lightbox-open { overflow: hidden; }
     position: absolute !important;
     left: 50% !important;
     top: 50% !important;
-    transform: translate(-50%, -50%) !important;
+    /* 중앙 정렬 + 위로 0.2cm */
+    transform: translate(-50%, calc(-50% - 0.2cm)) !important;
     grid-column: unset !important;
     justify-self: unset !important;
     z-index: 0 !important;
@@ -1205,7 +1209,7 @@ body.qr-lightbox-open { overflow: hidden; }
     pointer-events: none !important;
   }
   .activity-sheet-bar h2 {
-    font-size: 17px !important;
+    font-size: calc(17px + 5pt) !important;
     text-align: center !important;
   }
   .sheet-identity {
@@ -1213,6 +1217,7 @@ body.qr-lightbox-open { overflow: hidden; }
     justify-self: end !important;
     z-index: 1 !important;
     width: auto !important;
+    padding-top: 0.1cm !important;
   }
   .sheet-identity input {
     height: 28px !important;
