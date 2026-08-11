@@ -748,40 +748,61 @@ body{padding:16px!important;background:#fff!important}
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .print-sheet { margin: 0; padding: 0; }
+  .print-sheet { margin: 0; padding: 0; width: 100%; }
+  .activity-card { width: 100%; }
   .activity-sheet-bar {
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 1fr);
+    grid-template-columns: 1fr 1fr;
     align-items: center;
-    gap: 8px 10px;
+    column-gap: 8px;
+    min-height: 34px;
     margin: 0 0 8px;
-    padding-bottom: 6px;
+    padding: 2px 0 6px;
     border-bottom: 1.5px solid #d6d3d1;
   }
   .print-lesson-title {
     display: block;
     grid-column: 1;
     justify-self: start;
+    align-self: center;
+    z-index: 1;
+    max-width: calc(50% - 3.2rem);
     margin: 0;
-    font: 700 12px/1.3 "Noto Serif KR", Pretendard, serif;
+    font: 700 11px/1.3 "Noto Serif KR", Pretendard, serif;
     letter-spacing: -0.02em;
     word-break: keep-all;
   }
   .activity-sheet-bar-title {
-    grid-column: 2;
-    justify-self: center;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    margin: 0;
     text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
   }
   .activity-sheet-bar h2 {
     margin: 0;
     font: 700 17px/1.25 Pretendard, sans-serif;
+    text-align: center;
   }
   .sheet-identity {
-    grid-column: 3;
+    grid-column: 2;
     justify-self: end;
+    align-self: center;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 8px;
+  }
+  @media print {
+    .activity-sheet-bar-title {
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
   }
   .sheet-identity label {
     display: grid;
@@ -968,6 +989,7 @@ body{padding:16px!important;background:#fff!important}
   }
 
   function printActivitySheet() {
+    syncPrintLessonTitle();
     const filled = snapshotFilledRoot();
     if (!filled) return;
     const html = buildPrintDocument(filled);
@@ -975,11 +997,14 @@ body{padding:16px!important;background:#fff!important}
     const prev = document.getElementById("activityPrintFrame");
     if (prev) prev.remove();
 
+    const mobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent || "");
     const iframe = document.createElement("iframe");
     iframe.id = "activityPrintFrame";
     iframe.setAttribute("aria-hidden", "true");
-    iframe.style.cssText =
-      "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none";
+    // iOS/Android: 완전 0크기 iframe은 인쇄가 실패하는 경우가 있어 최소 크기 유지
+    iframe.style.cssText = mobile
+      ? "position:fixed;left:0;top:0;width:1px;height:1px;border:0;opacity:0.01;pointer-events:none;z-index:-1"
+      : "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0;pointer-events:none";
     document.body.appendChild(iframe);
 
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
@@ -992,20 +1017,28 @@ body{padding:16px!important;background:#fff!important}
     doc.write(html);
     doc.close();
 
+    let printed = false;
     const runPrint = () => {
+      if (printed) return;
+      printed = true;
       try {
         iframe.contentWindow?.focus();
         iframe.contentWindow?.print();
+      } catch (err) {
+        console.warn("print failed", err);
+        // 폴백: 현재 페이지 인쇄(히어로는 CSS로 숨김)
+        window.print();
       } finally {
-        setTimeout(() => iframe.remove(), 1200);
+        setTimeout(() => iframe.remove(), mobile ? 2800 : 1200);
       }
     };
 
+    const startDelay = mobile ? 320 : 50;
     if (iframe.contentDocument?.readyState === "complete") {
-      setTimeout(runPrint, 40);
+      setTimeout(runPrint, startDelay);
     } else {
-      iframe.onload = () => setTimeout(runPrint, 40);
-      setTimeout(runPrint, 200);
+      iframe.onload = () => setTimeout(runPrint, startDelay);
+      setTimeout(runPrint, mobile ? 600 : 220);
     }
   }
 

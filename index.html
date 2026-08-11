@@ -1113,33 +1113,53 @@
     .dept-box[hidden] { display: none !important; }
     .dept-fields {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 6px;
+    }
+    .dept-hint {
+      margin: 0 0 8px;
+      font: 500 11.5px/1.4 var(--font-sans);
+      color: #8a847a;
     }
     .dept-row {
       display: grid;
-      grid-template-columns: 36px minmax(0, 1fr);
+      grid-template-columns: 28px 64px minmax(0, 1fr);
       gap: 6px;
       align-items: center;
-      padding: 5px 6px;
+      padding: 6px 7px;
       border: 1px solid #e0d8cc;
       border-radius: 8px;
       background: #fff;
     }
-    .dept-row span {
+    .dept-row .dept-slot {
       font: 700 11px/1 var(--font-sans);
       color: var(--text-secondary);
       text-align: center;
     }
+    .dept-row .dept-class-wrap,
+    .dept-row .dept-name-wrap {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+    .dept-row .dept-class-wrap span,
+    .dept-row .dept-name-wrap span {
+      font: 700 10px/1.2 var(--font-sans);
+      color: #8a847a;
+    }
     .dept-row input {
       width: 100%;
-      height: 30px;
+      height: 32px;
       border: 1.5px solid var(--border-default);
       border-radius: 8px;
       background: #fff;
       padding: 0 8px;
       font: 600 12px/1 var(--font-sans);
       color: var(--text-primary);
+    }
+    .dept-row input.dept-class-no {
+      text-align: center;
+      padding: 0 4px;
     }
     .dept-row input:focus {
       outline: none;
@@ -1244,6 +1264,7 @@
       .setup-panel-body { padding: 8px 10px 10px; gap: 8px; }
       .setup-panel-title strong { font-size: 13.5px; }
       .dept-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dept-row { grid-template-columns: 24px 72px minmax(0, 1fr); }
       .class-count-control .btn-save-inline { max-width: 130px; }
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
@@ -1296,8 +1317,10 @@
         border-left: 0;
         border-top: 1.5px solid #e0d8cc;
       }
-      .dept-fields { grid-template-columns: 1fr 1fr; gap: 5px; }
-      .dept-row input { height: 36px; font-size: 16px; }
+      .dept-fields { grid-template-columns: 1fr; gap: 6px; }
+      .dept-row { grid-template-columns: 28px 76px minmax(0, 1fr); }
+      .dept-row input { height: 40px; font-size: 16px; }
+      .dept-hint { font-size: 12px; }
       .class-settings .settings-sub { font-size: 12px; margin-bottom: 4px; }
       .chip-toggle {
         min-height: 36px;
@@ -1566,10 +1589,11 @@
             <div class="setup-panel-head">
               <div class="setup-panel-title">
                 <span class="setup-step" aria-hidden="true">+</span>
-                <strong id="setupDeptTitle">학과 이름 지정</strong>
+                <strong id="setupDeptTitle">반·학과 자유롭게 설정</strong>
               </div>
             </div>
             <div class="setup-panel-body">
+              <p class="dept-hint" id="deptHint">학급 수만큼 반 번호와 학과명을 입력한 뒤 [학급 저장]을 누르세요. 학과가 다르면 같은 반도 가능합니다.</p>
               <div class="dept-fields" id="deptFields"></div>
             </div>
           </section>
@@ -1590,7 +1614,7 @@
                 <div class="setup-field">
                   <p class="settings-sub">반 선택</p>
                   <div class="chip-row" id="rosterClassChips"></div>
-                  <p class="roster-chip-hint">더블클릭으로 반·학과명 수정. 학과가 다르면 같은 반·같은 학번도 가능합니다. (예: 1반·미용 / 1반·기계)</p>
+                  <p class="roster-chip-hint">위에서 설정한 학급이 여기에 나타납니다. 더블클릭으로도 반·학과명을 수정할 수 있습니다.</p>
                 </div>
                 <div class="setup-field setup-field--count">
                   <p class="settings-sub">학생 수</p>
@@ -1892,9 +1916,10 @@
         const key = String(grade);
         const cur = classSettings.byGrade[key];
         if (!cur || typeof cur !== "object") {
-          classSettings.byGrade[key] = { classCount: 1, departments: {} };
-        } else if (!cur.departments || typeof cur.departments !== "object") {
-          cur.departments = {};
+          classSettings.byGrade[key] = { classCount: 1, departments: {}, units: [] };
+        } else {
+          if (!cur.departments || typeof cur.departments !== "object") cur.departments = {};
+          if (!Array.isArray(cur.units)) cur.units = [];
         }
         return classSettings.byGrade[key];
       }
@@ -1903,18 +1928,90 @@
         return ensureByGradeBag(grade).departments;
       }
 
+      function normalizeUnitClassNo(raw, fallback = 1) {
+        const m = String(raw ?? "").match(/\d{1,2}/);
+        const n = parseInt(m?.[0] || "", 10);
+        if (!Number.isFinite(n) || n < 1) return fallback;
+        return Math.min(10, n);
+      }
+
+      /** 특성화고: 학급 수만큼 { classNo, department } 슬롯 */
+      function getGradeUnits(grade) {
+        const bag = ensureByGradeBag(grade);
+        const count = clampClassCount(
+          grade === classSettings.classGrade ? classSettings.classCount : bag.classCount || 1
+        );
+        bag.classCount = count;
+        if (!Array.isArray(bag.units)) bag.units = [];
+
+        if (!bag.units.length) {
+          for (let i = 1; i <= count; i++) {
+            bag.units.push({
+              classNo: i,
+              department: String(bag.departments?.[String(i)] || "").trim()
+            });
+          }
+        }
+        while (bag.units.length < count) {
+          const i = bag.units.length + 1;
+          bag.units.push({
+            classNo: i,
+            department: String(bag.departments?.[String(i)] || "").trim()
+          });
+        }
+        if (bag.units.length > count) bag.units = bag.units.slice(0, count);
+
+        bag.units = bag.units.map((u, idx) => ({
+          classNo: normalizeUnitClassNo(u?.classNo, idx + 1),
+          department: String(u?.department || "").trim()
+        }));
+        syncUnitsToDepartmentsMap(grade);
+        return bag.units;
+      }
+
+      function syncUnitsToDepartmentsMap(grade) {
+        const bag = ensureByGradeBag(grade);
+        const map = {};
+        (bag.units || []).forEach((u) => {
+          const no = normalizeUnitClassNo(u.classNo, 0);
+          const dept = String(u.department || "").trim();
+          if (no && dept) map[String(no)] = dept;
+        });
+        bag.departments = map;
+      }
+
+      function setGradeUnit(grade, index, patch) {
+        const units = getGradeUnits(grade);
+        if (!units[index]) return;
+        if (patch.classNo != null) units[index].classNo = normalizeUnitClassNo(patch.classNo, index + 1);
+        if (patch.department != null) units[index].department = String(patch.department || "").trim();
+        syncUnitsToDepartmentsMap(grade);
+      }
+
       function departmentNameFor(grade, classNo, row) {
         const fromRow = String(row?.department_name || "").trim();
         if (fromRow) return fromRow;
+        const units = ensureByGradeBag(grade).units;
+        if (Array.isArray(units) && units.length) {
+          const hit = units.find(
+            (u) => normalizeUnitClassNo(u.classNo, -1) === Number(classNo) && String(u.department || "").trim()
+          );
+          if (hit) return String(hit.department || "").trim();
+        }
         const map = getDepartmentsMap(grade);
         return String(map[String(classNo)] || "").trim();
       }
 
       function setDepartmentName(grade, classNo, name) {
-        const map = getDepartmentsMap(grade);
         const cleaned = String(name || "").trim();
+        const map = getDepartmentsMap(grade);
         if (cleaned) map[String(classNo)] = cleaned;
         else delete map[String(classNo)];
+        const units = ensureByGradeBag(grade).units;
+        if (Array.isArray(units)) {
+          const u = units.find((x) => normalizeUnitClassNo(x.classNo, -1) === Number(classNo));
+          if (u) u.department = cleaned;
+        }
       }
 
       function persistClassSettingsLocal() {
@@ -1940,9 +2037,16 @@
               if (!bag || typeof bag !== "object") return;
               const deps =
                 bag.departments && typeof bag.departments === "object" ? { ...bag.departments } : {};
+              const units = Array.isArray(bag.units)
+                ? bag.units.map((u, idx) => ({
+                    classNo: normalizeUnitClassNo(u?.classNo, idx + 1),
+                    department: String(u?.department || deps[String(idx + 1)] || "").trim()
+                  }))
+                : [];
               byGrade[k] = {
-                classCount: clampClassCount(bag.classCount || 1),
-                departments: deps
+                classCount: clampClassCount(bag.classCount || units.length || 1),
+                departments: deps,
+                units
               };
             });
           }
@@ -1963,11 +2067,30 @@
       function rememberGradeCount() {
         const bag = ensureByGradeBag(classSettings.classGrade);
         bag.classCount = clampClassCount(classSettings.classCount);
-        // 학급 수보다 큰 반 학과명은 정리
-        const maxNo = bag.classCount;
-        Object.keys(bag.departments || {}).forEach((k) => {
-          if (Number(k) > maxNo) delete bag.departments[k];
-        });
+        getGradeUnits(classSettings.classGrade);
+      }
+
+      function validateVocationalUnits(grade) {
+        if (!isVocational()) return null;
+        const units = getGradeUnits(grade);
+        const seen = new Map();
+        for (let i = 0; i < units.length; i++) {
+          const no = normalizeUnitClassNo(units[i].classNo, 0);
+          const dept = String(units[i].department || "").trim();
+          if (!no) return `${i + 1}번째 줄: 반 번호를 1~10으로 입력해 주세요.`;
+          const key = `${no}::${dept.toLowerCase()}`;
+          if (seen.has(key)) {
+            return dept
+              ? `같은 반·학과가 중복됩니다: ${no}반 · ${dept}`
+              : `같은 반 번호(${no}반)를 쓰려면 학과명을 서로 다르게 입력해 주세요.`;
+          }
+          seen.set(key, true);
+          if (!dept) {
+            const sameNo = units.filter((u) => normalizeUnitClassNo(u.classNo, -1) === no).length > 1;
+            if (sameNo) return `${no}반이 여러 개면 각 줄에 학과명을 입력해 주세요.`;
+          }
+        }
+        return null;
       }
 
       function saveClassSettings() {
@@ -2122,27 +2245,38 @@
         const active = activeClassesForGrade(classSettings.classGrade);
         if (active.length) return active.map(unitLabel);
         const g = classSettings.classGrade;
-        return classNosFromCount(classSettings.classCount).map((n) => {
-          const base = `${g}학년 ${n}반`;
-          if (!isVocational()) return base;
-          const dept = departmentNameFor(g, n);
-          return dept ? `${base} · ${dept}` : base;
-        });
+        if (isVocational()) {
+          return getGradeUnits(g).map((u) => {
+            const no = normalizeUnitClassNo(u.classNo, 1);
+            const dept = String(u.department || "").trim();
+            return dept ? `${g}학년 ${no}반 · ${dept}` : `${g}학년 ${no}반`;
+          });
+        }
+        return classNosFromCount(classSettings.classCount).map((n) => `${g}학년 ${n}반`);
       }
 
       function desiredUnitsFromSettings() {
         const g = Number(classSettings.classGrade) || 1;
-        return classNosFromCount(classSettings.classCount).map((class_no) => {
-          const dept = isVocational() ? departmentNameFor(g, class_no) : "";
-          const head = dept ? `${g}학년 ${class_no}반 (${dept})` : `${g}학년 ${class_no}반`;
-          return {
-            mode: "class",
-            grade: g,
-            class_no,
-            department_name: dept,
-            title: `${head} · AI와 함께 하는 고교학점제 진로설계`
-          };
-        });
+        if (isVocational()) {
+          return getGradeUnits(g).map((u) => {
+            const class_no = normalizeUnitClassNo(u.classNo, 1);
+            const dept = String(u.department || "").trim();
+            return {
+              mode: "class",
+              grade: g,
+              class_no,
+              department_name: dept,
+              title: buildClassTitle(g, class_no, dept)
+            };
+          });
+        }
+        return classNosFromCount(classSettings.classCount).map((class_no) => ({
+          mode: "class",
+          grade: g,
+          class_no,
+          department_name: "",
+          title: buildClassTitle(g, class_no, "")
+        }));
       }
 
       function unitKey(mode, grade, classNo) {
@@ -2426,12 +2560,11 @@
 
         box.hidden = false;
         const grade = classSettings.classGrade;
-        const count = clampClassCount(classSettings.classCount);
-        const deps = getDepartmentsMap(grade);
+        const units = getGradeUnits(grade);
         const activeEl = document.activeElement;
-        const activeClassNo =
-          activeEl && root.contains(activeEl) && activeEl.dataset?.classNo
-            ? activeEl.dataset.classNo
+        const activeKey =
+          activeEl && root.contains(activeEl) && activeEl.dataset?.unitKey
+            ? activeEl.dataset.unitKey
             : "";
         const activePos =
           activeEl && root.contains(activeEl) && typeof activeEl.selectionStart === "number"
@@ -2439,25 +2572,53 @@
             : null;
 
         const frag = document.createDocumentFragment();
-        for (let n = 1; n <= count; n++) {
-          const row = document.createElement("label");
+        units.forEach((u, idx) => {
+          const row = document.createElement("div");
           row.className = "dept-row";
-          const tag = document.createElement("span");
-          tag.textContent = `${n}반`;
-          const input = document.createElement("input");
-          input.type = "text";
-          input.autocomplete = "off";
-          input.placeholder = "예: 조리과, 미용과";
-          input.dataset.classNo = String(n);
-          input.value = String(deps[String(n)] || "");
-          input.setAttribute("aria-label", `${grade}학년 ${n}반 학과 이름`);
-          row.append(tag, input);
+          row.dataset.unitIndex = String(idx);
+
+          const slot = document.createElement("span");
+          slot.className = "dept-slot";
+          slot.textContent = `${idx + 1}`;
+
+          const classWrap = document.createElement("label");
+          classWrap.className = "dept-class-wrap";
+          classWrap.innerHTML = `<span>반</span>`;
+          const classInput = document.createElement("input");
+          classInput.type = "text";
+          classInput.inputMode = "numeric";
+          classInput.className = "dept-class-no";
+          classInput.autocomplete = "off";
+          classInput.maxLength = 2;
+          classInput.placeholder = "1";
+          classInput.dataset.unitIndex = String(idx);
+          classInput.dataset.unitKey = `no-${idx}`;
+          classInput.value = String(u.classNo || idx + 1);
+          classInput.setAttribute("aria-label", `${grade}학년 ${idx + 1}번째 학급 반 번호`);
+          classWrap.appendChild(classInput);
+
+          const nameWrap = document.createElement("label");
+          nameWrap.className = "dept-name-wrap";
+          nameWrap.innerHTML = `<span>학과</span>`;
+          const nameInput = document.createElement("input");
+          nameInput.type = "text";
+          nameInput.className = "dept-name";
+          nameInput.autocomplete = "off";
+          nameInput.placeholder = "예: 미용과";
+          nameInput.maxLength = 20;
+          nameInput.dataset.unitIndex = String(idx);
+          nameInput.dataset.unitKey = `dept-${idx}`;
+          nameInput.value = String(u.department || "");
+          nameInput.setAttribute("aria-label", `${grade}학년 ${idx + 1}번째 학급 학과명`);
+          nameWrap.appendChild(nameInput);
+
+          row.append(slot, classWrap, nameWrap);
           frag.appendChild(row);
-        }
+        });
         root.replaceChildren(frag);
 
-        if (activeClassNo) {
-          const again = root.querySelector(`input[data-class-no="${activeClassNo}"]`);
+        if (activeKey) {
+          const again = root.querySelector(`[data-unit-key="${activeKey}"]`);
           if (again) {
             again.focus();
             if (activePos != null) {
@@ -2619,7 +2780,8 @@
         const row = teacherClasses.find((c) => c.id === classId);
         if (!row) return false;
 
-        const classNo = Math.max(1, Math.min(10, parseInt(String(classNoRaw || "").trim(), 10) || 0));
+        const classNoMatch = String(classNoRaw || "").match(/\d{1,2}/);
+        const classNo = Math.max(1, Math.min(10, parseInt(classNoMatch?.[0] || "", 10) || 0));
         if (!classNo) {
           toast("반 번호는 1~10 숫자로 입력해 주세요.");
           return false;
@@ -2694,8 +2856,12 @@
         row.department_name = dept;
         row.title = title;
         if (teacherClass?.id === classId) teacherClass = row;
-        setDepartmentName(grade, classNo, dept);
+        const activeList = activeClassesForGrade(grade);
+        const slotIdx = activeList.findIndex((c) => c.id === classId);
+        if (slotIdx >= 0) setGradeUnit(grade, slotIdx, { classNo, department: dept });
+        else setDepartmentName(grade, classNo, dept);
         persistClassSettingsLocal();
+        renderDeptFields();
 
         if (classNo !== prevNo) {
           try {
@@ -2705,7 +2871,7 @@
           }
         }
 
-        renderRosterClassChips();
+        renderRosterClassChips(true);
         updateSetupLaunchHint();
         toast(`학급 이름 저장: ${classChipLabel(row)}`);
         return true;
@@ -2769,17 +2935,27 @@
             if (!ok) {
               closed = false;
               setTimeout(() => document.addEventListener("pointerdown", onDoc, true), 0);
-              noInput.focus();
+              (deptInput || noInput).focus();
               return;
             }
-          } else {
-            renderRosterClassChips();
           }
+          // 편집 UI가 남아 있으면 칩이 갱신되지 않던 문제 방지
+          renderRosterClassChips(true);
         };
 
         edit.addEventListener("click", (e) => e.stopPropagation());
         edit.addEventListener("dblclick", (e) => e.stopPropagation());
-        edit.addEventListener("keydown", (e) => {
+        noInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (deptInput) deptInput.focus();
+            else void finish(true);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            void finish(false);
+          }
+        });
+        deptInput?.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
             e.preventDefault();
             void finish(true);
@@ -2795,10 +2971,10 @@
         setTimeout(() => document.addEventListener("pointerdown", onDoc, true), 0);
       }
 
-      function renderRosterClassChips() {
+      function renderRosterClassChips(force = false) {
         const root = $("rosterClassChips");
         if (!root) return;
-        if (root.querySelector(".chip-edit")) return;
+        if (!force && root.querySelector(".chip-edit")) return;
         const active = activeClassesForGrade(classSettings.classGrade);
         if (!active.length) {
           root.replaceChildren();
@@ -4028,29 +4204,35 @@ ${built.html}
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!classSettings.byGrade) classSettings.byGrade = {};
         let hasDept = false;
-        // 학년별 학급 수·학과명을 DB에서 기억 (다른 학년 설정 유지)
+        // 학년별 학급 슬롯(반·학과)을 DB에서 기억
         [1, 2, 3].forEach((g) => {
-          const rows = active.filter((c) => Number(c.grade) === g);
-          const nos = rows
-            .map((c) => Number(c.class_no))
-            .filter((n) => n >= 1 && n <= MAX_CLASS_COUNT);
-          if (!nos.length) return;
+          const rows = active
+            .filter((c) => Number(c.grade) === g)
+            .sort((a, b) => {
+              const ta = a.created_at || "";
+              const tb = b.created_at || "";
+              if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
+              return Number(a.class_no) - Number(b.class_no);
+            });
+          if (!rows.length) return;
           const bag = ensureByGradeBag(g);
-          bag.classCount = clampClassCount(Math.max(...nos));
-          rows.forEach((c) => {
+          bag.classCount = clampClassCount(rows.length);
+          bag.units = rows.map((c) => {
             const dept = String(c.department_name || "").trim();
-            if (dept) {
-              bag.departments[String(c.class_no)] = dept;
-              hasDept = true;
-            }
+            if (dept) hasDept = true;
+            return {
+              classNo: normalizeUnitClassNo(c.class_no, 1),
+              department: dept
+            };
           });
+          syncUnitsToDepartmentsMap(g);
         });
         if (hasDept) classSettings.schoolType = "vocational";
 
         if (!classSettings.needsResave) {
           const cur = activeClassesForGrade(classSettings.classGrade);
           if (cur.length) {
-            classSettings.classCount = clampClassCount(Math.max(...cur.map((c) => Number(c.class_no))));
+            classSettings.classCount = clampClassCount(cur.length);
           } else if (classSettings.byGrade[String(classSettings.classGrade)]?.classCount) {
             classSettings.classCount = clampClassCount(
               classSettings.byGrade[String(classSettings.classGrade)].classCount
@@ -4125,13 +4307,11 @@ ${built.html}
           if (offErr) throw offErr;
         }
 
-        async function upsertClassUnit(unit, found, preserveIdentity) {
-          const classNo = preserveIdentity && found?.class_no
-            ? Number(found.class_no)
-            : unit.class_no;
-          const dept = preserveIdentity && found
-            ? String(found.department_name || "").trim() || (isVocational() ? unit.department_name || "" : "")
-            : (isVocational() ? unit.department_name || "" : "");
+        async function upsertClassUnit(unit, found) {
+          // 학급 저장 폼이 기준 — 반 번호·학과명을 그대로 반영
+          const classNo = Number(unit.class_no) || 1;
+          const dept = isVocational() ? String(unit.department_name || "").trim() : "";
+          const prevNo = found ? Number(found.class_no) || 0 : 0;
           const title = buildClassTitle(unit.grade, classNo, dept);
           const base = {
             is_active: true,
@@ -4150,8 +4330,20 @@ ${built.html}
               ({ error: onErr } = await sb.from("classes").update(base).eq("id", found.id));
             }
             if (onErr) throw onErr;
+            found.class_no = classNo;
+            found.department_name = dept;
+            found.title = title;
+            const cached = teacherClasses.find((c) => c.id === found.id);
+            if (cached) {
+              cached.class_no = classNo;
+              cached.department_name = dept;
+              cached.title = title;
+            }
             await seedLessonsForClass(found.id);
             try { await seedDefaultStudents(found.id); } catch (e) { console.warn(e); }
+            if (prevNo && prevNo !== classNo) {
+              try { await migrateRosterToHakbun(found.id); } catch (e) { console.warn(e); }
+            }
             return found.id;
           }
 
@@ -4179,12 +4371,11 @@ ${built.html}
           return created.id;
         }
 
-        // 인덱스 순서로 매칭 → 더블클릭으로 바꾼 반·학과명 유지
+        // 설정 칸(학급 수·반·학과) 순서대로 저장
         const usedIds = new Set();
         for (let i = 0; i < desired.length; i++) {
           const unit = desired[i];
           let found = existingActive[i] || null;
-          let preserve = !!found;
           if (found) usedIds.add(found.id);
           if (!found) {
             found =
@@ -4193,14 +4384,21 @@ ${built.html}
                   !c.is_active &&
                   !usedIds.has(c.id) &&
                   Number(c.grade) === grade &&
+                  Number(c.class_no) === unit.class_no &&
+                  String(c.department_name || "").trim().toLowerCase() ===
+                    String(unit.department_name || "").trim().toLowerCase()
+              ) ||
+              (existing || []).find(
+                (c) =>
+                  !c.is_active &&
+                  !usedIds.has(c.id) &&
+                  Number(c.grade) === grade &&
                   Number(c.class_no) === unit.class_no
-              ) || null;
-            if (found) {
-              usedIds.add(found.id);
-              preserve = false;
-            }
+              ) ||
+              null;
+            if (found) usedIds.add(found.id);
           }
-          await upsertClassUnit(unit, found, preserve);
+          await upsertClassUnit(unit, found);
         }
 
         // 고교 유형·학번 유형을 프로필에 저장 (컬럼 없으면 무시)
@@ -5227,9 +5425,15 @@ ${built.html}
       {
         let deptTimer = 0;
         $("deptFields")?.addEventListener("input", (e) => {
-          const input = e.target.closest("input[data-class-no]");
+          const input = e.target.closest("input[data-unit-index]");
           if (!input) return;
-          setDepartmentName(classSettings.classGrade, input.dataset.classNo, input.value);
+          const idx = Number(input.dataset.unitIndex);
+          if (!Number.isFinite(idx)) return;
+          if (input.classList.contains("dept-class-no")) {
+            setGradeUnit(classSettings.classGrade, idx, { classNo: input.value });
+          } else {
+            setGradeUnit(classSettings.classGrade, idx, { department: input.value });
+          }
           classSettings.needsResave = true;
           clearTimeout(deptTimer);
           deptTimer = setTimeout(() => {
@@ -5237,7 +5441,14 @@ ${built.html}
             persistClassSettingsLocal();
             renderRosterClassChips();
             updateSetupLaunchHint();
-          }, 160);
+          }, 120);
+        });
+        $("deptFields")?.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter") return;
+          const input = e.target.closest("input[data-unit-index]");
+          if (!input) return;
+          e.preventDefault();
+          $("btnSaveClassSettings")?.click();
         });
       }
       $("btnClassCountPlus")?.addEventListener("click", () => adjustClassCount(1));
@@ -5278,6 +5489,9 @@ ${built.html}
         if (!clampClassCount(classSettings.classCount)) {
           return toast("학급 수를 1개 이상으로 설정해 주세요.");
         }
+        rememberGradeCount();
+        const unitErr = validateVocationalUnits(classSettings.classGrade);
+        if (unitErr) return toast(unitErr);
         const btn = $("btnSaveClassSettings");
         btn.disabled = true;
         try {
@@ -5290,7 +5504,10 @@ ${built.html}
           await loadLessons({ seed: true });
           renderLessonList();
           showRightPanel("setup");
-          toast(`학급 ${classSettings.classCount}개 저장 완료`);
+          const labels = desiredUnitsFromSettings()
+            .map((u) => (u.department_name ? `${u.class_no}반·${u.department_name}` : `${u.class_no}반`))
+            .join(", ");
+          toast(`학급 ${classSettings.classCount}개 저장: ${labels}`);
         } catch (e) {
           console.error(e);
           toast("저장 실패: " + (e.message || e) + " (supabase-students.sql 실행 여부 확인)");
