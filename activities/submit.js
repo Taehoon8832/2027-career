@@ -1119,43 +1119,26 @@ body{padding:16px!important;background:#fff!important}
     window.addEventListener("load", syncAll, { once: true });
   }
 
-  function syncTopbarStickyOffset() {
+  function placeTimeWatchInTopbar(el) {
     const topbar = document.querySelector(".topbar");
-    const h = topbar ? Math.ceil(topbar.getBoundingClientRect().height) : 0;
-    document.documentElement.style.setProperty("--topbar-sticky-h", `${Math.max(0, h)}px`);
-  }
-
-  function bindTopbarStickyOffset() {
-    if (document.documentElement.dataset.twStickyBound === "1") {
-      syncTopbarStickyOffset();
-      return;
-    }
-    document.documentElement.dataset.twStickyBound = "1";
-    syncTopbarStickyOffset();
-    window.addEventListener("resize", syncTopbarStickyOffset, { passive: true });
-  }
-
-  function placeTimeWatchInShell(el) {
-    const shell = document.querySelector(".shell");
-    if (!shell || !el) return;
-    // 상단바에 남아 있으면 본문으로 이동 (카드 왼쪽 열 정렬)
-    if (el.parentElement !== shell) shell.insertBefore(el, shell.firstChild);
-    else if (shell.firstChild !== el) shell.insertBefore(el, shell.firstChild);
-    bindTopbarStickyOffset();
+    if (!topbar || !el) return;
+    const actions = topbar.querySelector(".topbar-actions");
+    // 파란 박스 위치: 제목(왼쪽)과 도구(오른쪽) 사이 중앙
+    if (actions) topbar.insertBefore(el, actions);
+    else if (el.parentElement !== topbar) topbar.appendChild(el);
   }
 
   function ensureTimeWatch() {
     const existing = document.getElementById("timeWatch");
     if (existing) {
-      // 이전 고급형 face 래퍼 제거 → 담백한 숫자만
       const face = existing.querySelector(".tw-face");
       const display = existing.querySelector("#twDisplay");
       if (face && display) face.replaceWith(display);
-      placeTimeWatchInShell(existing);
+      placeTimeWatchInTopbar(existing);
       return;
     }
-    const shell = document.querySelector(".shell");
-    if (!shell) return;
+    const topbar = document.querySelector(".topbar");
+    if (!topbar) return;
 
     const wrap = document.createElement("div");
     wrap.className = "time-watch";
@@ -1182,7 +1165,7 @@ body{padding:16px!important;background:#fff!important}
         </div>
       </div>`;
 
-    placeTimeWatchInShell(wrap);
+    placeTimeWatchInTopbar(wrap);
 
     const input = wrap.querySelector("#twMinutes");
     const display = wrap.querySelector("#twDisplay");

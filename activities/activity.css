@@ -51,7 +51,8 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 .top-meta {
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
+  max-width: min(220px, 26vw);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -91,23 +92,19 @@ button, .submit-fab, a { touch-action: manipulation; }
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-  margin-left: auto;
+  margin-left: 0;
 }
 
-/* —— 수업 타임워치 (본문 왼쪽 · 상단 sticky · 담백) —— */
-:root { --topbar-sticky-h: 56px; }
+/* —— 수업 타임워치 (상단바 중앙 · sticky) —— */
 .time-watch {
-  position: sticky;
-  top: var(--topbar-sticky-h);
-  z-index: 19;
+  flex: 1 1 auto;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  width: fit-content;
-  max-width: 100%;
-  margin: 0 0 12px;
-  padding: 6px 0;
-  background: linear-gradient(180deg, #f7f4ee 0%, rgba(247, 244, 238, 0.96) 70%, transparent 100%);
+  justify-content: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0 6px;
+  background: transparent;
 }
 .time-watch .tw-shell {
   display: inline-flex;
@@ -1015,12 +1012,13 @@ body.qr-lightbox-open { overflow: hidden; }
   .modal h3 { font-size: 22px; }
   .modal .sub { font-size: 13px; }
 
-  /* 태블릿·좁은 화면: 제목 / 도구 (타이머는 본문 왼쪽 sticky) */
+  /* 태블릿·좁은 화면: 제목 / 타이머 / 도구 (상단 고정) */
   .topbar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       "brand meta"
+      "timer timer"
       "actions actions";
     align-items: center;
     column-gap: 10px;
@@ -1046,8 +1044,10 @@ body.qr-lightbox-open { overflow: hidden; }
     text-overflow: unset;
   }
   .time-watch {
+    grid-area: timer;
     width: 100%;
-    max-width: 100%;
+    padding: 0;
+    justify-content: center;
   }
   .time-watch .tw-shell {
     width: auto;
@@ -1060,7 +1060,7 @@ body.qr-lightbox-open { overflow: hidden; }
     height: 38px;
     font-size: 16px;
   }
-  .time-watch .tw-display { font-size: 30px; min-width: 5em; }
+  .time-watch .tw-display { font-size: 28px; min-width: 5em; }
   .time-watch .tw-act { width: 40px; height: 40px; }
   .time-watch .tw-act svg { width: 18px; height: 18px; }
   .topbar-actions {
@@ -1088,16 +1088,12 @@ body.qr-lightbox-open { overflow: hidden; }
   .top-meta { gap: 4px; }
   .top-meta .chip { font-size: 10.5px; padding: 3px 8px; }
   .top-meta strong { font-size: 14px; line-height: 1.4; }
-  .time-watch {
-    width: 100%;
-    margin-bottom: 10px;
-    padding: 4px 0;
-  }
+  .time-watch { width: 100%; padding: 0; }
   .time-watch .tw-shell {
     gap: 8px;
     padding: 7px 10px;
     width: 100%;
-    justify-content: flex-start;
+    justify-content: center;
   }
   .time-watch .tw-set input { width: 48px; height: 36px; font-size: 16px; }
   .time-watch .tw-display {
