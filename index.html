@@ -608,6 +608,128 @@
       font: 700 11px/1.2 var(--font-sans);
     }
     .roster-board-bar .roster-board-dept[hidden] { display: none !important; }
+    .officer-tools {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      margin-left: 2px;
+    }
+    .btn-officer {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 9px 0 6px;
+      border: 1.5px solid #6E3A24;
+      border-radius: 8px;
+      background: #fffdfb;
+      color: #6E3A24;
+      font: 700 11px/1 var(--font-sans);
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: nowrap;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+    .btn-officer-mark {
+      display: grid;
+      place-items: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 5px;
+      background: linear-gradient(145deg, #D88861 0%, #C96442 55%, #8C4022 100%);
+      color: #fff;
+      font: 800 9px/1 var(--font-sans);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+    }
+    .btn-officer--vice .btn-officer-mark {
+      background: linear-gradient(145deg, #a89b88 0%, #7d7264 55%, #5a5248 100%);
+    }
+    .btn-officer:hover {
+      background: #fff7f1;
+      border-color: #5A2F1C;
+    }
+    .btn-officer.is-on {
+      background: #6E3A24;
+      border-color: #5A2F1C;
+      color: #fffdfb;
+      box-shadow: 0 2px 8px rgba(110, 58, 36, 0.22);
+    }
+    .btn-officer.is-on .btn-officer-mark {
+      background: rgba(255,255,255,0.18);
+      box-shadow: none;
+    }
+    .btn-officer.is-assigned:not(.is-on) {
+      background: #fff4ec;
+      box-shadow: inset 0 -2px 0 #C96442;
+    }
+    .btn-officer--vice.is-assigned:not(.is-on) {
+      background: #f3f0ea;
+      box-shadow: inset 0 -2px 0 #7d7264;
+    }
+    .roster-list.is-picking {
+      outline: 2px dashed rgba(110, 58, 36, 0.35);
+      outline-offset: -2px;
+      border-radius: 8px;
+    }
+    .roster-list.is-picking .roster-cell {
+      cursor: pointer;
+    }
+    .roster-list.is-picking .roster-cell:hover,
+    .roster-list.is-picking .roster-cell:focus-within {
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.2);
+    }
+    .roster-cell.is-president,
+    .roster-cell.is-vice {
+      overflow: hidden;
+    }
+    .roster-cell.is-president {
+      border-color: #8C4022;
+      background: #fffaf6;
+      box-shadow: inset 5px 0 0 #C96442;
+    }
+    .roster-cell.is-vice {
+      border-color: #6b6358;
+      background: #faf9f6;
+      box-shadow: inset 5px 0 0 #9a8f7e;
+    }
+    .roster-cell.is-president.has-sub {
+      background: #fff4ec;
+    }
+    .roster-cell.is-vice.has-sub {
+      background: #f3efe8;
+    }
+    .officer-band {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      margin: -6px -6px 2px;
+      min-height: 18px;
+      padding: 3px 6px;
+      font: 800 10px/1 var(--font-sans);
+      letter-spacing: 0.14em;
+      color: #fff;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.18);
+      pointer-events: none;
+      user-select: none;
+    }
+    .officer-band--president {
+      background: linear-gradient(90deg, #8C4022 0%, #C96442 50%, #8C4022 100%);
+    }
+    .officer-band--vice {
+      background: linear-gradient(90deg, #5a5248 0%, #8a8072 50%, #5a5248 100%);
+    }
+    .officer-band::before,
+    .officer-band::after {
+      content: "";
+      width: 10px;
+      height: 2px;
+      border-radius: 1px;
+      background: rgba(255,255,255,0.55);
+    }
     .roster-cell input {
       width: 100%; height: 28px; border: 1px solid var(--border-default);
       border-radius: 7px; padding: 0 6px; background: #fff;
@@ -1585,6 +1707,9 @@
       .class-count-control .count-btn { width: 42px; }
       .class-count-control .count-input { width: 72px; }
       .btn-batch-input { height: 36px; font-size: 13px; padding: 0 14px; }
+      .btn-officer { height: 36px; min-height: 36px; font-size: 12px; }
+      .btn-officer-mark { width: 20px; height: 20px; font-size: 10px; }
+      .officer-band { min-height: 20px; font-size: 10.5px; }
       .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: none; }
       .roster-cell input { height: 38px; font-size: 15px; }
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -1752,7 +1877,7 @@
       }
       .setup-field--count .class-count-control { padding: 8px; }
       .roster-board-bar {
-        flex-wrap: nowrap;
+        flex-wrap: wrap;
         gap: 8px;
         padding: 8px 12px;
         position: sticky;
@@ -1760,6 +1885,44 @@
         z-index: 2;
       }
       .roster-board-bar strong { font-size: 13px; }
+      .officer-tools { gap: 6px; }
+      .btn-officer {
+        min-height: 40px;
+        height: 40px;
+        padding: 0 12px 0 8px;
+        font-size: 13px;
+      }
+      .btn-officer-mark {
+        width: 22px;
+        height: 22px;
+        font-size: 11px;
+        border-radius: 6px;
+      }
+      .officer-band {
+        margin: -10px -10px 4px;
+        min-height: 22px;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+      }
+      @media (max-width: 400px) {
+        .btn-officer-label {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          overflow: hidden;
+          clip: rect(0, 0, 0, 0);
+        }
+        .btn-officer {
+          padding: 0 8px;
+          position: relative;
+        }
+      }
+      .roster-cell.is-president,
+      .roster-cell.is-vice {
+        box-shadow: inset 6px 0 0 currentColor;
+      }
+      .roster-cell.is-president { box-shadow: inset 6px 0 0 #C96442; }
+      .roster-cell.is-vice { box-shadow: inset 6px 0 0 #9a8f7e; }
       .btn-batch-input {
         height: 36px;
         font-size: 12.5px;
@@ -2142,6 +2305,16 @@
             <div class="roster-board-bar">
               <strong>학생 카드</strong>
               <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
+              <div class="officer-tools" role="group" aria-label="반장·부반장 지정">
+                <button type="button" class="btn-officer" id="btnPickPresident" title="반장 지정" aria-label="반장 지정" aria-pressed="false">
+                  <span class="btn-officer-mark" aria-hidden="true">반</span>
+                  <span class="btn-officer-label">반장</span>
+                </button>
+                <button type="button" class="btn-officer btn-officer--vice" id="btnPickVice" title="부반장 지정" aria-label="부반장 지정" aria-pressed="false">
+                  <span class="btn-officer-mark" aria-hidden="true">부</span>
+                  <span class="btn-officer-label">부반장</span>
+                </button>
+              </div>
               <span class="grow" aria-hidden="true"></span>
               <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -2231,6 +2404,7 @@
       /** 예전 합성 이메일 계정 호환용 */
       const AUTH_EMAIL_DOMAIN = "id.2027career.local";
       const CLASS_SETTINGS_KEY = "career-class-settings-v1";
+      const CLASS_OFFICERS_KEY = "career-class-officers-v1";
 
       const MONTH_THEMES = [
         { month: 3, label: "3월", theme: "진로 탐색과 AI 기초 역량 빌드업", sessions: [1, 2, 3, 4, 5] },
@@ -2311,6 +2485,9 @@
       let rosterStudents = [];
       let rosterClassId = null;
       let rosterSubMap = new Map();
+      let classOfficers = loadClassOfficers();
+      let officerPickMode = null; // null | "president" | "vice"
+      let officersDbReady = null; // null=미확인, true/false
       let detailSubMap = new Map();
       let submissionById = new Map();
       let detailExportRows = [];
@@ -2587,6 +2764,177 @@
         } catch {
           /* ignore */
         }
+      }
+
+      function emptyOfficers() {
+        return { president: null, vice: null };
+      }
+
+      function loadClassOfficers() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(CLASS_OFFICERS_KEY) || "null");
+          if (!raw || typeof raw !== "object") return {};
+          const out = {};
+          Object.keys(raw).forEach((classId) => {
+            const bag = raw[classId];
+            if (!bag || typeof bag !== "object") return;
+            out[classId] = {
+              president: bag.president || null,
+              vice: bag.vice || null
+            };
+          });
+          return out;
+        } catch {
+          return {};
+        }
+      }
+
+      function persistClassOfficers() {
+        try {
+          localStorage.setItem(CLASS_OFFICERS_KEY, JSON.stringify(classOfficers));
+        } catch {
+          /* ignore */
+        }
+      }
+
+      function getClassOfficers(classId) {
+        if (!classId) return emptyOfficers();
+        const cur = classOfficers[classId];
+        return cur ? { president: cur.president || null, vice: cur.vice || null } : emptyOfficers();
+      }
+
+      function setClassOfficersLocal(classId, next) {
+        if (!classId) return;
+        classOfficers[classId] = {
+          president: next?.president || null,
+          vice: next?.vice || null
+        };
+        persistClassOfficers();
+      }
+
+      function hydrateOfficersFromClassRow(row) {
+        if (!row?.id) return;
+        if (row.president_student_id == null && row.vice_president_student_id == null) return;
+        setClassOfficersLocal(row.id, {
+          president: row.president_student_id || null,
+          vice: row.vice_president_student_id || null
+        });
+      }
+
+      async function syncOfficersToDb(classId) {
+        if (!sb || !classId || officersDbReady === false) return;
+        const o = getClassOfficers(classId);
+        const payload = {
+          president_student_id: o.president,
+          vice_president_student_id: o.vice
+        };
+        const { error } = await sb.from("classes").update(payload).eq("id", classId);
+        if (error) {
+          if (/president_student_id|vice_president_student_id/i.test(error.message || "")) {
+            officersDbReady = false;
+          }
+          return;
+        }
+        officersDbReady = true;
+        const row = teacherClasses.find((c) => c.id === classId);
+        if (row) {
+          row.president_student_id = o.president;
+          row.vice_president_student_id = o.vice;
+        }
+      }
+
+      function clearOfficerIfStudent(classId, studentId) {
+        if (!classId || !studentId) return;
+        const o = getClassOfficers(classId);
+        let changed = false;
+        if (o.president === studentId) {
+          o.president = null;
+          changed = true;
+        }
+        if (o.vice === studentId) {
+          o.vice = null;
+          changed = true;
+        }
+        if (!changed) return;
+        setClassOfficersLocal(classId, o);
+        void syncOfficersToDb(classId);
+      }
+
+      function syncOfficerPickButtons() {
+        const o = getClassOfficers(rosterClassId);
+        const btnP = $("btnPickPresident");
+        const btnV = $("btnPickVice");
+        if (btnP) {
+          btnP.classList.toggle("is-on", officerPickMode === "president");
+          btnP.classList.toggle("is-assigned", !!o.president);
+          btnP.setAttribute("aria-pressed", officerPickMode === "president" ? "true" : "false");
+        }
+        if (btnV) {
+          btnV.classList.toggle("is-on", officerPickMode === "vice");
+          btnV.classList.toggle("is-assigned", !!o.vice);
+          btnV.setAttribute("aria-pressed", officerPickMode === "vice" ? "true" : "false");
+        }
+        const root = $("rosterList");
+        if (root) root.classList.toggle("is-picking", !!officerPickMode);
+      }
+
+      function applyOfficerBands() {
+        const root = $("rosterList");
+        if (!root) return;
+        const o = getClassOfficers(rosterClassId);
+        const cells = root.querySelectorAll(".roster-cell");
+        for (let i = 0; i < cells.length; i++) {
+          const cell = cells[i];
+          const id = cell.getAttribute("data-id");
+          const isP = !!(id && id === o.president);
+          const isV = !!(id && id === o.vice);
+          cell.classList.toggle("is-president", isP);
+          cell.classList.toggle("is-vice", isV);
+          let band = cell.firstElementChild;
+          const hasBand = band && band.classList.contains("officer-band");
+          if (isP || isV) {
+            const label = isP ? "반장" : "부반장";
+            const cls = isP ? "officer-band officer-band--president" : "officer-band officer-band--vice";
+            if (!hasBand) {
+              band = document.createElement("div");
+              band.setAttribute("aria-hidden", "true");
+              cell.insertBefore(band, cell.firstChild);
+            }
+            if (band.className !== cls) band.className = cls;
+            if (band.textContent !== label) band.textContent = label;
+          } else if (hasBand) {
+            band.remove();
+          }
+        }
+        syncOfficerPickButtons();
+      }
+
+      function setOfficerPickMode(mode) {
+        officerPickMode = officerPickMode === mode ? null : mode;
+        syncOfficerPickButtons();
+        if (officerPickMode === "president") toast("반장으로 지정할 학생 카드를 눌러 주세요.");
+        else if (officerPickMode === "vice") toast("부반장으로 지정할 학생 카드를 눌러 주세요.");
+      }
+
+      function assignOfficerFromCard(studentId) {
+        if (!rosterClassId || !studentId || !officerPickMode) return;
+        const role = officerPickMode;
+        const o = getClassOfficers(rosterClassId);
+        if (o[role] === studentId) {
+          o[role] = null;
+          toast(role === "president" ? "반장 지정을 해제했습니다." : "부반장 지정을 해제했습니다.");
+        } else {
+          o[role] = studentId;
+          if (role === "president" && o.vice === studentId) o.vice = null;
+          if (role === "vice" && o.president === studentId) o.president = null;
+          const stu = rosterStudents.find((s) => s.id === studentId);
+          const who = (stu?.student_name || stu?.student_no || "학생").trim();
+          toast(role === "president" ? `${who} · 반장` : `${who} · 부반장`);
+        }
+        setClassOfficersLocal(rosterClassId, o);
+        officerPickMode = null;
+        applyOfficerBands();
+        void syncOfficersToDb(rosterClassId);
       }
 
       function loadClassSettings() {
@@ -3794,6 +4142,7 @@
       async function loadRoster(classId) {
         if (!sb || !classId) return;
         const seq = ++rosterLoadSeq;
+        if (rosterClassId !== classId) officerPickMode = null;
         rosterClassId = classId;
         try {
           await seedDefaultStudents(classId, { migrate: false });
@@ -3828,6 +4177,16 @@
           }
           if (namePatches.length) {
             Promise.all(namePatches).catch((e) => console.warn(e));
+          }
+          // 삭제된 학생의 반장·부반장 지정 정리
+          const ids = new Set(rosterStudents.map((s) => s.id));
+          const o = getClassOfficers(classId);
+          if ((o.president && !ids.has(o.president)) || (o.vice && !ids.has(o.vice))) {
+            setClassOfficersLocal(classId, {
+              president: o.president && ids.has(o.president) ? o.president : null,
+              vice: o.vice && ids.has(o.vice) ? o.vice : null
+            });
+            void syncOfficersToDb(classId);
           }
           renderRosterList();
         } catch (e) {
@@ -3880,6 +4239,7 @@
             if (!confirm("이 학생을 명단에서 삭제할까요?")) return;
             const { error } = await sb.from("students").delete().eq("id", id);
             if (error) return toast("삭제 실패: " + error.message);
+            clearOfficerIfStudent(rosterClassId, id);
             studentsCache.delete(rosterClassId);
             await loadRoster(rosterClassId);
             toast("학생을 삭제했습니다.");
@@ -3898,6 +4258,15 @@
             const id = delSub.getAttribute("data-del-sub");
             if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
             await deleteSubmission(id);
+            return;
+          }
+          if (officerPickMode) {
+            if (e.target.closest("input, button, a, textarea, select")) return;
+            const cell = e.target.closest(".roster-cell");
+            if (cell && root.contains(cell)) {
+              e.preventDefault();
+              assignOfficerFromCard(cell.getAttribute("data-id"));
+            }
           }
         });
       }
@@ -4245,6 +4614,7 @@
         bindRosterListEvents(root);
         if (!rosterStudents.length) {
           root.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">학생이 없습니다. 학생 수를 설정해 주세요.</p>`;
+          syncOfficerPickButtons();
           return;
         }
         const dept = currentRosterDepartment();
@@ -4252,6 +4622,7 @@
           ? `<span class="roster-dept" title="학과: ${escapeHtml(dept)}">${escapeHtml(dept)}</span>`
           : "";
         // 문서조각 없이 한 번에 그려 모바일에서 빠르게 갱신
+        const officers = getClassOfficers(rosterClassId);
         const parts = new Array(rosterStudents.length);
         for (let i = 0; i < rosterStudents.length; i++) {
           const s = rosterStudents[i];
@@ -4277,8 +4648,17 @@
                   </div>
                 </div>`).join("")}</div>`
             : `<div class="roster-sub-list"><div class="roster-sub-item" style="cursor:default;opacity:.75">제출된 보고서 없음</div></div>`;
+          const isP = s.id === officers.president;
+          const isV = s.id === officers.vice;
+          const bandHtml = isP
+            ? `<div class="officer-band officer-band--president" aria-hidden="true">반장</div>`
+            : isV
+              ? `<div class="officer-band officer-band--vice" aria-hidden="true">부반장</div>`
+              : "";
+          const officerCls = isP ? " is-president" : isV ? " is-vice" : "";
           parts[i] = `
-          <div class="roster-cell${sorted.length ? " has-sub" : ""}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
+          <div class="roster-cell${sorted.length ? " has-sub" : ""}${officerCls}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
+            ${bandHtml}
             <div class="roster-cell-head">
               <div class="no">${escapeHtml(labelNo)}</div>
               ${deptHtml}
@@ -4290,6 +4670,7 @@
           </div>`;
         }
         root.innerHTML = parts.join("");
+        syncOfficerPickButtons();
       }
 
       let viewingSubmissionId = null;
@@ -4738,6 +5119,18 @@ ${built.html}
           if (error) {
             toast("삭제 실패: " + (error.message || error));
             return false;
+          }
+        }
+        {
+          const o = getClassOfficers(rosterClassId);
+          const gone = new Set(ids);
+          const next = {
+            president: o.president && gone.has(o.president) ? null : o.president,
+            vice: o.vice && gone.has(o.vice) ? null : o.vice
+          };
+          if (next.president !== o.president || next.vice !== o.vice) {
+            setClassOfficersLocal(rosterClassId, next);
+            void syncOfficersToDb(rosterClassId);
           }
         }
         studentsCache.delete(rosterClassId);
@@ -5249,11 +5642,21 @@ ${built.html}
         let error = null;
         ({ data, error } = await sb
           .from("classes")
-          .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name")
+          .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name, president_student_id, vice_president_student_id")
           .eq("teacher_id", session.userId)
           .eq("mode", "class")
           .order("grade", { ascending: true })
           .order("class_no", { ascending: true }));
+        if (error && /president_student_id|vice_president_student_id/i.test(error.message || "")) {
+          officersDbReady = false;
+          ({ data, error } = await sb
+            .from("classes")
+            .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name")
+            .eq("teacher_id", session.userId)
+            .eq("mode", "class")
+            .order("grade", { ascending: true })
+            .order("class_no", { ascending: true }));
+        }
         if (error && /department_name/i.test(error.message || "")) {
           ({ data, error } = await sb
             .from("classes")
@@ -5265,6 +5668,16 @@ ${built.html}
         }
         if (error) throw error;
         teacherClasses = data || [];
+        if (officersDbReady !== false) {
+          let sawOfficerCol = false;
+          for (const row of teacherClasses) {
+            if ("president_student_id" in row || "vice_president_student_id" in row) {
+              sawOfficerCol = true;
+              hydrateOfficersFromClassRow(row);
+            }
+          }
+          if (sawOfficerCol) officersDbReady = true;
+        }
 
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!classSettings.byGrade) classSettings.byGrade = {};
@@ -6686,6 +7099,13 @@ ${built.html}
       $("btnStudentCountMinus")?.addEventListener("click", () => adjustStudentCount(-1));
       $("btnStudentCountPlus")?.addEventListener("click", () => adjustStudentCount(1));
       $("btnBatchNameInput")?.addEventListener("click", () => openBatchNameInput());
+      $("btnPickPresident")?.addEventListener("click", () => setOfficerPickMode("president"));
+      $("btnPickVice")?.addEventListener("click", () => setOfficerPickMode("vice"));
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape" || !officerPickMode) return;
+        officerPickMode = null;
+        syncOfficerPickButtons();
+      });
       $("btnBatchClose")?.addEventListener("click", () => closeBatchNameInput());
       $("btnBatchUndo")?.addEventListener("click", () => applyBatchUndo());
       $("btnBatchApply")?.addEventListener("click", () => {
