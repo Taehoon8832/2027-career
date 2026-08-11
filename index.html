@@ -300,64 +300,91 @@
       color: var(--color-primary-700);
     }
     .class-count-control {
-      display: flex; align-items: center; gap: 8px; flex-wrap: nowrap;
+      display: flex; align-items: center; gap: 6px; flex-wrap: nowrap;
       margin: 0;
     }
     .class-count-control .count-btn {
-      width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px;
+      width: 34px; height: 34px; flex-shrink: 0; border-radius: 8px;
       border: 1.5px solid var(--border-default); background: #fff;
-      color: var(--text-primary); font: 700 18px/1 var(--font-sans); cursor: pointer;
+      color: var(--text-primary); font: 700 16px/1 var(--font-sans); cursor: pointer;
     }
     .class-count-control .count-btn:hover { border-color: var(--color-primary-300); }
     .class-count-control .count-input {
-      width: 64px; height: 40px; text-align: center;
-      border: 1.5px solid var(--border-default); border-radius: 10px;
+      width: 52px; height: 34px; text-align: center;
+      border: 1.5px solid var(--border-default); border-radius: 8px;
       background: #fff; color: var(--color-primary-700);
-      font: 700 18px/1 var(--font-sans);
+      font: 700 16px/1 var(--font-sans);
     }
     .class-count-control .count-input:focus {
       outline: none; border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15);
+      box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.14);
     }
     .class-count-control .btn-save-inline {
-      height: 40px; flex: 0 1 140px; min-width: 96px; max-width: 180px; padding: 0 14px;
-      border: 0; border-radius: 10px; cursor: pointer;
+      height: 34px; flex: 0 1 112px; min-width: 84px; max-width: 140px; padding: 0 12px;
+      border: 0; border-radius: 8px; cursor: pointer;
       background: var(--color-primary-500); color: var(--text-on-primary);
-      font: 700 13px/1 var(--font-sans);
+      font: 700 12px/1 var(--font-sans);
       margin-left: auto;
     }
     .class-count-control .btn-save-inline:disabled { opacity: 0.6; cursor: wait; }
     .roster-box { margin: 0; }
+    .roster-panel-body {
+      gap: 0 !important;
+      padding: 0 !important;
+    }
+    .roster-controls {
+      display: grid;
+      gap: 8px;
+      padding: 8px 10px 10px;
+      background: #fff;
+    }
+    .roster-board {
+      border-top: 2.5px solid #1f1e1d;
+      background: #efebe3;
+      padding: 0;
+    }
+    .roster-board-bar {
+      display: flex;
+      align-items: center;
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(31, 30, 29, 0.14);
+      background: #e7e1d6;
+    }
+    .roster-board-bar strong {
+      font: 700 12px/1.2 var(--font-sans);
+      color: #1f1e1d;
+      letter-spacing: -0.01em;
+    }
     .roster-list {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
-      gap: 8px;
-      max-height: min(70vh, 640px);
+      gap: 6px;
+      max-height: min(58vh, 520px);
       overflow-y: auto;
-      margin: 2px 0 0;
-      padding: 10px;
-      border: 1px solid rgba(31, 30, 29, 0.08);
-      border-radius: 12px;
-      background: rgba(250, 249, 245, 0.65);
+      margin: 0;
+      padding: 8px 10px 10px;
+      border: 0;
+      border-radius: 0;
+      background: #f7f4ee;
     }
     .roster-cell {
-      display: flex; flex-direction: column; gap: 6px;
-      padding: 8px;
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 6px;
       border: 1px solid var(--border-default);
-      border-radius: 10px;
-      background: var(--bg-subtle);
-      min-height: 120px;
+      border-radius: 8px;
+      background: #fff;
+      min-height: 0;
     }
     .roster-cell.has-sub {
       border-color: var(--color-primary-300);
       background: var(--color-primary-50);
     }
     .roster-cell .no {
-      font: 700 12px/1 var(--font-sans); color: var(--color-primary-700);
+      font: 700 11px/1 var(--font-sans); color: var(--color-primary-700);
     }
     .roster-cell input {
-      width: 100%; height: 32px; border: 1px solid var(--border-default);
-      border-radius: 8px; padding: 0 8px; background: #fff;
+      width: 100%; height: 28px; border: 1px solid var(--border-default);
+      border-radius: 7px; padding: 0 6px; background: #fff;
       font: 500 12px/1 var(--font-sans); color: var(--text-primary);
     }
     .roster-cell .sub-meta {
@@ -724,8 +751,8 @@
       min-width: 0;
     }
     .hakbun-type-chips .chip-toggle {
-      height: 32px;
-      padding: 0 10px;
+      height: 28px;
+      padding: 0 9px;
       font-size: 11px;
       white-space: nowrap;
     }
@@ -878,106 +905,98 @@
     }
     .class-settings {
       display: grid;
-      gap: 12px;
-      margin-bottom: 14px;
+      gap: 8px;
+      margin-bottom: 10px;
       padding: 0;
       border: 0;
       background: transparent;
       box-shadow: none;
+      contain: layout style;
     }
     .class-settings[hidden] { display: none !important; }
     .setup-page-head {
-      padding: 2px 2px 0;
+      display: flex;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 6px 10px;
+      padding: 0 1px;
     }
     .setup-page-head h2 {
       margin: 0;
-      font: 700 20px/1.25 var(--font-serif);
+      font: 700 17px/1.2 var(--font-serif);
       letter-spacing: -0.02em;
       color: var(--text-primary);
     }
-    .setup-page-desc {
-      margin: 4px 0 0;
-      color: var(--text-tertiary);
-      font: 500 12.5px/1.45 var(--font-sans);
-    }
     .setup-panel {
-      border: 1.5px solid #ddd6cb;
-      border-radius: 14px;
-      background:
-        linear-gradient(180deg, #fffdf9 0%, #ffffff 48%);
-      box-shadow: 0 1px 0 rgba(31, 30, 29, 0.03);
+      border: 1.5px solid #d8d0c4;
+      border-radius: 12px;
+      background: #fff;
       overflow: hidden;
     }
     .setup-panel-head {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(31, 30, 29, 0.08);
-      background: rgba(250, 246, 240, 0.9);
+      padding: 7px 10px;
+      border-bottom: 1px solid #e8e2d8;
+      background: #f7f2ea;
     }
     .setup-panel-title {
       display: flex;
-      align-items: flex-start;
-      gap: 10px;
+      align-items: center;
+      gap: 8px;
       min-width: 0;
     }
     .setup-step {
       flex-shrink: 0;
-      width: 24px;
-      height: 24px;
-      border-radius: 8px;
+      width: 20px;
+      height: 20px;
+      border-radius: 6px;
       display: grid;
       place-items: center;
       background: var(--color-primary-500);
       color: #fff;
-      font: 700 12px/1 var(--font-sans);
+      font: 700 11px/1 var(--font-sans);
     }
     .setup-panel-title strong {
-      display: block;
-      font: 700 15px/1.3 var(--font-sans);
+      display: inline;
+      font: 700 13.5px/1.2 var(--font-sans);
       color: var(--text-primary);
       letter-spacing: -0.01em;
     }
-    .setup-panel-title span {
-      display: block;
-      margin-top: 2px;
-      font: 500 11.5px/1.35 var(--font-sans);
-      color: var(--text-tertiary);
-    }
     .setup-panel-body {
       display: grid;
-      gap: 14px;
-      padding: 14px;
+      gap: 8px;
+      padding: 8px 10px 10px;
     }
     .setup-field { min-width: 0; }
     .class-settings .settings-sub {
-      margin: 0 0 8px;
+      margin: 0 0 4px;
       color: var(--text-secondary);
-      font: 700 12px/1.3 var(--font-sans);
+      font: 700 11px/1.2 var(--font-sans);
       letter-spacing: -0.01em;
     }
     .chip-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 5px;
       margin: 0;
     }
     .chip-toggle {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      height: 36px;
-      padding: 0 12px;
-      border-radius: var(--radius-full);
+      height: 30px;
+      padding: 0 10px;
+      border-radius: 999px;
       border: 1.5px solid var(--border-default);
       background: #fff;
       color: var(--text-secondary);
-      font: 600 12px/1 var(--font-sans);
+      font: 600 11.5px/1 var(--font-sans);
       cursor: pointer;
-      transition: border-color 0.08s ease, background 0.08s ease, color 0.08s ease;
+      transition: none;
     }
     .chip-toggle.is-on {
       border-color: var(--color-primary-300);
@@ -988,50 +1007,65 @@
     .setup-type-grade {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px 16px;
-      align-items: start;
+      gap: 0;
+      align-items: stretch;
+      border: 1.5px solid #e0d8cc;
+      border-radius: 10px;
+      background: #faf8f4;
+      overflow: hidden;
+    }
+    .setup-type-grade > .setup-field {
+      padding: 7px 9px;
+      min-width: 0;
+    }
+    .setup-type-grade > .setup-field + .setup-field {
+      border-left: 1.5px solid #e0d8cc;
+      background: #fff;
+    }
+    .setup-type-grade > .setup-field:first-child {
+      background: #fff;
     }
     .setup-field--count .class-count-control {
-      padding: 10px;
-      border: 1px dashed rgba(31, 30, 29, 0.12);
-      border-radius: 12px;
-      background: rgba(250, 249, 245, 0.8);
+      padding: 6px 8px;
+      border: 1.5px solid #e0d8cc;
+      border-radius: 10px;
+      background: #faf8f4;
     }
     .dept-box[hidden] { display: none !important; }
     .dept-fields {
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
     }
     .dept-row {
       display: grid;
-      grid-template-columns: 44px minmax(0, 1fr);
-      gap: 8px;
+      grid-template-columns: 36px minmax(0, 1fr);
+      gap: 6px;
       align-items: center;
-      padding: 8px;
-      border: 1px solid rgba(31, 30, 29, 0.08);
-      border-radius: 10px;
+      padding: 5px 6px;
+      border: 1px solid #e0d8cc;
+      border-radius: 8px;
       background: #fff;
     }
     .dept-row span {
-      font: 700 12px/1 var(--font-sans);
+      font: 700 11px/1 var(--font-sans);
       color: var(--text-secondary);
       text-align: center;
     }
     .dept-row input {
       width: 100%;
-      height: 36px;
+      height: 30px;
       border: 1.5px solid var(--border-default);
-      border-radius: 10px;
+      border-radius: 8px;
       background: #fff;
-      padding: 0 10px;
-      font: 600 13px/1 var(--font-sans);
+      padding: 0 8px;
+      font: 600 12px/1 var(--font-sans);
       color: var(--text-primary);
     }
     .dept-row input:focus {
       outline: none;
       border-color: var(--border-focus);
-      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.15);
+      box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.14);
     }
     .seg {
       display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
@@ -1126,12 +1160,12 @@
     }
     /* 태블릿: 분할 유지, 터치 여유 */
     @media (max-width: 1024px) and (min-width: 769px) {
-      .chip-toggle { min-height: 40px; padding: 0 14px; font-size: 13px; }
-      .setup-panel-title strong { font-size: 15px; }
-      .setup-panel-title span { font-size: 12px; }
-      .setup-type-grade { gap: 14px; }
+      .chip-toggle { min-height: 34px; height: 34px; padding: 0 12px; font-size: 12.5px; }
+      .setup-panel-head { padding: 7px 10px; }
+      .setup-panel-body { padding: 8px 10px 10px; gap: 8px; }
+      .setup-panel-title strong { font-size: 13.5px; }
       .dept-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .class-count-control .btn-save-inline { max-width: 160px; }
+      .class-count-control .btn-save-inline { max-width: 130px; }
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
       .topbar-switcher select { height: 40px; font-size: 14px; }
@@ -1171,22 +1205,26 @@
         padding-top: 2px;
       }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
-      .setup-page-head h2 { font-size: 22px; }
-      .setup-page-desc { font-size: 13.5px; line-height: 1.5; }
-      .setup-panel-head { padding: 12px; }
-      .setup-panel-body { padding: 12px; gap: 12px; }
-      .setup-panel-title strong { font-size: 15px; }
-      .setup-panel-title span { font-size: 12px; }
-      .setup-type-grade { grid-template-columns: 1fr; gap: 12px; }
-      .dept-fields { grid-template-columns: 1fr; }
-      .dept-row input { height: 42px; font-size: 16px; }
-      .class-settings .settings-sub { font-size: 13px; }
+      .class-settings { gap: 7px; }
+      .setup-page-head h2 { font-size: 18px; }
+      .setup-panel-head { padding: 7px 9px; }
+      .setup-panel-body { padding: 8px; gap: 7px; }
+      .setup-panel-title strong { font-size: 13.5px; }
+      .setup-type-grade {
+        grid-template-columns: 1fr;
+      }
+      .setup-type-grade > .setup-field + .setup-field {
+        border-left: 0;
+        border-top: 1.5px solid #e0d8cc;
+      }
+      .dept-fields { grid-template-columns: 1fr 1fr; gap: 5px; }
+      .dept-row input { height: 36px; font-size: 16px; }
+      .class-settings .settings-sub { font-size: 12px; margin-bottom: 4px; }
       .chip-toggle {
-        min-height: 40px;
-        height: auto;
-        padding: 8px 14px;
+        min-height: 36px;
+        height: 36px;
+        padding: 0 12px;
         font-size: 13px;
-        line-height: 1.25;
       }
       .roster-head {
         align-items: stretch;
@@ -1197,24 +1235,25 @@
         width: 100%;
       }
       .hakbun-type-chips .chip-toggle {
-        flex: 1 1 calc(50% - 4px);
-        justify-content: center;
-        text-align: center;
-        font-size: 12.5px;
+        flex: 1 1 calc(50% - 3px);
+        min-height: 34px;
+        height: 34px;
+        font-size: 12px;
       }
-      .class-count-control { flex-wrap: wrap; }
+      .class-count-control { flex-wrap: wrap; gap: 6px; }
       .class-count-control .count-input,
       .class-count-control .count-btn,
       .class-count-control .btn-save-inline {
-        height: 44px; font-size: 16px;
+        height: 40px; font-size: 16px;
       }
-      .class-count-control .count-input { width: 72px; }
+      .class-count-control .count-btn { width: 40px; }
+      .class-count-control .count-input { width: 64px; }
       .class-count-control .btn-save-inline {
         flex: 1 1 100%;
         max-width: none;
         margin-left: 0;
       }
-      .setup-field--count .class-count-control { padding: 10px; }
+      .setup-field--count .class-count-control { padding: 7px; }
       .detail-filter { gap: 6px; padding: 8px; }
       .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
       .detail-action-strip {
@@ -1403,17 +1442,13 @@
         <div class="class-settings" id="classSettings" hidden>
           <header class="setup-page-head">
             <h2>초기 설정</h2>
-            <p class="setup-page-desc">학급 구성 → 명단 순서로 맞춘 뒤 저장해 주세요</p>
           </header>
 
           <section class="setup-panel" aria-labelledby="setupPanelTitle">
             <div class="setup-panel-head">
               <div class="setup-panel-title">
                 <span class="setup-step" aria-hidden="true">1</span>
-                <div>
-                  <strong id="setupUnitTitle">학급 구성</strong>
-                  <span>고교 유형 · 학년 · 학급 수</span>
-                </div>
+                <strong id="setupUnitTitle">학급 구성</strong>
               </div>
             </div>
             <div class="setup-panel-body">
@@ -1446,10 +1481,7 @@
             <div class="setup-panel-head">
               <div class="setup-panel-title">
                 <span class="setup-step" aria-hidden="true">+</span>
-                <div>
-                  <strong id="setupDeptTitle">학과 이름 지정</strong>
-                  <span>특성화고 반별 학과명</span>
-                </div>
+                <strong id="setupDeptTitle">학과 이름 지정</strong>
               </div>
             </div>
             <div class="setup-panel-body">
@@ -1461,31 +1493,35 @@
             <div class="setup-panel-head roster-head">
               <div class="setup-panel-title">
                 <span class="setup-step" aria-hidden="true">2</span>
-                <div>
-                  <strong id="setupRosterTitle">학급 명단</strong>
-                  <span>학번 유형 · 반 · 학생 수</span>
-                </div>
+                <strong id="setupRosterTitle">학급 명단</strong>
               </div>
               <div class="chip-row hakbun-type-chips" id="studentNoFormatChips" role="group" aria-label="학번 유형">
                 <button type="button" class="chip-toggle" data-no-format="type1" title="학년+반(2)+번호(2)">유형1 · 10101</button>
                 <button type="button" class="chip-toggle" data-no-format="type2" title="학년+반+번호(2)">유형2 · 1101</button>
               </div>
             </div>
-            <div class="setup-panel-body">
-              <div class="setup-field">
-                <p class="settings-sub">반 선택</p>
-                <div class="chip-row" id="rosterClassChips"></div>
-              </div>
-              <div class="setup-field setup-field--count">
-                <p class="settings-sub">학생 수</p>
-                <div class="class-count-control" id="studentCountControl">
-                  <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
-                  <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
-                  <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
-                  <button type="button" class="btn-save-inline" id="btnApplyStudentCount">적용</button>
+            <div class="setup-panel-body roster-panel-body">
+              <div class="roster-controls">
+                <div class="setup-field">
+                  <p class="settings-sub">반 선택</p>
+                  <div class="chip-row" id="rosterClassChips"></div>
+                </div>
+                <div class="setup-field setup-field--count">
+                  <p class="settings-sub">학생 수</p>
+                  <div class="class-count-control" id="studentCountControl">
+                    <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
+                    <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
+                    <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
+                    <button type="button" class="btn-save-inline" id="btnApplyStudentCount">적용</button>
+                  </div>
                 </div>
               </div>
-              <div class="roster-list" id="rosterList"></div>
+              <div class="roster-board" aria-label="학생 카드">
+                <div class="roster-board-bar">
+                  <strong>학생 카드</strong>
+                </div>
+                <div class="roster-list" id="rosterList"></div>
+              </div>
             </div>
           </section>
         </div>

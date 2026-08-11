@@ -123,13 +123,13 @@
         }
       }
       if (el.tagName === "A") {
-        el.href = url;
+        el.href = "#";
         el.removeAttribute("target");
         el.rel = "noopener noreferrer";
       }
       el.innerHTML = "";
-      el.title = "탭하여 활동지 열기";
-      el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+      el.title = "눌러서 QR 크게 보기";
+      el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
       el.dataset.qrUrl = url;
       el.dataset.painted = "1";
       canvas.className = "qr-img";
@@ -155,21 +155,119 @@
     const displayPx = Math.max(100, Number(size) || 108);
     const url = String(text).trim();
     if (el.tagName === "A") {
-      el.href = url;
+      el.href = "#";
       el.removeAttribute("target");
       el.rel = "noopener noreferrer";
     }
-    el.title = "탭하여 활동지 열기";
-    el.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+    el.title = "눌러서 QR 크게 보기";
+    el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
     el.dataset.qrUrl = url;
 
-    if (paintScannableQr(el, url, displayPx)) return;
+    if (paintScannableQr(el, url, displayPx)) {
+      if (el.tagName === "A") el.href = "#";
+      el.title = "눌러서 QR 크게 보기";
+      el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
+      return;
+    }
 
     loadQrLib().then(() => {
       if (!paintScannableQr(el, url, displayPx)) {
         el.textContent = "QR";
+      } else if (el.tagName === "A") {
+        el.href = "#";
+        el.title = "눌러서 QR 크게 보기";
+        el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
       }
     });
+  }
+
+  function isQrLightboxOpen() {
+    return !!document.getElementById("qrLightbox")?.classList.contains("is-open");
+  }
+
+  function closeQrLightbox() {
+    const box = document.getElementById("qrLightbox");
+    if (!box) return;
+    box.classList.remove("is-open");
+    box.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("qr-lightbox-open");
+  }
+
+  function openQrLightbox() {
+    const url =
+      document.getElementById("activityPageQr")?.dataset?.qrUrl || activityPageUrl();
+    if (!url) return;
+
+    let box = document.getElementById("qrLightbox");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "qrLightbox";
+      box.className = "qr-lightbox";
+      box.setAttribute("role", "dialog");
+      box.setAttribute("aria-modal", "true");
+      box.setAttribute("aria-label", "확대된 활동지 QR");
+      box.innerHTML = `
+        <button type="button" class="qr-lightbox-panel" aria-label="QR 닫기">
+          <div class="qr-lightbox-code" id="qrLightboxCode"></div>
+          <span class="qr-lightbox-hint">다시 누르면 닫힙니다</span>
+        </button>`;
+      document.body.appendChild(box);
+      box.addEventListener("click", (e) => {
+        if (e.target === box || e.target.closest(".qr-lightbox-panel")) {
+          e.preventDefault();
+          closeQrLightbox();
+        }
+      });
+    }
+
+    const host = document.getElementById("qrLightboxCode");
+    if (host) {
+      host.innerHTML = "";
+      const size = Math.min(360, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.62));
+      paintQrInto(host, url, size);
+    }
+
+    box.classList.add("is-open");
+    box.setAttribute("aria-hidden", "false");
+    document.body.classList.add("qr-lightbox-open");
+  }
+
+  function toggleQrLightbox(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isQrLightboxOpen()) closeQrLightbox();
+    else openQrLightbox();
+  }
+
+  function bindQrLightboxControls(wrap, el) {
+    if (!wrap || wrap.dataset.qrLightboxBound === "1") return;
+    wrap.dataset.qrLightboxBound = "1";
+
+    let cap = wrap.querySelector(".hero-qr-cap");
+    if (cap && cap.tagName !== "BUTTON") {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "hero-qr-cap";
+      btn.textContent = "눌러서 열기";
+      btn.setAttribute("aria-label", "QR 코드 크게 보기");
+      cap.replaceWith(btn);
+      cap = btn;
+    } else if (cap) {
+      cap.textContent = "눌러서 열기";
+      cap.setAttribute("aria-label", "QR 코드 크게 보기");
+    }
+
+    el?.addEventListener("click", toggleQrLightbox);
+    cap?.addEventListener("click", toggleQrLightbox);
+
+    if (!document.documentElement.dataset.qrLightboxEsc) {
+      document.documentElement.dataset.qrLightboxEsc = "1";
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && isQrLightboxOpen()) closeQrLightbox();
+      });
+    }
   }
 
   function ensureHeroQr() {
@@ -188,8 +286,8 @@
       wrap = document.createElement("div");
       wrap.className = "hero-qr-wrap";
       wrap.innerHTML =
-        `<a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>` +
-        `<span class="hero-qr-cap">눌러서 열기</span>`;
+        `<a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 크게 보기"></a>` +
+        `<button type="button" class="hero-qr-cap">눌러서 열기</button>`;
       hero.appendChild(wrap);
     }
 
@@ -202,16 +300,15 @@
       const a = document.createElement("a");
       a.id = el.id || "activityPageQr";
       a.className = el.className || "hero-qr";
-      a.setAttribute("aria-label", "활동지 QR — 눌러서 열기");
+      a.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
       el.replaceWith(a);
       el = a;
     }
-    const cap = wrap.querySelector(".hero-qr-cap");
-    if (cap) cap.textContent = "눌러서 열기";
 
-    el.href = url;
+    el.href = "#";
     el.removeAttribute("target");
     el.rel = "noopener noreferrer";
+    bindQrLightboxControls(wrap, el);
 
     if (el.dataset.painted === "1" && el.dataset.qrUrl === url && el.querySelector("canvas")) {
       return;
@@ -237,13 +334,71 @@
           ".na-manual-info",
           ".na-info-box",
           ".na-manual .student-info",
-          "#sheetStudentNo",
-          "#sheetStudentName",
           "#studentId",
           "#studentName"
         ].join(", ")
       )
       .forEach((el) => el.remove());
+  }
+
+  function readSheetIdentity() {
+    return {
+      studentNo: (document.getElementById("sheetHakbun")?.value || "").trim(),
+      studentName: (document.getElementById("sheetDisplayName")?.value || "").trim()
+    };
+  }
+
+  function sanitizeFilePart(s, fallback) {
+    const t = String(s || "")
+      .replace(/[\\/:*?"<>|]+/g, "_")
+      .replace(/\s+/g, "")
+      .trim();
+    return t || fallback || "미입력";
+  }
+
+  function captureQrDataUrl() {
+    const canvas = document.querySelector("#activityPageQr canvas");
+    if (canvas && canvas.toDataURL) {
+      try {
+        return canvas.toDataURL("image/png");
+      } catch {
+        /* ignore */
+      }
+    }
+    return "";
+  }
+
+  function ensureSheetIdentity() {
+    const root = document.getElementById("activity-root");
+    if (!root) return;
+    if (document.getElementById("sheetIdentity")) return;
+
+    let titleEl = root.querySelector(":scope > h2");
+    if (titleEl) titleEl.remove();
+    else {
+      titleEl = document.createElement("h2");
+      titleEl.textContent = "학생 활동지";
+    }
+
+    const bar = document.createElement("div");
+    bar.className = "activity-sheet-bar";
+    bar.id = "sheetIdentity";
+    const titleWrap = document.createElement("div");
+    titleWrap.className = "activity-sheet-bar-title";
+    titleWrap.appendChild(titleEl);
+    bar.appendChild(titleWrap);
+
+    const idWrap = document.createElement("div");
+    idWrap.className = "sheet-identity";
+    idWrap.innerHTML = `
+      <label for="sheetHakbun"><span>학번</span>
+        <input id="sheetHakbun" name="sheetHakbun" type="text" inputmode="numeric" autocomplete="off" placeholder="10101" maxlength="8" />
+      </label>
+      <label for="sheetDisplayName"><span>이름</span>
+        <input id="sheetDisplayName" name="sheetDisplayName" type="text" autocomplete="name" placeholder="홍길동" maxlength="20" />
+      </label>`;
+    bar.appendChild(idWrap);
+    root.insertBefore(bar, root.firstChild);
   }
 
   const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6];
@@ -484,6 +639,8 @@
   function buildExportDocument(filledRoot, cssText) {
     const meta = activityMeta();
     const title = meta.title || `${sessionNo}차시 활동지`;
+    const id = readSheetIdentity();
+    const qr = captureQrDataUrl();
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -495,9 +652,11 @@
 <style>
 ${cssText}
 body{padding:16px!important;background:#fff!important}
-.topbar,.topbar-actions,.overlay,.submit-fab,.zoom-controls,.sheet-tools,.hero-qr-wrap{display:none!important}
+.topbar,.topbar-actions,.overlay,.submit-fab,.zoom-controls,.sheet-tools,.hero-qr-cap{display:none!important}
 .shell{width:min(980px,100%)!important;margin:0 auto!important;zoom:1!important;transform:none!important}
-.hero-card{grid-template-columns:1fr!important}
+.hero-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important}
+.hero-qr-wrap{display:flex!important}
+.sheet-identity input{border:1px solid #ccc}
 </style>
 </head>
 <body>
@@ -507,7 +666,9 @@ body{padding:16px!important;background:#fff!important}
         ${meta.theme ? `<div class="theme">${escapeHtml(meta.theme)}</div>` : ""}
         <h1>${escapeHtml(title)}</h1>
         ${meta.summary ? `<p>${escapeHtml(meta.summary)}</p>` : ""}
+        ${(id.studentNo || id.studentName) ? `<p>${escapeHtml([id.studentNo, id.studentName].filter(Boolean).join(" · "))}</p>` : ""}
       </div>
+      ${qr ? `<div class="hero-qr-wrap"><div class="hero-qr"><img src="${qr}" alt="활동지 QR" style="width:100%;height:100%;display:block" /></div></div>` : ""}
     </section>
     <section class="activity-card" id="activity-root">
       ${filledRoot.innerHTML}
@@ -522,17 +683,13 @@ body{padding:16px!important;background:#fff!important}
     if (!filled) return;
     const cssText = await loadActivityCssText();
     const html = buildExportDocument(filled, cssText);
-    const meta = activityMeta();
-    const safeTitle = (meta.topTitle || meta.title || `${sessionNo}차시`)
-      .replace(/[\\/:*?"<>|]+/g, "_")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, 60);
+    const id = readSheetIdentity();
+    const fname = `${sessionNo}차시-${sanitizeFilePart(id.studentNo, "학번미입력")}-${sanitizeFilePart(id.studentName, "이름미입력")}.html`;
     const blob = new Blob([html], { type: "text/html;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${safeTitle || sessionNo + "차시_활동지"}.html`;
+    a.download = fname;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -542,13 +699,8 @@ body{padding:16px!important;background:#fff!important}
   function buildPrintDocument(filledRoot) {
     const meta = activityMeta();
     const title = meta.title || `${sessionNo}차시 활동지`;
-    const hasInnerHead = !!filledRoot.querySelector(".q100-head, .na-manual-head, .bingo-head");
-    const headHtml = hasInnerHead
-      ? ""
-      : `<header class="print-head">
-      <strong>${escapeHtml(title)}</strong>
-      ${meta.summary ? `<span>${escapeHtml(meta.summary)}</span>` : ""}
-    </header>`;
+    const id = readSheetIdentity();
+    const qr = captureQrDataUrl();
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -567,24 +719,74 @@ body{padding:16px!important;background:#fff!important}
     print-color-adjust: exact;
   }
   .print-sheet { margin: 0; padding: 0; }
-  .print-head {
-    margin: 0 0 6px;
-    padding: 0 0 6px;
-    border-bottom: 1.5px solid #312e81;
+  .print-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px;
+    align-items: center;
+    margin: 0 0 8px;
+    padding: 8px 10px;
+    border: 1.5px solid #111;
+    border-radius: 10px;
   }
-  .print-head strong {
-    display: block;
-    font: 700 14px/1.25 Pretendard, sans-serif;
-    color: #312e81;
-    letter-spacing: -0.02em;
+  .print-hero .theme {
+    display: inline-block;
+    margin-bottom: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #fbefe7;
+    color: #8c4022;
+    font: 600 10px/1.3 Pretendard, sans-serif;
   }
-  .print-head span {
-    display: block;
-    margin-top: 2px;
-    font: 500 10px/1.35 Pretendard, sans-serif;
-    color: #64748b;
+  .print-hero h1 {
+    margin: 0;
+    font: 700 16px/1.25 "Noto Serif KR", serif;
   }
-  .activity-card > h2 { display: none !important; }
+  .print-hero .who {
+    margin: 4px 0 0;
+    font: 600 11px/1.3 Pretendard, sans-serif;
+    color: #475569;
+  }
+  .print-hero .qr {
+    width: 72px;
+    height: 72px;
+    border: 1.5px solid #111;
+    border-radius: 8px;
+    padding: 4px;
+    background: #fff;
+  }
+  .print-hero .qr img { width: 100%; height: 100%; display: block; }
+  .activity-sheet-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 10px;
+    margin: 0 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1.5px solid #d6d3d1;
+  }
+  .activity-sheet-bar h2 {
+    margin: 0;
+    font: 700 13px/1.25 Pretendard, sans-serif;
+  }
+  .sheet-identity {
+    display: flex;
+    gap: 8px;
+  }
+  .sheet-identity label {
+    display: grid;
+    gap: 2px;
+    font: 700 10px/1.2 Pretendard, sans-serif;
+    color: #57534e;
+  }
+  .sheet-identity input {
+    width: 88px;
+    height: 24px;
+    border: 0;
+    border-bottom: 1px solid #a8a29e;
+    background: transparent;
+    font: 600 11px/1 Pretendard, sans-serif;
+  }
   .q100-head { margin: 0 0 6px; }
   .q100-head strong {
     display: block;
@@ -747,7 +949,16 @@ body{padding:16px!important;background:#fff!important}
 </head>
 <body>
   <div class="print-sheet">
-    ${headHtml}
+    <section class="print-hero">
+      <div>
+        ${meta.theme ? `<div class="theme">${escapeHtml(meta.theme)}</div>` : ""}
+        <h1>${escapeHtml(title)}</h1>
+        ${(id.studentNo || id.studentName)
+          ? `<p class="who">${escapeHtml([id.studentNo, id.studentName].filter(Boolean).join(" · "))}</p>`
+          : ""}
+      </div>
+      ${qr ? `<div class="qr"><img src="${qr}" alt="활동지 QR" /></div>` : ""}
+    </section>
     <div class="activity-card">
       ${filledRoot.innerHTML}
     </div>
@@ -829,9 +1040,38 @@ body{padding:16px!important;background:#fff!important}
     });
   }
 
+  function autosizeTextarea(el) {
+    if (!el || el.tagName !== "TEXTAREA") return;
+    el.style.height = "auto";
+    el.style.overflow = "hidden";
+    el.style.height = `${Math.max(el.scrollHeight, 0)}px`;
+  }
+
+  function ensureAutosizeTextareas() {
+    const root = document.getElementById("activity-root") || document.body;
+    if (!root || root.dataset.autosizeBound === "1") {
+      root?.querySelectorAll("textarea").forEach(autosizeTextarea);
+      return;
+    }
+    root.dataset.autosizeBound = "1";
+    const grow = (e) => {
+      const t = e.target;
+      if (t && t.tagName === "TEXTAREA") autosizeTextarea(t);
+    };
+    root.addEventListener("input", grow);
+    root.addEventListener("change", grow);
+    // 초기·폰트 로드 후 맞춤
+    const syncAll = () => root.querySelectorAll("textarea").forEach(autosizeTextarea);
+    syncAll();
+    requestAnimationFrame(syncAll);
+    window.addEventListener("load", syncAll, { once: true });
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
+    ensureSheetIdentity();
+    ensureAutosizeTextareas();
     if (document.getElementById("submitOverlay")) {
       const host =
         document.querySelector(".topbar-actions") ||
@@ -903,6 +1143,11 @@ body{padding:16px!important;background:#fff!important}
     fab.addEventListener("click", () => {
       overlay.classList.add("is-open");
       prefillCodeFromUrl();
+      const id = readSheetIdentity();
+      const noInput = document.getElementById("studentNoInput");
+      const nameInput = document.getElementById("studentNameInput");
+      if (noInput && id.studentNo) noInput.value = id.studentNo;
+      if (nameInput && id.studentName) nameInput.value = id.studentName;
       document.getElementById("submitCodeInput")?.focus();
     });
     document.getElementById("btnCancelSubmit").addEventListener("click", () => {
@@ -973,12 +1218,19 @@ body{padding:16px!important;background:#fff!important}
     }
 
     const submitCode = document.getElementById("submitCodeInput").value.trim();
-    const studentNo = document.getElementById("studentNoInput").value.trim();
-    const studentName = document.getElementById("studentNameInput").value.trim();
+    const sheet = readSheetIdentity();
+    const studentNo =
+      document.getElementById("studentNoInput").value.trim() || sheet.studentNo;
+    const studentName =
+      document.getElementById("studentNameInput").value.trim() || sheet.studentName;
 
     if (!submitCode) return setMsg("제출 코드를 입력해 주세요.", "error");
     if (!studentNo) return setMsg("학번을 입력해 주세요.", "error");
     if (!studentName) return setMsg("이름을 입력해 주세요.", "error");
+    const sheetNoEl = document.getElementById("sheetHakbun");
+    const sheetNameEl = document.getElementById("sheetDisplayName");
+    if (sheetNoEl && !sheetNoEl.value.trim()) sheetNoEl.value = studentNo;
+    if (sheetNameEl && !sheetNameEl.value.trim()) sheetNameEl.value = studentName;
 
     const content = collectActivityHtml(studentNo, studentName);
     if (!content) return setMsg("제출할 활동 내용이 없습니다.", "error");
