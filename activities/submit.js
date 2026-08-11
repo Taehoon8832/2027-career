@@ -1122,10 +1122,14 @@ body{padding:16px!important;background:#fff!important}
   function placeTimeWatchInTopbar(el) {
     const topbar = document.querySelector(".topbar");
     if (!topbar || !el) return;
-    const actions = topbar.querySelector(".topbar-actions");
-    // 파란 박스 위치: 제목(왼쪽)과 도구(오른쪽) 사이 중앙
-    if (actions) topbar.insertBefore(el, actions);
-    else if (el.parentElement !== topbar) topbar.appendChild(el);
+    const meta = topbar.querySelector(".top-meta");
+    // 파란색 위치: 제목(.top-meta) 바로 오른쪽
+    if (meta) meta.insertAdjacentElement("afterend", el);
+    else {
+      const actions = topbar.querySelector(".topbar-actions");
+      if (actions) topbar.insertBefore(el, actions);
+      else if (el.parentElement !== topbar) topbar.appendChild(el);
+    }
   }
 
   function ensureTimeWatch() {

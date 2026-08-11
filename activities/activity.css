@@ -92,18 +92,18 @@ button, .submit-fab, a { touch-action: manipulation; }
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-  margin-left: 0;
+  margin-left: auto;
 }
 
-/* —— 수업 타임워치 (상단바 중앙 · sticky) —— */
+/* —— 수업 타임워치 (제목 바로 오른쪽 · sticky) —— */
 .time-watch {
-  flex: 1 1 auto;
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: 0;
   margin: 0;
-  padding: 0 6px;
+  padding: 0;
   background: transparent;
 }
 .time-watch .tw-shell {
@@ -1047,7 +1047,7 @@ body.qr-lightbox-open { overflow: hidden; }
     grid-area: timer;
     width: 100%;
     padding: 0;
-    justify-content: center;
+    justify-content: flex-start;
   }
   .time-watch .tw-shell {
     width: auto;
@@ -1093,7 +1093,7 @@ body.qr-lightbox-open { overflow: hidden; }
     gap: 8px;
     padding: 7px 10px;
     width: 100%;
-    justify-content: center;
+    justify-content: flex-start;
   }
   .time-watch .tw-set input { width: 48px; height: 36px; font-size: 16px; }
   .time-watch .tw-display {
