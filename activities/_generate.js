@@ -44,7 +44,7 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
   <title>${n}차시 · ${title}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=prt8" />
+  <link rel="stylesheet" href="./activity.css?v=prt10" />
   <script>window.ACTIVITY_SESSION = ${n};</script>
 </head>
 <body>
@@ -91,7 +91,7 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./submit.js?v=prt8"></script>
+  <script src="./submit.js?v=prt10"></script>
 </body>
 </html>
 `;

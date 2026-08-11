@@ -767,11 +767,16 @@ body{padding:16px!important;background:#fff!important}
     justify-self: start;
     align-self: center;
     z-index: 1;
-    max-width: calc(50% - 3.2rem);
+    width: max-content;
+    max-width: none;
     margin: 0;
-    font: 700 11px/1.3 "Noto Serif KR", Pretendard, serif;
+    padding: 0;
+    font: 700 10.5px/1.25 "Noto Serif KR", Pretendard, serif;
     letter-spacing: -0.02em;
+    white-space: nowrap;
     word-break: keep-all;
+    overflow: visible;
+    writing-mode: horizontal-tb;
   }
   .activity-sheet-bar-title {
     position: absolute;
@@ -806,6 +811,13 @@ body{padding:16px!important;background:#fff!important}
     }
     .activity-sheet-bar h2 {
       font-size: calc(17px + 5pt);
+    }
+    .print-lesson-title {
+      white-space: nowrap !important;
+      word-break: keep-all !important;
+      max-width: none !important;
+      width: max-content !important;
+      writing-mode: horizontal-tb !important;
     }
     .sheet-identity {
       padding-top: 0.1cm;
