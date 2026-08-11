@@ -674,7 +674,7 @@
 <style>
 ${cssText}
 body{padding:16px!important;background:#fff!important}
-.topbar,.topbar-actions,.overlay,.submit-fab,.zoom-controls,.sheet-tools,.hero-qr-cap{display:none!important}
+.topbar,.topbar-actions,.time-watch,.overlay,.submit-fab,.zoom-controls,.sheet-tools,.hero-qr-cap{display:none!important}
 .shell{width:min(980px,100%)!important;margin:0 auto!important;zoom:1!important;transform:none!important}
 .hero-card{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important}
 .hero-qr-wrap{display:flex!important}
@@ -1119,6 +1119,182 @@ body{padding:16px!important;background:#fff!important}
     window.addEventListener("load", syncAll, { once: true });
   }
 
+  function ensureTimeWatch() {
+    if (document.getElementById("timeWatch")) return;
+    const topbar = document.querySelector(".topbar");
+    if (!topbar) return;
+
+    const wrap = document.createElement("div");
+    wrap.className = "time-watch";
+    wrap.id = "timeWatch";
+    wrap.setAttribute("role", "group");
+    wrap.setAttribute("aria-label", "수업 타임워치");
+    wrap.innerHTML = `
+      <div class="tw-shell">
+        <label class="tw-set">
+          <input id="twMinutes" type="number" min="1" max="300" step="1" inputmode="numeric" placeholder="50" aria-label="분 입력" />
+          <span class="tw-unit">분</span>
+        </label>
+        <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+        <div class="tw-btns">
+          <button type="button" class="tw-act" id="twToggle" title="시작" aria-label="시작">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg>
+          </button>
+          <button type="button" class="tw-act tw-reset" id="twReset" title="리셋" aria-label="리셋">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 3-6.7"/>
+              <path d="M3 4v5h5"/>
+            </svg>
+          </button>
+        </div>
+      </div>`;
+
+    const actions = topbar.querySelector(".topbar-actions");
+    if (actions) topbar.insertBefore(wrap, actions);
+    else topbar.appendChild(wrap);
+
+    const input = wrap.querySelector("#twMinutes");
+    const display = wrap.querySelector("#twDisplay");
+    const toggleBtn = wrap.querySelector("#twToggle");
+    const resetBtn = wrap.querySelector("#twReset");
+
+    const ICON_PLAY =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg>';
+    const ICON_PAUSE =
+      '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3v14H7zM14 5h3v14h-3z" fill="currentColor" stroke="none"/></svg>';
+
+    let mode = "idle"; // idle | running | paused | done
+    let remainMs = 0;
+    let endsAt = 0;
+    let tickId = 0;
+
+    const pad2 = (n) => (n < 10 ? "0" + n : String(n));
+
+    function formatMs(ms) {
+      const total = Math.max(0, Math.ceil(ms / 1000));
+      const m = Math.floor(total / 60);
+      const s = total % 60;
+      return pad2(m) + ":" + pad2(s);
+    }
+
+    function readMinutes() {
+      const n = Math.floor(Number(input?.value));
+      if (!Number.isFinite(n) || n < 1) return null;
+      return Math.min(300, n);
+    }
+
+    function currentMs() {
+      if (mode === "running") return Math.max(0, endsAt - Date.now());
+      return Math.max(0, remainMs);
+    }
+
+    function paint() {
+      const ms = currentMs();
+      const totalSec = Math.ceil(ms / 1000);
+      display.textContent = formatMs(ms);
+      display.classList.toggle("is-warn", totalSec > 0 && totalSec <= 600 && totalSec > 300);
+      display.classList.toggle("is-alert", totalSec > 0 && totalSec <= 300);
+      display.classList.toggle("is-done", mode === "done" || totalSec === 0 && mode !== "idle");
+      if (input) input.disabled = mode === "running";
+      if (toggleBtn) {
+        const running = mode === "running";
+        toggleBtn.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
+        toggleBtn.title = running ? "일시정지" : mode === "paused" ? "계속" : "시작";
+        toggleBtn.setAttribute("aria-label", toggleBtn.title);
+      }
+    }
+
+    function stopTick() {
+      if (tickId) {
+        clearInterval(tickId);
+        tickId = 0;
+      }
+    }
+
+    function finish() {
+      stopTick();
+      mode = "done";
+      remainMs = 0;
+      endsAt = 0;
+      paint();
+    }
+
+    function startTick() {
+      stopTick();
+      tickId = setInterval(() => {
+        if (mode !== "running") return;
+        if (Date.now() >= endsAt) {
+          finish();
+          return;
+        }
+        paint();
+      }, 250);
+    }
+
+    function syncFromInput() {
+      if (mode === "running" || mode === "paused") return;
+      const mins = readMinutes();
+      remainMs = mins ? mins * 60 * 1000 : 0;
+      mode = "idle";
+      paint();
+    }
+
+    function startOrResume() {
+      if (mode === "running") {
+        remainMs = currentMs();
+        mode = "paused";
+        stopTick();
+        paint();
+        return;
+      }
+      if (mode === "idle" || mode === "done") {
+        const mins = readMinutes();
+        if (!mins) {
+          input?.focus();
+          input?.select?.();
+          return;
+        }
+        remainMs = mins * 60 * 1000;
+      }
+      if (remainMs <= 0) {
+        finish();
+        return;
+      }
+      endsAt = Date.now() + remainMs;
+      mode = "running";
+      paint();
+      startTick();
+    }
+
+    function reset() {
+      stopTick();
+      mode = "idle";
+      endsAt = 0;
+      const mins = readMinutes();
+      remainMs = mins ? mins * 60 * 1000 : 0;
+      paint();
+    }
+
+    input?.addEventListener("input", syncFromInput);
+    input?.addEventListener("change", syncFromInput);
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        startOrResume();
+      }
+    });
+    toggleBtn?.addEventListener("click", startOrResume);
+    resetBtn?.addEventListener("click", reset);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && mode === "running") {
+        if (Date.now() >= endsAt) finish();
+        else paint();
+      }
+    });
+
+    syncFromInput();
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
@@ -1131,6 +1307,7 @@ body{padding:16px!important;background:#fff!important}
         document.body;
       ensureSheetTools(host);
       ensureZoomControls(host);
+      ensureTimeWatch();
       return;
     }
 
@@ -1164,6 +1341,7 @@ body{padding:16px!important;background:#fff!important}
     ensureSheetTools(actions);
     ensureZoomControls(actions);
     actions.appendChild(fab);
+    ensureTimeWatch();
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";

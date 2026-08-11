@@ -320,6 +320,13 @@
       border: 1.5px solid var(--border-default); border-radius: 8px;
       background: #fff; color: var(--color-primary-700);
       font: 700 16px/1 var(--font-sans);
+      -moz-appearance: textfield;
+      appearance: textfield;
+    }
+    .class-count-control .count-input::-webkit-outer-spin-button,
+    .class-count-control .count-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
     .class-count-control .count-input:focus {
       outline: none; border-color: var(--border-focus);
@@ -2291,7 +2298,7 @@
                     <p class="settings-sub">학생 수</p>
                     <div class="class-count-control" id="studentCountControl">
                       <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
-                      <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
+                      <input id="studentCountInput" class="count-input" type="number" min="1" max="50" step="1" inputmode="numeric" autocomplete="off" placeholder="30" aria-label="학생 수" />
                       <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
                       <button type="button" class="btn-save-inline btn-save-class" id="btnSaveClassSettings">학급 저장</button>
                     </div>
@@ -2573,12 +2580,23 @@
         return Math.min(MAX_STUDENT_COUNT, Math.max(MIN_STUDENT_COUNT, Math.floor(v)));
       }
 
-      function syncStudentCountInput(forceValue) {
+      function syncStudentCountInput(forceValue, opts = {}) {
         const input = $("studentCountInput");
         if (!input) return;
-        if (document.activeElement === input && forceValue == null) return;
+        // 키보드 입력 중에는 덮어쓰지 않음 (숫자 입력이 지워지는 문제 방지)
+        if (document.activeElement === input && !opts.force) return;
         const v = forceValue != null ? forceValue : rosterStudents.length;
         input.value = String(v);
+      }
+
+      function commitStudentCountInput() {
+        const input = $("studentCountInput");
+        const raw = String(input?.value || "").trim();
+        if (!raw) {
+          syncStudentCountInput(rosterStudents.length, { force: true });
+          return;
+        }
+        void applyStudentCount(raw);
       }
 
       function classNosFromCount(count) {
@@ -7120,24 +7138,26 @@ ${built.html}
           closeBatchNameInput();
         }
       });
-      $("studentCountInput")?.addEventListener("input", (e) => {
+      $("studentCountInput")?.addEventListener("focus", (e) => {
         const el = e.target;
-        const cleaned = String(el.value || "").replace(/[^\d]/g, "");
-        if (el.value !== cleaned) el.value = cleaned;
+        // 클릭 직후 전체 선택 → 바로 새 숫자 입력 가능
+        requestAnimationFrame(() => {
+          try { el.select(); } catch (_) {}
+        });
       });
       $("studentCountInput")?.addEventListener("keydown", (e) => {
         if (e.key === "Enter") {
           e.preventDefault();
-          void applyStudentCount($("studentCountInput")?.value);
+          commitStudentCountInput();
+          e.target.blur();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          syncStudentCountInput(rosterStudents.length, { force: true });
+          e.target.blur();
         }
       });
-      $("studentCountInput")?.addEventListener("blur", () => {
-        const raw = String($("studentCountInput")?.value || "").trim();
-        if (!raw) {
-          syncStudentCountInput();
-          return;
-        }
-        void applyStudentCount(raw);
+      $("studentCountInput")?.addEventListener("change", () => {
+        commitStudentCountInput();
       });
       $("btnSaveClassSettings").addEventListener("click", async () => {
         // 입력 중인 반·학과를 먼저 반영한 뒤 학급 수 적용 (리렌더로 값이 지워지지 않게)
