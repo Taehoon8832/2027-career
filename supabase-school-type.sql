@@ -30,6 +30,7 @@ set department_name = coalesce(department_name, '')
 where department_name is null;
 
 -- 같은 반 번호 + 다른 학과명 허용 (1반·조리과 / 1반·미용과)
+drop index if exists public.classes_teacher_unit_uidx;
 drop index if exists public.classes_teacher_unit_active_uidx;
 create unique index if not exists classes_teacher_unit_active_uidx
   on public.classes (

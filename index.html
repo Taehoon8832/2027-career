@@ -374,14 +374,45 @@
       border-radius: 8px;
       background: #fff;
       min-height: 0;
+      contain: content;
     }
     .roster-cell.has-sub {
       border-color: var(--color-primary-300);
       background: var(--color-primary-50);
     }
+    .roster-cell-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      min-width: 0;
+    }
     .roster-cell .no {
       font: 700 11px/1 var(--font-sans); color: var(--color-primary-700);
+      white-space: nowrap;
     }
+    .roster-dept {
+      flex-shrink: 1;
+      min-width: 0;
+      max-width: 56%;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: #efe8dc;
+      color: #6b5344;
+      font: 700 9px/1.2 var(--font-sans);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .roster-board-bar .roster-board-dept {
+      margin-left: 6px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--color-primary-50);
+      color: var(--color-primary-700);
+      font: 700 11px/1.2 var(--font-sans);
+    }
+    .roster-board-bar .roster-board-dept[hidden] { display: none !important; }
     .roster-cell input {
       width: 100%; height: 28px; border: 1px solid var(--border-default);
       border-radius: 7px; padding: 0 6px; background: #fff;
@@ -1332,6 +1363,12 @@
       .detail-roster-cell .name { font-size: 14px; }
       .detail-sub-actions button { font-size: 12px; min-height: 28px; }
       .roster-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
+      .roster-cell { padding: 8px; gap: 5px; }
+      .roster-cell .no { font-size: 12px; }
+      .roster-dept { font-size: 10px; max-width: 50%; padding: 3px 7px; }
+      .roster-cell input { height: 36px; font-size: 16px; }
+      .roster-board-bar { flex-wrap: wrap; gap: 4px 6px; }
+      .roster-chip-hint { font-size: 11px; line-height: 1.4; }
       .setup-launch { padding: 14px; }
       .setup-launch-copy strong { font-size: 15px; }
       .lesson-meta strong { font-size: 14px; }
@@ -1553,7 +1590,7 @@
                 <div class="setup-field">
                   <p class="settings-sub">반 선택</p>
                   <div class="chip-row" id="rosterClassChips"></div>
-                  <p class="roster-chip-hint">반 이름을 더블클릭하면 반 번호·학과명을 수정할 수 있습니다. (예: 2반 → 1반 · 미용과)</p>
+                  <p class="roster-chip-hint">더블클릭으로 반·학과명 수정. 학과가 다르면 같은 반·같은 학번도 가능합니다. (예: 1반·미용 / 1반·기계)</p>
                 </div>
                 <div class="setup-field setup-field--count">
                   <p class="settings-sub">학생 수</p>
@@ -1568,6 +1605,7 @@
               <div class="roster-board" aria-label="학생 카드">
                 <div class="roster-board-bar">
                   <strong>학생 카드</strong>
+                  <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
                 </div>
                 <div class="roster-list" id="rosterList"></div>
               </div>
@@ -2632,13 +2670,20 @@
           is_active: true
         };
         let { error } = await sb.from("classes").update(payload).eq("id", classId);
-        if (error && /department_name/i.test(error.message || "")) {
+        // 특성화고는 학과명 없이 저장하면 같은 반 충돌이 나므로 폴백하지 않음
+        if (error && /department_name/i.test(error.message || "") && !isVocational()) {
           const { department_name: _d, ...noDept } = payload;
           ({ error } = await sb.from("classes").update(noDept).eq("id", classId));
         }
         if (error) {
           if (/unique|duplicate|uidx/i.test(error.message || "")) {
-            toast("같은 반·학과 조합이 이미 있습니다. (Supabase SQL을 적용했는지 확인해 주세요)");
+            toast(
+              isVocational()
+                ? "같은 반·학과가 이미 있거나, DB 인덱스가 예전 버전입니다. supabase-class-rename.sql을 다시 실행해 주세요."
+                : "같은 반 번호가 이미 있습니다."
+            );
+          } else if (/department_name/i.test(error.message || "")) {
+            toast("학과명 컬럼이 없습니다. supabase-school-type.sql을 실행해 주세요.");
           } else {
             toast("학급 이름 저장 실패: " + (error.message || error));
           }
@@ -2910,25 +2955,97 @@
         }
       }
 
+      function currentRosterDepartment() {
+        if (!isVocational() || !rosterClassId) return "";
+        const meta = classMetaById(rosterClassId);
+        if (!meta) return "";
+        return departmentNameFor(meta.grade, meta.class_no, meta);
+      }
+
+      function syncRosterBoardDept() {
+        const el = $("rosterBoardDept");
+        if (!el) return;
+        const dept = currentRosterDepartment();
+        if (dept) {
+          el.hidden = false;
+          el.textContent = dept;
+          el.title = `학과: ${dept} · 학과가 다르면 같은 반·학번 가능`;
+        } else {
+          el.hidden = true;
+          el.textContent = "";
+        }
+      }
+
+      function bindRosterListEvents(root) {
+        if (!root || root.dataset.rosterBound === "1") return;
+        root.dataset.rosterBound = "1";
+        root.addEventListener("change", async (e) => {
+          const input = e.target.closest("input[data-name]");
+          if (!input || !root.contains(input)) return;
+          const id = input.getAttribute("data-name");
+          const { error } = await sb.from("students").update({ student_name: input.value.trim() }).eq("id", id);
+          if (error) toast("이름 저장 실패: " + error.message);
+        });
+        root.addEventListener("click", async (e) => {
+          const delStu = e.target.closest("button[data-del]");
+          if (delStu && root.contains(delStu)) {
+            const id = delStu.getAttribute("data-del");
+            if (!confirm("이 학생을 명단에서 삭제할까요?")) return;
+            const { error } = await sb.from("students").delete().eq("id", id);
+            if (error) return toast("삭제 실패: " + error.message);
+            studentsCache.delete(rosterClassId);
+            await loadRoster(rosterClassId);
+            toast("학생을 삭제했습니다.");
+            return;
+          }
+          const viewBtn = e.target.closest("button[data-tab-sub]");
+          if (viewBtn && root.contains(viewBtn)) {
+            e.stopPropagation();
+            const id = viewBtn.getAttribute("data-tab-sub");
+            if (id) void openSubmissionInNewTab(id);
+            return;
+          }
+          const delSub = e.target.closest("button[data-del-sub]");
+          if (delSub && root.contains(delSub)) {
+            e.stopPropagation();
+            const id = delSub.getAttribute("data-del-sub");
+            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
+            await deleteSubmission(id);
+          }
+        });
+      }
+
       function renderRosterList() {
         const root = $("rosterList");
         if (!root) return;
         syncStudentCountInput();
+        syncRosterBoardDept();
+        bindRosterListEvents(root);
         if (!rosterStudents.length) {
           root.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">학생이 없습니다. 학생 수를 설정해 주세요.</p>`;
           return;
         }
-        root.innerHTML = rosterStudents.map((s) => {
+        const dept = currentRosterDepartment();
+        const deptHtml = dept
+          ? `<span class="roster-dept" title="학과: ${escapeHtml(dept)}">${escapeHtml(dept)}</span>`
+          : "";
+        // 문서조각 없이 한 번에 그려 모바일에서 빠르게 갱신
+        const parts = new Array(rosterStudents.length);
+        for (let i = 0; i < rosterStudents.length; i++) {
+          const s = rosterStudents[i];
           const key = normalizeStudentNo(s.student_no);
-          const subs = (rosterSubMap.get(key) || []).slice().sort((a, b) => {
-            const sa = Number(a.session_no) || 0;
-            const sb_ = Number(b.session_no) || 0;
-            if (sa !== sb_) return sa - sb_;
-            return new Date(b.created_at) - new Date(a.created_at);
-          });
+          const subs = rosterSubMap.get(key) || [];
+          const sorted = subs.length > 1
+            ? subs.slice().sort((a, b) => {
+                const sa = Number(a.session_no) || 0;
+                const sb_ = Number(b.session_no) || 0;
+                if (sa !== sb_) return sa - sb_;
+                return new Date(b.created_at) - new Date(a.created_at);
+              })
+            : subs;
           const labelNo = key || s.student_no;
-          const subListHtml = subs.length
-            ? `<div class="roster-sub-list">${subs.map((sub) => `
+          const subListHtml = sorted.length
+            ? `<div class="roster-sub-list">${sorted.map((sub) => `
                 <div class="roster-sub-item">
                   <strong>${sub.session_no ? `${sub.session_no}차시` : "차시"}</strong>
                   <span>${escapeHtml(buildYukhaSummary(sub).oneLine || previewText(htmlToPlainTextFast(sub.content), 48))}</span>
@@ -2938,49 +3055,19 @@
                   </div>
                 </div>`).join("")}</div>`
             : `<div class="roster-sub-list"><div class="roster-sub-item" style="cursor:default;opacity:.75">제출된 보고서 없음</div></div>`;
-          return `
-          <div class="roster-cell${subs.length ? " has-sub" : ""}" data-id="${s.id}" data-no="${escapeHtml(key)}">
-            <div class="no">${escapeHtml(labelNo)}</div>
-            <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" />
-            <div class="sub-meta">${subs.length ? `제출 ${subs.length}건` : "미제출"}</div>
+          parts[i] = `
+          <div class="roster-cell${sorted.length ? " has-sub" : ""}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
+            <div class="roster-cell-head">
+              <div class="no">${escapeHtml(labelNo)}</div>
+              ${deptHtml}
+            </div>
+            <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" autocomplete="off" />
+            <div class="sub-meta">${sorted.length ? `제출 ${sorted.length}건` : "미제출"}</div>
             ${subListHtml}
             <button type="button" class="del" data-del="${s.id}">학생 삭제</button>
           </div>`;
-        }).join("");
-
-        root.querySelectorAll("input[data-name]").forEach((input) => {
-          input.addEventListener("change", async () => {
-            const id = input.getAttribute("data-name");
-            const { error } = await sb.from("students").update({ student_name: input.value.trim() }).eq("id", id);
-            if (error) toast("이름 저장 실패: " + error.message);
-          });
-        });
-        root.querySelectorAll("button[data-del]").forEach((btn) => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-del");
-            if (!confirm("이 학생을 명단에서 삭제할까요?")) return;
-            const { error } = await sb.from("students").delete().eq("id", id);
-            if (error) return toast("삭제 실패: " + error.message);
-            studentsCache.delete(rosterClassId);
-            await loadRoster(rosterClassId);
-            toast("학생을 삭제했습니다.");
-          });
-        });
-        root.querySelectorAll("button[data-tab-sub]").forEach((btn) => {
-          btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute("data-tab-sub");
-            if (id) void openSubmissionInNewTab(id);
-          });
-        });
-        root.querySelectorAll("button[data-del-sub]").forEach((btn) => {
-          btn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const id = btn.getAttribute("data-del-sub");
-            if (!id || !confirm("이 제출 보고서를 삭제할까요?")) return;
-            await deleteSubmission(id);
-          });
-        });
+        }
+        root.innerHTML = parts.join("");
       }
 
       let viewingSubmissionId = null;

@@ -73,6 +73,7 @@ end $$;
 
 -- 활성 학급만 유니크 (비활성 예전 데이터와 충돌 방지)
 -- 특성화고: 같은 반 번호 + 다른 학과명 허용 (1반·조리과 / 1반·미용과)
+-- ※ classes_teacher_unit_uidx(학과 없음)가 남아 있으면 반드시 제거
 drop index if exists public.classes_teacher_unit_uidx;
 drop index if exists public.classes_teacher_unit_active_uidx;
 create unique index if not exists classes_teacher_unit_active_uidx

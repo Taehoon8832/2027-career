@@ -32,14 +32,18 @@ begin
   end;
 end $$;
 
--- 같은 교사 + 모드 + 학년 + 반 조합은 1개만
-create unique index if not exists classes_teacher_unit_uidx
+-- 예전 유니크(학과 미포함) — 특성화고 같은 반·다른 학과와 충돌하므로 제거
+drop index if exists public.classes_teacher_unit_uidx;
+-- 활성 학급만: 학년+반+학과명 조합 유니크 (학과가 다르면 같은 반 허용)
+drop index if exists public.classes_teacher_unit_active_uidx;
+create unique index if not exists classes_teacher_unit_active_uidx
   on public.classes (
     teacher_id,
-    mode,
     grade,
-    coalesce(class_no, 0)
-  );
+    class_no,
+    (lower(btrim(coalesce(department_name, ''))))
+  )
+  where is_active = true;
 
 create index if not exists classes_teacher_active_idx
   on public.classes (teacher_id, is_active);
