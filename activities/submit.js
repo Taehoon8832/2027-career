@@ -1120,9 +1120,16 @@ body{padding:16px!important;background:#fff!important}
   }
 
   function ensureTimeWatch() {
-    if (document.getElementById("timeWatch")) return;
-    const topbar = document.querySelector(".topbar");
-    if (!topbar) return;
+    const shell = document.querySelector(".shell");
+    const existing = document.getElementById("timeWatch");
+    if (existing) {
+      // 이전 상단바 배치였다면 본문 왼쪽으로 이동
+      if (shell && existing.parentElement !== shell) {
+        shell.insertBefore(existing, shell.firstChild);
+      }
+      return;
+    }
+    const host = shell || document.querySelector(".topbar") || document.body;
 
     const wrap = document.createElement("div");
     wrap.className = "time-watch";
@@ -1149,9 +1156,9 @@ body{padding:16px!important;background:#fff!important}
         </div>
       </div>`;
 
-    const actions = topbar.querySelector(".topbar-actions");
-    if (actions) topbar.insertBefore(wrap, actions);
-    else topbar.appendChild(wrap);
+    // 본문(.shell) 왼쪽 정렬 — 활동지 카드와 같은 열
+    if (shell) shell.insertBefore(wrap, shell.firstChild);
+    else host.appendChild(wrap);
 
     const input = wrap.querySelector("#twMinutes");
     const display = wrap.querySelector("#twDisplay");
