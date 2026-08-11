@@ -338,6 +338,15 @@
       padding: 8px 10px 10px;
       background: #fff;
     }
+    .roster-class-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .roster-class-head .settings-sub { margin: 0; }
     .roster-board {
       border-top: 2.5px solid #1f1e1d;
       background: #efebe3;
@@ -360,27 +369,41 @@
     .btn-batch-input {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      height: 30px;
-      padding: 0 10px;
-      border: 1.5px solid #1f1e1d;
+      gap: 7px;
+      height: 38px;
+      padding: 0 16px;
+      border: 2px solid #e11d48;
       border-radius: 999px;
-      background: #fff;
-      color: #1f1e1d;
-      font: 700 11px/1 var(--font-sans);
+      background: linear-gradient(145deg, #ef4444, #dc2626 45%, #b91c1c);
+      color: #fff;
+      font: 800 13px/1 var(--font-sans);
+      letter-spacing: -0.01em;
       cursor: pointer;
       white-space: nowrap;
       touch-action: manipulation;
+      box-shadow:
+        0 0 0 3px rgba(225, 29, 72, 0.28),
+        0 6px 16px rgba(185, 28, 28, 0.4);
+      animation: batch-pulse 1.8s ease-in-out infinite;
     }
     .btn-batch-input svg {
-      width: 14px; height: 14px;
+      width: 16px; height: 16px;
       stroke: currentColor; fill: none;
-      stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
     }
     .btn-batch-input:hover {
-      background: var(--color-primary-50);
-      border-color: var(--color-primary-300);
-      color: var(--color-primary-700);
+      filter: brightness(1.06);
+      color: #fff;
+      animation: none;
+    }
+    .btn-batch-input:active { transform: scale(0.98); }
+    @keyframes batch-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.28), 0 6px 16px rgba(185, 28, 28, 0.4); }
+      50% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0.18), 0 8px 20px rgba(185, 28, 28, 0.45); }
+    }
+    .chip-toggle.is-pending {
+      border-style: dashed;
+      opacity: 0.85;
     }
     .batch-sheet {
       display: none;
@@ -941,10 +964,28 @@
       flex-wrap: wrap;
       gap: 10px 12px;
     }
-    .roster-head .hakbun-type-chips {
+    .roster-head .hakbun-type-block {
       margin: 0 0 0 auto;
-      justify-content: flex-end;
+      display: grid;
+      gap: 4px;
+      justify-items: end;
       flex: 1 1 auto;
+      min-width: 0;
+    }
+    .hakbun-type-label {
+      margin: 0;
+      font: 600 11px/1.3 var(--font-sans);
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+      text-align: right;
+    }
+    .hakbun-type-label .hakbun-type-ex {
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+    .roster-head .hakbun-type-chips {
+      margin: 0;
+      justify-content: flex-end;
       min-width: 0;
     }
     .hakbun-type-chips .chip-toggle {
@@ -1497,6 +1538,12 @@
       .roster-head {
         align-items: stretch;
       }
+      .roster-head .hakbun-type-block {
+        margin-left: 0;
+        justify-items: stretch;
+        width: 100%;
+      }
+      .hakbun-type-label { text-align: left; }
       .roster-head .hakbun-type-chips {
         margin-left: 0;
         justify-content: flex-start;
@@ -1557,7 +1604,16 @@
       .roster-dept { font-size: 10px; max-width: 50%; padding: 3px 7px; }
       .roster-cell input { height: 36px; font-size: 16px; }
       .roster-board-bar { flex-wrap: wrap; gap: 4px 6px; }
-      .btn-batch-input { height: 34px; font-size: 12px; padding: 0 12px; }
+      .roster-class-head { width: 100%; }
+      .btn-batch-input {
+        height: 44px;
+        font-size: 14px;
+        padding: 0 16px;
+        flex: 1 1 auto;
+        min-width: 140px;
+        justify-content: center;
+        border-width: 2px;
+      }
       .batch-sheet { padding: 0; }
       .batch-sheet-panel { width: 100%; max-height: 100dvh; border-radius: 0; border-width: 0; }
       .batch-sheet-head { padding: 10px; gap: 6px; }
@@ -1739,10 +1795,10 @@
             <div class="setup-panel-body">
               <div class="setup-type-grade">
                 <div class="setup-field">
-                  <p class="settings-sub">고교 유형</p>
-                  <div class="chip-row" id="schoolTypeChips" role="group" aria-label="고교 유형">
-                    <button type="button" class="chip-toggle" data-school-type="general">일반고</button>
-                    <button type="button" class="chip-toggle" data-school-type="vocational">특성화고</button>
+                  <p class="settings-sub">학과</p>
+                  <div class="chip-row" id="schoolTypeChips" role="group" aria-label="학과">
+                    <button type="button" class="chip-toggle" data-school-type="general">학과 없음</button>
+                    <button type="button" class="chip-toggle" data-school-type="vocational">학과 있음</button>
                   </div>
                 </div>
                 <div class="setup-field">
@@ -1780,15 +1836,29 @@
                 <span class="setup-step" aria-hidden="true">2</span>
                 <strong id="setupRosterTitle">학급 명단</strong>
               </div>
-              <div class="chip-row hakbun-type-chips" id="studentNoFormatChips" role="group" aria-label="학번 유형">
-                <button type="button" class="chip-toggle" data-no-format="type1" title="학년+반(2)+번호(2)">유형1 · 10101</button>
-                <button type="button" class="chip-toggle" data-no-format="type2" title="학년+반+번호(2)">유형2 · 1101</button>
+              <div class="hakbun-type-block">
+                <p class="hakbun-type-label">학번 표시유형 <span class="hakbun-type-ex">(예시 1학년 2반 3번)</span></p>
+                <div class="chip-row hakbun-type-chips" id="studentNoFormatChips" role="group" aria-label="학번 표시유형">
+                  <button type="button" class="chip-toggle" data-no-format="type1" title="유형1(5자리): 학년+반(2)+번호(2) → 10203">유형1(5자리) 10203</button>
+                  <button type="button" class="chip-toggle" data-no-format="type2" title="유형2(4자리): 학년+반+번호(2) → 1203">유형2(4자리) 1203</button>
+                </div>
               </div>
             </div>
             <div class="setup-panel-body roster-panel-body">
               <div class="roster-controls">
                 <div class="setup-field">
-                  <p class="settings-sub">반 선택</p>
+                  <div class="roster-class-head">
+                    <p class="settings-sub">반 선택</p>
+                    <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 4h7v7H4z"/>
+                        <path d="M13 4h7v7h-7z"/>
+                        <path d="M4 13h7v7H4z"/>
+                        <path d="M13 13h7v7h-7z"/>
+                      </svg>
+                      [일괄 입력]
+                    </button>
+                  </div>
                   <div class="chip-row" id="rosterClassChips"></div>
                 </div>
                 <div class="setup-field setup-field--count">
@@ -1806,15 +1876,6 @@
                   <strong>학생 카드</strong>
                   <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
                   <span class="grow" aria-hidden="true"></span>
-                  <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M4 4h7v7H4z"/>
-                      <path d="M13 4h7v7h-7z"/>
-                      <path d="M4 13h7v7H4z"/>
-                      <path d="M13 13h7v7h-7z"/>
-                    </svg>
-                    일괄 입력
-                  </button>
                 </div>
                 <div class="roster-list" id="rosterList"></div>
               </div>
@@ -1868,7 +1929,7 @@
         <form id="studentForm">
           <div class="field">
             <label for="studentNo">학번</label>
-            <input id="studentNo" required inputmode="numeric" placeholder="예: 10101" maxlength="8" />
+            <input id="studentNo" required inputmode="numeric" placeholder="예: 10203" maxlength="8" />
           </div>
           <div class="field">
             <label for="studentName">이름</label>
@@ -2106,7 +2167,8 @@
       }
 
       function hakbunExample(format) {
-        return normalizeStudentNoFormat(format) === "type2" ? "1101" : "10101";
+        // 예시: 1학년 2반 3번
+        return normalizeStudentNoFormat(format) === "type2" ? "1203" : "10203";
       }
 
       function ensureByGradeBag(grade) {
@@ -2193,10 +2255,10 @@
         if (fromRow) return fromRow;
         const units = ensureByGradeBag(grade).units;
         if (Array.isArray(units) && units.length) {
-          const hit = units.find(
-            (u) => normalizeUnitClassNo(u.classNo, -1) === Number(classNo) && String(u.department || "").trim()
+          const matches = units.filter(
+            (u) => normalizeUnitClassNo(u.classNo, -1) === Number(classNo)
           );
-          if (hit) return String(hit.department || "").trim();
+          if (matches.length === 1) return String(matches[0].department || "").trim();
         }
         const map = getDepartmentsMap(grade);
         return String(map[String(classNo)] || "").trim();
@@ -2339,7 +2401,7 @@
       }
 
       function formatClassSettingsSummary() {
-        const typeLabel = isVocational() ? "특성화고" : "일반고";
+        const typeLabel = isVocational() ? "학과 있음" : "학과 없음";
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!active.length) {
           const n = clampClassCount(classSettings.classCount);
@@ -2492,8 +2554,8 @@
       }
 
       /**
-       * 학번 유형1: 학년 + 반(2) + 번호(2) → 10101
-       * 학번 유형2: 학년 + 반(자릿수 그대로) + 번호(2) → 1101
+       * 학번 유형1(5자리): 학년 + 반(2) + 번호(2) → 10203 (1학년 2반 3번)
+       * 학번 유형2(4자리): 학년 + 반 + 번호(2) → 1203
        */
       function formatHakbun(grade, classNo, seat, format) {
         const g = Math.max(1, Math.min(3, Number(grade) || 1));
@@ -3176,12 +3238,61 @@
         setTimeout(() => document.addEventListener("pointerdown", onDoc, true), 0);
       }
 
+      /** 학급 명단 칩: 특성화고는 반·학과 슬롯 수·이름과 1:1 (예전 3반·4반 잔여 숨김) */
+      function rosterSlotsForGrade(grade) {
+        const g = Number(grade) || 1;
+        const fromDb = activeClassesForGrade(g);
+        if (!isVocational()) {
+          return fromDb.map((c) => ({
+            id: c.id,
+            classNo: Number(c.class_no) || 1,
+            department: "",
+            label: classChipLabel(c),
+            pending: false,
+            row: c
+          }));
+        }
+        const units = getGradeUnits(g);
+        const used = new Set();
+        return units.map((u, idx) => {
+          const classNo = normalizeUnitClassNo(u.classNo, idx + 1);
+          const department = String(u.department || "").trim();
+          const label = department ? `${classNo}반 · ${department}` : `${classNo}반`;
+          const hit = fromDb.find(
+            (c) =>
+              !used.has(c.id) &&
+              Number(c.class_no) === classNo &&
+              String(c.department_name || "").trim().toLowerCase() === department.toLowerCase()
+          );
+          if (hit) {
+            used.add(hit.id);
+            return {
+              id: hit.id,
+              classNo,
+              department,
+              label: classChipLabel(hit) || label,
+              pending: false,
+              row: hit
+            };
+          }
+          return {
+            id: null,
+            classNo,
+            department,
+            label,
+            pending: true,
+            row: null
+          };
+        });
+      }
+
       function renderRosterClassChips(force = false) {
         const root = $("rosterClassChips");
         if (!root) return;
         if (!force && root.querySelector(".chip-edit")) return;
-        const active = activeClassesForGrade(classSettings.classGrade);
-        if (!active.length) {
+        const grade = classSettings.classGrade;
+        const slots = rosterSlotsForGrade(grade);
+        if (!slots.length) {
           root.replaceChildren();
           const list = $("rosterList");
           if (list) list.innerHTML = "";
@@ -3189,16 +3300,23 @@
           syncStudentCountInput(0);
           return;
         }
-        if (!rosterClassId || !active.some((c) => c.id === rosterClassId)) {
-          rosterClassId = activeClassId && active.some((c) => c.id === activeClassId)
-            ? activeClassId
-            : active[0].id;
+        const savedIds = slots.filter((s) => s.id).map((s) => s.id);
+        if (!rosterClassId || !savedIds.includes(rosterClassId)) {
+          rosterClassId =
+            (activeClassId && savedIds.includes(activeClassId) ? activeClassId : null) ||
+            savedIds[0] ||
+            null;
         }
 
         if (!root.dataset.delegated) {
           root.dataset.delegated = "1";
           root.addEventListener("click", (e) => {
             if (e.target.closest(".chip-edit")) return;
+            const pending = e.target.closest("[data-pending-unit]");
+            if (pending && root.contains(pending)) {
+              toast("위쪽 [학급 저장]을 누르면 반·학과가 명단에 반영됩니다.");
+              return;
+            }
             const btn = e.target.closest("[data-class-id]");
             if (!btn || !root.contains(btn)) return;
             const id = btn.getAttribute("data-class-id");
@@ -3214,13 +3332,19 @@
         }
 
         const frag = document.createDocumentFragment();
-        active.forEach((c) => {
+        slots.forEach((slot, idx) => {
           const btn = document.createElement("button");
           btn.type = "button";
-          btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
-          btn.dataset.classId = c.id;
-          btn.title = "더블클릭하여 반·학과명 수정";
-          btn.textContent = classChipLabel(c);
+          if (slot.id) {
+            btn.className = "chip-toggle" + (slot.id === rosterClassId ? " is-on" : "");
+            btn.dataset.classId = slot.id;
+            btn.title = slot.label;
+          } else {
+            btn.className = "chip-toggle is-pending";
+            btn.dataset.pendingUnit = String(idx);
+            btn.title = "학급 저장 후 사용할 수 있습니다";
+          }
+          btn.textContent = slot.label;
           frag.appendChild(btn);
         });
         root.replaceChildren(frag);
@@ -4744,32 +4868,37 @@ ${built.html}
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!classSettings.byGrade) classSettings.byGrade = {};
         let hasDept = false;
-        // 학년별 학급 슬롯(반·학과)을 DB에서 기억
-        [1, 2, 3].forEach((g) => {
-          const rows = active
-            .filter((c) => Number(c.grade) === g)
-            .sort((a, b) => {
-              const ta = a.created_at || "";
-              const tb = b.created_at || "";
-              if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
-              return Number(a.class_no) - Number(b.class_no);
-            });
-          if (!rows.length) return;
-          const bag = ensureByGradeBag(g);
-          bag.classCount = clampClassCount(rows.length);
-          bag.units = rows.map((c) => {
-            const dept = String(c.department_name || "").trim();
-            if (dept) hasDept = true;
-            return {
-              classNo: normalizeUnitClassNo(c.class_no, 1),
-              department: dept
-            };
-          });
-          syncUnitsToDepartmentsMap(g);
+        active.forEach((c) => {
+          if (String(c.department_name || "").trim()) hasDept = true;
         });
         if (hasDept) classSettings.schoolType = "vocational";
 
+        // 편집 중(needsResave)이면 로컬 반·학과 슬롯을 DB로 덮지 않음
         if (!classSettings.needsResave) {
+          [1, 2, 3].forEach((g) => {
+            const rows = active
+              .filter((c) => Number(c.grade) === g)
+              .sort((a, b) => {
+                const ta = a.created_at || "";
+                const tb = b.created_at || "";
+                if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
+                const dn = String(a.department_name || "").localeCompare(
+                  String(b.department_name || ""),
+                  "ko"
+                );
+                if (dn) return dn;
+                return Number(a.class_no) - Number(b.class_no);
+              });
+            if (!rows.length) return;
+            const bag = ensureByGradeBag(g);
+            bag.classCount = clampClassCount(rows.length);
+            bag.units = rows.map((c) => ({
+              classNo: normalizeUnitClassNo(c.class_no, 1),
+              department: String(c.department_name || "").trim()
+            }));
+            syncUnitsToDepartmentsMap(g);
+          });
+
           const cur = activeClassesForGrade(classSettings.classGrade);
           if (cur.length) {
             classSettings.classCount = clampClassCount(cur.length);
@@ -4819,44 +4948,57 @@ ${built.html}
         }
         if (error) throw error;
 
-        // 예전 학년별(mode=grade) 레코드만 비활성
+        // 학년별(mode=grade) 레코드 비활성
         await sb
           .from("classes")
           .update({ is_active: false })
           .eq("teacher_id", session.userId)
           .eq("mode", "grade");
 
-        const existingActive = (existing || [])
+        // 재사용할 행 풀: 이전에 활성이던 것 우선, 생성 시각 순
+        const pool = (existing || [])
           .filter(
             (c) =>
-              c.is_active &&
               Number(c.grade) === grade &&
               c.class_no &&
               String(c.mode || "class") !== "grade"
           )
           .sort((a, b) => {
+            if (!!a.is_active !== !!b.is_active) return a.is_active ? -1 : 1;
             const ta = a.created_at || "";
             const tb = b.created_at || "";
             if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
-            const dn = String(a.department_name || "").localeCompare(
-              String(b.department_name || ""),
-              "ko"
-            );
-            if (dn) return dn;
-            return Number(a.class_no) - Number(b.class_no);
+            return String(a.id).localeCompare(String(b.id));
           });
 
-        /*
-         * 같은 반·다른 학과(1반 미용 / 1반 조리) 저장 시
-         * 유니크 충돌을 피하려면 먼저 활성 학급을 모두 비활성(유니크 해제)한 뒤
-         * 슬롯 순서대로 다시 활성화·생성한다.
-         */
-        for (const row of existingActive) {
-          const { error: offErr } = await sb
+        function takePoolRow(unit) {
+          const classNo = Number(unit.class_no) || 1;
+          const dept = String(unit.department_name || "").trim().toLowerCase();
+          let i = pool.findIndex(
+            (c) =>
+              Number(c.class_no) === classNo &&
+              String(c.department_name || "").trim().toLowerCase() === dept
+          );
+          if (i < 0 && dept) {
+            i = pool.findIndex(
+              (c) =>
+                Number(c.class_no) === classNo &&
+                !String(c.department_name || "").trim()
+            );
+          }
+          if (i < 0) i = pool.length ? 0 : -1;
+          if (i < 0) return null;
+          return pool.splice(i, 1)[0];
+        }
+
+        // 해당 학년 활성 학급을 전부 비활성 → 유니크 슬롯 해제 + 예전 3반·4반 제거
+        {
+          const { error: offAllErr } = await sb
             .from("classes")
             .update({ is_active: false })
-            .eq("id", row.id);
-          if (offErr) throw offErr;
+            .eq("teacher_id", session.userId)
+            .eq("grade", grade);
+          if (offAllErr) throw offAllErr;
         }
 
         async function upsertClassUnit(unit, found) {
@@ -4871,16 +5013,14 @@ ${built.html}
             class_no: classNo,
             title
           };
-          const withDept = {
-            ...base,
-            department_name: dept
-          };
+          const withDept = { ...base, department_name: dept };
+
           if (found) {
             let { error: onErr } = await sb.from("classes").update(withDept).eq("id", found.id);
             if (onErr && /department_name/i.test(onErr.message || "")) {
               if (isVocational()) {
                 throw new Error(
-                  "학과명 컬럼이 없습니다. supabase-school-type.sql / supabase-class-rename.sql을 실행해 주세요."
+                  "학과명 컬럼이 없습니다. supabase-class-rename.sql을 실행해 주세요."
                 );
               }
               ({ error: onErr } = await sb.from("classes").update(base).eq("id", found.id));
@@ -4888,15 +5028,11 @@ ${built.html}
             if (onErr) {
               if (/unique|duplicate|uidx/i.test(onErr.message || "")) {
                 throw new Error(
-                  `학급 저장 충돌: ${classNo}반${dept ? ` · ${dept}` : ""}. supabase-class-rename.sql을 다시 실행해 주세요.`
+                  `같은 반·다른 학과 저장이 막혔습니다 (${classNo}반${dept ? `·${dept}` : ""}). Supabase에서 supabase-class-rename.sql을 실행한 뒤 다시 [학급 저장] 해 주세요.`
                 );
               }
               throw onErr;
             }
-            found.class_no = classNo;
-            found.department_name = dept;
-            found.title = title;
-            found.is_active = true;
             await seedLessonsForClass(found.id);
             try { await seedDefaultStudents(found.id); } catch (e) { console.warn(e); }
             if (prevNo && prevNo !== classNo) {
@@ -4918,7 +5054,7 @@ ${built.html}
           if (cErr && /department_name/i.test(cErr.message || "")) {
             if (isVocational()) {
               throw new Error(
-                "학과명 컬럼이 없습니다. supabase-school-type.sql / supabase-class-rename.sql을 실행해 주세요."
+                "학과명 컬럼이 없습니다. supabase-class-rename.sql을 실행해 주세요."
               );
             }
             const { department_name: _d, ...noDept } = insertRow;
@@ -4931,7 +5067,7 @@ ${built.html}
           if (cErr) {
             if (/unique|duplicate|uidx/i.test(cErr.message || "")) {
               throw new Error(
-                `학급 저장 충돌: ${classNo}반${dept ? ` · ${dept}` : ""}. supabase-class-rename.sql을 다시 실행해 주세요.`
+                `같은 반·다른 학과 저장이 막혔습니다 (${classNo}반${dept ? `·${dept}` : ""}). Supabase에서 supabase-class-rename.sql을 실행한 뒤 다시 [학급 저장] 해 주세요.`
               );
             }
             throw cErr;
@@ -4941,29 +5077,55 @@ ${built.html}
           return created.id;
         }
 
-        // 기존 슬롯을 순서대로 재사용 → 같은 반·다른 학과가 각각 생성됨
-        const usedIds = new Set();
+        const keptIds = [];
         for (let i = 0; i < desired.length; i++) {
-          const unit = desired[i];
-          let found = existingActive[i] || null;
-          if (found) usedIds.add(found.id);
-          if (!found) {
-            found =
-              (existing || []).find(
-                (c) =>
-                  !c.is_active &&
-                  !usedIds.has(c.id) &&
-                  Number(c.grade) === grade &&
-                  Number(c.class_no) === unit.class_no &&
-                  String(c.department_name || "").trim().toLowerCase() ===
-                    String(unit.department_name || "").trim().toLowerCase()
-              ) || null;
-            if (found) usedIds.add(found.id);
-          }
-          await upsertClassUnit(unit, found);
+          const id = await upsertClassUnit(desired[i], takePoolRow(desired[i]));
+          keptIds.push(id);
         }
 
-        // 고교 유형·학번 유형을 프로필에 저장 (컬럼 없으면 무시)
+        // 남은 활성 학급이 있으면 강제 비활성 (예전 3반·4반 잔존 방지)
+        {
+          const { data: stillOn, error: vErr } = await sb
+            .from("classes")
+            .select("id, class_no, department_name")
+            .eq("teacher_id", session.userId)
+            .eq("grade", grade)
+            .eq("is_active", true);
+          if (vErr) throw vErr;
+          const keep = new Set(keptIds);
+          for (const row of stillOn || []) {
+            if (!keep.has(row.id)) {
+              const { error: killErr } = await sb
+                .from("classes")
+                .update({ is_active: false })
+                .eq("id", row.id);
+              if (killErr) throw killErr;
+            }
+          }
+          const finalActive = (stillOn || []).filter((r) => keep.has(r.id));
+          if (finalActive.length !== desired.length) {
+            // stillOn was before kill — re-check
+            const { data: check, error: cErr } = await sb
+              .from("classes")
+              .select("id, class_no, department_name")
+              .eq("teacher_id", session.userId)
+              .eq("grade", grade)
+              .eq("is_active", true);
+            if (cErr) throw cErr;
+            if ((check || []).length !== desired.length) {
+              const got = (check || [])
+                .map((c) =>
+                  `${c.class_no}반${c.department_name ? `·${c.department_name}` : ""}`
+                )
+                .join(", ");
+              throw new Error(
+                `학급 수 불일치: 설정 ${desired.length}개 / 저장 ${(check || []).length}개 (${got || "없음"}). supabase-class-rename.sql 실행 후 다시 저장해 주세요.`
+              );
+            }
+          }
+        }
+
+        // 고교 유형·학번 유형을 프로필에 저장
         {
           const payload = {
             school_type: normalizeSchoolType(classSettings.schoolType),
@@ -4979,25 +5141,59 @@ ${built.html}
               .update({ school_type: payload.school_type })
               .eq("id", session.userId));
           }
-          if (stErr && /school_type/i.test(stErr.message || "")) {
-            /* ignore */
-          } else if (stErr) {
+          if (stErr && !/school_type/i.test(stErr.message || "")) {
             console.warn("profile 설정 저장:", stErr.message);
           }
         }
 
+        // 로컬 설정을 방금 저장한 슬롯으로 확정
+        classSettings.classCount = desired.length;
+        const bag = ensureByGradeBag(grade);
+        bag.classCount = desired.length;
+        bag.units = desired.map((u) => ({
+          classNo: Number(u.class_no) || 1,
+          department: String(u.department_name || "").trim()
+        }));
+        syncUnitsToDepartmentsMap(grade);
+        classSettings.needsResave = false;
         saveClassSettings();
+
         invalidateClassCache();
         await loadTeacherClassesFromDb();
-        const firstActive = activeClassesForGrade(grade)[0]
-          || teacherClasses.find((c) => c.is_active);
+
+        const slots = rosterSlotsForGrade(grade);
+        const firstActive = slots.find((s) => s.id)?.row || null;
         activeClassId = firstActive?.id || null;
         teacherClass = firstActive || null;
         rosterClassId = activeClassId;
+        renderRosterClassChips(true);
         if (rosterClassId) {
           try { await loadRoster(rosterClassId); } catch (e) { console.warn(e); }
         }
         return teacherClass?.id || null;
+      }
+
+      function orderClassesByUnits(grade, list) {
+        const units = isVocational() ? getGradeUnits(grade) : [];
+        if (!units.length) return list.slice();
+        const ordered = [];
+        const used = new Set();
+        units.forEach((u, idx) => {
+          const classNo = normalizeUnitClassNo(u.classNo, idx + 1);
+          const dept = String(u.department || "").trim().toLowerCase();
+          const hit = list.find(
+            (c) =>
+              !used.has(c.id) &&
+              Number(c.class_no) === classNo &&
+              String(c.department_name || "").trim().toLowerCase() === dept
+          );
+          if (hit) {
+            used.add(hit.id);
+            ordered.push(hit);
+          }
+        });
+        // 특성화고: 설정 슬롯에 없는 예전 반(3반·4반 등)은 목록에 붙이지 않음
+        return ordered;
       }
 
       async function ensureTeacherClassSeeded() {
@@ -6087,7 +6283,7 @@ ${built.html}
           toast(`학급 ${classSettings.classCount}개 저장: ${labels}`);
         } catch (e) {
           console.error(e);
-          toast("저장 실패: " + (e.message || e) + " (supabase-students.sql 실행 여부 확인)");
+          toast("저장 실패: " + (e.message || e));
         } finally {
           btn.disabled = false;
         }
