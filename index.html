@@ -963,11 +963,40 @@
       display: flex; flex-direction: column; gap: 5px;
       padding: 9px; border: 1.5px solid var(--border-default);
       border-radius: 10px; background: var(--bg-subtle); min-height: 0;
+      contain: content;
     }
     .detail-roster-cell.has-sub {
       border-color: #1f1e1d;
       background: #fff;
       box-shadow: 0 2px 0 rgba(31, 30, 29, 0.06);
+    }
+    .detail-roster-cell.is-president,
+    .detail-roster-cell.is-vice {
+      overflow: hidden;
+    }
+    .detail-roster-cell.is-president {
+      border-color: #8C4022;
+      background: #fffaf6;
+      box-shadow: inset 5px 0 0 #C96442;
+    }
+    .detail-roster-cell.is-vice {
+      border-color: #6b6358;
+      background: #faf9f6;
+      box-shadow: inset 5px 0 0 #9a8f7e;
+    }
+    .detail-roster-cell.is-president.has-sub {
+      background: #fff4ec;
+      box-shadow: inset 5px 0 0 #C96442, 0 2px 0 rgba(31, 30, 29, 0.06);
+    }
+    .detail-roster-cell.is-vice.has-sub {
+      background: #f3efe8;
+      box-shadow: inset 5px 0 0 #9a8f7e, 0 2px 0 rgba(31, 30, 29, 0.06);
+    }
+    .detail-roster-cell .officer-band {
+      margin: -9px -9px 2px;
+      min-height: 18px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
     }
     .detail-roster-cell .head {
       display: flex; align-items: center; justify-content: space-between; gap: 4px;
@@ -1025,8 +1054,19 @@
       max-width: 40%;
     }
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
+    @media (max-width: 1100px) {
+      .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
     @media (max-width: 900px) {
-      .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+      .detail-roster-cell { padding: 10px; }
+      .detail-roster-cell .officer-band {
+        margin: -10px -10px 3px;
+        min-height: 20px;
+        font-size: 10.5px;
+      }
+      .detail-roster-cell .no { font-size: 12px; }
+      .detail-roster-cell .name { font-size: 14px; }
       .detail-action-strip {
         grid-template-columns: auto minmax(0, 1fr);
         grid-template-areas:
@@ -1503,6 +1543,52 @@
       border-radius: 10px;
       background: #faf8f4;
     }
+
+    /* 학급 저장 완료: 차분한 회색·하늘색으로 ‘설정됨’ 상태 표시 */
+    .setup-frame.is-saved {
+      background:
+        linear-gradient(180deg, #f3f7fa 0%, #e8eef4 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 1px 2px rgba(70, 100, 120, 0.08),
+        0 8px 22px rgba(70, 100, 120, 0.07);
+    }
+    .setup-frame.is-saved .setup-panel {
+      border-color: #c5d2de;
+      background: #f7fafc;
+    }
+    .setup-frame.is-saved .setup-panel-head {
+      background: #e7eef5;
+      border-bottom-color: #d0dbe5;
+    }
+    .setup-frame.is-saved .setup-type-grade {
+      border-color: #c5d2de;
+      background: #eaf2f8;
+    }
+    .setup-frame.is-saved .setup-type-grade > .setup-field,
+    .setup-frame.is-saved .setup-type-grade > .setup-field:first-child {
+      background: #f4f8fb;
+    }
+    .setup-frame.is-saved .setup-type-grade > .setup-field + .setup-field {
+      border-left-color: #c5d2de;
+      background: #f4f8fb;
+    }
+    .setup-frame.is-saved .setup-field--count .class-count-control {
+      border-color: #b7c9d8;
+      background: #e4f0f8;
+    }
+    .setup-frame.is-saved .roster-controls {
+      background: #f7fafc;
+    }
+    .setup-frame.is-saved .dept-row {
+      border-color: #c5d2de;
+      background: #f4f8fb;
+    }
+    @media (max-width: 1024px) {
+      .setup-frame.is-saved .setup-type-grade > .setup-field + .setup-field {
+        border-top-color: #c5d2de;
+      }
+    }
     .dept-box[hidden] { display: none !important; }
     .dept-fields {
       display: grid;
@@ -1972,9 +2058,23 @@
         width: 100%; min-height: 44px; font-size: 14px;
       }
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .detail-roster-cell { padding: 10px; }
+      .detail-roster-cell { padding: 10px; gap: 6px; }
+      .detail-roster-cell .officer-band {
+        margin: -10px -10px 4px;
+        min-height: 22px;
+        font-size: 11px;
+        letter-spacing: 0.16em;
+      }
+      .detail-roster-cell.is-president { box-shadow: inset 6px 0 0 #C96442; }
+      .detail-roster-cell.is-vice { box-shadow: inset 6px 0 0 #9a8f7e; }
+      .detail-roster-cell.is-president.has-sub {
+        box-shadow: inset 6px 0 0 #C96442, 0 2px 0 rgba(31, 30, 29, 0.06);
+      }
+      .detail-roster-cell.is-vice.has-sub {
+        box-shadow: inset 6px 0 0 #9a8f7e, 0 2px 0 rgba(31, 30, 29, 0.06);
+      }
       .detail-roster-cell .name { font-size: 14px; }
-      .detail-sub-actions button { font-size: 12px; min-height: 32px; }
+      .detail-sub-actions button { font-size: 12px; min-height: 36px; }
       .batch-sheet {
         padding: 0;
         align-items: stretch;
@@ -2896,32 +2996,49 @@
         if (root) root.classList.toggle("is-picking", !!officerPickMode);
       }
 
+      function paintOfficerBandOnCell(cell, officers) {
+        if (!cell) return;
+        const id = cell.getAttribute("data-id");
+        const isP = !!(id && id === officers.president);
+        const isV = !!(id && id === officers.vice);
+        cell.classList.toggle("is-president", isP);
+        cell.classList.toggle("is-vice", isV);
+        let band = cell.firstElementChild;
+        const hasBand = band && band.classList.contains("officer-band");
+        if (isP || isV) {
+          const label = isP ? "반장" : "부반장";
+          const cls = isP ? "officer-band officer-band--president" : "officer-band officer-band--vice";
+          if (!hasBand) {
+            band = document.createElement("div");
+            band.setAttribute("aria-hidden", "true");
+            cell.insertBefore(band, cell.firstChild);
+          }
+          if (band.className !== cls) band.className = cls;
+          if (band.textContent !== label) band.textContent = label;
+        } else if (hasBand) {
+          band.remove();
+        }
+      }
+
       function applyOfficerBands() {
-        const root = $("rosterList");
-        if (!root) return;
-        const o = getClassOfficers(rosterClassId);
-        const cells = root.querySelectorAll(".roster-cell");
-        for (let i = 0; i < cells.length; i++) {
-          const cell = cells[i];
-          const id = cell.getAttribute("data-id");
-          const isP = !!(id && id === o.president);
-          const isV = !!(id && id === o.vice);
-          cell.classList.toggle("is-president", isP);
-          cell.classList.toggle("is-vice", isV);
-          let band = cell.firstElementChild;
-          const hasBand = band && band.classList.contains("officer-band");
-          if (isP || isV) {
-            const label = isP ? "반장" : "부반장";
-            const cls = isP ? "officer-band officer-band--president" : "officer-band officer-band--vice";
-            if (!hasBand) {
-              band = document.createElement("div");
-              band.setAttribute("aria-hidden", "true");
-              cell.insertBefore(band, cell.firstChild);
+        if (rosterClassId) {
+          const o = getClassOfficers(rosterClassId);
+          const root = $("rosterList");
+          if (root) {
+            const cells = root.querySelectorAll(".roster-cell");
+            for (let i = 0; i < cells.length; i++) paintOfficerBandOnCell(cells[i], o);
+          }
+        }
+        // 제출 현황에도 동일 학급의 반장·부반장 반영
+        const detailClassId = activeClassId || teacherClass?.id || null;
+        if (detailClassId) {
+          const detailRoot = $("detailRosterGrid");
+          if (detailRoot) {
+            const detailOfficers = getClassOfficers(detailClassId);
+            const detailCells = detailRoot.querySelectorAll(".detail-roster-cell[data-id]");
+            for (let i = 0; i < detailCells.length; i++) {
+              paintOfficerBandOnCell(detailCells[i], detailOfficers);
             }
-            if (band.className !== cls) band.className = cls;
-            if (band.textContent !== label) band.textContent = label;
-          } else if (hasBand) {
-            band.remove();
           }
         }
         syncOfficerPickButtons();
@@ -3293,12 +3410,21 @@
         return teacherClasses.some((c) => c.is_active && c.class_no);
       }
 
+      function syncSetupSavedAppearance() {
+        const frame = document.querySelector(".setup-frame");
+        if (!frame) return;
+        // 저장 완료(학급 있음 + 미수정)일 때만 쿨톤 배경
+        const saved = isClassSettingsReady() && !classSettings.needsResave;
+        frame.classList.toggle("is-saved", saved);
+      }
+
       function updateSetupLaunchHint() {
         const hint = $("setupLaunchHint");
         if (!hint) return;
         hint.textContent = isClassSettingsReady()
           ? formatClassSettingsSummary()
           : "학급을 먼저 지정해 주세요";
+        syncSetupSavedAppearance();
       }
 
       function showRightPanel(mode) {
@@ -3618,6 +3744,7 @@
         input.value = String(next);
         renderDeptFields();
         renderRosterClassChips();
+        syncSetupSavedAppearance();
       }
 
       function changeClassGrade(g) {
@@ -6577,9 +6704,11 @@ ${built.html}
           grid.innerHTML = `<p class="settings-sub" style="grid-column:1/-1">명단이 없습니다. 초기 설정에서 학급을 저장해 주세요.</p>`;
           return;
         }
-        const meta = classMetaById(activeClassId || teacherClass?.id);
+        const classId = activeClassId || teacherClass?.id || null;
+        const meta = classMetaById(classId);
         const grade = meta?.grade || 1;
         const classNo = meta?.class_no || 1;
+        const officers = getClassOfficers(classId);
         const parts = new Array(students.length);
         for (let i = 0; i < students.length; i++) {
           const st = students[i];
@@ -6597,8 +6726,17 @@ ${built.html}
                  <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
                </div>`
             : "";
+          const isP = !!(st.id && st.id === officers.president);
+          const isV = !!(st.id && st.id === officers.vice);
+          const bandHtml = isP
+            ? `<div class="officer-band officer-band--president" aria-hidden="true">반장</div>`
+            : isV
+              ? `<div class="officer-band officer-band--vice" aria-hidden="true">부반장</div>`
+              : "";
+          const officerCls = isP ? " is-president" : isV ? " is-vice" : "";
           parts[i] = `
-            <div class="detail-roster-cell${latest ? " has-sub" : ""}">
+            <div class="detail-roster-cell${latest ? " has-sub" : ""}${officerCls}" data-id="${st.id || ""}">
+              ${bandHtml}
               <div class="head">
                 <span class="no">${escapeHtml(key || st.student_no)}</span>
                 <span class="dot" aria-hidden="true" title="${latest ? "제출됨" : "미제출"}"></span>
@@ -7083,6 +7221,7 @@ ${built.html}
             setGradeUnit(classSettings.classGrade, idx, { department: input.value });
           }
           classSettings.needsResave = true;
+          syncSetupSavedAppearance();
           // 칩 갱신은 프레임당 1회, 로컬 저장은 더 느리게
           if (!deptChipRaf) {
             deptChipRaf = requestAnimationFrame(() => {
