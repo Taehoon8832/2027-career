@@ -1770,7 +1770,6 @@
               </div>
             </div>
             <div class="setup-panel-body">
-              <p class="dept-hint" id="deptHint">학급 수만큼 반 번호와 학과명을 입력한 뒤 [학급 저장]을 누르세요. 학과가 다르면 같은 반도 가능합니다.</p>
               <div class="dept-fields" id="deptFields"></div>
             </div>
           </section>
@@ -2901,15 +2900,20 @@
         classSettings.classGrade = g;
 
         const fromDb = activeClassesForGrade(g);
-        const remembered = Number(classSettings.byGrade?.[String(g)]?.classCount);
+        const bag = ensureByGradeBag(g);
         if (fromDb.length) {
-          classSettings.classCount = clampClassCount(Math.max(...fromDb.map((c) => Number(c.class_no))));
-          fromDb.forEach((c) => {
-            const dept = String(c.department_name || "").trim();
-            if (dept) setDepartmentName(g, c.class_no, dept);
-          });
-        } else if (remembered) {
-          classSettings.classCount = clampClassCount(remembered);
+          classSettings.classCount = clampClassCount(fromDb.length);
+          bag.classCount = classSettings.classCount;
+          bag.units = fromDb.map((c) => ({
+            classNo: normalizeUnitClassNo(c.class_no, 1),
+            department: String(c.department_name || "").trim()
+          }));
+          syncUnitsToDepartmentsMap(g);
+        } else if (Array.isArray(bag.units) && bag.units.length) {
+          classSettings.classCount = clampClassCount(bag.units.length);
+          bag.classCount = classSettings.classCount;
+        } else if (bag.classCount) {
+          classSettings.classCount = clampClassCount(bag.classCount);
         } else {
           classSettings.classCount = 1;
         }
@@ -4795,6 +4799,9 @@ ${built.html}
         await ensureTeacherProfile();
         classSettings.mode = "class";
         const grade = Number(classSettings.classGrade) || 1;
+        rememberGradeCount();
+        const unitErr = validateVocationalUnits(grade);
+        if (unitErr) throw new Error(unitErr);
         const desired = desiredUnitsFromSettings();
         if (!desired.length) throw new Error("선택된 학급이 없습니다.");
 
@@ -4831,20 +4838,28 @@ ${built.html}
             const ta = a.created_at || "";
             const tb = b.created_at || "";
             if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
+            const dn = String(a.department_name || "").localeCompare(
+              String(b.department_name || ""),
+              "ko"
+            );
+            if (dn) return dn;
             return Number(a.class_no) - Number(b.class_no);
           });
 
-        // 학급 수보다 많은 기존 학급은 뒤에서부터 비활성 (이름 수정본 유지)
-        for (let i = desired.length; i < existingActive.length; i++) {
+        /*
+         * 같은 반·다른 학과(1반 미용 / 1반 조리) 저장 시
+         * 유니크 충돌을 피하려면 먼저 활성 학급을 모두 비활성(유니크 해제)한 뒤
+         * 슬롯 순서대로 다시 활성화·생성한다.
+         */
+        for (const row of existingActive) {
           const { error: offErr } = await sb
             .from("classes")
             .update({ is_active: false })
-            .eq("id", existingActive[i].id);
+            .eq("id", row.id);
           if (offErr) throw offErr;
         }
 
         async function upsertClassUnit(unit, found) {
-          // 학급 저장 폼이 기준 — 반 번호·학과명을 그대로 반영
           const classNo = Number(unit.class_no) || 1;
           const dept = isVocational() ? String(unit.department_name || "").trim() : "";
           const prevNo = found ? Number(found.class_no) || 0 : 0;
@@ -4863,18 +4878,25 @@ ${built.html}
           if (found) {
             let { error: onErr } = await sb.from("classes").update(withDept).eq("id", found.id);
             if (onErr && /department_name/i.test(onErr.message || "")) {
+              if (isVocational()) {
+                throw new Error(
+                  "학과명 컬럼이 없습니다. supabase-school-type.sql / supabase-class-rename.sql을 실행해 주세요."
+                );
+              }
               ({ error: onErr } = await sb.from("classes").update(base).eq("id", found.id));
             }
-            if (onErr) throw onErr;
+            if (onErr) {
+              if (/unique|duplicate|uidx/i.test(onErr.message || "")) {
+                throw new Error(
+                  `학급 저장 충돌: ${classNo}반${dept ? ` · ${dept}` : ""}. supabase-class-rename.sql을 다시 실행해 주세요.`
+                );
+              }
+              throw onErr;
+            }
             found.class_no = classNo;
             found.department_name = dept;
             found.title = title;
-            const cached = teacherClasses.find((c) => c.id === found.id);
-            if (cached) {
-              cached.class_no = classNo;
-              cached.department_name = dept;
-              cached.title = title;
-            }
+            found.is_active = true;
             await seedLessonsForClass(found.id);
             try { await seedDefaultStudents(found.id); } catch (e) { console.warn(e); }
             if (prevNo && prevNo !== classNo) {
@@ -4894,6 +4916,11 @@ ${built.html}
             .select("id")
             .single();
           if (cErr && /department_name/i.test(cErr.message || "")) {
+            if (isVocational()) {
+              throw new Error(
+                "학과명 컬럼이 없습니다. supabase-school-type.sql / supabase-class-rename.sql을 실행해 주세요."
+              );
+            }
             const { department_name: _d, ...noDept } = insertRow;
             ({ data: created, error: cErr } = await sb
               .from("classes")
@@ -4901,13 +4928,20 @@ ${built.html}
               .select("id")
               .single());
           }
-          if (cErr) throw cErr;
+          if (cErr) {
+            if (/unique|duplicate|uidx/i.test(cErr.message || "")) {
+              throw new Error(
+                `학급 저장 충돌: ${classNo}반${dept ? ` · ${dept}` : ""}. supabase-class-rename.sql을 다시 실행해 주세요.`
+              );
+            }
+            throw cErr;
+          }
           await seedLessonsForClass(created.id);
           try { await seedDefaultStudents(created.id); } catch (e) { console.warn(e); }
           return created.id;
         }
 
-        // 설정 칸(학급 수·반·학과) 순서대로 저장
+        // 기존 슬롯을 순서대로 재사용 → 같은 반·다른 학과가 각각 생성됨
         const usedIds = new Set();
         for (let i = 0; i < desired.length; i++) {
           const unit = desired[i];
@@ -4923,15 +4957,7 @@ ${built.html}
                   Number(c.class_no) === unit.class_no &&
                   String(c.department_name || "").trim().toLowerCase() ===
                     String(unit.department_name || "").trim().toLowerCase()
-              ) ||
-              (existing || []).find(
-                (c) =>
-                  !c.is_active &&
-                  !usedIds.has(c.id) &&
-                  Number(c.grade) === grade &&
-                  Number(c.class_no) === unit.class_no
-              ) ||
-              null;
+              ) || null;
             if (found) usedIds.add(found.id);
           }
           await upsertClassUnit(unit, found);
