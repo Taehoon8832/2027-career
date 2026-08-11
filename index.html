@@ -994,25 +994,12 @@
       font-size: 11px;
       white-space: nowrap;
     }
-    .hakbun-type-block .btn-save-class {
-      height: 34px;
-      padding: 0 16px;
-      border: 0;
-      border-radius: 10px;
-      background: linear-gradient(145deg, #d88861, #c96442 50%, #8c4022);
-      color: #fff;
-      font: 800 13px/1 var(--font-sans);
-      letter-spacing: -0.01em;
-      cursor: pointer;
-      white-space: nowrap;
-      justify-self: stretch;
-      width: 100%;
-      min-width: 108px;
-      box-shadow: 0 3px 10px rgba(201, 100, 66, 0.28);
-      touch-action: manipulation;
+    #studentCountControl .btn-save-class {
+      flex: 1 1 auto;
+      min-width: 96px;
+      max-width: 140px;
+      margin-left: auto;
     }
-    .hakbun-type-block .btn-save-class:hover { filter: brightness(1.04); }
-    .hakbun-type-block .btn-save-class:disabled { opacity: 0.6; cursor: wait; }
     #rosterClassChips {
       gap: 6px;
     }
@@ -1543,10 +1530,11 @@
         height: 38px;
         font-size: 13px;
       }
-      .hakbun-type-block .btn-save-class {
-        min-height: 44px;
-        height: 44px;
-        font-size: 15px;
+      #studentCountControl .btn-save-class {
+        min-height: 42px;
+        height: 42px;
+        font-size: 14px;
+        max-width: none;
       }
       #rosterClassChips .chip-toggle {
         min-height: 36px;
@@ -1687,8 +1675,10 @@
         font-size: 12.5px;
         padding: 0 8px;
       }
-      .hakbun-type-block .btn-save-class {
-        width: 100%;
+      #studentCountControl .btn-save-class {
+        flex: 1 1 100%;
+        max-width: none;
+        margin-left: 0;
         min-height: 48px;
         height: 48px;
         font-size: 15px;
@@ -1880,7 +1870,7 @@
       .setup-panel-body { padding: 8px 10px; }
       .dept-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .roster-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-      .hakbun-type-block .btn-save-class { min-height: 40px; height: 40px; }
+      #studentCountControl .btn-save-class { min-height: 40px; height: 40px; }
       .batch-sheet-panel { max-height: 100dvh; }
       #rosterClassChips .chip-toggle {
         flex: 1 1 calc(33.33% - 6px);
@@ -1893,7 +1883,7 @@
       .setup-launch:hover,
       .topbar .btn-tiny:hover,
       .btn-batch-input:hover,
-      .hakbun-type-block .btn-save-class:hover { transform: none; filter: none; }
+      #studentCountControl .btn-save-class:hover { transform: none; filter: none; }
       .chip-toggle,
       .btn-batch-input,
       .btn-save-inline,
@@ -2090,7 +2080,6 @@
                   <button type="button" class="chip-toggle" data-no-format="type1" title="유형1(5자리): 학년+반(2)+번호(2) → 10203">유형1(5자리) 10203</button>
                   <button type="button" class="chip-toggle" data-no-format="type2" title="유형2(4자리): 학년+반+번호(2) → 1203">유형2(4자리) 1203</button>
                 </div>
-                <button type="button" class="btn-save-inline btn-save-class" id="btnSaveClassSettings">학급 저장</button>
               </div>
             </div>
             <div class="setup-panel-body roster-panel-body">
@@ -2105,7 +2094,7 @@
                     <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
                     <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
                     <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
-                    <button type="button" class="btn-save-inline" id="btnApplyStudentCount">적용</button>
+                    <button type="button" class="btn-save-inline btn-save-class" id="btnSaveClassSettings">학급 저장</button>
                   </div>
                 </div>
               </div>
@@ -4738,8 +4727,6 @@ ${built.html}
           return;
         }
         studentCountBusy = true;
-        const btn = $("btnApplyStudentCount");
-        if (btn) btn.disabled = true;
         try {
           if (target > current) {
             const ok = await addRosterStudents(target - current, { quiet: true, skipReload: true });
@@ -4760,7 +4747,6 @@ ${built.html}
           syncStudentCountInput();
         } finally {
           studentCountBusy = false;
-          if (btn) btn.disabled = false;
         }
       }
 
@@ -6661,9 +6647,6 @@ ${built.html}
       });
       $("btnStudentCountMinus")?.addEventListener("click", () => adjustStudentCount(-1));
       $("btnStudentCountPlus")?.addEventListener("click", () => adjustStudentCount(1));
-      $("btnApplyStudentCount")?.addEventListener("click", () => {
-        void applyStudentCount($("studentCountInput")?.value);
-      });
       $("btnBatchNameInput")?.addEventListener("click", () => openBatchNameInput());
       $("btnBatchClose")?.addEventListener("click", () => closeBatchNameInput());
       $("btnBatchUndo")?.addEventListener("click", () => applyBatchUndo());
