@@ -9,10 +9,16 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&display=swap" />
+  <!-- 폰트는 화면을 막지 않도록 비동기 로드 (시스템 폰트로 먼저 그림) -->
+  <link rel="preload" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" media="print" onload="this.media='all'" />
+  <noscript>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" />
+  </noscript>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./vendor/qrcode.min.js"></script>
+  <!-- qrcode는 필요할 때만 로드 -->
   <!-- xlsx는 다운로드 시에만 지연 로드 -->
   <style>
     :root {
@@ -46,8 +52,8 @@
       --duration-base: 280ms;
       --ease-out: cubic-bezier(0.32, 0.72, 0, 1);
       --ease-bounce: cubic-bezier(0.34, 1.4, 0.64, 1);
-      --font-serif: "Noto Serif KR", "Source Serif 4", "Tiempos Text", ui-serif, Georgia, serif;
-      --font-sans: "Pretendard", "Noto Sans KR", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --font-serif: "Noto Serif KR", "Apple SD Gothic Neo", ui-serif, Georgia, serif;
+      --font-sans: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --safe-top: env(safe-area-inset-top, 0px);
       --safe-bottom: env(safe-area-inset-bottom, 0px);
       --safe-left: env(safe-area-inset-left, 0px);
@@ -369,38 +375,30 @@
     .btn-batch-input {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
-      height: 38px;
-      padding: 0 16px;
-      border: 2px solid #e11d48;
-      border-radius: 999px;
-      background: linear-gradient(145deg, #ef4444, #dc2626 45%, #b91c1c);
-      color: #fff;
-      font: 800 13px/1 var(--font-sans);
+      gap: 6px;
+      height: 30px;
+      padding: 0 12px;
+      border: 1px solid #7a9e7e;
+      border-radius: 8px;
+      background: #e8f2e9;
+      color: #2f5d34;
+      font: 700 12px/1 var(--font-sans);
       letter-spacing: -0.01em;
       cursor: pointer;
       white-space: nowrap;
       touch-action: manipulation;
-      box-shadow:
-        0 0 0 3px rgba(225, 29, 72, 0.28),
-        0 6px 16px rgba(185, 28, 28, 0.4);
-      animation: batch-pulse 1.8s ease-in-out infinite;
+      box-shadow: none;
     }
     .btn-batch-input svg {
-      width: 16px; height: 16px;
+      width: 14px; height: 14px;
       stroke: currentColor; fill: none;
-      stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
     }
     .btn-batch-input:hover {
-      filter: brightness(1.06);
-      color: #fff;
-      animation: none;
+      background: #dcecde;
+      color: #244a28;
     }
     .btn-batch-input:active { transform: scale(0.98); }
-    @keyframes batch-pulse {
-      0%, 100% { box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.28), 0 6px 16px rgba(185, 28, 28, 0.4); }
-      50% { box-shadow: 0 0 0 6px rgba(225, 29, 72, 0.18), 0 8px 20px rgba(185, 28, 28, 0.45); }
-    }
     .chip-toggle.is-pending {
       border-style: dashed;
       opacity: 0.85;
@@ -967,10 +965,11 @@
     .roster-head .hakbun-type-block {
       margin: 0 0 0 auto;
       display: grid;
-      gap: 4px;
+      gap: 6px;
       justify-items: end;
-      flex: 1 1 auto;
-      min-width: 0;
+      flex: 1 1 260px;
+      min-width: min(100%, 260px);
+      max-width: 420px;
     }
     .hakbun-type-label {
       margin: 0;
@@ -987,12 +986,38 @@
       margin: 0;
       justify-content: flex-end;
       min-width: 0;
+      width: 100%;
     }
     .hakbun-type-chips .chip-toggle {
       height: 28px;
       padding: 0 9px;
       font-size: 11px;
       white-space: nowrap;
+    }
+    .hakbun-type-block .btn-save-class {
+      height: 34px;
+      padding: 0 16px;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(145deg, #d88861, #c96442 50%, #8c4022);
+      color: #fff;
+      font: 800 13px/1 var(--font-sans);
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      white-space: nowrap;
+      justify-self: stretch;
+      width: 100%;
+      min-width: 108px;
+      box-shadow: 0 3px 10px rgba(201, 100, 66, 0.28);
+      touch-action: manipulation;
+    }
+    .hakbun-type-block .btn-save-class:hover { filter: brightness(1.04); }
+    .hakbun-type-block .btn-save-class:disabled { opacity: 0.6; cursor: wait; }
+    #rosterClassChips {
+      gap: 6px;
+    }
+    #rosterClassChips .chip-toggle {
+      max-width: 100%;
     }
     .setup-launch {
       width: 100%; display: flex; align-items: center; gap: 12px;
@@ -1150,6 +1175,17 @@
       background: transparent;
       box-shadow: none;
       contain: layout style;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 800px;
+    }
+    .setup-panel {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 180px;
+    }
+    .roster-list,
+    .detail-roster-grid {
+      content-visibility: auto;
+      contain-intrinsic-size: auto 400px;
     }
     .class-settings[hidden] { display: none !important; }
     .setup-page-head {
@@ -1456,53 +1492,131 @@
       50% { transform: rotate(12deg) translateY(-3px); }
     }
     @media (prefers-reduced-motion: reduce) {
-      .hero, .hero-copy, .auth-panel, .brand-mark, .welcome-avatar, .student-card, .sub-card {
+      .hero, .hero-copy, .auth-panel, .brand-mark, .welcome-avatar, .student-card, .sub-card,
+      .btn-batch-input {
         animation: none !important; opacity: 1 !important; transform: none !important;
       }
     }
-    @media (max-width: 1100px) {
-      .dash { grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); }
-      body { font-size: 15px; }
+
+    /* —— 데스크톱 와이드 —— */
+    @media (min-width: 1280px) {
+      .dash { grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); }
+      .dept-fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .roster-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
     }
-    /* 태블릿: 분할 유지, 터치 여유 */
+
+    /* —— 노트북·작은 데스크톱 —— */
+    @media (max-width: 1279px) and (min-width: 1025px) {
+      .dash { grid-template-columns: minmax(260px, 320px) minmax(0, 1fr); }
+      .dept-fields { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+      .roster-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+
+    /* —— 태블릿 (세로·가로) —— */
     @media (max-width: 1024px) and (min-width: 769px) {
+      body { font-size: 15px; }
+      .dash { grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); }
+      .dash-list, .dash-detail { padding: 12px 14px 18px; }
       .chip-toggle { min-height: 34px; height: 34px; padding: 0 12px; font-size: 12.5px; }
-      .setup-panel-head { padding: 7px 10px; }
-      .setup-panel-body { padding: 8px 10px 10px; gap: 8px; }
-      .setup-panel-title strong { font-size: 13.5px; }
-      .dept-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .dept-row { grid-template-columns: 24px 72px minmax(0, 1fr); }
-      .class-count-control .btn-save-inline { max-width: 130px; }
+      .setup-panel-head { padding: 8px 12px; }
+      .setup-panel-body { padding: 10px 12px 12px; gap: 10px; }
+      .setup-panel-title strong { font-size: 14px; }
+      .setup-type-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .dept-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .dept-row {
+        grid-template-columns: 28px 80px minmax(0, 1fr);
+        padding: 8px;
+      }
+      .dept-row input { height: 38px; font-size: 14px; }
+      .roster-head { gap: 12px; }
+      .roster-head .hakbun-type-block {
+        flex: 1 1 100%;
+        max-width: none;
+        margin: 0;
+        justify-items: stretch;
+      }
+      .hakbun-type-label { text-align: left; font-size: 12px; }
+      .roster-head .hakbun-type-chips { justify-content: flex-start; }
+      .hakbun-type-chips .chip-toggle {
+        flex: 1 1 calc(50% - 4px);
+        min-height: 38px;
+        height: 38px;
+        font-size: 13px;
+      }
+      .hakbun-type-block .btn-save-class {
+        min-height: 44px;
+        height: 44px;
+        font-size: 15px;
+      }
+      #rosterClassChips .chip-toggle {
+        min-height: 36px;
+        height: auto;
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      .class-count-control .count-btn,
+      .class-count-control .count-input,
+      .class-count-control .btn-save-inline {
+        height: 42px;
+        font-size: 15px;
+      }
+      .class-count-control .count-btn { width: 42px; }
+      .class-count-control .count-input { width: 72px; }
+      .btn-batch-input { height: 36px; font-size: 13px; padding: 0 14px; }
+      .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: none; }
+      .roster-cell input { height: 38px; font-size: 15px; }
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; }
       .topbar-switcher select { height: 40px; font-size: 14px; }
       .detail-action-strip .qr,
       .detail-action-strip a.qr { width: 132px; height: 132px; padding: 8px; }
       .detail-action-strip .btns .btn { min-height: 44px; font-size: 14px; }
+      .batch-sheet-panel { width: min(860px, 100%); }
     }
-    /* 폰·좁은 태블릿: 단일 패널 */
-    @media (max-width: 768px) {
+
+    /* —— 모바일·좁은 태블릿: 단일 패널 —— */
+      @media (max-width: 768px) {
       body {
         font-size: 16px;
-        background-image: none; /* 패턴 제거로 스크롤 부담 감소 */
+        background-image: none;
+      }
+      .topbar,
+      .dash-mobile-tabs {
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
       }
       .hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 18px 20px; border-radius: var(--radius-lg); }
       .hero-copy h1 { font-size: clamp(26px, 7vw, 34px); }
-      .dash-mobile-tabs { display: flex; }
+      .dash-mobile-tabs {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        background: rgba(240, 238, 230, 0.96);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        padding: 8px 0 6px;
+        margin: 0;
+        gap: 6px;
+      }
       .dash { grid-template-columns: 1fr; }
       .dash-list, .dash-detail {
-        border: 0; max-height: none;
-        padding: 12px 12px calc(16px + var(--safe-bottom));
+        border: 0;
+        max-height: none;
+        padding: 8px 12px calc(20px + var(--safe-bottom));
       }
       .dash[data-panel="list"] .dash-detail { display: none; }
       .dash[data-panel="detail"] .dash-list { display: none; }
-      .topbar { gap: 6px; padding: 8px 10px; }
+      .topbar {
+        gap: 6px;
+        padding: 8px max(10px, var(--safe-right)) 8px max(10px, var(--safe-left));
+      }
       .topbar .chip { display: none; }
       .topbar-switcher { flex: 1 1 auto; min-width: 0; }
       .topbar-switcher .name { max-width: 72px; font-size: 14px; }
       .topbar-switcher select {
         height: 40px; max-width: none; flex: 1; min-width: 0;
-        font-size: 16px; /* iOS 줌 방지 */
+        font-size: 16px;
       }
       input, select, textarea { font-size: 16px; }
       .topbar-actions {
@@ -1512,65 +1626,133 @@
         padding-top: 2px;
       }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
-      .class-settings { gap: 7px; }
+      .class-settings { gap: 10px; padding-bottom: 8px; }
       .setup-page-head h2 { font-size: 18px; }
-      .setup-panel-head { padding: 7px 9px; }
-      .setup-panel-body { padding: 8px; gap: 7px; }
-      .setup-panel-title strong { font-size: 13.5px; }
-      .setup-type-grade {
-        grid-template-columns: 1fr;
-      }
+      .setup-panel { border-radius: 14px; }
+      .setup-panel-head { padding: 10px 12px; }
+      .setup-panel-body { padding: 10px 12px 12px; gap: 10px; }
+      .setup-panel-title strong { font-size: 14px; }
+      .setup-step { width: 22px; height: 22px; font-size: 12px; }
+      .setup-type-grade { grid-template-columns: 1fr; }
+      .setup-type-grade > .setup-field { padding: 10px; }
       .setup-type-grade > .setup-field + .setup-field {
         border-left: 0;
         border-top: 1.5px solid #e0d8cc;
       }
-      .dept-fields { grid-template-columns: 1fr; gap: 6px; }
-      .dept-row { grid-template-columns: 28px 76px minmax(0, 1fr); }
-      .dept-row input { height: 40px; font-size: 16px; }
+      .dept-fields { grid-template-columns: 1fr; gap: 8px; }
+      .dept-row {
+        grid-template-columns: 28px 76px minmax(0, 1fr);
+        padding: 8px;
+        gap: 8px;
+      }
+      .dept-row input { height: 42px; font-size: 16px; border-radius: 10px; }
       .dept-hint { font-size: 12px; }
-      .class-settings .settings-sub { font-size: 12px; margin-bottom: 4px; }
+      .class-settings .settings-sub { font-size: 12px; margin-bottom: 6px; }
       .chip-toggle {
-        min-height: 36px;
-        height: 36px;
-        padding: 0 12px;
+        min-height: 40px;
+        height: 40px;
+        padding: 0 14px;
         font-size: 13px;
       }
       .roster-head {
         align-items: stretch;
+        gap: 10px;
       }
+      .roster-head .setup-panel-title { width: 100%; }
       .roster-head .hakbun-type-block {
-        margin-left: 0;
+        margin: 0;
         justify-items: stretch;
         width: 100%;
+        max-width: none;
+        flex: 1 1 100%;
       }
-      .hakbun-type-label { text-align: left; }
+      .hakbun-type-label {
+        text-align: left;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+      .hakbun-type-label .hakbun-type-ex { display: inline; }
       .roster-head .hakbun-type-chips {
-        margin-left: 0;
-        justify-content: flex-start;
+        margin: 0;
+        justify-content: stretch;
         width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
       }
       .hakbun-type-chips .chip-toggle {
-        flex: 1 1 calc(50% - 3px);
-        min-height: 34px;
-        height: 34px;
-        font-size: 12px;
+        width: 100%;
+        min-height: 42px;
+        height: 42px;
+        font-size: 12.5px;
+        padding: 0 8px;
       }
-      .class-count-control { flex-wrap: wrap; gap: 6px; }
+      .hakbun-type-block .btn-save-class {
+        width: 100%;
+        min-height: 48px;
+        height: 48px;
+        font-size: 15px;
+        border-radius: 12px;
+      }
+      .roster-controls { padding: 10px 12px 12px; gap: 12px; }
+      #rosterClassChips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      #rosterClassChips .chip-toggle {
+        flex: 1 1 calc(50% - 6px);
+        min-width: calc(50% - 6px);
+        min-height: 42px;
+        height: auto;
+        padding: 10px 12px;
+        font-size: 13px;
+        white-space: normal;
+        text-align: center;
+        line-height: 1.25;
+      }
+      .class-count-control { flex-wrap: wrap; gap: 8px; }
       .class-count-control .count-input,
       .class-count-control .count-btn,
       .class-count-control .btn-save-inline {
-        height: 40px; font-size: 16px;
+        height: 44px; font-size: 16px;
       }
-      .class-count-control .count-btn { width: 40px; }
-      .class-count-control .count-input { width: 64px; }
+      .class-count-control .count-btn { width: 44px; }
+      .class-count-control .count-input { width: 72px; }
       .class-count-control .btn-save-inline {
         flex: 1 1 100%;
         max-width: none;
         margin-left: 0;
+        min-height: 44px;
       }
-      .setup-field--count .class-count-control { padding: 7px; }
+      .setup-field--count .class-count-control { padding: 8px; }
+      .roster-board-bar {
+        flex-wrap: nowrap;
+        gap: 8px;
+        padding: 8px 12px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+      .roster-board-bar strong { font-size: 13px; }
+      .btn-batch-input {
+        height: 36px;
+        font-size: 12.5px;
+        padding: 0 12px;
+        flex-shrink: 0;
+      }
+      .roster-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        max-height: none;
+        gap: 8px;
+        padding: 10px;
+      }
+      .roster-cell { padding: 10px; gap: 6px; }
+      .roster-cell .no { font-size: 13px; }
+      .roster-dept { font-size: 11px; max-width: 55%; padding: 3px 7px; }
+      .roster-cell input { height: 40px; font-size: 16px; }
       .detail-filter { gap: 6px; padding: 8px; }
-      .detail-filter .chip-toggle { min-height: 38px; font-size: 13px; }
+      .detail-filter .chip-toggle { min-height: 40px; font-size: 13px; }
       .detail-action-strip {
         grid-template-columns: auto minmax(0, 1fr);
         grid-template-areas:
@@ -1581,8 +1763,8 @@
       }
       .detail-action-strip .qr,
       .detail-action-strip a.qr {
-        width: 128px; height: 128px;
-        min-width: 128px; min-height: 128px;
+        width: 112px; height: 112px;
+        min-width: 112px; min-height: 112px;
         padding: 8px;
       }
       .detail-action-strip .code-row strong { font-size: 15px; word-break: break-all; }
@@ -1597,31 +1779,34 @@
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
       .detail-roster-cell { padding: 10px; }
       .detail-roster-cell .name { font-size: 14px; }
-      .detail-sub-actions button { font-size: 12px; min-height: 28px; }
-      .roster-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
-      .roster-cell { padding: 8px; gap: 5px; }
-      .roster-cell .no { font-size: 12px; }
-      .roster-dept { font-size: 10px; max-width: 50%; padding: 3px 7px; }
-      .roster-cell input { height: 36px; font-size: 16px; }
-      .roster-board-bar { flex-wrap: wrap; gap: 4px 6px; }
-      .roster-class-head { width: 100%; }
-      .btn-batch-input {
-        height: 44px;
-        font-size: 14px;
-        padding: 0 16px;
-        flex: 1 1 auto;
-        min-width: 140px;
-        justify-content: center;
-        border-width: 2px;
+      .detail-sub-actions button { font-size: 12px; min-height: 32px; }
+      .batch-sheet {
+        padding: 0;
+        align-items: stretch;
       }
-      .batch-sheet { padding: 0; }
-      .batch-sheet-panel { width: 100%; max-height: 100dvh; border-radius: 0; border-width: 0; }
-      .batch-sheet-head { padding: 10px; gap: 6px; }
-      .batch-sheet-head h3 { font-size: 16px; width: 100%; }
+      .batch-sheet-panel {
+        width: 100%;
+        max-height: 100dvh;
+        height: 100dvh;
+        border-radius: 0;
+        border-width: 0;
+      }
+      .batch-sheet-head {
+        padding: 10px max(10px, var(--safe-right)) 10px max(10px, var(--safe-left));
+        gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #fff;
+      }
+      .batch-sheet-head h3 { font-size: 17px; width: 100%; }
       .batch-sheet-head .sub { width: 100%; font-size: 12px; }
       .batch-sheet-actions { width: 100%; }
-      .batch-sheet-actions .btn-tiny { flex: 1; min-height: 42px; font-size: 14px; }
-      .batch-grid .cell-b input { height: 42px; font-size: 16px; }
+      .batch-sheet-actions .btn-tiny { flex: 1; min-height: 44px; font-size: 14px; }
+      .batch-sheet-body {
+        padding-bottom: calc(12px + var(--safe-bottom));
+      }
+      .batch-grid .cell-b input { height: 44px; font-size: 16px; }
       .batch-grid .cell-a { font-size: 13px; padding: 10px; }
       .batch-fill-handle { width: 14px; height: 14px; right: 3px; bottom: 3px; }
       .roster-chip-hint { font-size: 11px; line-height: 1.4; }
@@ -1629,26 +1814,90 @@
       .setup-launch-copy strong { font-size: 15px; }
       .lesson-meta strong { font-size: 14px; }
       .lesson-meta small { font-size: 12px; -webkit-line-clamp: 2; }
-      .sub-viewer { padding: 8px; align-items: stretch; }
+      .sub-viewer {
+        padding: max(8px, var(--safe-top)) max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
+        align-items: stretch;
+      }
       .sub-viewer-panel {
         width: 100%; height: auto; min-height: 70dvh; max-height: 92dvh;
         border-radius: 14px;
       }
       .brand-mark { animation: none; }
       .dash-mobile-tabs button { min-height: 44px; font-size: 14px; }
+      .toast {
+        bottom: calc(16px + var(--safe-bottom));
+        max-width: calc(100% - 24px);
+        font-size: 14px;
+      }
     }
-    @media (max-width: 420px) {
+
+    /* —— 작은 폰 —— */
+    @media (max-width: 480px) {
       .topbar-title { display: none; }
+      .setup-page-head h2 { font-size: 17px; }
+      .hakbun-type-chips .chip-toggle { font-size: 11.5px; padding: 0 6px; }
+      #rosterClassChips .chip-toggle {
+        flex: 1 1 100%;
+        min-width: 100%;
+      }
+      .dept-row { grid-template-columns: 24px 68px minmax(0, 1fr); }
+      .detail-action-strip {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+          "qr"
+          "btns"
+          "meta";
+      }
+      .detail-action-strip .qr,
+      .detail-action-strip a.qr {
+        width: min(160px, 100%);
+        height: auto;
+        aspect-ratio: 1;
+        min-width: 0;
+        min-height: 0;
+        margin: 0 auto;
+      }
+      .roster-board-bar { flex-wrap: wrap; }
+      .btn-batch-input { width: 100%; justify-content: center; height: 40px; }
+    }
+
+    @media (max-width: 420px) {
       .topbar-switcher .name,
       .topbar-switcher .dot { display: none; }
       .auth-actions { grid-template-columns: 1fr; }
       .class-code-bar .hint { display: none; }
       .detail-roster-grid { grid-template-columns: 1fr 1fr; }
     }
+
+    /* —— 모바일 가로 —— */
+    @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
+      .dash-mobile-tabs { display: flex; }
+      .dash { grid-template-columns: 1fr; }
+      .dash[data-panel="list"] .dash-detail { display: none; }
+      .dash[data-panel="detail"] .dash-list { display: none; }
+      .topbar { min-height: 44px; padding: 4px 10px; }
+      .topbar-actions { width: auto; order: 0; padding-top: 0; }
+      .setup-panel-body { padding: 8px 10px; }
+      .dept-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .roster-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .hakbun-type-block .btn-save-class { min-height: 40px; height: 40px; }
+      .batch-sheet-panel { max-height: 100dvh; }
+      #rosterClassChips .chip-toggle {
+        flex: 1 1 calc(33.33% - 6px);
+        min-width: calc(33.33% - 6px);
+      }
+    }
+
     @media (hover: none) {
       .lesson-item:hover,
       .setup-launch:hover,
-      .topbar .btn-tiny:hover { transform: none; }
+      .topbar .btn-tiny:hover,
+      .btn-batch-input:hover,
+      .hakbun-type-block .btn-save-class:hover { transform: none; filter: none; }
+      .chip-toggle,
+      .btn-batch-input,
+      .btn-save-inline,
+      .count-btn { min-height: 40px; }
     }
   </style>
 </head>
@@ -1795,8 +2044,8 @@
             <div class="setup-panel-body">
               <div class="setup-type-grade">
                 <div class="setup-field">
-                  <p class="settings-sub">학과</p>
-                  <div class="chip-row" id="schoolTypeChips" role="group" aria-label="학과">
+                  <p class="settings-sub">고교 유형</p>
+                  <div class="chip-row" id="schoolTypeChips" role="group" aria-label="고교 유형">
                     <button type="button" class="chip-toggle" data-school-type="general">학과 없음</button>
                     <button type="button" class="chip-toggle" data-school-type="vocational">학과 있음</button>
                   </div>
@@ -1812,7 +2061,6 @@
                   <button type="button" class="count-btn" id="btnClassCountMinus" aria-label="학급 수 줄이기">−</button>
                   <input id="classCountInput" class="count-input" type="number" min="1" max="10" step="1" inputmode="numeric" value="1" aria-label="학급 수" />
                   <button type="button" class="count-btn" id="btnClassCountPlus" aria-label="학급 수 늘리기">+</button>
-                  <button type="button" class="btn-save-inline" id="btnSaveClassSettings">학급 저장</button>
                 </div>
               </div>
             </div>
@@ -1842,23 +2090,13 @@
                   <button type="button" class="chip-toggle" data-no-format="type1" title="유형1(5자리): 학년+반(2)+번호(2) → 10203">유형1(5자리) 10203</button>
                   <button type="button" class="chip-toggle" data-no-format="type2" title="유형2(4자리): 학년+반+번호(2) → 1203">유형2(4자리) 1203</button>
                 </div>
+                <button type="button" class="btn-save-inline btn-save-class" id="btnSaveClassSettings">학급 저장</button>
               </div>
             </div>
             <div class="setup-panel-body roster-panel-body">
               <div class="roster-controls">
                 <div class="setup-field">
-                  <div class="roster-class-head">
-                    <p class="settings-sub">반 선택</p>
-                    <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
-                      <svg viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M4 4h7v7H4z"/>
-                        <path d="M13 4h7v7h-7z"/>
-                        <path d="M4 13h7v7H4z"/>
-                        <path d="M13 13h7v7h-7z"/>
-                      </svg>
-                      [일괄 입력]
-                    </button>
-                  </div>
+                  <p class="settings-sub">반 선택</p>
                   <div class="chip-row" id="rosterClassChips"></div>
                 </div>
                 <div class="setup-field setup-field--count">
@@ -1876,6 +2114,15 @@
                   <strong>학생 카드</strong>
                   <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
                   <span class="grow" aria-hidden="true"></span>
+                  <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 4h7v7H4z"/>
+                      <path d="M13 4h7v7h-7z"/>
+                      <path d="M4 13h7v7H4z"/>
+                      <path d="M13 13h7v7h-7z"/>
+                    </svg>
+                    일괄 입력
+                  </button>
                 </div>
                 <div class="roster-list" id="rosterList"></div>
               </div>
@@ -2049,10 +2296,14 @@
       const lessonsCache = new Map(); // classId -> lessons[]
       const studentsCache = new Map(); // classId -> students[]
       const subCountCache = new Map(); // lessonId -> count
+      const studentsSeeded = new Set(); // classId — 빈 학급 시드 완료
+      const hakbunMigrated = new Set(); // classId — 학번 변환 완료
+      let qrcodeLoadPromise = null;
       let switchSeq = 0;
       let listRenderSeq = 0;
       let topbarSwitchTimer = 0;
       let xlsxLoadPromise = null;
+      let rosterLoadSeq = 0;
       let undoStack = [];
       let activityCssCache = null;
       let activityCssPromise = null;
@@ -2250,6 +2501,25 @@
         syncUnitsToDepartmentsMap(grade);
       }
 
+      /** 화면 입력값을 저장 전에 로컬 슬롯에 즉시 반영 (디바운스 유실 방지) */
+      function flushDeptFieldsFromDom() {
+        const root = $("deptFields");
+        if (!root || !root.querySelector("input[data-unit-index]")) return;
+        const grade = classSettings.classGrade;
+        getGradeUnits(grade);
+        root.querySelectorAll("input[data-unit-index]").forEach((input) => {
+          const idx = Number(input.dataset.unitIndex);
+          if (!Number.isFinite(idx)) return;
+          if (input.classList.contains("dept-class-no")) {
+            setGradeUnit(grade, idx, { classNo: input.value });
+          } else if (input.classList.contains("dept-name")) {
+            setGradeUnit(grade, idx, { department: input.value });
+          }
+        });
+        rememberGradeCount();
+        persistClassSettingsLocal();
+      }
+
       function departmentNameFor(grade, classNo, row) {
         const fromRow = String(row?.department_name || "").trim();
         if (fromRow) return fromRow;
@@ -2260,20 +2530,28 @@
           );
           if (matches.length === 1) return String(matches[0].department || "").trim();
         }
-        const map = getDepartmentsMap(grade);
-        return String(map[String(classNo)] || "").trim();
+        return "";
       }
 
-      function setDepartmentName(grade, classNo, name) {
+      function setDepartmentName(grade, classNo, name, prevDept = null) {
         const cleaned = String(name || "").trim();
-        const map = getDepartmentsMap(grade);
-        if (cleaned) map[String(classNo)] = cleaned;
-        else delete map[String(classNo)];
         const units = ensureByGradeBag(grade).units;
-        if (Array.isArray(units)) {
-          const u = units.find((x) => normalizeUnitClassNo(x.classNo, -1) === Number(classNo));
+        if (Array.isArray(units) && units.length) {
+          let u = null;
+          if (prevDept != null) {
+            const prev = String(prevDept || "").trim().toLowerCase();
+            u = units.find(
+              (x) =>
+                normalizeUnitClassNo(x.classNo, -1) === Number(classNo) &&
+                String(x.department || "").trim().toLowerCase() === prev
+            );
+          }
+          if (!u) {
+            u = units.find((x) => normalizeUnitClassNo(x.classNo, -1) === Number(classNo));
+          }
           if (u) u.department = cleaned;
         }
+        syncUnitsToDepartmentsMap(grade);
       }
 
       function persistClassSettingsLocal() {
@@ -2441,7 +2719,7 @@
         }
 
         const g = Number(gradeSel.value) || curGrade;
-        const classes = activeClassesForGrade(g);
+        const classes = orderClassesByUnits(g, activeClassesForGrade(g));
         classSel.innerHTML = classes.length
           ? classes
               .map((c) => {
@@ -2725,6 +3003,7 @@
 
       async function convertAllClassesHakbunFormat(format, preferClassId) {
         const fmt = normalizeStudentNoFormat(format);
+        hakbunMigrated.clear();
         const ids = teacherClasses
           .filter((c) => c.is_active && c.class_no)
           .map((c) => c.id)
@@ -2823,15 +3102,20 @@
         box.hidden = false;
         const grade = classSettings.classGrade;
         const units = getGradeUnits(grade);
-        const activeEl = document.activeElement;
-        const activeKey =
-          activeEl && root.contains(activeEl) && activeEl.dataset?.unitKey
-            ? activeEl.dataset.unitKey
-            : "";
-        const activePos =
-          activeEl && root.contains(activeEl) && typeof activeEl.selectionStart === "number"
-            ? activeEl.selectionStart
-            : null;
+        const existing = root.querySelectorAll(".dept-row");
+        // 슬롯 수가 같으면 DOM 재생성 없이 값만 갱신 (입력 중 버벅임 방지)
+        if (existing.length === units.length) {
+          units.forEach((u, idx) => {
+            const row = existing[idx];
+            const no = row.querySelector(".dept-class-no");
+            const name = row.querySelector(".dept-name");
+            const slot = row.querySelector(".dept-slot");
+            if (slot) slot.textContent = `${idx + 1}`;
+            if (no && document.activeElement !== no) no.value = String(u.classNo || idx + 1);
+            if (name && document.activeElement !== name) name.value = String(u.department || "");
+          });
+          return;
+        }
 
         const frag = document.createDocumentFragment();
         units.forEach((u, idx) => {
@@ -2845,7 +3129,8 @@
 
           const classWrap = document.createElement("label");
           classWrap.className = "dept-class-wrap";
-          classWrap.innerHTML = `<span>반</span>`;
+          const classLabel = document.createElement("span");
+          classLabel.textContent = "반";
           const classInput = document.createElement("input");
           classInput.type = "text";
           classInput.inputMode = "numeric";
@@ -2857,11 +3142,12 @@
           classInput.dataset.unitKey = `no-${idx}`;
           classInput.value = String(u.classNo || idx + 1);
           classInput.setAttribute("aria-label", `${grade}학년 ${idx + 1}번째 학급 반 번호`);
-          classWrap.appendChild(classInput);
+          classWrap.append(classLabel, classInput);
 
           const nameWrap = document.createElement("label");
           nameWrap.className = "dept-name-wrap";
-          nameWrap.innerHTML = `<span>학과</span>`;
+          const nameLabel = document.createElement("span");
+          nameLabel.textContent = "학과";
           const nameInput = document.createElement("input");
           nameInput.type = "text";
           nameInput.className = "dept-name";
@@ -2872,26 +3158,12 @@
           nameInput.dataset.unitKey = `dept-${idx}`;
           nameInput.value = String(u.department || "");
           nameInput.setAttribute("aria-label", `${grade}학년 ${idx + 1}번째 학급 학과명`);
-          nameWrap.appendChild(nameInput);
+          nameWrap.append(nameLabel, nameInput);
 
           row.append(slot, classWrap, nameWrap);
           frag.appendChild(row);
         });
         root.replaceChildren(frag);
-
-        if (activeKey) {
-          const again = root.querySelector(`[data-unit-key="${activeKey}"]`);
-          if (again) {
-            again.focus();
-            if (activePos != null) {
-              try {
-                again.setSelectionRange(activePos, activePos);
-              } catch {
-                /* ignore */
-              }
-            }
-          }
-        }
       }
 
       function setSchoolType(type) {
@@ -2957,13 +3229,15 @@
 
       function changeClassGrade(g) {
         if (classSettings.classGrade === g) return;
-        // 현재 학년 학급 수는 로컬에만 기억 (DB의 다른 학년은 그대로 유지)
+        flushDeptFieldsFromDom();
         rememberGradeCount();
+        const wasDirty = !!classSettings.needsResave;
         classSettings.classGrade = g;
 
         const fromDb = activeClassesForGrade(g);
         const bag = ensureByGradeBag(g);
-        if (fromDb.length) {
+        // 편집 중이 아닐 때만 DB로 슬롯 채움 (미저장 반·학과 보호)
+        if (!wasDirty && fromDb.length) {
           classSettings.classCount = clampClassCount(fromDb.length);
           bag.classCount = classSettings.classCount;
           bag.units = fromDb.map((c) => ({
@@ -2972,17 +3246,26 @@
           }));
           syncUnitsToDepartmentsMap(g);
         } else if (Array.isArray(bag.units) && bag.units.length) {
-          classSettings.classCount = clampClassCount(bag.units.length);
+          classSettings.classCount = clampClassCount(bag.units.length || bag.classCount || 1);
           bag.classCount = classSettings.classCount;
         } else if (bag.classCount) {
           classSettings.classCount = clampClassCount(bag.classCount);
+        } else if (fromDb.length) {
+          classSettings.classCount = clampClassCount(fromDb.length);
+          bag.classCount = classSettings.classCount;
+          bag.units = fromDb.map((c) => ({
+            classNo: normalizeUnitClassNo(c.class_no, 1),
+            department: String(c.department_name || "").trim()
+          }));
+          syncUnitsToDepartmentsMap(g);
         } else {
           classSettings.classCount = 1;
         }
-        classSettings.needsResave = false;
+        classSettings.needsResave = wasDirty;
         persistClassSettingsLocal();
 
-        const first = fromDb[0];
+        const slots = rosterSlotsForGrade(g);
+        const first = slots.find((s) => s.id)?.row || fromDb[0] || null;
         if (first) {
           activeClassId = first.id;
           teacherClass = first;
@@ -3015,6 +3298,7 @@
           if (delta > 0) toast(`학급은 최대 ${MAX_CLASS_COUNT}개까지입니다.`);
           return;
         }
+        flushDeptFieldsFromDom();
         classSettings.classCount = next;
         classSettings.needsResave = true;
         rememberGradeCount();
@@ -3022,6 +3306,8 @@
         const input = $("classCountInput");
         if (input) input.value = String(next);
         renderDeptFields();
+        renderRosterClassChips(true);
+        updateSetupLaunchHint();
       }
 
       function selectRosterClass(id) {
@@ -3119,14 +3405,24 @@
           return false;
         }
 
+        // 로컬 슬롯은 변경 전 반·학과로 찾아 갱신 (같은 반·다른 학과 충돌 방지)
+        const units = getGradeUnits(grade);
+        let slotIdx = units.findIndex(
+          (u, idx) =>
+            normalizeUnitClassNo(u.classNo, idx + 1) === prevNo &&
+            String(u.department || "").trim().toLowerCase() === prevDept.toLowerCase()
+        );
+        if (slotIdx < 0) {
+          slotIdx = units.findIndex(
+            (u, idx) => normalizeUnitClassNo(u.classNo, idx + 1) === prevNo
+          );
+        }
         row.class_no = classNo;
         row.department_name = dept;
         row.title = title;
         if (teacherClass?.id === classId) teacherClass = row;
-        const activeList = activeClassesForGrade(grade);
-        const slotIdx = activeList.findIndex((c) => c.id === classId);
         if (slotIdx >= 0) setGradeUnit(grade, slotIdx, { classNo, department: dept });
-        else setDepartmentName(grade, classNo, dept);
+        else setDepartmentName(grade, classNo, dept, prevDept);
         persistClassSettingsLocal();
         renderDeptFields();
 
@@ -3238,22 +3534,44 @@
         setTimeout(() => document.addEventListener("pointerdown", onDoc, true), 0);
       }
 
-      /** 학급 명단 칩: 특성화고는 반·학과 슬롯 수·이름과 1:1 (예전 3반·4반 잔여 숨김) */
+      /** 학급 명단 칩: 설정 슬롯(학급 수·반·학과)과 1:1 (예전 잔여 반 숨김) */
       function rosterSlotsForGrade(grade) {
         const g = Number(grade) || 1;
         const fromDb = activeClassesForGrade(g);
-        if (!isVocational()) {
-          return fromDb.map((c) => ({
-            id: c.id,
-            classNo: Number(c.class_no) || 1,
-            department: "",
-            label: classChipLabel(c),
-            pending: false,
-            row: c
-          }));
-        }
-        const units = getGradeUnits(g);
         const used = new Set();
+
+        if (!isVocational()) {
+          const count = clampClassCount(
+            g === classSettings.classGrade ? classSettings.classCount : ensureByGradeBag(g).classCount || 1
+          );
+          const slots = [];
+          for (let i = 1; i <= count; i++) {
+            const hit = fromDb.find((c) => !used.has(c.id) && Number(c.class_no) === i);
+            if (hit) {
+              used.add(hit.id);
+              slots.push({
+                id: hit.id,
+                classNo: i,
+                department: "",
+                label: classChipLabel(hit),
+                pending: false,
+                row: hit
+              });
+            } else {
+              slots.push({
+                id: null,
+                classNo: i,
+                department: "",
+                label: `${i}반`,
+                pending: true,
+                row: null
+              });
+            }
+          }
+          return slots;
+        }
+
+        const units = getGradeUnits(g);
         return units.map((u, idx) => {
           const classNo = normalizeUnitClassNo(u.classNo, idx + 1);
           const department = String(u.department || "").trim();
@@ -3314,7 +3632,7 @@
             if (e.target.closest(".chip-edit")) return;
             const pending = e.target.closest("[data-pending-unit]");
             if (pending && root.contains(pending)) {
-              toast("위쪽 [학급 저장]을 누르면 반·학과가 명단에 반영됩니다.");
+              toast("[학급 저장]을 누르면 반·학과가 명단에 반영됩니다.");
               return;
             }
             const btn = e.target.closest("[data-class-id]");
@@ -3350,21 +3668,25 @@
         root.replaceChildren(frag);
       }
 
-      async function seedDefaultStudents(classId) {
+      async function seedDefaultStudents(classId, { migrate = false } = {}) {
         if (!sb || !classId) return;
+        if (studentsSeeded.has(classId) && !migrate) return;
+
         const { count, error } = await sb
           .from("students")
           .select("id", { count: "exact", head: true })
           .eq("class_id", classId);
         if (error) throw error;
         if (count && count > 0) {
-          await migrateRosterToHakbun(classId);
+          studentsSeeded.add(classId);
+          if (migrate) await migrateRosterToHakbun(classId);
           return;
         }
 
         const { error: rpcErr } = await sb.rpc("seed_default_students", { p_class_id: classId });
         if (!rpcErr) {
-          await migrateRosterToHakbun(classId);
+          studentsSeeded.add(classId);
+          if (migrate) await migrateRosterToHakbun(classId);
           return;
         }
 
@@ -3379,13 +3701,16 @@
         }));
         const { error: insErr } = await sb.from("students").insert(rows);
         if (insErr) throw insErr;
+        studentsSeeded.add(classId);
       }
 
       /** 기존 1·2자리 번호·다른 유형 학번을 현재 학번 형식으로 맞춤 */
       async function migrateRosterToHakbun(classId) {
         if (!sb || !classId) return;
+        if (hakbunMigrated.has(classId)) return;
         try {
           await convertClassHakbunFormat(classId, getStudentNoFormat());
+          hakbunMigrated.add(classId);
         } catch (e) {
           console.warn(e);
         }
@@ -3400,9 +3725,10 @@
         if (lErr || !lessonRows?.length) return rosterSubMap;
         const lessonMap = new Map(lessonRows.map((l) => [l.id, l.session_no]));
         const ids = lessonRows.map((l) => l.id);
+        // content는 목록에서 제외 → 용량·파싱 비용 대폭 감소 (크게 보기 시 지연 로드)
         const { data: subs, error: sErr } = await sb
           .from("submissions")
-          .select("id, lesson_id, student_no, student_name, content, created_at")
+          .select("id, lesson_id, student_no, student_name, created_at")
           .in("lesson_id", ids)
           .order("created_at", { ascending: false });
         if (sErr) return rosterSubMap;
@@ -3412,6 +3738,7 @@
           if (!rosterSubMap.has(key)) rosterSubMap.set(key, []);
           const row = {
             ...s,
+            content: null,
             session_no: lessonMap.get(s.lesson_id) || null
           };
           rosterSubMap.get(key).push(row);
@@ -3420,36 +3747,64 @@
         return rosterSubMap;
       }
 
+      async function ensureSubmissionContent(sub) {
+        if (!sub?.id || !sb) return sub;
+        if (typeof sub.content === "string" && sub.content.length) return sub;
+        const { data, error } = await sb
+          .from("submissions")
+          .select("content")
+          .eq("id", sub.id)
+          .maybeSingle();
+        if (!error && data) {
+          sub.content = data.content || "";
+          submissionById.set(sub.id, sub);
+        } else if (!sub.content) {
+          sub.content = "";
+        }
+        return sub;
+      }
+
       async function loadRoster(classId) {
         if (!sb || !classId) return;
+        const seq = ++rosterLoadSeq;
         rosterClassId = classId;
         try {
-          await seedDefaultStudents(classId);
-          const { data, error } = await sb
-            .from("students")
-            .select("id, student_no, student_name, sort_order")
-            .eq("class_id", classId)
-            .order("sort_order", { ascending: true });
+          await seedDefaultStudents(classId, { migrate: false });
+          if (seq !== rosterLoadSeq) return;
+          const [{ data, error }, ] = await Promise.all([
+            sb
+              .from("students")
+              .select("id, student_no, student_name, sort_order")
+              .eq("class_id", classId)
+              .order("sort_order", { ascending: true }),
+            loadRosterSubmissionMap(classId)
+          ]);
+          if (seq !== rosterLoadSeq) return;
           if (error) throw error;
           rosterStudents = (data || []).slice().sort((a, b) => {
             const na = Number(normalizeStudentNo(a.student_no)) || a.sort_order;
             const nb = Number(normalizeStudentNo(b.student_no)) || b.sort_order;
             return na - nb;
           });
-          await loadRosterSubmissionMap(classId);
-          // 제출된 이름이 있고 명단 이름이 비어 있으면 자동 반영
+          // 제출된 이름이 있고 명단 이름이 비어 있으면 일괄 반영
+          const namePatches = [];
           for (const s of rosterStudents) {
             if (s.student_name) continue;
             const subs = rosterSubMap.get(normalizeStudentNo(s.student_no)) || [];
             const named = subs.find((x) => x.student_name);
             if (named?.student_name) {
               s.student_name = named.student_name;
-              await sb.from("students").update({ student_name: named.student_name }).eq("id", s.id);
+              namePatches.push(
+                sb.from("students").update({ student_name: named.student_name }).eq("id", s.id)
+              );
             }
           }
+          if (namePatches.length) {
+            Promise.all(namePatches).catch((e) => console.warn(e));
+          }
           renderRosterList();
-          renderRosterClassChips();
         } catch (e) {
+          if (seq !== rosterLoadSeq) return;
           console.warn(e);
           rosterStudents = [];
           const root = $("rosterList");
@@ -3888,7 +4243,7 @@
             ? `<div class="roster-sub-list">${sorted.map((sub) => `
                 <div class="roster-sub-item">
                   <strong>${sub.session_no ? `${sub.session_no}차시` : "차시"}</strong>
-                  <span>${escapeHtml(buildYukhaSummary(sub).oneLine || previewText(htmlToPlainTextFast(sub.content), 48))}</span>
+                  <span>${escapeHtml(sub.student_name ? `${sub.student_name} 제출` : "제출됨")}</span>
                   <div class="sub-actions">
                     <button type="button" class="is-view" data-tab-sub="${sub.id}">크게 보기</button>
                     <button type="button" class="is-danger" data-del-sub="${sub.id}">삭제</button>
@@ -3937,7 +4292,7 @@
         return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
       }
 
-      function openSubViewer(submissionId) {
+      async function openSubViewer(submissionId) {
         const sub = findSubmissionById(submissionId);
         const viewer = $("subViewer");
         const body = $("subViewerBody");
@@ -3945,13 +4300,16 @@
         if (!sub || !viewer || !body) return;
         viewingSubmissionId = sub.id;
         title.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${sub.student_no} ${sub.student_name || ""}`.trim();
+        body.innerHTML = `<div class="plain">불러오는 중…</div>`;
+        viewer.classList.add("is-open");
+        viewer.setAttribute("aria-hidden", "false");
+        await ensureSubmissionContent(sub);
+        if (viewingSubmissionId !== sub.id) return;
         if (looksLikeHtml(sub.content)) {
           body.innerHTML = `<iframe sandbox="" srcdoc="${escapeSrcdoc(sub.content)}" title="제출 보고서"></iframe>`;
         } else {
           body.innerHTML = `<div class="plain">${escapeHtml(sub.content || "(내용 없음)")}</div>`;
         }
-        viewer.classList.add("is-open");
-        viewer.setAttribute("aria-hidden", "false");
       }
 
       async function loadActivityCssText() {
@@ -4132,6 +4490,7 @@
           /* ignore */
         }
         try {
+          await ensureSubmissionContent(sub);
           const css = await loadActivityCssText();
           const built = buildSubmissionReportBody(sub);
           const reportCss = `
@@ -4513,13 +4872,14 @@ ${built.html}
             .maybeSingle());
         }
         if (!data) return session;
-        if (data.school_type) {
+        // 로컬에서 고교 유형을 바꾼 뒤 아직 저장 전이면 DB 기본값(general)으로 덮지 않음
+        if (data.school_type && !classSettings.needsResave) {
           classSettings.schoolType = normalizeSchoolType(data.school_type);
         }
-        if (data.student_no_format) {
+        if (data.student_no_format && !classSettings.needsResave) {
           classSettings.studentNoFormat = normalizeStudentNoFormat(data.student_no_format);
         }
-        if (data.school_type || data.student_no_format) {
+        if ((data.school_type || data.student_no_format) && !classSettings.needsResave) {
           persistClassSettingsLocal();
         }
         session = {
@@ -4597,6 +4957,23 @@ ${built.html}
         const code = String(submitCode || "").trim().toUpperCase();
         if (code) u.searchParams.set("code", code);
         return u.href;
+      }
+
+      function ensureQrcodeLib() {
+        if (typeof window.QRCode === "function") return Promise.resolve();
+        if (qrcodeLoadPromise) return qrcodeLoadPromise;
+        qrcodeLoadPromise = new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = "./vendor/qrcode.min.js";
+          s.async = true;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("QR 라이브러리 로드 실패"));
+          document.head.appendChild(s);
+        }).catch((e) => {
+          qrcodeLoadPromise = null;
+          throw e;
+        });
+        return qrcodeLoadPromise;
       }
 
       /**
@@ -4867,14 +5244,15 @@ ${built.html}
 
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!classSettings.byGrade) classSettings.byGrade = {};
-        let hasDept = false;
-        active.forEach((c) => {
-          if (String(c.department_name || "").trim()) hasDept = true;
-        });
-        if (hasDept) classSettings.schoolType = "vocational";
 
-        // 편집 중(needsResave)이면 로컬 반·학과 슬롯을 DB로 덮지 않음
+        // 편집 중(needsResave)이면 로컬 고교 유형·반·학과 슬롯을 DB로 덮지 않음
         if (!classSettings.needsResave) {
+          let hasDept = false;
+          active.forEach((c) => {
+            if (String(c.department_name || "").trim()) hasDept = true;
+          });
+          if (hasDept) classSettings.schoolType = "vocational";
+
           [1, 2, 3].forEach((g) => {
             const rows = active
               .filter((c) => Number(c.grade) === g)
@@ -4925,7 +5303,13 @@ ${built.html}
 
       async function syncClassGroupsToDb() {
         if (!sb || !session) throw new Error("로그인이 필요합니다.");
+        flushDeptFieldsFromDom();
+        // ensureTeacherProfile → enrich 가 DB 기본값으로 덮기 전에 로컬 선택 고정
+        const lockedSchoolType = normalizeSchoolType(classSettings.schoolType);
+        const lockedNoFormat = normalizeStudentNoFormat(classSettings.studentNoFormat);
         await ensureTeacherProfile();
+        classSettings.schoolType = lockedSchoolType;
+        classSettings.studentNoFormat = lockedNoFormat;
         classSettings.mode = "class";
         const grade = Number(classSettings.classGrade) || 1;
         rememberGradeCount();
@@ -4974,11 +5358,13 @@ ${built.html}
         function takePoolRow(unit) {
           const classNo = Number(unit.class_no) || 1;
           const dept = String(unit.department_name || "").trim().toLowerCase();
+          // 1) 반+학과 완전 일치
           let i = pool.findIndex(
             (c) =>
               Number(c.class_no) === classNo &&
               String(c.department_name || "").trim().toLowerCase() === dept
           );
+          // 2) 같은 반·학과 비어 있는 예전 행 (학과명 새로 붙일 때)
           if (i < 0 && dept) {
             i = pool.findIndex(
               (c) =>
@@ -4986,7 +5372,13 @@ ${built.html}
                 !String(c.department_name || "").trim()
             );
           }
-          if (i < 0) i = pool.length ? 0 : -1;
+          // 3) 학과 없음: 같은 반 번호 우선
+          if (i < 0 && !dept) {
+            i = pool.findIndex((c) => Number(c.class_no) === classNo);
+          }
+          // 4) 학과 있음에서는 임의 행 재사용 금지 → 새 학급 insert
+          //    학과 없음에서는 남는 행 재활용
+          if (i < 0 && !isVocational() && pool.length) i = 0;
           if (i < 0) return null;
           return pool.splice(i, 1)[0];
         }
@@ -5033,10 +5425,10 @@ ${built.html}
               }
               throw onErr;
             }
-            await seedLessonsForClass(found.id);
-            try { await seedDefaultStudents(found.id); } catch (e) { console.warn(e); }
+            // 차시·명단 시드는 저장 루프 밖에서 병렬 처리
             if (prevNo && prevNo !== classNo) {
-              try { await migrateRosterToHakbun(found.id); } catch (e) { console.warn(e); }
+              hakbunMigrated.delete(found.id);
+              studentsSeeded.delete(found.id);
             }
             return found.id;
           }
@@ -5072,8 +5464,7 @@ ${built.html}
             }
             throw cErr;
           }
-          await seedLessonsForClass(created.id);
-          try { await seedDefaultStudents(created.id); } catch (e) { console.warn(e); }
+          studentsSeeded.delete(created.id);
           return created.id;
         }
 
@@ -5082,6 +5473,11 @@ ${built.html}
           const id = await upsertClassUnit(desired[i], takePoolRow(desired[i]));
           keptIds.push(id);
         }
+
+        // 차시 시드만 병렬 (명단은 열 때 생성 — 저장 체감 속도 향상)
+        await Promise.all(
+          keptIds.map((id) => seedLessonsForClass(id).catch((e) => console.warn(e)))
+        );
 
         // 남은 활성 학급이 있으면 강제 비활성 (예전 3반·4반 잔존 방지)
         {
@@ -5125,11 +5521,11 @@ ${built.html}
           }
         }
 
-        // 고교 유형·학번 유형을 프로필에 저장
+        // 고교 유형·학번 유형을 프로필에 저장 (다음 로그인에서도 유지)
         {
           const payload = {
-            school_type: normalizeSchoolType(classSettings.schoolType),
-            student_no_format: getStudentNoFormat()
+            school_type: lockedSchoolType,
+            student_no_format: lockedNoFormat
           };
           let { error: stErr } = await sb
             .from("profiles")
@@ -5141,12 +5537,19 @@ ${built.html}
               .update({ school_type: payload.school_type })
               .eq("id", session.userId));
           }
-          if (stErr && !/school_type/i.test(stErr.message || "")) {
+          if (stErr) {
+            if (/school_type/i.test(stErr.message || "")) {
+              throw new Error(
+                "고교 유형 저장 실패. Supabase에서 supabase-school-type.sql을 실행한 뒤 다시 저장해 주세요."
+              );
+            }
             console.warn("profile 설정 저장:", stErr.message);
           }
         }
 
-        // 로컬 설정을 방금 저장한 슬롯으로 확정
+        // 로컬 설정을 방금 저장한 슬롯으로 확정 (고교 유형 유지)
+        classSettings.schoolType = lockedSchoolType;
+        classSettings.studentNoFormat = lockedNoFormat;
         classSettings.classCount = desired.length;
         const bag = ensureByGradeBag(grade);
         bag.classCount = desired.length;
@@ -5160,6 +5563,9 @@ ${built.html}
 
         invalidateClassCache();
         await loadTeacherClassesFromDb();
+        classSettings.schoolType = lockedSchoolType;
+        classSettings.studentNoFormat = lockedNoFormat;
+        persistClassSettingsLocal();
 
         const slots = rosterSlotsForGrade(grade);
         const firstActive = slots.find((s) => s.id)?.row || null;
@@ -5174,7 +5580,24 @@ ${built.html}
       }
 
       function orderClassesByUnits(grade, list) {
-        const units = isVocational() ? getGradeUnits(grade) : [];
+        if (!isVocational()) {
+          const count = clampClassCount(
+            Number(grade) === classSettings.classGrade
+              ? classSettings.classCount
+              : ensureByGradeBag(grade).classCount || list.length || 1
+          );
+          const ordered = [];
+          const used = new Set();
+          for (let i = 1; i <= count; i++) {
+            const hit = list.find((c) => !used.has(c.id) && Number(c.class_no) === i);
+            if (hit) {
+              used.add(hit.id);
+              ordered.push(hit);
+            }
+          }
+          return ordered;
+        }
+        const units = getGradeUnits(grade);
         if (!units.length) return list.slice();
         const ordered = [];
         const used = new Set();
@@ -5192,7 +5615,7 @@ ${built.html}
             ordered.push(hit);
           }
         });
-        // 특성화고: 설정 슬롯에 없는 예전 반(3반·4반 등)은 목록에 붙이지 않음
+        // 설정 슬롯에 없는 예전 반(3반·4반 등)은 목록에 붙이지 않음
         return ordered;
       }
 
@@ -5219,10 +5642,12 @@ ${built.html}
         if (classId) {
           lessonsCache.delete(classId);
           studentsCache.delete(classId);
+          studentsSeeded.delete(classId);
         } else {
           lessonsCache.clear();
           studentsCache.clear();
           subCountCache.clear();
+          studentsSeeded.clear();
         }
       }
 
@@ -5364,11 +5789,19 @@ ${built.html}
 
         if (paintScannableQr(el, url, displayPx)) return;
 
-        let tries = 0;
-        const timer = setInterval(() => {
-          tries += 1;
-          if (paintScannableQr(el, url, displayPx) || tries > 20) clearInterval(timer);
-        }, 50);
+        void ensureQrcodeLib()
+          .then(() => {
+            if (!paintScannableQr(el, url, displayPx)) {
+              let tries = 0;
+              const timer = setInterval(() => {
+                tries += 1;
+                if (paintScannableQr(el, url, displayPx) || tries > 20) clearInterval(timer);
+              }, 40);
+            }
+          })
+          .catch(() => {
+            el.textContent = "QR";
+          });
       }
 
       function formatTime(iso) {
@@ -6182,24 +6615,32 @@ ${built.html}
       });
       {
         let deptTimer = 0;
+        let deptChipRaf = 0;
         $("deptFields")?.addEventListener("input", (e) => {
           const input = e.target.closest("input[data-unit-index]");
           if (!input) return;
           const idx = Number(input.dataset.unitIndex);
           if (!Number.isFinite(idx)) return;
-          if (input.classList.contains("dept-class-no")) {
+          const isClassNo = input.classList.contains("dept-class-no");
+          if (isClassNo) {
             setGradeUnit(classSettings.classGrade, idx, { classNo: input.value });
           } else {
             setGradeUnit(classSettings.classGrade, idx, { department: input.value });
           }
           classSettings.needsResave = true;
+          // 칩 갱신은 프레임당 1회, 로컬 저장은 더 느리게
+          if (!deptChipRaf) {
+            deptChipRaf = requestAnimationFrame(() => {
+              deptChipRaf = 0;
+              renderRosterClassChips();
+            });
+          }
           clearTimeout(deptTimer);
           deptTimer = setTimeout(() => {
             rememberGradeCount();
             persistClassSettingsLocal();
-            renderRosterClassChips();
             updateSetupLaunchHint();
-          }, 120);
+          }, 400);
         });
         $("deptFields")?.addEventListener("keydown", (e) => {
           if (e.key !== "Enter") return;
@@ -6258,17 +6699,22 @@ ${built.html}
         void applyStudentCount(raw);
       });
       $("btnSaveClassSettings").addEventListener("click", async () => {
+        // 입력 중인 반·학과를 먼저 반영한 뒤 학급 수 적용 (리렌더로 값이 지워지지 않게)
+        flushDeptFieldsFromDom();
         applyClassCountInput();
+        flushDeptFieldsFromDom();
         if (!clampClassCount(classSettings.classCount)) {
           return toast("학급 수를 1개 이상으로 설정해 주세요.");
         }
+        // needsResave를 유지한 채 저장 → 프로필 enrich가 고교 유형을 되돌리지 않음
+        classSettings.needsResave = true;
+        persistClassSettingsLocal();
         rememberGradeCount();
         const unitErr = validateVocationalUnits(classSettings.classGrade);
         if (unitErr) return toast(unitErr);
         const btn = $("btnSaveClassSettings");
         btn.disabled = true;
         try {
-          saveClassSettings();
           await syncClassGroupsToDb();
           updateSetupLaunchHint();
           renderClassSettingsUI();
@@ -6294,7 +6740,7 @@ ${built.html}
       $("btnTeacherLogout").addEventListener("click", () => logout());
       $("topGradeSelect")?.addEventListener("change", () => {
         const g = Number($("topGradeSelect").value);
-        const list = activeClassesForGrade(g);
+        const list = orderClassesByUnits(g, activeClassesForGrade(g));
         const classSel = $("topClassSelect");
         if (classSel) {
           classSel.innerHTML = list.length
