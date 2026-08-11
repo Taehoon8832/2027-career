@@ -1004,6 +1004,54 @@
       color: var(--color-primary-700);
     }
     .chip-toggle:disabled { opacity: 0.55; cursor: wait; }
+    .chip-toggle[data-class-id] { cursor: pointer; }
+    .chip-toggle[data-class-id]:active { transform: scale(0.98); }
+    .chip-edit {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      height: 34px;
+      padding: 0 8px;
+      border-radius: 999px;
+      border: 1.5px solid var(--color-primary-300);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
+    }
+    .chip-edit-no {
+      width: 36px;
+      height: 24px;
+      border: 0;
+      border-bottom: 1.5px solid #d6d3d1;
+      background: transparent;
+      text-align: center;
+      font: 700 13px/1 var(--font-sans);
+      color: var(--text-primary);
+      outline: none;
+      padding: 0;
+    }
+    .chip-edit-no:focus { border-bottom-color: var(--color-primary-300); }
+    .chip-edit-suffix {
+      font: 700 12px/1 var(--font-sans);
+      color: var(--text-secondary);
+    }
+    .chip-edit-dept {
+      width: 88px;
+      min-width: 72px;
+      height: 24px;
+      border: 0;
+      border-bottom: 1.5px solid #d6d3d1;
+      background: transparent;
+      font: 600 12px/1 var(--font-sans);
+      color: var(--text-primary);
+      outline: none;
+      padding: 0 2px;
+    }
+    .chip-edit-dept:focus { border-bottom-color: var(--color-primary-300); }
+    .roster-chip-hint {
+      margin: 5px 0 0;
+      font: 500 11px/1.35 var(--font-sans);
+      color: #8a847a;
+    }
     .setup-type-grade {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1505,6 +1553,7 @@
                 <div class="setup-field">
                   <p class="settings-sub">반 선택</p>
                   <div class="chip-row" id="rosterClassChips"></div>
+                  <p class="roster-chip-hint">반 이름을 더블클릭하면 반 번호·학과명을 수정할 수 있습니다. (예: 2반 → 1반 · 미용과)</p>
                 </div>
                 <div class="setup-field setup-field--count">
                   <p class="settings-sub">학생 수</p>
@@ -1905,7 +1954,27 @@
         const g = Number(grade);
         return teacherClasses
           .filter((c) => c.is_active && c.class_no && Number(c.grade) === g)
-          .sort((a, b) => Number(a.class_no) - Number(b.class_no));
+          .sort((a, b) => {
+            const ta = a.created_at || "";
+            const tb = b.created_at || "";
+            if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
+            const dn = String(a.department_name || "").localeCompare(String(b.department_name || ""), "ko");
+            if (dn) return dn;
+            return Number(a.class_no) - Number(b.class_no);
+          });
+      }
+
+      function classChipLabel(c) {
+        if (!c) return "";
+        const dept = isVocational() ? departmentNameFor(c.grade, c.class_no, c) : "";
+        return dept ? `${c.class_no}반 · ${dept}` : `${c.class_no}반`;
+      }
+
+      function buildClassTitle(grade, classNo, dept) {
+        const head = dept
+          ? `${grade}학년 ${classNo}반 (${dept})`
+          : `${grade}학년 ${classNo}반`;
+        return `${head} · AI와 함께 하는 고교학점제 진로설계`;
       }
 
       function formatClassSettingsSummary() {
@@ -2489,9 +2558,202 @@
         renderDeptFields();
       }
 
+      function selectRosterClass(id) {
+        const c = teacherClasses.find((x) => x.id === id);
+        if (!c) return;
+        rosterClassId = c.id;
+        activeClassId = c.id;
+        teacherClass = c;
+        selectedLessonId = null;
+        renderRosterClassChips();
+        updateSetupLaunchHint();
+        loadRoster(c.id).catch(() => {});
+        fetchLessonsForClass(c.id, { seed: !lessonsCache.has(c.id) })
+          .then((rows) => {
+            lessons = rows;
+            return renderLessonList();
+          })
+          .catch(() => {});
+      }
+
+      async function saveRosterClassRename(classId, classNoRaw, deptRaw) {
+        if (!sb || !session || !classId) return false;
+        const row = teacherClasses.find((c) => c.id === classId);
+        if (!row) return false;
+
+        const classNo = Math.max(1, Math.min(10, parseInt(String(classNoRaw || "").trim(), 10) || 0));
+        if (!classNo) {
+          toast("반 번호는 1~10 숫자로 입력해 주세요.");
+          return false;
+        }
+        const grade = Number(row.grade) || classSettings.classGrade || 1;
+        const dept = isVocational() ? String(deptRaw || "").trim() : "";
+        const prevNo = Number(row.class_no) || 1;
+        const prevDept = String(row.department_name || "").trim();
+
+        if (classNo === prevNo && dept === prevDept) return true;
+
+        const conflict = teacherClasses.find(
+          (c) =>
+            c.is_active &&
+            c.id !== classId &&
+            Number(c.grade) === grade &&
+            Number(c.class_no) === classNo &&
+            String(c.department_name || "").trim().toLowerCase() === dept.toLowerCase()
+        );
+        if (conflict) {
+          toast(
+            isVocational()
+              ? "같은 반 번호·학과 이름이 이미 있습니다."
+              : "같은 반 번호가 이미 있습니다."
+          );
+          return false;
+        }
+        if (isVocational() && !dept) {
+          const sameNo = teacherClasses.some(
+            (c) =>
+              c.is_active &&
+              c.id !== classId &&
+              Number(c.grade) === grade &&
+              Number(c.class_no) === classNo
+          );
+          if (sameNo) {
+            toast("같은 반 번호가 있으면 학과 이름을 반드시 입력해 주세요.");
+            return false;
+          }
+        }
+
+        const title = buildClassTitle(grade, classNo, dept);
+        const payload = {
+          class_no: classNo,
+          department_name: dept,
+          title,
+          mode: "class",
+          is_active: true
+        };
+        let { error } = await sb.from("classes").update(payload).eq("id", classId);
+        if (error && /department_name/i.test(error.message || "")) {
+          const { department_name: _d, ...noDept } = payload;
+          ({ error } = await sb.from("classes").update(noDept).eq("id", classId));
+        }
+        if (error) {
+          if (/unique|duplicate|uidx/i.test(error.message || "")) {
+            toast("같은 반·학과 조합이 이미 있습니다. (Supabase SQL을 적용했는지 확인해 주세요)");
+          } else {
+            toast("학급 이름 저장 실패: " + (error.message || error));
+          }
+          return false;
+        }
+
+        row.class_no = classNo;
+        row.department_name = dept;
+        row.title = title;
+        if (teacherClass?.id === classId) teacherClass = row;
+        setDepartmentName(grade, classNo, dept);
+        persistClassSettingsLocal();
+
+        if (classNo !== prevNo) {
+          try {
+            await migrateRosterToHakbun(classId);
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+
+        renderRosterClassChips();
+        updateSetupLaunchHint();
+        toast(`학급 이름 저장: ${classChipLabel(row)}`);
+        return true;
+      }
+
+      function beginRosterChipEdit(btn) {
+        const root = $("rosterClassChips");
+        if (!root || !btn || root.querySelector(".chip-edit")) return;
+        const id = btn.getAttribute("data-class-id");
+        const row = teacherClasses.find((c) => c.id === id);
+        if (!row) return;
+
+        const edit = document.createElement("div");
+        edit.className = "chip-edit";
+        edit.dataset.classId = id;
+
+        const noInput = document.createElement("input");
+        noInput.className = "chip-edit-no";
+        noInput.type = "text";
+        noInput.inputMode = "numeric";
+        noInput.maxLength = 2;
+        noInput.value = String(row.class_no || 1);
+        noInput.setAttribute("aria-label", "반 번호");
+
+        const suffix = document.createElement("span");
+        suffix.className = "chip-edit-suffix";
+        suffix.textContent = "반";
+
+        edit.append(noInput, suffix);
+
+        let deptInput = null;
+        if (isVocational()) {
+          const dot = document.createElement("span");
+          dot.className = "chip-edit-suffix";
+          dot.textContent = "·";
+          deptInput = document.createElement("input");
+          deptInput.className = "chip-edit-dept";
+          deptInput.type = "text";
+          deptInput.maxLength = 20;
+          deptInput.placeholder = "학과명";
+          deptInput.value = departmentNameFor(row.grade, row.class_no, row);
+          deptInput.setAttribute("aria-label", "학과 이름");
+          edit.append(dot, deptInput);
+        }
+
+        let closed = false;
+        const onDoc = (e) => {
+          if (edit.contains(e.target)) return;
+          void finish(true);
+        };
+        const finish = async (save) => {
+          if (closed) return;
+          closed = true;
+          document.removeEventListener("pointerdown", onDoc, true);
+          if (save) {
+            const ok = await saveRosterClassRename(
+              id,
+              noInput.value,
+              deptInput ? deptInput.value : ""
+            );
+            if (!ok) {
+              closed = false;
+              setTimeout(() => document.addEventListener("pointerdown", onDoc, true), 0);
+              noInput.focus();
+              return;
+            }
+          } else {
+            renderRosterClassChips();
+          }
+        };
+
+        edit.addEventListener("click", (e) => e.stopPropagation());
+        edit.addEventListener("dblclick", (e) => e.stopPropagation());
+        edit.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void finish(true);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            void finish(false);
+          }
+        });
+
+        btn.replaceWith(edit);
+        noInput.focus();
+        noInput.select();
+        setTimeout(() => document.addEventListener("pointerdown", onDoc, true), 0);
+      }
+
       function renderRosterClassChips() {
         const root = $("rosterClassChips");
         if (!root) return;
+        if (root.querySelector(".chip-edit")) return;
         const active = activeClassesForGrade(classSettings.classGrade);
         if (!active.length) {
           root.replaceChildren();
@@ -2510,24 +2772,18 @@
         if (!root.dataset.delegated) {
           root.dataset.delegated = "1";
           root.addEventListener("click", (e) => {
+            if (e.target.closest(".chip-edit")) return;
             const btn = e.target.closest("[data-class-id]");
             if (!btn || !root.contains(btn)) return;
             const id = btn.getAttribute("data-class-id");
             if (!id || id === rosterClassId) return;
-            const c = teacherClasses.find((x) => x.id === id);
-            if (!c) return;
-            rosterClassId = c.id;
-            activeClassId = c.id;
-            teacherClass = c;
-            selectedLessonId = null;
-            renderRosterClassChips();
-            loadRoster(c.id).catch(() => {});
-            fetchLessonsForClass(c.id, { seed: !lessonsCache.has(c.id) })
-              .then((rows) => {
-                lessons = rows;
-                return renderLessonList();
-              })
-              .catch(() => {});
+            selectRosterClass(id);
+          });
+          root.addEventListener("dblclick", (e) => {
+            const btn = e.target.closest("button[data-class-id]");
+            if (!btn || !root.contains(btn)) return;
+            e.preventDefault();
+            beginRosterChipEdit(btn);
           });
         }
 
@@ -2537,8 +2793,8 @@
           btn.type = "button";
           btn.className = "chip-toggle" + (c.id === rosterClassId ? " is-on" : "");
           btn.dataset.classId = c.id;
-          const dept = isVocational() ? departmentNameFor(c.grade, c.class_no, c) : "";
-          btn.textContent = dept ? `${c.class_no}반 · ${dept}` : `${c.class_no}반`;
+          btn.title = "더블클릭하여 반·학과명 수정";
+          btn.textContent = classChipLabel(c);
           frag.appendChild(btn);
         });
         root.replaceChildren(frag);
@@ -3741,36 +3997,15 @@ ${built.html}
         let error = null;
         ({ data: existing, error } = await sb
           .from("classes")
-          .select("id, mode, grade, class_no, class_code, is_active, department_name")
+          .select("id, mode, grade, class_no, class_code, is_active, department_name, created_at, title")
           .eq("teacher_id", session.userId));
         if (error && /department_name/i.test(error.message || "")) {
           ({ data: existing, error } = await sb
             .from("classes")
-            .select("id, mode, grade, class_no, class_code, is_active")
+            .select("id, mode, grade, class_no, class_code, is_active, created_at, title")
             .eq("teacher_id", session.userId));
         }
         if (error) throw error;
-
-        const map = new Map();
-        for (const c of existing || []) {
-          const key = unitKey("class", c.grade || 1, c.class_no);
-          const prev = map.get(key);
-          if (!prev || (!prev.is_active && c.is_active)) map.set(key, c);
-        }
-        const desiredKeys = new Set(desired.map((u) => unitKey("class", u.grade, u.class_no)));
-
-        // 현재 학년에서만 초과 학급 비활성 (다른 학년 설정은 유지)
-        for (const row of existing || []) {
-          if (Number(row.grade) !== grade) continue;
-          const key = unitKey("class", row.grade || 1, row.class_no);
-          if (!desiredKeys.has(key) && row.is_active) {
-            const { error: offErr } = await sb
-              .from("classes")
-              .update({ is_active: false })
-              .eq("id", row.id);
-            if (offErr) throw offErr;
-          }
-        }
 
         // 예전 학년별(mode=grade) 레코드만 비활성
         await sb
@@ -3779,17 +4014,48 @@ ${built.html}
           .eq("teacher_id", session.userId)
           .eq("mode", "grade");
 
-        async function upsertClassUnit(unit, found) {
+        const existingActive = (existing || [])
+          .filter(
+            (c) =>
+              c.is_active &&
+              Number(c.grade) === grade &&
+              c.class_no &&
+              String(c.mode || "class") !== "grade"
+          )
+          .sort((a, b) => {
+            const ta = a.created_at || "";
+            const tb = b.created_at || "";
+            if (ta && tb && ta !== tb) return ta < tb ? -1 : 1;
+            return Number(a.class_no) - Number(b.class_no);
+          });
+
+        // 학급 수보다 많은 기존 학급은 뒤에서부터 비활성 (이름 수정본 유지)
+        for (let i = desired.length; i < existingActive.length; i++) {
+          const { error: offErr } = await sb
+            .from("classes")
+            .update({ is_active: false })
+            .eq("id", existingActive[i].id);
+          if (offErr) throw offErr;
+        }
+
+        async function upsertClassUnit(unit, found, preserveIdentity) {
+          const classNo = preserveIdentity && found?.class_no
+            ? Number(found.class_no)
+            : unit.class_no;
+          const dept = preserveIdentity && found
+            ? String(found.department_name || "").trim() || (isVocational() ? unit.department_name || "" : "")
+            : (isVocational() ? unit.department_name || "" : "");
+          const title = buildClassTitle(unit.grade, classNo, dept);
           const base = {
             is_active: true,
             mode: "class",
             grade: unit.grade,
-            class_no: unit.class_no,
-            title: unit.title
+            class_no: classNo,
+            title
           };
           const withDept = {
             ...base,
-            department_name: isVocational() ? unit.department_name || "" : ""
+            department_name: dept
           };
           if (found) {
             let { error: onErr } = await sb.from("classes").update(withDept).eq("id", found.id);
@@ -3826,9 +4092,28 @@ ${built.html}
           return created.id;
         }
 
-        for (const unit of desired) {
-          const key = unitKey("class", unit.grade, unit.class_no);
-          await upsertClassUnit(unit, map.get(key));
+        // 인덱스 순서로 매칭 → 더블클릭으로 바꾼 반·학과명 유지
+        const usedIds = new Set();
+        for (let i = 0; i < desired.length; i++) {
+          const unit = desired[i];
+          let found = existingActive[i] || null;
+          let preserve = !!found;
+          if (found) usedIds.add(found.id);
+          if (!found) {
+            found =
+              (existing || []).find(
+                (c) =>
+                  !c.is_active &&
+                  !usedIds.has(c.id) &&
+                  Number(c.grade) === grade &&
+                  Number(c.class_no) === unit.class_no
+              ) || null;
+            if (found) {
+              usedIds.add(found.id);
+              preserve = false;
+            }
+          }
+          await upsertClassUnit(unit, found, preserve);
         }
 
         // 고교 유형·학번 유형을 프로필에 저장 (컬럼 없으면 무시)
@@ -4508,7 +4793,7 @@ ${built.html}
             const btn = document.createElement("button");
             btn.type = "button";
             btn.className = "chip-toggle" + (c.id === activeClassId ? " is-on" : "");
-            btn.textContent = `${c.class_no}반`;
+            btn.textContent = classChipLabel(c);
             btn.addEventListener("click", () => {
               if (c.id === activeClassId) return;
               switchDetailClass(c, lesson.session_no);
@@ -4936,7 +5221,7 @@ ${built.html}
         const classSel = $("topClassSelect");
         if (classSel) {
           classSel.innerHTML = list.length
-            ? list.map((c) => `<option value="${c.id}">${c.class_no}반</option>`).join("")
+            ? list.map((c) => `<option value="${c.id}">${classChipLabel(c)}</option>`).join("")
             : `<option value="">학급 없음</option>`;
           classSel.disabled = !list.length;
           if (list.length) classSel.value = list[0].id;

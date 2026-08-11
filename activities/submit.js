@@ -368,10 +368,25 @@
     return "";
   }
 
+  function lessonTitleText() {
+    return (
+      document.querySelector(".hero-card h1")?.textContent?.trim() ||
+      `${sessionNo}차시 활동지`
+    );
+  }
+
+  function syncPrintLessonTitle() {
+    const el = document.querySelector("#sheetIdentity .print-lesson-title");
+    if (el) el.textContent = lessonTitleText();
+  }
+
   function ensureSheetIdentity() {
     const root = document.getElementById("activity-root");
     if (!root) return;
-    if (document.getElementById("sheetIdentity")) return;
+    if (document.getElementById("sheetIdentity")) {
+      syncPrintLessonTitle();
+      return;
+    }
 
     let titleEl = root.querySelector(":scope > h2");
     if (titleEl) titleEl.remove();
@@ -383,6 +398,13 @@
     const bar = document.createElement("div");
     bar.className = "activity-sheet-bar";
     bar.id = "sheetIdentity";
+
+    const lesson = document.createElement("p");
+    lesson.className = "print-lesson-title";
+    lesson.setAttribute("aria-hidden", "true");
+    lesson.textContent = lessonTitleText();
+    bar.appendChild(lesson);
+
     const titleWrap = document.createElement("div");
     titleWrap.className = "activity-sheet-bar-title";
     titleWrap.appendChild(titleEl);
@@ -699,8 +721,16 @@ body{padding:16px!important;background:#fff!important}
   function buildPrintDocument(filledRoot) {
     const meta = activityMeta();
     const title = meta.title || `${sessionNo}차시 활동지`;
-    const id = readSheetIdentity();
-    const qr = captureQrDataUrl();
+    const bar = filledRoot.querySelector(".activity-sheet-bar");
+    if (bar) {
+      let lesson = bar.querySelector(".print-lesson-title");
+      if (!lesson) {
+        lesson = document.createElement("p");
+        lesson.className = "print-lesson-title";
+        bar.insertBefore(lesson, bar.firstChild);
+      }
+      lesson.textContent = title;
+    }
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -719,51 +749,23 @@ body{padding:16px!important;background:#fff!important}
     print-color-adjust: exact;
   }
   .print-sheet { margin: 0; padding: 0; }
-  .print-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px;
-    align-items: center;
-    margin: 0 0 8px;
-    padding: 8px 10px;
-    border: 1.5px solid #111;
-    border-radius: 10px;
-  }
-  .print-hero .theme {
-    display: inline-block;
-    margin-bottom: 4px;
-    padding: 2px 7px;
-    border-radius: 999px;
-    background: #fbefe7;
-    color: #8c4022;
-    font: 600 10px/1.3 Pretendard, sans-serif;
-  }
-  .print-hero h1 {
-    margin: 0;
-    font: 700 16px/1.25 "Noto Serif KR", serif;
-  }
-  .print-hero .who {
-    margin: 4px 0 0;
-    font: 600 11px/1.3 Pretendard, sans-serif;
-    color: #475569;
-  }
-  .print-hero .qr {
-    width: 72px;
-    height: 72px;
-    border: 1.5px solid #111;
-    border-radius: 8px;
-    padding: 4px;
-    background: #fff;
-  }
-  .print-hero .qr img { width: 100%; height: 100%; display: block; }
   .activity-sheet-bar {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 1fr);
     align-items: center;
-    gap: 8px;
+    gap: 8px 10px;
     margin: 0 0 8px;
     padding-bottom: 6px;
     border-bottom: 1.5px solid #d6d3d1;
+  }
+  .print-lesson-title {
+    display: block;
+    grid-column: 1;
+    justify-self: start;
+    margin: 0;
+    font: 700 12px/1.3 "Noto Serif KR", Pretendard, serif;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
   }
   .activity-sheet-bar-title {
     grid-column: 2;
@@ -772,7 +774,7 @@ body{padding:16px!important;background:#fff!important}
   }
   .activity-sheet-bar h2 {
     margin: 0;
-    font: 700 15px/1.25 Pretendard, sans-serif;
+    font: 700 17px/1.25 Pretendard, sans-serif;
   }
   .sheet-identity {
     grid-column: 3;
@@ -957,16 +959,6 @@ body{padding:16px!important;background:#fff!important}
 </head>
 <body>
   <div class="print-sheet">
-    <section class="print-hero">
-      <div>
-        ${meta.theme ? `<div class="theme">${escapeHtml(meta.theme)}</div>` : ""}
-        <h1>${escapeHtml(title)}</h1>
-        ${(id.studentNo || id.studentName)
-          ? `<p class="who">${escapeHtml([id.studentNo, id.studentName].filter(Boolean).join(" · "))}</p>`
-          : ""}
-      </div>
-      ${qr ? `<div class="qr"><img src="${qr}" alt="활동지 QR" /></div>` : ""}
-    </section>
     <div class="activity-card">
       ${filledRoot.innerHTML}
     </div>

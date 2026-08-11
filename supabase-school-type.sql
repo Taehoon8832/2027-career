@@ -29,6 +29,17 @@ update public.classes
 set department_name = coalesce(department_name, '')
 where department_name is null;
 
+-- 같은 반 번호 + 다른 학과명 허용 (1반·조리과 / 1반·미용과)
+drop index if exists public.classes_teacher_unit_active_uidx;
+create unique index if not exists classes_teacher_unit_active_uidx
+  on public.classes (
+    teacher_id,
+    grade,
+    class_no,
+    (lower(btrim(coalesce(department_name, ''))))
+  )
+  where is_active = true;
+
 -- 학번 유형: type1(10101) / type2(1101)
 alter table public.profiles
   add column if not exists student_no_format text default 'type1';

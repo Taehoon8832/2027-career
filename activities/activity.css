@@ -407,7 +407,7 @@ body.qr-lightbox-open { overflow: hidden; }
   to { opacity: 1; transform: scale(1); }
 }
 
-.activity-card { padding: 18px 16px 20px; }
+.activity-card { padding: calc(18px - 0.3cm) 16px 20px; }
 .activity-card h2 {
   margin: 0 0 14px;
   font: 600 16px/1.35 var(--serif);
@@ -460,6 +460,19 @@ body.qr-lightbox-open { overflow: hidden; }
   padding-bottom: 10px;
   border-bottom: 1.5px solid rgba(31, 30, 29, 0.1);
 }
+.print-lesson-title {
+  display: none;
+  grid-column: 1;
+  justify-self: start;
+  align-self: center;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font: 700 13px/1.3 var(--serif);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  word-break: keep-all;
+}
 .activity-sheet-bar-title {
   grid-column: 2;
   justify-self: center;
@@ -468,7 +481,7 @@ body.qr-lightbox-open { overflow: hidden; }
 }
 .activity-sheet-bar h2 {
   margin: 0 !important;
-  font: 700 20px/1.3 var(--serif);
+  font: 700 22px/1.3 var(--serif);
   letter-spacing: -0.02em;
 }
 .sheet-identity {
@@ -507,7 +520,7 @@ body.qr-lightbox-open { overflow: hidden; }
 
 /* 1차시 · 나 사용 설명서 */
 .activity-card:has(.na-manual) {
-  padding: 14px 14px 16px;
+  padding: calc(14px - 0.3cm) 14px 16px;
 }
 .na-manual {
   margin: 0;
@@ -953,28 +966,34 @@ body.qr-lightbox-open { overflow: hidden; }
     grid-template-columns: 1fr;
     justify-items: center;
     row-gap: 10px;
+    padding-bottom: 12px;
   }
+  .print-lesson-title { display: none !important; }
   .activity-sheet-bar-title {
     grid-column: 1;
+    width: 100%;
   }
-  .activity-sheet-bar h2 { font-size: 18px; }
+  .activity-sheet-bar h2 {
+    font-size: 20px;
+    text-align: center;
+  }
   .sheet-identity {
     grid-column: 1;
     justify-self: stretch;
     width: 100%;
-    justify-content: center;
+    justify-content: stretch;
+    gap: 10px;
   }
+  .sheet-identity label { flex: 1; min-width: 0; }
   .sheet-identity input {
-    flex: 1;
-    width: auto;
-    min-width: 0;
-    max-width: 140px;
-    height: 40px;
+    width: 100%;
+    max-width: none;
+    height: 42px;
     font-size: 16px;
   }
-  .sheet-identity input#sheetDisplayName { width: auto; }
+  .sheet-identity input#sheetDisplayName { width: 100%; }
   .field label { font-size: 13px; }
-  .activity-card:has(.na-manual) { padding: 12px 12px 14px; }
+  .activity-card:has(.na-manual) { padding: calc(12px - 0.3cm) 12px 14px; }
   .na-manual-head { margin-bottom: 8px; padding-bottom: 8px; }
   .na-manual-head strong { font-size: 16px; }
   .na-manual-head span { font-size: 11.5px; }
@@ -1138,25 +1157,9 @@ body.qr-lightbox-open { overflow: hidden; }
     transform: none !important;
   }
 
+  /* 출력: 히어로(테마·QR·안내문구) 숨김 — 차시 제목은 활동지 바에만 표시 */
   .hero-card {
-    display: grid !important;
-    grid-template-columns: minmax(0, 1fr) auto !important;
-    align-items: center !important;
-    gap: 10px !important;
-    margin: 0 0 8px !important;
-    padding: 8px 10px !important;
-    box-shadow: none !important;
-    border-width: 1.5px !important;
-    break-inside: avoid;
-  }
-  .hero-qr-wrap { display: flex !important; }
-  .hero-card .hero-qr,
-  .hero-card a.hero-qr {
-    width: 72px !important;
-    height: 72px !important;
-    min-width: 72px !important;
-    min-height: 72px !important;
-    padding: 4px !important;
+    display: none !important;
   }
 
   .activity-card {
@@ -1169,8 +1172,31 @@ body.qr-lightbox-open { overflow: hidden; }
   }
 
   .activity-sheet-bar {
+    grid-template-columns: minmax(0, 1.35fr) auto minmax(0, 1fr) !important;
+    align-items: center !important;
+    justify-items: stretch !important;
+    column-gap: 10px !important;
+    row-gap: 0 !important;
     margin-bottom: 8px !important;
     padding-bottom: 6px !important;
+  }
+  .print-lesson-title {
+    display: block !important;
+    grid-column: 1 !important;
+    justify-self: start !important;
+    font: 700 12px/1.3 var(--serif) !important;
+  }
+  .activity-sheet-bar-title {
+    grid-column: 2 !important;
+    justify-self: center !important;
+  }
+  .activity-sheet-bar h2 {
+    font-size: 17px !important;
+  }
+  .sheet-identity {
+    grid-column: 3 !important;
+    justify-self: end !important;
+    width: auto !important;
   }
   .sheet-identity input {
     height: 28px !important;
