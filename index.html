@@ -335,13 +335,12 @@
     .class-count-control .btn-save-inline:disabled { opacity: 0.6; cursor: wait; }
     .roster-box { margin: 0; }
     .roster-panel-body {
-      gap: 0 !important;
-      padding: 0 !important;
+      gap: 8px;
+      padding: 8px 10px 10px;
     }
     .roster-controls {
       display: grid;
       gap: 8px;
-      padding: 8px 10px 10px;
       background: #fff;
     }
     .roster-class-head {
@@ -354,9 +353,11 @@
     }
     .roster-class-head .settings-sub { margin: 0; }
     .roster-board {
-      border-top: 2.5px solid #1f1e1d;
+      border: 1.5px solid #d8d0c4;
+      border-radius: 12px;
       background: #efebe3;
       padding: 0;
+      overflow: hidden;
     }
     .roster-board-bar {
       display: flex;
@@ -483,15 +484,20 @@
       padding: 8px 10px;
       background: #ebe6dc;
       border-bottom: 1.5px solid #cfc8ba;
-      text-align: left;
+      text-align: center;
       font: 700 12px/1 var(--font-sans);
       color: #4a4845;
+    }
+    .batch-grid th:first-child,
+    .batch-grid .cell-a {
+      border-right: 1px solid #cfc8ba;
     }
     .batch-grid td {
       padding: 0;
       border-bottom: 1px solid #e8e2d6;
       vertical-align: middle;
       background: #fff;
+      text-align: center;
     }
     .batch-grid tr:nth-child(even) td { background: #fcfbf8; }
     .batch-grid .cell-a {
@@ -500,6 +506,7 @@
       color: var(--color-primary-700);
       user-select: none;
       white-space: nowrap;
+      text-align: center;
     }
     .batch-grid .cell-b {
       position: relative;
@@ -514,6 +521,7 @@
       font: 600 14px/1 var(--font-sans);
       color: #1f1e1d;
       outline: none;
+      text-align: center;
     }
     .batch-grid .cell-b.is-selected {
       outline: 2px solid var(--color-primary-300);
@@ -1009,22 +1017,35 @@
     .setup-launch {
       width: 100%; display: flex; align-items: center; gap: 12px;
       margin: 0 0 14px; padding: 12px 14px;
-      border: 1px solid var(--border-default); border-radius: var(--radius-lg);
+      border: 2.5px solid #6E3A24;
+      border-radius: var(--radius-lg);
       background:
-        linear-gradient(135deg, rgba(255,255,255,0.95), rgba(251,239,231,0.55)),
+        linear-gradient(180deg, rgba(255, 252, 248, 0.98) 0%, rgba(251, 239, 231, 0.72) 100%),
         var(--bg-elevated);
-      box-shadow: var(--shadow-sm);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        0 1px 2px rgba(110, 58, 36, 0.1),
+        0 6px 16px rgba(110, 58, 36, 0.1);
       cursor: pointer; text-align: left;
       transition: border-color var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce), box-shadow var(--duration-fast) ease;
     }
     .setup-launch:hover {
-      border-color: var(--color-primary-300);
+      border-color: #5A2F1C;
       transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 2px 4px rgba(110, 58, 36, 0.12),
+        0 10px 22px rgba(110, 58, 36, 0.14);
     }
     .setup-launch.is-active {
-      border-color: var(--color-primary-300);
-      background: var(--color-primary-50);
+      border-color: #5A2F1C;
+      background:
+        linear-gradient(180deg, #fff9f4 0%, var(--color-primary-50) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 1px 2px rgba(110, 58, 36, 0.12),
+        0 0 0 1px rgba(110, 58, 36, 0.08),
+        0 8px 18px rgba(110, 58, 36, 0.12);
     }
     .setup-icon {
       width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px;
@@ -1188,8 +1209,21 @@
       letter-spacing: -0.02em;
       color: var(--text-primary);
     }
+    .setup-frame {
+      display: grid;
+      gap: 8px;
+      padding: 12px;
+      border: 2.5px solid #6E3A24;
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(255, 252, 248, 0.95) 0%, rgba(250, 245, 238, 0.9) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.65),
+        0 1px 2px rgba(110, 58, 36, 0.08),
+        0 8px 22px rgba(110, 58, 36, 0.07);
+    }
     .setup-panel {
-      border: 1.5px solid #d8d0c4;
+      border: 1px solid #e0d8cc;
       border-radius: 12px;
       background: #fff;
       overflow: hidden;
@@ -1616,6 +1650,7 @@
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
       .class-settings { gap: 10px; padding-bottom: 8px; }
       .setup-page-head h2 { font-size: 18px; }
+      .setup-frame { gap: 10px; padding: 12px; border-radius: 18px; }
       .setup-panel { border-radius: 14px; }
       .setup-panel-head { padding: 10px 12px; }
       .setup-panel-body { padding: 10px 12px 12px; gap: 10px; }
@@ -2024,105 +2059,108 @@
             <h2>초기 설정</h2>
           </header>
 
-          <section class="setup-panel" aria-labelledby="setupPanelTitle">
-            <div class="setup-panel-head">
-              <div class="setup-panel-title">
-                <span class="setup-step" aria-hidden="true">1</span>
-                <strong id="setupUnitTitle">학급 구성</strong>
+          <div class="setup-frame">
+            <section class="setup-panel" aria-labelledby="setupPanelTitle">
+              <div class="setup-panel-head">
+                <div class="setup-panel-title">
+                  <span class="setup-step" aria-hidden="true">1</span>
+                  <strong id="setupUnitTitle">학급 구성</strong>
+                </div>
               </div>
-            </div>
-            <div class="setup-panel-body">
-              <div class="setup-type-grade">
-                <div class="setup-field">
-                  <p class="settings-sub">고교 유형</p>
-                  <div class="chip-row" id="schoolTypeChips" role="group" aria-label="고교 유형">
-                    <button type="button" class="chip-toggle" data-school-type="general">학과 없음</button>
-                    <button type="button" class="chip-toggle" data-school-type="vocational">학과 있음</button>
+              <div class="setup-panel-body">
+                <div class="setup-type-grade">
+                  <div class="setup-field">
+                    <p class="settings-sub">고교 유형</p>
+                    <div class="chip-row" id="schoolTypeChips" role="group" aria-label="고교 유형">
+                      <button type="button" class="chip-toggle" data-school-type="general">학과 없음</button>
+                      <button type="button" class="chip-toggle" data-school-type="vocational">학과 있음</button>
+                    </div>
                   </div>
-                </div>
-                <div class="setup-field">
-                  <p class="settings-sub">학년</p>
-                  <div class="chip-row" id="classGradeChips" role="group" aria-label="학년"></div>
-                </div>
-              </div>
-              <div class="setup-field setup-field--count">
-                <p class="settings-sub">학급 수</p>
-                <div class="class-count-control" id="classCountControl">
-                  <button type="button" class="count-btn" id="btnClassCountMinus" aria-label="학급 수 줄이기">−</button>
-                  <input id="classCountInput" class="count-input" type="number" min="1" max="10" step="1" inputmode="numeric" value="1" aria-label="학급 수" />
-                  <button type="button" class="count-btn" id="btnClassCountPlus" aria-label="학급 수 늘리기">+</button>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="setup-panel dept-box" id="deptBox" hidden aria-labelledby="setupDeptTitle">
-            <div class="setup-panel-head">
-              <div class="setup-panel-title">
-                <span class="setup-step" aria-hidden="true">+</span>
-                <strong id="setupDeptTitle">반·학과 자유롭게 설정</strong>
-              </div>
-            </div>
-            <div class="setup-panel-body">
-              <div class="dept-fields" id="deptFields"></div>
-            </div>
-          </section>
-
-          <section class="setup-panel roster-box" id="rosterBox" aria-labelledby="setupRosterTitle">
-            <div class="setup-panel-head roster-head">
-              <div class="setup-panel-title">
-                <span class="setup-step" aria-hidden="true">2</span>
-                <strong id="setupRosterTitle">학급 명단</strong>
-              </div>
-              <div class="hakbun-type-block">
-                <p class="hakbun-type-label">학번 표시유형 <span class="hakbun-type-ex">(예시 1학년 2반 3번)</span></p>
-                <div class="chip-row hakbun-type-chips" id="studentNoFormatChips" role="group" aria-label="학번 표시유형">
-                  <button type="button" class="chip-toggle" data-no-format="type1" title="유형1(5자리): 학년+반(2)+번호(2) → 10203">유형1(5자리) 10203</button>
-                  <button type="button" class="chip-toggle" data-no-format="type2" title="유형2(4자리): 학년+반+번호(2) → 1203">유형2(4자리) 1203</button>
-                </div>
-              </div>
-            </div>
-            <div class="setup-panel-body roster-panel-body">
-              <div class="roster-controls">
-                <div class="setup-field">
-                  <p class="settings-sub">반 선택</p>
-                  <div class="chip-row" id="rosterClassChips"></div>
+                  <div class="setup-field">
+                    <p class="settings-sub">학년</p>
+                    <div class="chip-row" id="classGradeChips" role="group" aria-label="학년"></div>
+                  </div>
                 </div>
                 <div class="setup-field setup-field--count">
-                  <p class="settings-sub">학생 수</p>
-                  <div class="class-count-control" id="studentCountControl">
-                    <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
-                    <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
-                    <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
-                    <button type="button" class="btn-save-inline btn-save-class" id="btnSaveClassSettings">학급 저장</button>
+                  <p class="settings-sub">학급 수</p>
+                  <div class="class-count-control" id="classCountControl">
+                    <button type="button" class="count-btn" id="btnClassCountMinus" aria-label="학급 수 줄이기">−</button>
+                    <input id="classCountInput" class="count-input" type="number" min="1" max="10" step="1" inputmode="numeric" value="1" aria-label="학급 수" />
+                    <button type="button" class="count-btn" id="btnClassCountPlus" aria-label="학급 수 늘리기">+</button>
                   </div>
                 </div>
               </div>
-              <div class="roster-board" aria-label="학생 카드">
-                <div class="roster-board-bar">
-                  <strong>학생 카드</strong>
-                  <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
-                  <span class="grow" aria-hidden="true"></span>
-                  <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M4 4h7v7H4z"/>
-                      <path d="M13 4h7v7h-7z"/>
-                      <path d="M4 13h7v7H4z"/>
-                      <path d="M13 13h7v7h-7z"/>
-                    </svg>
-                    일괄 입력
-                  </button>
+            </section>
+
+            <section class="setup-panel dept-box" id="deptBox" hidden aria-labelledby="setupDeptTitle">
+              <div class="setup-panel-head">
+                <div class="setup-panel-title">
+                  <span class="setup-step" aria-hidden="true">+</span>
+                  <strong id="setupDeptTitle">반·학과 자유롭게 설정</strong>
                 </div>
-                <div class="roster-list" id="rosterList"></div>
               </div>
+              <div class="setup-panel-body">
+                <div class="dept-fields" id="deptFields"></div>
+              </div>
+            </section>
+
+            <section class="setup-panel roster-box" id="rosterBox" aria-labelledby="setupRosterTitle">
+              <div class="setup-panel-head roster-head">
+                <div class="setup-panel-title">
+                  <span class="setup-step" aria-hidden="true">2</span>
+                  <strong id="setupRosterTitle">학급 명단</strong>
+                </div>
+                <div class="hakbun-type-block">
+                  <p class="hakbun-type-label">학번 표시유형 <span class="hakbun-type-ex">(예시 1학년 2반 3번)</span></p>
+                  <div class="chip-row hakbun-type-chips" id="studentNoFormatChips" role="group" aria-label="학번 표시유형">
+                    <button type="button" class="chip-toggle" data-no-format="type1" title="유형1(5자리): 학년+반(2)+번호(2) → 10203">유형1(5자리) 10203</button>
+                    <button type="button" class="chip-toggle" data-no-format="type2" title="유형2(4자리): 학년+반+번호(2) → 1203">유형2(4자리) 1203</button>
+                  </div>
+                </div>
+              </div>
+              <div class="setup-panel-body roster-panel-body">
+                <div class="roster-controls">
+                  <div class="setup-field">
+                    <p class="settings-sub">반 선택</p>
+                    <div class="chip-row" id="rosterClassChips"></div>
+                  </div>
+                  <div class="setup-field setup-field--count">
+                    <p class="settings-sub">학생 수</p>
+                    <div class="class-count-control" id="studentCountControl">
+                      <button type="button" class="count-btn" id="btnStudentCountMinus" aria-label="학생 수 줄이기">−</button>
+                      <input id="studentCountInput" class="count-input" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="off" placeholder="30" aria-label="학생 수" />
+                      <button type="button" class="count-btn" id="btnStudentCountPlus" aria-label="학생 수 늘리기">+</button>
+                      <button type="button" class="btn-save-inline btn-save-class" id="btnSaveClassSettings">학급 저장</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="roster-board" aria-label="학생 카드">
+            <div class="roster-board-bar">
+              <strong>학생 카드</strong>
+              <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
+              <span class="grow" aria-hidden="true"></span>
+              <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 4h7v7H4z"/>
+                  <path d="M13 4h7v7h-7z"/>
+                  <path d="M4 13h7v7H4z"/>
+                  <path d="M13 13h7v7h-7z"/>
+                </svg>
+                일괄 입력
+              </button>
             </div>
-          </section>
+            <div class="roster-list" id="rosterList"></div>
+          </div>
         </div>
         <div class="batch-sheet" id="batchSheet" aria-hidden="true">
           <div class="batch-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="batchSheetTitle">
             <div class="batch-sheet-head">
-              <h3 id="batchSheetTitle">이름 일괄 입력</h3>
-              <p class="sub">A열 학번 · B열 이름 · 붙여넣기 · 드래그 복사/삭제 · Ctrl+Z</p>
+              <h3 id="batchSheetTitle">✅ 일괄 입력</h3>
+              <p class="sub">(복사, 붙여넣기 가능)</p>
               <div class="batch-sheet-actions">
                 <button type="button" class="btn-tiny" id="btnBatchUndo" title="되돌리기 (Ctrl+Z)">되돌리기</button>
                 <button type="button" class="btn-tiny" id="btnBatchClose">닫기</button>
@@ -3985,7 +4023,7 @@
         const parts = new Array(batchState.rows.length + 1);
         parts[0] = `<table class="batch-grid" id="batchGrid">
           <colgroup><col class="col-a" /><col class="col-b" /></colgroup>
-          <thead><tr><th>A · 학번</th><th>B · 이름</th></tr></thead><tbody>`;
+          <thead><tr><th>학번</th><th>이름</th></tr></thead><tbody>`;
         for (let i = 0; i < batchState.rows.length; i++) {
           const r = batchState.rows[i];
           parts[i + 1] = `<tr data-idx="${i}">
