@@ -35,7 +35,7 @@ const html = `<!DOCTYPE html>
   <title>1차시 · 디지털 나 사용 설명서</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=qr1" />
+  <link rel="stylesheet" href="./activity.css?v=bar1" />
   <script>window.ACTIVITY_SESSION = 1;</script>
 </head>
 <body>
@@ -51,6 +51,7 @@ const html = `<!DOCTYPE html>
       <div class="hero-copy">
         <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
         <h1>1차시 · 디지털 나 사용 설명서</h1>
+        <p>서로를 이해하고 즐거운 학급 문화를 만들기 위한 상세 안내서</p>
       </div>
       <div class="hero-qr-wrap">
         <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
@@ -65,7 +66,7 @@ const html = `<!DOCTYPE html>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./submit.js?v=qr1"></script>
+  <script src="./submit.js?v=bar1"></script>
 </body>
 </html>
 `;

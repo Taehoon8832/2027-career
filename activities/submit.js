@@ -757,20 +757,28 @@ body{padding:16px!important;background:#fff!important}
   }
   .print-hero .qr img { width: 100%; height: 100%; display: block; }
   .activity-sheet-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: 10px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
     margin: 0 0 8px;
     padding-bottom: 6px;
     border-bottom: 1.5px solid #d6d3d1;
   }
+  .activity-sheet-bar-title {
+    grid-column: 2;
+    justify-self: center;
+    text-align: center;
+  }
   .activity-sheet-bar h2 {
     margin: 0;
-    font: 700 13px/1.25 Pretendard, sans-serif;
+    font: 700 15px/1.25 Pretendard, sans-serif;
   }
   .sheet-identity {
+    grid-column: 3;
+    justify-self: end;
     display: flex;
+    align-items: center;
     gap: 8px;
   }
   .sheet-identity label {
