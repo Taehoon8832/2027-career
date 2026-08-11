@@ -346,6 +346,7 @@
     .roster-board-bar {
       display: flex;
       align-items: center;
+      gap: 6px;
       padding: 6px 10px;
       border-bottom: 1px solid rgba(31, 30, 29, 0.14);
       background: #e7e1d6;
@@ -354,6 +355,171 @@
       font: 700 12px/1.2 var(--font-sans);
       color: #1f1e1d;
       letter-spacing: -0.01em;
+    }
+    .roster-board-bar .grow { flex: 1; min-width: 4px; }
+    .btn-batch-input {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 30px;
+      padding: 0 10px;
+      border: 1.5px solid #1f1e1d;
+      border-radius: 999px;
+      background: #fff;
+      color: #1f1e1d;
+      font: 700 11px/1 var(--font-sans);
+      cursor: pointer;
+      white-space: nowrap;
+      touch-action: manipulation;
+    }
+    .btn-batch-input svg {
+      width: 14px; height: 14px;
+      stroke: currentColor; fill: none;
+      stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .btn-batch-input:hover {
+      background: var(--color-primary-50);
+      border-color: var(--color-primary-300);
+      color: var(--color-primary-700);
+    }
+    .batch-sheet {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      align-items: stretch;
+      justify-content: center;
+      padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      background: rgba(31, 30, 29, 0.48);
+    }
+    .batch-sheet.is-open { display: flex; }
+    .batch-sheet-panel {
+      width: min(720px, 100%);
+      max-height: min(92dvh, 900px);
+      display: flex;
+      flex-direction: column;
+      border: 2.5px solid #111;
+      border-radius: 14px;
+      background: #fff;
+      overflow: hidden;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.28);
+    }
+    .batch-sheet-head {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      padding: 10px 12px;
+      border-bottom: 1px solid #e5e0d5;
+      background: #f7f4ee;
+    }
+    .batch-sheet-head h3 {
+      margin: 0;
+      font: 700 15px/1.2 var(--font-sans);
+      color: #1f1e1d;
+    }
+    .batch-sheet-head .sub {
+      margin: 0;
+      flex: 1;
+      min-width: 120px;
+      font: 500 11px/1.35 var(--font-sans);
+      color: #807d75;
+    }
+    .batch-sheet-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .batch-sheet-actions .btn-tiny {
+      min-height: 34px;
+      padding: 0 12px;
+      font-weight: 700;
+    }
+    .batch-sheet-actions .is-apply {
+      background: linear-gradient(145deg, #d88861, #c96442 50%, #8c4022);
+      border-color: transparent;
+      color: #fff;
+    }
+    .batch-sheet-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      background: #faf9f5;
+    }
+    .batch-grid {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font: 500 13px/1.2 var(--font-sans);
+    }
+    .batch-grid col.col-a { width: 34%; }
+    .batch-grid col.col-b { width: 66%; }
+    .batch-grid th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 8px 10px;
+      background: #ebe6dc;
+      border-bottom: 1.5px solid #cfc8ba;
+      text-align: left;
+      font: 700 12px/1 var(--font-sans);
+      color: #4a4845;
+    }
+    .batch-grid td {
+      padding: 0;
+      border-bottom: 1px solid #e8e2d6;
+      vertical-align: middle;
+      background: #fff;
+    }
+    .batch-grid tr:nth-child(even) td { background: #fcfbf8; }
+    .batch-grid .cell-a {
+      padding: 8px 10px;
+      font: 700 12px/1.2 var(--font-sans);
+      color: var(--color-primary-700);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .batch-grid .cell-b {
+      position: relative;
+    }
+    .batch-grid .cell-b input {
+      width: 100%;
+      height: 36px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      padding: 0 10px;
+      font: 600 14px/1 var(--font-sans);
+      color: #1f1e1d;
+      outline: none;
+    }
+    .batch-grid .cell-b.is-selected {
+      outline: 2px solid var(--color-primary-300);
+      outline-offset: -2px;
+      background: #fff7f1 !important;
+    }
+    .batch-grid .cell-b.is-fill-target {
+      background: #ffe8d8 !important;
+    }
+    .batch-fill-handle {
+      position: absolute;
+      right: 2px;
+      bottom: 2px;
+      width: 9px;
+      height: 9px;
+      border: 1px solid #fff;
+      background: var(--color-primary-700);
+      cursor: crosshair;
+      touch-action: none;
+      z-index: 1;
+    }
+    .batch-sheet-foot {
+      padding: 8px 12px;
+      border-top: 1px solid #e5e0d5;
+      background: #fff;
+      font: 500 11px/1.4 var(--font-sans);
+      color: #807d75;
     }
     .roster-list {
       display: grid;
@@ -1391,6 +1557,17 @@
       .roster-dept { font-size: 10px; max-width: 50%; padding: 3px 7px; }
       .roster-cell input { height: 36px; font-size: 16px; }
       .roster-board-bar { flex-wrap: wrap; gap: 4px 6px; }
+      .btn-batch-input { height: 34px; font-size: 12px; padding: 0 12px; }
+      .batch-sheet { padding: 0; }
+      .batch-sheet-panel { width: 100%; max-height: 100dvh; border-radius: 0; border-width: 0; }
+      .batch-sheet-head { padding: 10px; gap: 6px; }
+      .batch-sheet-head h3 { font-size: 16px; width: 100%; }
+      .batch-sheet-head .sub { width: 100%; font-size: 12px; }
+      .batch-sheet-actions { width: 100%; }
+      .batch-sheet-actions .btn-tiny { flex: 1; min-height: 42px; font-size: 14px; }
+      .batch-grid .cell-b input { height: 42px; font-size: 16px; }
+      .batch-grid .cell-a { font-size: 13px; padding: 10px; }
+      .batch-fill-handle { width: 14px; height: 14px; right: 3px; bottom: 3px; }
       .roster-chip-hint { font-size: 11px; line-height: 1.4; }
       .setup-launch { padding: 14px; }
       .setup-launch-copy strong { font-size: 15px; }
@@ -1614,7 +1791,6 @@
                 <div class="setup-field">
                   <p class="settings-sub">반 선택</p>
                   <div class="chip-row" id="rosterClassChips"></div>
-                  <p class="roster-chip-hint">위에서 설정한 학급이 여기에 나타납니다. 더블클릭으로도 반·학과명을 수정할 수 있습니다.</p>
                 </div>
                 <div class="setup-field setup-field--count">
                   <p class="settings-sub">학생 수</p>
@@ -1630,11 +1806,36 @@
                 <div class="roster-board-bar">
                   <strong>학생 카드</strong>
                   <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
+                  <span class="grow" aria-hidden="true"></span>
+                  <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 4h7v7H4z"/>
+                      <path d="M13 4h7v7h-7z"/>
+                      <path d="M4 13h7v7H4z"/>
+                      <path d="M13 13h7v7h-7z"/>
+                    </svg>
+                    일괄 입력
+                  </button>
                 </div>
                 <div class="roster-list" id="rosterList"></div>
               </div>
             </div>
           </section>
+        </div>
+        <div class="batch-sheet" id="batchSheet" aria-hidden="true">
+          <div class="batch-sheet-panel" role="dialog" aria-modal="true" aria-labelledby="batchSheetTitle">
+            <div class="batch-sheet-head">
+              <h3 id="batchSheetTitle">이름 일괄 입력</h3>
+              <p class="sub">A열 학번 · B열 이름 · 붙여넣기 · 드래그 복사/삭제 · Ctrl+Z</p>
+              <div class="batch-sheet-actions">
+                <button type="button" class="btn-tiny" id="btnBatchUndo" title="되돌리기 (Ctrl+Z)">되돌리기</button>
+                <button type="button" class="btn-tiny" id="btnBatchClose">닫기</button>
+                <button type="button" class="btn-tiny is-apply" id="btnBatchApply">입력</button>
+              </div>
+            </div>
+            <div class="batch-sheet-body" id="batchSheetBody"></div>
+            <div class="batch-sheet-foot">엑셀에서 이름만 또는 학번+이름을 복사해 붙여넣을 수 있습니다. 입력 후 학생 카드에 바로 반영됩니다.</div>
+          </div>
         </div>
         <div class="sub-viewer" id="subViewer" aria-hidden="true">
           <div class="sub-viewer-panel" role="dialog" aria-modal="true" aria-labelledby="subViewerTitle">
@@ -3189,6 +3390,341 @@
             await deleteSubmission(id);
           }
         });
+      }
+
+      /* —— 이름 일괄 입력 (엑셀형) —— */
+      const batchState = {
+        rows: [], // { id, student_no, name }
+        undo: [],
+        selStart: -1,
+        selEnd: -1,
+        filling: false,
+        fillFrom: -1,
+        fillTo: -1,
+        bound: false
+      };
+
+      function pushBatchUndo() {
+        batchState.undo.push(batchState.rows.map((r) => r.name));
+        if (batchState.undo.length > 40) batchState.undo.shift();
+      }
+
+      function applyBatchUndo() {
+        if (!batchState.undo.length) return;
+        const prev = batchState.undo.pop();
+        batchState.rows.forEach((r, i) => {
+          r.name = prev[i] ?? "";
+        });
+        syncBatchInputsFromState();
+      }
+
+      function syncBatchInputsFromState() {
+        const body = $("batchSheetBody");
+        if (!body) return;
+        body.querySelectorAll("input[data-batch-idx]").forEach((input) => {
+          const i = Number(input.dataset.batchIdx);
+          if (!Number.isFinite(i) || !batchState.rows[i]) return;
+          if (input.value !== batchState.rows[i].name) input.value = batchState.rows[i].name;
+        });
+        paintBatchSelection();
+      }
+
+      function paintBatchSelection() {
+        const body = $("batchSheetBody");
+        if (!body) return;
+        const a = Math.min(batchState.selStart, batchState.selEnd);
+        const b = Math.max(batchState.selStart, batchState.selEnd);
+        const fa = Math.min(batchState.fillFrom, batchState.fillTo);
+        const fb = Math.max(batchState.fillFrom, batchState.fillTo);
+        body.querySelectorAll(".cell-b").forEach((td) => {
+          const i = Number(td.dataset.idx);
+          td.classList.toggle("is-selected", batchState.selStart >= 0 && i >= a && i <= b);
+          td.classList.toggle(
+            "is-fill-target",
+            batchState.filling && batchState.fillFrom >= 0 && i >= fa && i <= fb && i !== batchState.fillFrom
+          );
+        });
+      }
+
+      function setBatchSelection(start, end) {
+        batchState.selStart = start;
+        batchState.selEnd = end ?? start;
+        paintBatchSelection();
+      }
+
+      function clearBatchRange(start, end) {
+        const a = Math.min(start, end);
+        const b = Math.max(start, end);
+        if (a < 0) return;
+        pushBatchUndo();
+        for (let i = a; i <= b; i++) {
+          if (batchState.rows[i]) batchState.rows[i].name = "";
+        }
+        syncBatchInputsFromState();
+      }
+
+      function fillBatchRange(from, to) {
+        if (from < 0 || to < 0 || from === to) return;
+        const value = batchState.rows[from]?.name ?? "";
+        const a = Math.min(from, to);
+        const b = Math.max(from, to);
+        pushBatchUndo();
+        for (let i = a; i <= b; i++) {
+          if (i === from) continue;
+          if (batchState.rows[i]) batchState.rows[i].name = value;
+        }
+        syncBatchInputsFromState();
+      }
+
+      function pasteIntoBatch(text, startIdx) {
+        const lines = String(text || "")
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n")
+          .split("\n")
+          .filter((line, idx, arr) => !(idx === arr.length - 1 && line === ""));
+        if (!lines.length) return;
+        pushBatchUndo();
+        let row = Math.max(0, startIdx);
+        for (const line of lines) {
+          if (row >= batchState.rows.length) break;
+          const cols = line.split("\t");
+          let name = "";
+          if (cols.length >= 2) {
+            // 학번\t이름 또는 이름만
+            const maybeNo = String(cols[0] || "").trim();
+            const maybeName = String(cols[1] || "").trim();
+            const curNo = String(batchState.rows[row].student_no || "").trim();
+            name = maybeNo === curNo || /^\d+$/.test(maybeNo) ? maybeName : String(cols[cols.length - 1] || "").trim();
+            if (!name && maybeName) name = maybeName;
+            if (!name) name = maybeNo;
+          } else {
+            name = String(cols[0] || "").trim();
+          }
+          batchState.rows[row].name = name;
+          row += 1;
+        }
+        syncBatchInputsFromState();
+        setBatchSelection(startIdx, Math.min(batchState.rows.length - 1, row - 1));
+      }
+
+      function renderBatchGrid() {
+        const body = $("batchSheetBody");
+        if (!body) return;
+        const parts = new Array(batchState.rows.length + 1);
+        parts[0] = `<table class="batch-grid" id="batchGrid">
+          <colgroup><col class="col-a" /><col class="col-b" /></colgroup>
+          <thead><tr><th>A · 학번</th><th>B · 이름</th></tr></thead><tbody>`;
+        for (let i = 0; i < batchState.rows.length; i++) {
+          const r = batchState.rows[i];
+          parts[i + 1] = `<tr data-idx="${i}">
+            <td class="cell-a">${escapeHtml(r.student_no)}</td>
+            <td class="cell-b" data-idx="${i}">
+              <input type="text" data-batch-idx="${i}" value="${escapeHtml(r.name)}" placeholder="이름" autocomplete="off" spellcheck="false" />
+              <span class="batch-fill-handle" data-fill="${i}" aria-hidden="true"></span>
+            </td>
+          </tr>`;
+        }
+        body.innerHTML = `${parts.join("")}</tbody></table>`;
+        bindBatchSheetEvents();
+        setBatchSelection(0, 0);
+        const first = body.querySelector('input[data-batch-idx="0"]');
+        first?.focus();
+      }
+
+      function bindBatchSheetEvents() {
+        const root = $("batchSheet");
+        const body = $("batchSheetBody");
+        if (!root || !body || batchState.bound) return;
+        batchState.bound = true;
+
+        body.addEventListener("input", (e) => {
+          const input = e.target.closest("input[data-batch-idx]");
+          if (!input) return;
+          const i = Number(input.dataset.batchIdx);
+          if (!Number.isFinite(i) || !batchState.rows[i]) return;
+          batchState.rows[i].name = input.value;
+        });
+
+        body.addEventListener("keydown", (e) => {
+          const input = e.target.closest("input[data-batch-idx]");
+          const i = input ? Number(input.dataset.batchIdx) : batchState.selStart;
+          if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "z") {
+            e.preventDefault();
+            applyBatchUndo();
+            return;
+          }
+          if (e.key === "Delete" || e.key === "Backspace") {
+            if (!input || (input.selectionStart === 0 && input.selectionEnd === input.value.length) || !input.value) {
+              if (batchState.selStart >= 0 && batchState.selEnd !== batchState.selStart) {
+                e.preventDefault();
+                clearBatchRange(batchState.selStart, batchState.selEnd);
+                return;
+              }
+            }
+          }
+          if (e.key === "ArrowDown" || e.key === "Enter") {
+            e.preventDefault();
+            const next = Math.min(batchState.rows.length - 1, (Number.isFinite(i) ? i : 0) + 1);
+            const el = body.querySelector(`input[data-batch-idx="${next}"]`);
+            el?.focus();
+            setBatchSelection(next, next);
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            const prev = Math.max(0, (Number.isFinite(i) ? i : 0) - 1);
+            const el = body.querySelector(`input[data-batch-idx="${prev}"]`);
+            el?.focus();
+            setBatchSelection(prev, prev);
+          }
+        });
+
+        body.addEventListener("paste", (e) => {
+          const input = e.target.closest("input[data-batch-idx]");
+          if (!input) return;
+          const text = e.clipboardData?.getData("text") || "";
+          if (!text || (!text.includes("\n") && !text.includes("\t"))) return;
+          e.preventDefault();
+          pasteIntoBatch(text, Number(input.dataset.batchIdx) || 0);
+        });
+
+        // 드래그로 범위 선택 + 삭제(빈 칸으로 드래그 확장 후 Delete) / 핸들로 채우기
+        let dragSelect = false;
+        body.addEventListener("pointerdown", (e) => {
+          const handle = e.target.closest("[data-fill]");
+          if (handle) {
+            e.preventDefault();
+            const from = Number(handle.getAttribute("data-fill"));
+            batchState.filling = true;
+            batchState.fillFrom = from;
+            batchState.fillTo = from;
+            setBatchSelection(from, from);
+            handle.setPointerCapture?.(e.pointerId);
+            paintBatchSelection();
+            return;
+          }
+          const td = e.target.closest(".cell-b");
+          if (!td) return;
+          const i = Number(td.dataset.idx);
+          if (!Number.isFinite(i)) return;
+          dragSelect = true;
+          setBatchSelection(i, i);
+        });
+        body.addEventListener("pointermove", (e) => {
+          const td = e.target.closest?.(".cell-b") || document.elementFromPoint(e.clientX, e.clientY)?.closest?.(".cell-b");
+          if (!td) return;
+          const i = Number(td.dataset.idx);
+          if (!Number.isFinite(i)) return;
+          if (batchState.filling) {
+            batchState.fillTo = i;
+            paintBatchSelection();
+          } else if (dragSelect) {
+            batchState.selEnd = i;
+            paintBatchSelection();
+          }
+        });
+        body.addEventListener("pointerup", () => {
+          if (batchState.filling) {
+            fillBatchRange(batchState.fillFrom, batchState.fillTo);
+            batchState.filling = false;
+            batchState.fillFrom = -1;
+            batchState.fillTo = -1;
+            paintBatchSelection();
+          }
+          dragSelect = false;
+        });
+        body.addEventListener("pointercancel", () => {
+          batchState.filling = false;
+          dragSelect = false;
+          paintBatchSelection();
+        });
+
+        body.addEventListener("focusin", (e) => {
+          const input = e.target.closest("input[data-batch-idx]");
+          if (!input) return;
+          const i = Number(input.dataset.batchIdx);
+          if (Number.isFinite(i)) setBatchSelection(i, i);
+          if (input.dataset.undoArmed === "1") return;
+          input.dataset.undoArmed = "1";
+          pushBatchUndo();
+        }, true);
+        body.addEventListener("focusout", (e) => {
+          const input = e.target.closest("input[data-batch-idx]");
+          if (input) delete input.dataset.undoArmed;
+        }, true);
+
+        // 빈 값으로 드래그 채우기 = 드래그 삭제
+        root.addEventListener("keydown", (e) => {
+          if (!root.classList.contains("is-open")) return;
+          if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === "z") {
+            if (e.target.closest("input[data-batch-idx]")) return;
+            e.preventDefault();
+            applyBatchUndo();
+          }
+        });
+      }
+
+      function openBatchNameInput() {
+        if (!rosterClassId) return toast("학급을 먼저 선택해 주세요.");
+        if (!rosterStudents.length) return toast("학생이 없습니다. 학생 수를 먼저 적용해 주세요.");
+        batchState.rows = rosterStudents.map((s) => ({
+          id: s.id,
+          student_no: normalizeStudentNo(s.student_no) || s.student_no,
+          name: String(s.student_name || "")
+        }));
+        batchState.undo = [];
+        batchState.selStart = 0;
+        batchState.selEnd = 0;
+        const sheet = $("batchSheet");
+        if (!sheet) return;
+        sheet.classList.add("is-open");
+        sheet.setAttribute("aria-hidden", "false");
+        document.body.style.overflow = "hidden";
+        renderBatchGrid();
+      }
+
+      function closeBatchNameInput() {
+        const sheet = $("batchSheet");
+        if (!sheet) return;
+        sheet.classList.remove("is-open");
+        sheet.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+      }
+
+      async function applyBatchNameInput() {
+        if (!sb || !rosterClassId || !batchState.rows.length) return;
+        const btn = $("btnBatchApply");
+        if (btn) btn.disabled = true;
+        try {
+          const updates = batchState.rows.filter((r) => {
+            const cur = rosterStudents.find((s) => s.id === r.id);
+            return cur && String(cur.student_name || "") !== String(r.name || "").trim();
+          });
+          // 병렬 소량 배치로 빠르게 저장
+          const CHUNK = 12;
+          for (let i = 0; i < updates.length; i += CHUNK) {
+            const slice = updates.slice(i, i + CHUNK);
+            const results = await Promise.all(
+              slice.map((r) =>
+                sb.from("students").update({ student_name: String(r.name || "").trim() }).eq("id", r.id)
+              )
+            );
+            const err = results.find((x) => x.error)?.error;
+            if (err) throw err;
+          }
+          // 로컬 즉시 반영 후 목록 갱신
+          const nameById = new Map(batchState.rows.map((r) => [r.id, String(r.name || "").trim()]));
+          rosterStudents.forEach((s) => {
+            if (nameById.has(s.id)) s.student_name = nameById.get(s.id);
+          });
+          studentsCache.set(rosterClassId, rosterStudents.slice());
+          renderRosterList();
+          closeBatchNameInput();
+          toast(updates.length ? `${updates.length}명 이름을 입력했습니다.` : "변경된 이름이 없습니다.");
+        } catch (e) {
+          console.error(e);
+          toast("일괄 입력 실패: " + (e.message || e));
+        } finally {
+          if (btn) btn.disabled = false;
+        }
       }
 
       function renderRosterList() {
@@ -5464,6 +6000,21 @@ ${built.html}
       $("btnStudentCountPlus")?.addEventListener("click", () => adjustStudentCount(1));
       $("btnApplyStudentCount")?.addEventListener("click", () => {
         void applyStudentCount($("studentCountInput")?.value);
+      });
+      $("btnBatchNameInput")?.addEventListener("click", () => openBatchNameInput());
+      $("btnBatchClose")?.addEventListener("click", () => closeBatchNameInput());
+      $("btnBatchUndo")?.addEventListener("click", () => applyBatchUndo());
+      $("btnBatchApply")?.addEventListener("click", () => {
+        void applyBatchNameInput();
+      });
+      $("batchSheet")?.addEventListener("click", (e) => {
+        if (e.target === $("batchSheet")) closeBatchNameInput();
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && $("batchSheet")?.classList.contains("is-open")) {
+          e.preventDefault();
+          closeBatchNameInput();
+        }
       });
       $("studentCountInput")?.addEventListener("input", (e) => {
         const el = e.target;
