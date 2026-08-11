@@ -1119,34 +1119,43 @@ body{padding:16px!important;background:#fff!important}
     window.addEventListener("load", syncAll, { once: true });
   }
 
-  function placeTimeWatchInTopbar(el) {
+  function syncTopbarStickyOffset() {
     const topbar = document.querySelector(".topbar");
-    if (!topbar || !el) return;
-    const brand = topbar.querySelector(".brand");
-    // 브랜드 바로 오른쪽(왼쪽 열) + 상단 sticky 유지
-    if (brand && brand.nextSibling !== el) {
-      brand.insertAdjacentElement("afterend", el);
-    } else if (!brand && el.parentElement !== topbar) {
-      topbar.insertBefore(el, topbar.firstChild);
+    const h = topbar ? Math.ceil(topbar.getBoundingClientRect().height) : 0;
+    document.documentElement.style.setProperty("--topbar-sticky-h", `${Math.max(0, h)}px`);
+  }
+
+  function bindTopbarStickyOffset() {
+    if (document.documentElement.dataset.twStickyBound === "1") {
+      syncTopbarStickyOffset();
+      return;
     }
+    document.documentElement.dataset.twStickyBound = "1";
+    syncTopbarStickyOffset();
+    window.addEventListener("resize", syncTopbarStickyOffset, { passive: true });
+  }
+
+  function placeTimeWatchInShell(el) {
+    const shell = document.querySelector(".shell");
+    if (!shell || !el) return;
+    // 상단바에 남아 있으면 본문으로 이동 (카드 왼쪽 열 정렬)
+    if (el.parentElement !== shell) shell.insertBefore(el, shell.firstChild);
+    else if (shell.firstChild !== el) shell.insertBefore(el, shell.firstChild);
+    bindTopbarStickyOffset();
   }
 
   function ensureTimeWatch() {
     const existing = document.getElementById("timeWatch");
     if (existing) {
-      placeTimeWatchInTopbar(existing);
-      // 이전 마크업에 tw-face가 없으면 보강
+      // 이전 고급형 face 래퍼 제거 → 담백한 숫자만
+      const face = existing.querySelector(".tw-face");
       const display = existing.querySelector("#twDisplay");
-      if (display && !display.parentElement?.classList.contains("tw-face")) {
-        const face = document.createElement("div");
-        face.className = "tw-face";
-        display.parentNode.insertBefore(face, display);
-        face.appendChild(display);
-      }
+      if (face && display) face.replaceWith(display);
+      placeTimeWatchInShell(existing);
       return;
     }
-    const topbar = document.querySelector(".topbar");
-    if (!topbar) return;
+    const shell = document.querySelector(".shell");
+    if (!shell) return;
 
     const wrap = document.createElement("div");
     wrap.className = "time-watch";
@@ -1159,9 +1168,7 @@ body{padding:16px!important;background:#fff!important}
           <input id="twMinutes" type="number" min="1" max="300" step="1" inputmode="numeric" placeholder="50" aria-label="분 입력" />
           <span class="tw-unit">분</span>
         </label>
-        <div class="tw-face">
-          <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
-        </div>
+        <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
         <div class="tw-btns">
           <button type="button" class="tw-act" id="twToggle" title="시작" aria-label="시작">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg>
@@ -1175,7 +1182,7 @@ body{padding:16px!important;background:#fff!important}
         </div>
       </div>`;
 
-    placeTimeWatchInTopbar(wrap);
+    placeTimeWatchInShell(wrap);
 
     const input = wrap.querySelector("#twMinutes");
     const display = wrap.querySelector("#twDisplay");
