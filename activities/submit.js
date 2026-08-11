@@ -1119,17 +1119,34 @@ body{padding:16px!important;background:#fff!important}
     window.addEventListener("load", syncAll, { once: true });
   }
 
+  function placeTimeWatchInTopbar(el) {
+    const topbar = document.querySelector(".topbar");
+    if (!topbar || !el) return;
+    const brand = topbar.querySelector(".brand");
+    // 브랜드 바로 오른쪽(왼쪽 열) + 상단 sticky 유지
+    if (brand && brand.nextSibling !== el) {
+      brand.insertAdjacentElement("afterend", el);
+    } else if (!brand && el.parentElement !== topbar) {
+      topbar.insertBefore(el, topbar.firstChild);
+    }
+  }
+
   function ensureTimeWatch() {
-    const shell = document.querySelector(".shell");
     const existing = document.getElementById("timeWatch");
     if (existing) {
-      // 이전 상단바 배치였다면 본문 왼쪽으로 이동
-      if (shell && existing.parentElement !== shell) {
-        shell.insertBefore(existing, shell.firstChild);
+      placeTimeWatchInTopbar(existing);
+      // 이전 마크업에 tw-face가 없으면 보강
+      const display = existing.querySelector("#twDisplay");
+      if (display && !display.parentElement?.classList.contains("tw-face")) {
+        const face = document.createElement("div");
+        face.className = "tw-face";
+        display.parentNode.insertBefore(face, display);
+        face.appendChild(display);
       }
       return;
     }
-    const host = shell || document.querySelector(".topbar") || document.body;
+    const topbar = document.querySelector(".topbar");
+    if (!topbar) return;
 
     const wrap = document.createElement("div");
     wrap.className = "time-watch";
@@ -1142,7 +1159,9 @@ body{padding:16px!important;background:#fff!important}
           <input id="twMinutes" type="number" min="1" max="300" step="1" inputmode="numeric" placeholder="50" aria-label="분 입력" />
           <span class="tw-unit">분</span>
         </label>
-        <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+        <div class="tw-face">
+          <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+        </div>
         <div class="tw-btns">
           <button type="button" class="tw-act" id="twToggle" title="시작" aria-label="시작">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg>
@@ -1156,9 +1175,7 @@ body{padding:16px!important;background:#fff!important}
         </div>
       </div>`;
 
-    // 본문(.shell) 왼쪽 정렬 — 활동지 카드와 같은 열
-    if (shell) shell.insertBefore(wrap, shell.firstChild);
-    else host.appendChild(wrap);
+    placeTimeWatchInTopbar(wrap);
 
     const input = wrap.querySelector("#twMinutes");
     const display = wrap.querySelector("#twDisplay");

@@ -36,10 +36,11 @@ button, .submit-fab, a { touch-action: manipulation; }
 .topbar {
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; gap: 10px;
-  margin: -18px -16px 18px; padding: 12px 16px;
-  background: rgba(255,255,255,0.86);
+  margin: -18px -16px 18px; padding: 10px 16px;
+  background: rgba(255,252,248,0.94);
   border-bottom: 1px solid var(--line);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 .brand {
   flex-shrink: 0;
@@ -50,7 +51,7 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 .top-meta {
   min-width: 0;
-  flex: 1;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -93,29 +94,31 @@ button, .submit-fab, a { touch-action: manipulation; }
   margin-left: auto;
 }
 
-/* —— 수업 타임워치 (콘텐츠 왼쪽 정렬) —— */
+/* —— 수업 타임워치 (상단바 왼쪽 · sticky) —— */
 .time-watch {
+  flex: 0 1 auto;
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  width: 100%;
-  margin: 0 0 12px;
-  padding: 0;
+  order: 0;
   min-width: 0;
+  margin: 0;
+  padding: 0;
 }
 .time-watch .tw-shell {
   display: inline-flex;
   align-items: center;
   gap: 12px;
   max-width: 100%;
-  padding: 7px 12px 7px 14px;
-  border: 1.5px solid #6e3a24;
+  padding: 6px 12px 6px 12px;
+  border: 1.5px solid #5c3a24;
   border-radius: 999px;
   background:
-    linear-gradient(180deg, #fffdfb 0%, #f7f1ea 100%);
+    linear-gradient(165deg, #fffaf4 0%, #f3ebe1 48%, #ebe2d6 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    0 2px 10px rgba(110, 58, 36, 0.1);
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 0 rgba(92, 58, 36, 0.06),
+    0 4px 14px rgba(92, 58, 36, 0.12);
 }
 .time-watch .tw-set {
   display: inline-flex;
@@ -124,15 +127,15 @@ button, .submit-fab, a { touch-action: manipulation; }
   flex-shrink: 0;
 }
 .time-watch .tw-set input {
-  width: 48px;
-  height: 34px;
+  width: 46px;
+  height: 32px;
   padding: 0 4px;
-  border: 1px solid #d8d0c4;
+  border: 1px solid #d2c4b4;
   border-radius: 9px;
-  background: #fff;
-  color: #6e3a24;
+  background: rgba(255, 255, 255, 0.92);
+  color: #5c3a24;
   text-align: center;
-  font: 700 15px/1 var(--sans);
+  font: 700 14px/1 var(--sans);
   font-variant-numeric: tabular-nums;
   -moz-appearance: textfield;
   appearance: textfield;
@@ -145,61 +148,66 @@ button, .submit-fab, a { touch-action: manipulation; }
 .time-watch .tw-set input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.14);
+  box-shadow: 0 0 0 2px rgba(201, 100, 66, 0.16);
 }
 .time-watch .tw-set input:disabled {
   opacity: 0.55;
-  background: #f5f1ea;
+  background: #f0e8de;
 }
 .time-watch .tw-unit {
-  font: 700 12px/1 var(--sans);
+  font: 700 11px/1 var(--sans);
   color: #6e3a24;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+}
+.time-watch .tw-face {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 3px;
+  border-radius: 14px;
+  background:
+    linear-gradient(145deg, #e8d2a8 0%, #b8925a 42%, #7a5630 78%, #5a3d22 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 1px 2px rgba(31, 30, 29, 0.18);
 }
 .time-watch .tw-display {
   box-sizing: border-box;
-  min-width: 7.6em;
-  height: 40px;
-  padding: 0 18px;
+  min-width: 8.4em;
+  height: 38px;
+  padding: 0 22px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(110, 58, 36, 0.22);
-  border-radius: 12px;
+  border-radius: 11px;
   background:
-    linear-gradient(180deg, #2a221c 0%, #1a1512 100%);
+    radial-gradient(120% 90% at 50% 0%, rgba(255, 236, 210, 0.1) 0%, transparent 55%),
+    linear-gradient(180deg, #1c1612 0%, #0c0a09 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
-    0 1px 2px rgba(31, 30, 29, 0.08);
+    inset 0 2px 4px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   text-align: center;
-  font: 700 26px/1 var(--serif);
+  font: 700 25px/1 var(--serif);
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0.14em;
-  color: #f3e7d8;
-  transition: color 0.25s ease, box-shadow 0.25s ease;
+  letter-spacing: 0.18em;
+  color: #f4e6d2;
+  text-shadow: 0 0 12px rgba(244, 230, 210, 0.18);
+  transition: color 0.25s ease, text-shadow 0.25s ease;
 }
 .time-watch .tw-display.is-warn {
-  color: #7eb6ff;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(26, 95, 191, 0.25);
+  color: #8ec5ff;
+  text-shadow: 0 0 14px rgba(100, 170, 255, 0.35);
 }
 .time-watch .tw-display.is-alert {
-  color: #ff8a80;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.1),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35),
-    0 0 0 1px rgba(198, 40, 40, 0.28);
+  color: #ff9a90;
+  text-shadow: 0 0 14px rgba(255, 100, 90, 0.35);
 }
 .time-watch .tw-display.is-done {
-  color: #ff8a80;
+  color: #ff9a90;
   animation: tw-pulse 1s ease-in-out infinite;
 }
 @keyframes tw-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.45; }
+  50% { opacity: 0.42; }
 }
 .time-watch .tw-btns {
   display: inline-flex;
@@ -217,7 +225,9 @@ button, .submit-fab, a { touch-action: manipulation; }
   background: linear-gradient(145deg, #d88861, var(--accent) 55%, var(--accent-deep));
   color: #f7f1ea;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 3px 8px rgba(201, 100, 66, 0.22);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.28),
+    0 3px 10px rgba(201, 100, 66, 0.26);
 }
 .time-watch .tw-act svg {
   width: 16px;
@@ -229,10 +239,10 @@ button, .submit-fab, a { touch-action: manipulation; }
   stroke-linejoin: round;
 }
 .time-watch .tw-act.tw-reset {
-  background: #fff;
+  background: linear-gradient(180deg, #fff 0%, #f7f1ea 100%);
   color: #6e3a24;
   border: 1.5px solid #6e3a24;
-  box-shadow: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
 }
 .time-watch .tw-act:active { transform: scale(0.96); }
 .time-watch .tw-act:disabled { opacity: 0.45; cursor: default; transform: none; }
@@ -1038,16 +1048,17 @@ body.qr-lightbox-open { overflow: hidden; }
   .modal h3 { font-size: 22px; }
   .modal .sub { font-size: 13px; }
 
-  /* 태블릿·좁은 화면: 제목 / 도구 2단 (타이머는 본문 왼쪽) */
+  /* 태블릿·좁은 화면: 제목 / 타이머 / 도구 (상단 고정 유지) */
   .topbar {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     grid-template-areas:
       "brand meta"
+      "timer timer"
       "actions actions";
     align-items: center;
     column-gap: 10px;
-    row-gap: 10px;
+    row-gap: 8px;
     padding: 10px 14px;
   }
   .brand { grid-area: brand; }
@@ -1069,26 +1080,30 @@ body.qr-lightbox-open { overflow: hidden; }
     text-overflow: unset;
   }
   .time-watch {
-    margin-bottom: 12px;
+    grid-area: timer;
+    width: 100%;
     justify-content: flex-start;
   }
   .time-watch .tw-shell {
-    width: auto;
+    width: 100%;
     max-width: 100%;
     gap: 12px;
     padding: 8px 12px;
+    justify-content: flex-start;
   }
   .time-watch .tw-set input {
     width: 54px;
     height: 38px;
     font-size: 16px;
   }
+  .time-watch .tw-face { flex: 1 1 auto; }
   .time-watch .tw-display {
-    min-width: 8em;
+    width: 100%;
+    min-width: 0;
     height: 44px;
-    padding: 0 22px;
+    padding: 0 20px;
     font-size: 28px;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.2em;
   }
   .time-watch .tw-act { width: 40px; height: 40px; }
   .time-watch .tw-act svg { width: 18px; height: 18px; }
@@ -1117,7 +1132,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .top-meta { gap: 4px; }
   .top-meta .chip { font-size: 10.5px; padding: 3px 8px; }
   .top-meta strong { font-size: 14px; line-height: 1.4; }
-  .time-watch { margin-bottom: 10px; }
+  .time-watch { margin: 0; }
   .time-watch .tw-shell {
     gap: 8px;
     padding: 7px 10px;
@@ -1125,13 +1140,14 @@ body.qr-lightbox-open { overflow: hidden; }
     justify-content: flex-start;
   }
   .time-watch .tw-set input { width: 48px; height: 36px; font-size: 16px; }
+  .time-watch .tw-face { flex: 1 1 auto; min-width: 0; }
   .time-watch .tw-display {
-    flex: 1 1 auto;
+    width: 100%;
     min-width: 0;
-    height: 42px;
-    padding: 0 14px;
-    font-size: 24px;
-    letter-spacing: 0.12em;
+    height: 40px;
+    padding: 0 12px;
+    font-size: 23px;
+    letter-spacing: 0.14em;
   }
   .time-watch .tw-act { width: 38px; height: 38px; flex-shrink: 0; }
   .hero-card {
