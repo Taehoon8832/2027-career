@@ -1344,10 +1344,43 @@ body{padding:16px!important;background:#fff!important}
     syncFromInput();
   }
 
+  function ensureReflectField() {
+    const root = document.getElementById("activity-root");
+    if (!root) return;
+    let ta = root.querySelector("#fReflect");
+    if (!ta) {
+      const legacy = root.querySelector("#bReflect");
+      if (legacy) {
+        legacy.id = "fReflect";
+        legacy.name = "fReflect";
+        const lab = root.querySelector('label[for="bReflect"]');
+        if (lab) {
+          lab.setAttribute("for", "fReflect");
+          lab.textContent = "느낀점(세특 참조)";
+        }
+        const wrap = legacy.closest(".bingo-reflection, .field") || legacy.parentElement;
+        if (wrap) {
+          wrap.classList.add("reflect-field");
+          wrap.setAttribute("data-reflect", "1");
+        }
+        ta = legacy;
+      }
+    }
+    if (ta) return;
+    const box = document.createElement("div");
+    box.className = "field reflect-field";
+    box.setAttribute("data-reflect", "1");
+    box.innerHTML = `
+      <label for="fReflect">느낀점(세특 참조)</label>
+      <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>`;
+    root.appendChild(box);
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
     ensureSheetIdentity();
+    ensureReflectField();
     ensureAutosizeTextareas();
     if (document.getElementById("submitOverlay")) {
       const host =

@@ -572,6 +572,20 @@ body.qr-lightbox-open { overflow: hidden; }
 .field input:focus, .field textarea:focus, .field select:focus {
   border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
 }
+.reflect-field {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1.5px dashed #d8d0c2;
+}
+.reflect-field label {
+  color: var(--accent-deep);
+  font-size: 13px;
+}
+.reflect-field textarea {
+  min-height: 110px;
+  background: #fffaf5;
+  border-color: #e2c8b4;
+}
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 
 /* 구버전 PDF용 학번/이름·컨트롤만 숨김 */

@@ -87,6 +87,10 @@ function htmlFor([n, m, theme, title, summary, f1, f2, f3, p1, p2, p3]) {
         <label for="f4">추가로 남기고 싶은 내용</label>
         <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
       </div>
+      <div class="field reflect-field" data-reflect="1">
+        <label for="fReflect">느낀점(세특 참조)</label>
+        <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
+      </div>
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

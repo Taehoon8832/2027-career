@@ -750,19 +750,48 @@
       color: var(--text-tertiary); font: 600 10px/1 var(--font-sans); cursor: pointer;
     }
     .roster-sub-list {
-      display: grid; gap: 4px; max-height: 140px; overflow-y: auto;
+      display: grid; gap: 6px; max-height: 280px; overflow-y: auto;
       margin-top: 2px;
     }
     .roster-sub-item {
-      display: grid; gap: 2px;
-      padding: 6px; border-radius: 8px;
+      display: grid; gap: 4px;
+      padding: 7px 8px; border-radius: 8px;
       background: #fff; border: 1px solid var(--border-default);
       text-align: left; cursor: pointer;
       font: 500 10px/1.3 var(--font-sans); color: var(--text-secondary);
     }
     .roster-sub-item:hover { border-color: var(--color-primary-300); }
     .roster-sub-item strong {
-      display: block; font: 700 10px/1.2 var(--font-sans); color: var(--text-primary);
+      display: block; font: 700 10px/1.3 var(--font-sans); color: var(--text-primary);
+    }
+    .roster-reflect {
+      display: grid; gap: 2px;
+      padding: 6px 7px;
+      border-radius: 7px;
+      background: #fffaf5;
+      border: 1px solid #edd9c8;
+    }
+    .roster-reflect-label {
+      font: 700 9px/1.2 var(--font-sans);
+      color: var(--color-primary-700);
+      letter-spacing: -0.01em;
+    }
+    .roster-reflect p {
+      margin: 0;
+      font: 500 10px/1.4 var(--font-sans);
+      color: var(--text-primary);
+      white-space: pre-wrap;
+      word-break: keep-all;
+      overflow-wrap: anywhere;
+      max-height: 4.2em;
+      overflow: hidden;
+    }
+    .roster-reflect p.is-empty {
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+    .roster-reflect p.is-loading {
+      color: var(--text-tertiary);
     }
     .roster-sub-item .sub-actions {
       display: flex; justify-content: space-between; align-items: center;
@@ -4334,6 +4363,7 @@
             void syncOfficersToDb(classId);
           }
           renderRosterList();
+          void hydrateRosterReflections();
         } catch (e) {
           if (seq !== rosterLoadSeq) return;
           console.warn(e);
@@ -4783,15 +4813,31 @@
             : subs;
           const labelNo = key || s.student_no;
           const subListHtml = sorted.length
-            ? `<div class="roster-sub-list">${sorted.map((sub) => `
+            ? `<div class="roster-sub-list">${sorted.map((sub) => {
+                const meta = getLessonMeta(sub.session_no);
+                const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
+                const title = meta?.title ? `${sessionLabel} · ${meta.title}` : sessionLabel;
+                let reflectBody;
+                if (typeof sub.reflectText === "string") {
+                  reflectBody = sub.reflectText
+                    ? `<p>${escapeHtml(sub.reflectText)}</p>`
+                    : `<p class="is-empty">미작성</p>`;
+                } else {
+                  reflectBody = `<p class="is-loading">불러오는 중…</p>`;
+                }
+                return `
                 <div class="roster-sub-item">
-                  <strong>${sub.session_no ? `${sub.session_no}차시` : "차시"}</strong>
-                  <span>${escapeHtml(sub.student_name ? `${sub.student_name} 제출` : "제출됨")}</span>
+                  <strong>${escapeHtml(title)}</strong>
+                  <div class="roster-reflect">
+                    <span class="roster-reflect-label">느낀점(세특 참조)</span>
+                    ${reflectBody}
+                  </div>
                   <div class="sub-actions">
                     <button type="button" class="is-view" data-tab-sub="${sub.id}">크게 보기</button>
                     <button type="button" class="is-danger" data-del-sub="${sub.id}">삭제</button>
                   </div>
-                </div>`).join("")}</div>`
+                </div>`;
+              }).join("")}</div>`
             : `<div class="roster-sub-list"><div class="roster-sub-item" style="cursor:default;opacity:.75">제출된 보고서 없음</div></div>`;
           const isP = s.id === officers.president;
           const isV = s.id === officers.vice;
@@ -4899,6 +4945,68 @@
           if (plain) out.push({ label: "활동 내용", value: previewText(plain, 220) });
         }
         return out;
+      }
+
+      function extractReflectText(html) {
+        const s = String(html || "");
+        if (!s) return "";
+        const byId =
+          /<(?:textarea)[^>]*(?:id|name)=["']fReflect["'][^>]*>([\s\S]*?)<\/textarea>/i.exec(s) ||
+          /<(?:textarea)[^>]*(?:id|name)=["']bReflect["'][^>]*>([\s\S]*?)<\/textarea>/i.exec(s);
+        if (byId) return htmlToPlainTextFast(byId[1]).trim();
+        const labelRe =
+          /<label[^>]*>([\s\S]*?느낀\s*점[\s\S]*?|[\s\S]*?세특\s*참조[\s\S]*?)<\/label>[\s\S]*?<textarea[^>]*>([\s\S]*?)<\/textarea>/i;
+        const byLabel = labelRe.exec(s);
+        if (byLabel) return htmlToPlainTextFast(byLabel[2]).trim();
+        return "";
+      }
+
+      function paintRosterReflect(sub) {
+        const root = $("rosterList");
+        if (!root || !sub?.id) return;
+        const btn = root.querySelector(`[data-tab-sub="${sub.id}"]`);
+        const p = btn?.closest(".roster-sub-item")?.querySelector(".roster-reflect p");
+        if (!p) return;
+        if (sub.reflectText) {
+          p.className = "";
+          p.textContent = sub.reflectText;
+        } else {
+          p.className = "is-empty";
+          p.textContent = "미작성";
+        }
+      }
+
+      let rosterReflectHydrateSeq = 0;
+      async function hydrateRosterReflections() {
+        const seq = ++rosterReflectHydrateSeq;
+        const classId = rosterClassId;
+        const pending = [];
+        for (const list of rosterSubMap.values()) {
+          for (const sub of list) {
+            if (typeof sub.reflectText === "string") continue;
+            pending.push(sub);
+          }
+        }
+        if (!pending.length) return;
+        const chunkSize = 8;
+        for (let i = 0; i < pending.length; i += chunkSize) {
+          if (seq !== rosterReflectHydrateSeq || rosterClassId !== classId) return;
+          const chunk = pending.slice(i, i + chunkSize);
+          await Promise.all(
+            chunk.map(async (sub) => {
+              try {
+                await ensureSubmissionContent(sub);
+                sub.reflectText = extractReflectText(sub.content);
+              } catch (e) {
+                console.warn(e);
+                sub.reflectText = "";
+              }
+              if (seq === rosterReflectHydrateSeq && rosterClassId === classId) {
+                paintRosterReflect(sub);
+              }
+            })
+          );
+        }
       }
 
       function buildYukhaSummary(sub, opts = {}) {
