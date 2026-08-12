@@ -36,6 +36,7 @@ button, .submit-fab, a { touch-action: manipulation; }
 .topbar {
   --shell-w: min(820px, 100%);
   --hero-inline-pad: 18px;
+  --tw-nudge: 0.3cm; /* 시계 왼쪽 미세 이동 */
   position: sticky; top: 0; z-index: 20;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--shell-w) minmax(0, 1fr);
@@ -110,7 +111,7 @@ button, .submit-fab, a { touch-action: manipulation; }
   justify-self: end;
 }
 
-/* —— 수업 타임워치 (본문 '1차시' 왼쪽 정렬 · sticky) —— */
+/* —— 수업 타임워치 (본문 '1차시' 정렬 − 0.3cm · sticky) —— */
 .time-watch {
   grid-column: 2;
   display: flex;
@@ -119,8 +120,7 @@ button, .submit-fab, a { touch-action: manipulation; }
   justify-self: stretch;
   min-width: 0;
   margin: 0;
-  /* 히어로 카드 안쪽 패딩과 맞춰 '1차시' 왼쪽선에 정렬 */
-  padding: 0 0 0 var(--hero-inline-pad);
+  padding: 0 0 0 max(0px, calc(var(--hero-inline-pad) - var(--tw-nudge, 0.3cm)));
   background: transparent;
 }
 .time-watch .tw-shell {
@@ -977,6 +977,7 @@ body.qr-lightbox-open { overflow: hidden; }
   border-color: #3b82f6 !important;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
 }
+/* 태블릿: 본문 터치·가독성 */
 @media (max-width: 1024px) and (min-width: 721px) {
   body { font-size: 16px; }
   .field input, .field textarea, .field select { font-size: 16px; }
@@ -1021,7 +1022,8 @@ body.qr-lightbox-open { overflow: hidden; }
     height: auto !important;
   }
 }
-@media (max-width: 900px) {
+/* 태블릿·좁은 데스크톱: 상단바 세로 스택 (겹침 방지) */
+@media (max-width: 1024px) {
   body { font-size: 16px; }
   .field input, .field textarea, .field select { font-size: 16px; } /* iOS 줌 방지 */
   .submit-fab { min-height: 44px; font-size: 14px; }
@@ -1029,9 +1031,9 @@ body.qr-lightbox-open { overflow: hidden; }
   .modal h3 { font-size: 22px; }
   .modal .sub { font-size: 13px; }
 
-  /* 태블릿·좁은 화면: 제목 / 타이머 / 도구 (상단 고정) */
   .topbar {
     --hero-inline-pad: 16px;
+    --tw-nudge: 0.3cm;
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
       "start"
@@ -1060,7 +1062,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .time-watch {
     grid-area: timer;
     width: 100%;
-    padding-left: var(--hero-inline-pad);
+    padding-left: max(0px, calc(var(--hero-inline-pad) - var(--tw-nudge)));
     justify-content: flex-start;
   }
   .time-watch .tw-shell {
@@ -1071,17 +1073,18 @@ body.qr-lightbox-open { overflow: hidden; }
   }
   .time-watch .tw-set input {
     width: 52px;
-    height: 38px;
+    height: 40px;
     font-size: 16px;
   }
   .time-watch .tw-display { font-size: 28px; min-width: 5em; }
-  .time-watch .tw-act { width: 40px; height: 40px; }
+  .time-watch .tw-act { width: 42px; height: 42px; }
   .time-watch .tw-act svg { width: 18px; height: 18px; }
   .topbar-actions {
     grid-area: actions;
     width: 100%;
     justify-self: stretch;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 8px;
   }
 }
@@ -1093,30 +1096,36 @@ body.qr-lightbox-open { overflow: hidden; }
   }
   .grid-2 { grid-template-columns: 1fr; }
   .topbar {
+    --hero-inline-pad: 14px;
+    --tw-nudge: 0.3cm;
     margin-left: -16px;
     margin-right: -16px;
     padding: 10px 12px;
     row-gap: 8px;
     column-gap: 8px;
   }
-  .topbar { --hero-inline-pad: 14px; }
   .top-meta { gap: 4px; }
   .top-meta .chip { font-size: 10.5px; padding: 3px 8px; }
   .top-meta strong { font-size: 14px; line-height: 1.4; }
-  .time-watch { width: 100%; padding-left: var(--hero-inline-pad); }
+  .time-watch {
+    width: 100%;
+    padding-left: max(0px, calc(var(--hero-inline-pad) - var(--tw-nudge)));
+  }
   .time-watch .tw-shell {
     gap: 8px;
     padding: 7px 10px;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     justify-content: flex-start;
   }
-  .time-watch .tw-set input { width: 48px; height: 36px; font-size: 16px; }
+  .time-watch .tw-set input { width: 48px; height: 40px; font-size: 16px; }
   .time-watch .tw-display {
     flex: 1 1 auto;
     min-width: 0;
     font-size: 26px;
   }
-  .time-watch .tw-act { width: 38px; height: 38px; flex-shrink: 0; }
+  .time-watch .tw-act { width: 40px; height: 40px; flex-shrink: 0; }
   .hero-card {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto;
@@ -1268,6 +1277,53 @@ body.qr-lightbox-open { overflow: hidden; }
   .modal { border-radius: 14px; border-width: 2.5px; width: min(100%, 440px); }
   .modal-actions { grid-template-columns: 1fr 1fr; gap: 10px; }
   .btn { min-height: 48px; }
+}
+
+/* 작은 핸드폰: 시계·도구 한 줄 유지 */
+@media (max-width: 480px) {
+  .topbar {
+    --hero-inline-pad: 12px;
+    --tw-nudge: 0.3cm;
+    padding: 8px 10px;
+    row-gap: 6px;
+  }
+  .brand { width: 28px; height: 28px; border-radius: 8px; font-size: 13px; }
+  .top-meta .chip { font-size: 10px; padding: 2px 7px; }
+  .top-meta strong { font-size: 13px; }
+  .time-watch {
+    padding-left: max(0px, calc(var(--hero-inline-pad) - var(--tw-nudge)));
+  }
+  .time-watch .tw-shell {
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .time-watch .tw-set input {
+    width: 44px;
+    height: 38px;
+    font-size: 16px;
+    border-radius: 9px;
+  }
+  .time-watch .tw-unit { font-size: 12px; }
+  .time-watch .tw-display {
+    font-size: 22px;
+    min-width: 4.2em;
+    padding: 0 2px;
+    letter-spacing: 0.02em;
+  }
+  .time-watch .tw-act { width: 38px; height: 38px; }
+  .time-watch .tw-act svg { width: 16px; height: 16px; }
+  .topbar-actions {
+    gap: 5px;
+    justify-content: space-between;
+  }
+  .sheet-tools { height: 42px; }
+  .tool-btn { width: 38px; min-width: 38px; }
+  .zoom-controls { height: 42px; }
+  .zoom-btn { width: 36px; min-width: 36px; }
+  .zoom-level { min-width: 40px; font-size: 10.5px; }
+  .submit-fab {
+    width: 42px; height: 42px; min-height: 42px;
+  }
 }
 
 .overlay {
