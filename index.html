@@ -764,33 +764,33 @@
     .roster-sub-item strong {
       display: block; font: 700 10px/1.3 var(--font-sans); color: var(--text-primary);
     }
-    .roster-reflect {
+    .roster-summary {
       display: grid; gap: 2px;
       padding: 6px 7px;
       border-radius: 7px;
       background: #fffaf5;
       border: 1px solid #edd9c8;
     }
-    .roster-reflect-label {
+    .roster-summary-label {
       font: 700 9px/1.2 var(--font-sans);
       color: var(--color-primary-700);
       letter-spacing: -0.01em;
     }
-    .roster-reflect p {
+    .roster-summary p {
       margin: 0;
       font: 500 10px/1.4 var(--font-sans);
       color: var(--text-primary);
       white-space: pre-wrap;
       word-break: keep-all;
       overflow-wrap: anywhere;
-      max-height: 4.2em;
+      max-height: 6.2em;
       overflow: hidden;
     }
-    .roster-reflect p.is-empty {
+    .roster-summary p.is-empty {
       color: var(--text-tertiary);
       font-style: italic;
     }
-    .roster-reflect p.is-loading {
+    .roster-summary p.is-loading {
       color: var(--text-tertiary);
     }
     .roster-sub-item .sub-actions {
@@ -2541,6 +2541,7 @@
       const AUTH_EMAIL_DOMAIN = "id.2027career.local";
       const CLASS_SETTINGS_KEY = "career-class-settings-v1";
       const CLASS_OFFICERS_KEY = "career-class-officers-v1";
+      const SUMMARY_EDITS_KEY = "career-summary-edits-v1";
 
       const MONTH_THEMES = [
         { month: 3, label: "3월", theme: "진로 탐색과 AI 기초 역량 빌드업", sessions: [1, 2, 3, 4, 5] },
@@ -4363,7 +4364,7 @@
             void syncOfficersToDb(classId);
           }
           renderRosterList();
-          void hydrateRosterReflections();
+          void hydrateRosterSummaries();
         } catch (e) {
           if (seq !== rosterLoadSeq) return;
           console.warn(e);
@@ -4816,21 +4817,23 @@
             ? `<div class="roster-sub-list">${sorted.map((sub) => {
                 const meta = getLessonMeta(sub.session_no);
                 const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
-                const title = meta?.title ? `${sessionLabel} · ${meta.title}` : sessionLabel;
-                let reflectBody;
-                if (typeof sub.reflectText === "string") {
-                  reflectBody = sub.reflectText
-                    ? `<p>${escapeHtml(sub.reflectText)}</p>`
-                    : `<p class="is-empty">미작성</p>`;
+                const title = meta?.title
+                  ? sanitizeSeteukText(`${sessionLabel}, ${meta.title}`)
+                  : sessionLabel;
+                let summaryBody;
+                if (typeof sub.summaryText === "string") {
+                  summaryBody = sub.summaryText
+                    ? `<p>${escapeHtml(sub.summaryText)}</p>`
+                    : `<p class="is-empty">요약 없음</p>`;
                 } else {
-                  reflectBody = `<p class="is-loading">불러오는 중…</p>`;
+                  summaryBody = `<p class="is-loading">불러오는 중…</p>`;
                 }
                 return `
                 <div class="roster-sub-item">
                   <strong>${escapeHtml(title)}</strong>
-                  <div class="roster-reflect">
-                    <span class="roster-reflect-label">느낀점(세특 참조)</span>
-                    ${reflectBody}
+                  <div class="roster-summary">
+                    <span class="roster-summary-label">요약</span>
+                    ${summaryBody}
                   </div>
                   <div class="sub-actions">
                     <button type="button" class="is-view" data-tab-sub="${sub.id}">크게 보기</button>
@@ -4961,53 +4964,140 @@
         return "";
       }
 
-      function paintRosterReflect(sub) {
-        const root = $("rosterList");
-        if (!root || !sub?.id) return;
-        const btn = root.querySelector(`[data-tab-sub="${sub.id}"]`);
-        const p = btn?.closest(".roster-sub-item")?.querySelector(".roster-reflect p");
-        if (!p) return;
-        if (sub.reflectText) {
-          p.className = "";
-          p.textContent = sub.reflectText;
-        } else {
-          p.className = "is-empty";
-          p.textContent = "미작성";
+      function readSummaryEditsMap() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(SUMMARY_EDITS_KEY) || "{}");
+          return raw && typeof raw === "object" ? raw : {};
+        } catch {
+          return {};
         }
       }
 
-      let rosterReflectHydrateSeq = 0;
-      async function hydrateRosterReflections() {
-        const seq = ++rosterReflectHydrateSeq;
+      function getSummaryEdit(submissionId) {
+        if (!submissionId) return "";
+        const v = readSummaryEditsMap()[submissionId];
+        return typeof v === "string" ? v.trim() : "";
+      }
+
+      function setSummaryEdit(submissionId, text) {
+        if (!submissionId) return;
+        const map = readSummaryEditsMap();
+        const cleaned = sanitizeSeteukText(String(text || "").replace(/\s+/g, " ")).trim();
+        if (cleaned) map[submissionId] = cleaned;
+        else delete map[submissionId];
+        try {
+          localStorage.setItem(SUMMARY_EDITS_KEY, JSON.stringify(map));
+        } catch (e) {
+          console.warn(e);
+        }
+        const sub = findSubmissionById(submissionId);
+        if (sub) {
+          delete sub._yukha;
+          sub.summaryText = cleaned || buildYukhaSummary(sub).paragraph || "";
+          paintRosterSummary(sub);
+        }
+      }
+
+      function resolveSummaryParagraph(sub) {
+        if (!sub) return "";
+        const edited = getSummaryEdit(sub.id);
+        if (edited) return edited;
+        return buildYukhaSummary(sub).paragraph || "";
+      }
+
+      function paintRosterSummary(sub) {
+        const root = $("rosterList");
+        if (!root || !sub?.id) return;
+        const btn = root.querySelector(`[data-tab-sub="${sub.id}"]`);
+        const p = btn?.closest(".roster-sub-item")?.querySelector(".roster-summary p");
+        if (!p) return;
+        if (sub.summaryText) {
+          p.className = "";
+          p.textContent = sub.summaryText;
+        } else {
+          p.className = "is-empty";
+          p.textContent = "요약 없음";
+        }
+      }
+
+      let rosterSummaryHydrateSeq = 0;
+      async function hydrateRosterSummaries() {
+        const seq = ++rosterSummaryHydrateSeq;
         const classId = rosterClassId;
         const pending = [];
         for (const list of rosterSubMap.values()) {
           for (const sub of list) {
-            if (typeof sub.reflectText === "string") continue;
+            if (typeof sub.summaryText === "string") continue;
             pending.push(sub);
           }
         }
         if (!pending.length) return;
         const chunkSize = 8;
         for (let i = 0; i < pending.length; i += chunkSize) {
-          if (seq !== rosterReflectHydrateSeq || rosterClassId !== classId) return;
+          if (seq !== rosterSummaryHydrateSeq || rosterClassId !== classId) return;
           const chunk = pending.slice(i, i + chunkSize);
           await Promise.all(
             chunk.map(async (sub) => {
               try {
                 await ensureSubmissionContent(sub);
-                sub.reflectText = extractReflectText(sub.content);
+                delete sub._yukha;
+                sub.summaryText = resolveSummaryParagraph(sub);
               } catch (e) {
                 console.warn(e);
-                sub.reflectText = "";
+                sub.summaryText = getSummaryEdit(sub.id) || "";
               }
-              if (seq === rosterReflectHydrateSeq && rosterClassId === classId) {
-                paintRosterReflect(sub);
+              if (seq === rosterSummaryHydrateSeq && rosterClassId === classId) {
+                paintRosterSummary(sub);
               }
             })
           );
         }
       }
+
+      function applySummaryEditFromOutside(submissionId, text) {
+        if (!submissionId) return;
+        const cleaned = sanitizeSeteukText(String(text || "").replace(/\s+/g, " ")).trim();
+        const map = readSummaryEditsMap();
+        if (cleaned) map[submissionId] = cleaned;
+        else delete map[submissionId];
+        try {
+          localStorage.setItem(SUMMARY_EDITS_KEY, JSON.stringify(map));
+        } catch (e) {
+          console.warn(e);
+        }
+        const sub = findSubmissionById(submissionId);
+        if (!sub) return;
+        delete sub._yukha;
+        sub.summaryText =
+          cleaned ||
+          (typeof sub.content === "string" && sub.content
+            ? buildYukhaSummary(sub).paragraph
+            : "");
+        paintRosterSummary(sub);
+      }
+
+      window.addEventListener("storage", (e) => {
+        if (e.key !== SUMMARY_EDITS_KEY) return;
+        for (const list of rosterSubMap.values()) {
+          for (const sub of list) {
+            const edited = getSummaryEdit(sub.id);
+            if (!edited && typeof sub.summaryText !== "string") continue;
+            delete sub._yukha;
+            if (typeof sub.content === "string" && sub.content.length) {
+              sub.summaryText = resolveSummaryParagraph(sub);
+            } else if (edited) {
+              sub.summaryText = edited;
+            }
+            paintRosterSummary(sub);
+          }
+        }
+      });
+
+      window.addEventListener("message", (e) => {
+        const data = e?.data;
+        if (!data || data.type !== "career-summary-edit") return;
+        applySummaryEditFromOutside(data.id, data.text);
+      });
 
       /** 세특 문장용: 특수기호 제거, 가운뎃점은 쉼표로 */
       function sanitizeSeteukText(text) {
@@ -5194,7 +5284,8 @@
         if (!sub) {
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
-        const cacheKey = "v5|" + (opts.where || "");
+        const editedEarly = getSummaryEdit(sub.id);
+        const cacheKey = "v6|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -5251,11 +5342,12 @@
           { k: "어떻게", v: howCore },
           { k: "왜", v: whyCore }
         ];
-        const paragraph = sanitizeSeteukText(
+        let paragraph = sanitizeSeteukText(
           `진로 시간에 ${lessonTitle} 활동에 참여하여 ${whatCore} 등을 정리하였고, ${observation}`
         )
           .replace(/\s+/g, " ")
           .trim();
+        if (editedEarly) paragraph = editedEarly;
         const oneLine = previewText(
           sanitizeSeteukText(`${whoName}, ${lessonTitle}, ${whatCore}`),
           72
@@ -5272,8 +5364,12 @@
         const studentLine = sanitizeSeteukText(`${sub.student_no || ""}, ${sub.student_name || ""}`).trim();
         const yukha = buildYukhaSummary(sub);
         const yukhaBlock = `
-<section class="eval-card" aria-label="요약">
-  <p class="eval-para is-solo"><strong>요약</strong>${escapeHtml(yukha.paragraph)}</p>
+<section class="eval-card" aria-label="요약" data-sub-id="${escapeHtml(sub.id || "")}" title="클릭하면 요약을 수정할 수 있습니다">
+  <p class="eval-para is-solo">
+    <strong>요약</strong>
+    <span class="eval-text">${escapeHtml(yukha.paragraph)}</span>
+  </p>
+  <span class="eval-edit-hint">클릭하여 수정</span>
 </section>`;
 
         if (!looksLikeHtml(raw)) {
@@ -5369,11 +5465,21 @@ input,textarea,select{pointer-events:none;caret-color:transparent}
 .student-activity-export .topbar{position:sticky}
 body{padding:calc(56px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom,0px))}
 .eval-card{
-  margin:0 0 14px;padding:16px 16px 14px;border:2.5px solid #111110;border-radius:16px;
+  position:relative;margin:0 0 14px;padding:16px 16px 18px;border:2.5px solid #111110;border-radius:16px;
   background:linear-gradient(180deg,#fff 0%,#fbefe7 100%);
+  cursor:text;outline:none;
 }
+.eval-card.is-editing{border-color:#c96442;box-shadow:0 0 0 3px rgba(201,100,66,0.16)}
 .eval-para{margin:0;padding:0;border:0;font:500 14px/1.7 var(--serif);color:#1f1e1d}
 .eval-para strong{display:block;margin-bottom:8px;font:700 14px/1.2 var(--sans);color:#8c4022}
+.eval-text{
+  display:block;pointer-events:auto;caret-color:#1f1e1d;
+  min-height:1.4em;white-space:pre-wrap;word-break:keep-all;outline:none;
+}
+.eval-edit-hint{
+  display:block;margin-top:10px;font:600 11px/1.2 Pretendard,sans-serif;color:#a07860;
+}
+.eval-card.is-editing .eval-edit-hint{color:#8c4022}
 .report-close{
   position:fixed;top:max(10px,var(--safe-top,0px));right:max(10px,var(--safe-right,0px));
   z-index:100;display:inline-flex;align-items:center;justify-content:center;gap:6px;
@@ -5402,15 +5508,58 @@ body{padding:calc(56px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom
   <span>닫기</span>
 </button>
 ${built.html}
+<script>
+(function () {
+  var id = ${JSON.stringify(String(sub.id || ""))};
+  var key = ${JSON.stringify(SUMMARY_EDITS_KEY)};
+  var card = document.querySelector(".eval-card");
+  var textEl = document.querySelector(".eval-text");
+  var hint = document.querySelector(".eval-edit-hint");
+  if (!id || !card || !textEl) return;
+  function readMap() {
+    try { return JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch (e) { return {}; }
+  }
+  function saveText(t) {
+    var map = readMap();
+    t = String(t || "").replace(/\\s+/g, " ").trim();
+    if (t) map[id] = t; else delete map[id];
+    try { localStorage.setItem(key, JSON.stringify(map)); } catch (e) {}
+    try {
+      if (window.opener && !window.opener.closed) {
+        window.opener.postMessage({ type: "career-summary-edit", id: id, text: t }, "*");
+      }
+    } catch (e) {}
+  }
+  function beginEdit() {
+    if (textEl.isContentEditable) return;
+    textEl.contentEditable = "true";
+    card.classList.add("is-editing");
+    if (hint) hint.textContent = "수정 후 바깥을 누르면 저장됩니다";
+    textEl.focus();
+  }
+  function endEdit() {
+    if (!textEl.isContentEditable) return;
+    textEl.contentEditable = "false";
+    card.classList.remove("is-editing");
+    if (hint) hint.textContent = "클릭하여 수정";
+    var t = (textEl.innerText || textEl.textContent || "").replace(/\\s+/g, " ").trim();
+    textEl.textContent = t;
+    saveText(t);
+  }
+  card.addEventListener("click", function (e) {
+    if (e.target.closest(".report-close")) return;
+    beginEdit();
+  });
+  textEl.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") { e.preventDefault(); textEl.blur(); }
+  });
+  textEl.addEventListener("blur", endEdit);
+})();
+</script>
 </body></html>`;
           win.document.open();
           win.document.write(doc);
           win.document.close();
-          try {
-            win.opener = null;
-          } catch {
-            /* ignore */
-          }
         } catch (e) {
           console.warn(e);
           try {

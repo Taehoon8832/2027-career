@@ -573,13 +573,22 @@ body.qr-lightbox-open { overflow: hidden; }
   border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.12);
 }
 .reflect-field {
-  margin-top: 18px;
-  padding-top: 16px;
+  display: grid;
+  gap: 6px;
+  margin-top: 28px;
+  margin-bottom: 4px;
+  padding-top: 22px;
   border-top: 1.5px dashed #d8d0c2;
+}
+.activity-card > .reflect-field:first-child,
+.na-manual + .reflect-field,
+.bingo > .reflect-field {
+  margin-top: 32px;
 }
 .reflect-field label {
   color: var(--accent-deep);
   font-size: 13px;
+  margin-top: 2px;
 }
 .reflect-field textarea {
   min-height: 110px;
