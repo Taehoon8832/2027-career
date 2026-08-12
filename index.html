@@ -5009,17 +5009,33 @@
         }
       }
 
-      /** 학생 원문 반복·군더더기 제거 후 짧은 근거 조각으로 압축 */
-      function compactStudentSnippet(text, maxLen = 40) {
-        let t = String(text || "")
-          .replace(/\r\n?/g, "\n")
-          .replace(/[ \t]+/g, " ")
-          .replace(/\n{2,}/g, "\n")
+      /** 세특 문장용: 특수기호 제거, 가운뎃점은 쉼표로 */
+      function sanitizeSeteukText(text) {
+        return String(text || "")
+          .replace(/[·•∙・]/g, ", ")
+          .replace(/[—–―～~]/g, ", ")
+          .replace(/[“”„‟«»]/g, "")
+          .replace(/[‘’‚‛'"`]/g, "")
+          .replace(/[「」『』【】〔〕\[\]\(\){}]/g, "")
+          .replace(/[※★☆◆◇▶▷◀◁✔✓✕✖…]/g, "")
+          .replace(/\s*,\s*,+/g, ", ")
+          .replace(/\s{2,}/g, " ")
           .trim();
+      }
+
+      /** 학생 원문 반복 제거 후 짧은 근거 조각으로 압축 */
+      function compactStudentSnippet(text, maxLen = 40) {
+        let t = sanitizeSeteukText(
+          String(text || "")
+            .replace(/\r\n?/g, "\n")
+            .replace(/[ \t]+/g, " ")
+            .replace(/\n{2,}/g, "\n")
+            .trim()
+        );
         if (!t) return "";
         const chunks = t
           .split(/[,，、]|(?<=다)\s+|(?<=음)\s+|(?<=함)\s+|\n/)
-          .map((s) => s.trim())
+          .map((s) => sanitizeSeteukText(s))
           .filter(Boolean);
         const uniq = [];
         const seen = new Set();
@@ -5031,9 +5047,8 @@
           if (uniq.length >= 4) break;
         }
         t = (uniq.length ? uniq : [t]).join(", ");
-        // 같은 구절이 연달아 반복되면 1회로
-        t = t.replace(/(.{6,}?)(?:\s*[,，]?\s*\1){2,}/g, "$1");
-        return previewText(t, maxLen);
+        t = t.replace(/(.{6,}?)(?:\s*,\s*\1){2,}/g, "$1");
+        return sanitizeSeteukText(previewText(t, maxLen));
       }
 
       function isSubstantiveReflect(text) {
@@ -5041,41 +5056,145 @@
         if (raw.length < 6) return false;
         const letters = raw.replace(/[^0-9A-Za-z가-힣]/g, "");
         if (letters.length < 4) return false;
-        // 웃음·자모 반복 위주면 관찰문 근거로 쓰지 않음
         const laugh = letters.replace(/[하호히헤키크흐흫ㅋㅎㅜㅠㅡ]/g, "");
         if (laugh.length / letters.length < 0.35) return false;
         if (/(.{5,})\1{2,}/.test(letters)) return false;
         return true;
       }
 
-      /** 교사의 세특(3인칭·음슴체) 관찰·평가 문장 */
-      function buildSeteukObservationTail({ howBits, reflect, hasAnswers }) {
-        const parts = [];
-        if (howBits.length) {
-          parts.push(
-            `${howBits.join(", ")} 등을 구체적으로 기록하며 자신에 대한 이해를 넓히는 과정이 관찰됨`
-          );
-        } else if (hasAnswers) {
-          parts.push("활동지 문항에 자신의 생각을 구체화하며 진로·자아를 탐색하는 모습이 확인됨");
+      function hashSeed(text) {
+        let h = 2166136261;
+        const s = String(text || "");
+        for (let i = 0; i < s.length; i++) {
+          h ^= s.charCodeAt(i);
+          h = Math.imul(h, 16777619);
+        }
+        return h >>> 0;
+      }
+
+      function pickBySeed(seed, list) {
+        if (!list?.length) return "";
+        return list[seed % list.length];
+      }
+
+      function detectAnswerThemes(filled, lessonTitle) {
+        const blob = `${lessonTitle || ""} ${(filled || []).map((a) => `${a.label} ${a.value}`).join(" ")}`;
+        const themes = [];
+        const rules = [
+          [/학과|전공|계열/, "전공 탐색"],
+          [/직업|진로|커리어|롤모델/, "진로 방향"],
+          [/강점|장점|재능|역량/, "강점 인식"],
+          [/약점|보완|개선/, "보완 계획"],
+          [/가치|태도|워라밸|가치관/, "직업 가치관"],
+          [/AI|인공지능|디지털|데이터/, "디지털 역량"],
+          [/대학|입시|수시|정시|학생부|세특/, "대입 준비"],
+          [/친구|모둠|협력|공유|발표/, "협업 태도"],
+          [/목표|계획|다짐|로드맵/, "목표 설정"],
+          [/성격|MBTI|키워드|나\b|자아|자기/, "자기이해"]
+        ];
+        for (const [re, label] of rules) {
+          if (re.test(blob)) themes.push(label);
+        }
+        if (!themes.length) themes.push("자기이해");
+        return themes.slice(0, 3);
+      }
+
+      function answerEffortLevel(filled) {
+        const vals = (filled || []).map((a) => String(a.value || "").trim()).filter(Boolean);
+        if (!vals.length) return 0;
+        const avg = vals.reduce((n, v) => n + v.length, 0) / vals.length;
+        if (vals.length >= 6 && avg >= 24) return 3;
+        if (vals.length >= 3 && avg >= 14) return 2;
+        if (vals.length >= 1) return 1;
+        return 0;
+      }
+
+      /** 학생별 응답을 반영한 세특 관찰문 (3인칭, 음슴체, 개별화) */
+      function buildSeteukObservationTail(ctx) {
+        const {
+          lessonTitle,
+          sessionNo,
+          filled = [],
+          whatCore,
+          howBits = [],
+          reflect,
+          whoName,
+          whoNo
+        } = ctx;
+        const seed = hashSeed(
+          [whoNo, whoName, sessionNo, lessonTitle, whatCore, howBits.join("|"), reflect, filled.map((a) => a.value).join("|")].join("||")
+        );
+        const themes = detectAnswerThemes(filled, lessonTitle);
+        const themeA = themes[0] || "자기이해";
+        const themeB = themes[1] || themes[0] || "진로 탐색";
+        const labels = filled
+          .map((a) => sanitizeSeteukText(String(a.label || "").replace(/\s+/g, " ")))
+          .filter(Boolean)
+          .slice(0, 3);
+        const labelPhrase =
+          labels.length >= 2
+            ? `${labels[0]}, ${labels[1]}`
+            : labels[0] || "활동 문항";
+        const evidence =
+          howBits.length >= 2
+            ? `${howBits[0]}, ${howBits[1]}`
+            : howBits[0] || whatCore || "자신의 생각";
+        const effort = answerEffortLevel(filled);
+        const focus = sanitizeSeteukText(lessonTitle || "진로 활동");
+
+        const processPool = [
+          `${evidence} 등을 자신의 말로 구체화하며 ${themeA}의 단서를 활동지에 연결해 정리함`,
+          `${labelPhrase} 항목을 중심으로 ${evidence}를 정리하고, ${themeB}에 대한 이해를 넓히는 과정이 관찰됨`,
+          `${whatCore}를 출발점으로 ${evidence}를 보완 서술하며 자신의 특성을 구조적으로 표현함`,
+          `활동 내용을 ${evidence} 수준으로 구체화하고 ${themeA}, ${themeB}를 스스로 점검하는 모습이 확인됨`,
+          `${labelPhrase}에 대한 응답을 세분하여 기록하면서 ${focus}의 핵심 과제를 자기 언어로 재구성함`
+        ];
+        const effortPool =
+          effort >= 3
+            ? [
+                "서술량이 충분하고 항목 간 연결이 이어져 사고의 깊이가 드러남",
+                "세부 사례를 덧붙여 설명하려는 노력이 보여 탐구 태도가 돋보임"
+              ]
+            : effort >= 2
+              ? [
+                  "주요 문항에 빠짐없이 응답하며 학습 참여도가 고르게 나타남",
+                  "자신의 경험을 문항에 맞춰 대응시키는 과정이 안정적으로 관찰됨"
+                ]
+              : [
+                  "핵심 키워드를 중심으로 짧게 정리하되 자신의 관점을 분명히 드러냄",
+                  "간결한 표현 속에서도 활동 목표에 맞는 자기 서술이 확인됨"
+                ];
+
+        let reflectSentence;
+        if (isSubstantiveReflect(reflect)) {
+          const r = compactStudentSnippet(reflect, 40);
+          reflectSentence = pickBySeed(seed + 11, [
+            `느낀점에서 ${r}라는 내용으로 활동 배움을 스스로 되짚음`,
+            `활동 후 소감에 ${r}를 담아 자신의 변화와 관심을 성찰함`,
+            `느낀점 기록의 ${r} 내용을 통해 ${themeA}에 대한 생각을 확장함`
+          ]);
         } else {
-          parts.push("활동에 성실히 참여하며 자신을 들여다보는 태도가 확인됨");
+          // 동일 문구 금지: 응답 내용, 문항, 차시, 테마로 학생별 관찰문 생성
+          reflectSentence = pickBySeed(seed + 29, [
+            `${whatCore}를 바탕으로 ${focus}에서 배운 점을 자신의 상황에 적용해 보려는 태도가 관찰됨`,
+            `${themeA}와 관련하여 ${evidence}를 다시 살펴보며 다음 활동 방향을 가늠하는 모습이 확인됨`,
+            `${labelPhrase} 응답을 중심으로 자기이해가 두드러지며 자신의 기록을 점검하는 성찰이 이어짐`,
+            `${sessionNo ? `${sessionNo}차시` : "본 차시"} 과제를 ${whatCore}와 연결해 정리하면서 배움을 점검함`,
+            `${themeB} 관점에서 작성 내용을 돌아보고 진로, 자아에 대한 인식을 다듬는 태도가 돋보임`
+          ]);
         }
 
-        if (isSubstantiveReflect(reflect)) {
-          parts.push(
-            `느낀점에서는 '${compactStudentSnippet(reflect, 42)}'와 같이 활동 소감을 정리하며 배움을 성찰함`
-          );
-        } else {
-          parts.push("활동 후 느낀점을 바탕으로 진로 시간에 배운 내용을 점검·성찰하는 태도가 돋보임");
-        }
-        return parts.join(". ").replace(/\s+/g, " ").trim();
+        const s1 = pickBySeed(seed, processPool);
+        const s2 = pickBySeed(seed + 7, effortPool);
+        const paragraph = sanitizeSeteukText(`${s1}. ${s2}. ${reflectSentence}`);
+        return paragraph.replace(/\s+/g, " ").trim();
       }
 
       function buildYukhaSummary(sub, opts = {}) {
         if (!sub) {
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
-        const cacheKey = "v4|" + (opts.where || "");
+        const cacheKey = "v5|" + (opts.where || "");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -5083,15 +5202,18 @@
           .filter((a) => a.value)
           .filter((a) => !/느낀\s*점|세특\s*참조/.test(a.label || ""));
         const answers = filled.map((a) => a.value);
-        const whoName = (sub.student_name || "학생").trim();
-        const whoNo = (sub.student_no || "-").trim();
-        const who = `${whoName}(학번 ${whoNo})`;
-        const when = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${formatTime(sub.created_at) || "제출"}`;
+        const whoName = sanitizeSeteukText(sub.student_name || "학생");
+        const whoNo = sanitizeSeteukText(sub.student_no || "-");
+        const who = `${whoName}, 학번 ${whoNo}`;
+        const when = `${sub.session_no ? `${sub.session_no}차시` : "차시"}, ${formatTime(sub.created_at) || "제출"}`;
         const where =
           opts.where ||
           (teacherClass ? `${unitLabel(teacherClass)} 수업` : "교실 수업");
-        const lessonTitle = meta?.title || (sub.session_no ? `${sub.session_no}차시 활동` : "활동");
-        const whatCore = compactStudentSnippet(answers[0] || "자신의 특성·관심사", 36) || "자신의 특성·관심사";
+        const lessonTitle = sanitizeSeteukText(
+          meta?.title || (sub.session_no ? `${sub.session_no}차시 활동` : "활동")
+        );
+        const whatCore =
+          compactStudentSnippet(answers[0] || "자신의 특성, 관심사", 36) || "자신의 특성, 관심사";
         const howBits = answers
           .slice(1, 3)
           .map((a) => compactStudentSnippet(a, 28))
@@ -5101,33 +5223,43 @@
           (filled.length > 1
             ? filled
                 .slice(1, 3)
-                .map((a) => a.label)
+                .map((a) => sanitizeSeteukText(a.label))
                 .filter(Boolean)
                 .join(", ") + " 항목을 구체적으로 작성함"
             : "활동지 문항에 자신의 생각을 구체적으로 기록함");
         const observation = buildSeteukObservationTail({
+          lessonTitle,
+          sessionNo: sub.session_no,
+          filled,
+          whatCore,
           howBits,
           reflect: reflectRaw,
-          hasAnswers: filled.length > 0
+          whoName,
+          whoNo
         });
         const whyCore = isSubstantiveReflect(reflectRaw)
-          ? `느낀점을 정리하며 배움을 성찰함 (${compactStudentSnippet(reflectRaw, 36)})`
-          : "진로·자아 탐색을 위해 활동에 성실히 참여함";
+          ? `느낀점을 정리하며 배움을 성찰함, ${compactStudentSnippet(reflectRaw, 36)}`
+          : sanitizeSeteukText(
+              `진로, 자아 탐색을 위해 ${whatCore}를 중심으로 활동에 성실히 참여함`
+            );
 
         const lines = [
           { k: "누가", v: who },
           { k: "언제", v: when },
-          { k: "어디서", v: where },
-          { k: "무엇을", v: `${lessonTitle} — ${whatCore}` },
+          { k: "어디서", v: sanitizeSeteukText(where) },
+          { k: "무엇을", v: `${lessonTitle}, ${whatCore}` },
           { k: "어떻게", v: howCore },
           { k: "왜", v: whyCore }
         ];
-        // 도입(참여·정리) + 교사 관찰·평가(음슴체). 학생 원문 반복 붙여넣기 금지.
-        const paragraph =
-          `진로 시간에 '${lessonTitle}' 활동에 참여하여 ${whatCore} 등을 정리하였고, ${observation}`
-            .replace(/\s+/g, " ")
-            .trim();
-        const oneLine = previewText(`${whoName} · ${lessonTitle} · ${whatCore}`, 72);
+        const paragraph = sanitizeSeteukText(
+          `진로 시간에 ${lessonTitle} 활동에 참여하여 ${whatCore} 등을 정리하였고, ${observation}`
+        )
+          .replace(/\s+/g, " ")
+          .trim();
+        const oneLine = previewText(
+          sanitizeSeteukText(`${whoName}, ${lessonTitle}, ${whatCore}`),
+          72
+        );
         const sheetText = lines.map((l) => `${l.k}: ${l.v}`).join(" / ");
         sub._yukhaWhere = cacheKey;
         sub._yukha = { oneLine, paragraph, lines, sheetText };
@@ -5137,7 +5269,7 @@
       function buildSubmissionReportBody(sub) {
         const raw = String(sub.content || "");
         const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
-        const studentLine = `${sub.student_no || ""} · ${sub.student_name || ""}`.trim();
+        const studentLine = sanitizeSeteukText(`${sub.student_no || ""}, ${sub.student_name || ""}`).trim();
         const yukha = buildYukhaSummary(sub);
         const yukhaBlock = `
 <section class="eval-card" aria-label="요약">
