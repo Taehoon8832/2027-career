@@ -34,13 +34,26 @@ button, input, select, textarea { font: inherit; }
 button, .submit-fab, a { touch-action: manipulation; }
 
 .topbar {
+  --shell-w: min(820px, 100%);
+  --hero-inline-pad: 18px;
   position: sticky; top: 0; z-index: 20;
-  display: flex; align-items: center; gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--shell-w) minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0;
   margin: -18px -16px 18px; padding: 10px 16px;
   background: rgba(255,252,248,0.94);
   border-bottom: 1px solid var(--line);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+}
+.topbar-start {
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  justify-self: start;
 }
 .brand {
   flex-shrink: 0;
@@ -51,8 +64,8 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 .top-meta {
   min-width: 0;
-  flex: 0 1 auto;
-  max-width: min(220px, 26vw);
+  flex: 1 1 auto;
+  max-width: min(200px, 22vw);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -86,24 +99,28 @@ button, .submit-fab, a { touch-action: manipulation; }
 }
 
 .topbar-actions {
+  grid-column: 3;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
   gap: 8px;
-  margin-left: auto;
+  margin-left: 0;
+  justify-self: end;
 }
 
-/* —— 수업 타임워치 (제목 바로 오른쪽 · sticky) —— */
+/* —— 수업 타임워치 (본문 '1차시' 왼쪽 정렬 · sticky) —— */
 .time-watch {
-  flex: 0 1 auto;
+  grid-column: 2;
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  justify-self: stretch;
   min-width: 0;
   margin: 0;
-  padding: 0;
+  /* 히어로 카드 안쪽 패딩과 맞춰 '1차시' 왼쪽선에 정렬 */
+  padding: 0 0 0 var(--hero-inline-pad);
   background: transparent;
 }
 .time-watch .tw-shell {
@@ -1014,20 +1031,17 @@ body.qr-lightbox-open { overflow: hidden; }
 
   /* 태블릿·좁은 화면: 제목 / 타이머 / 도구 (상단 고정) */
   .topbar {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
+    --hero-inline-pad: 16px;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "brand meta"
-      "timer timer"
-      "actions actions";
-    align-items: center;
-    column-gap: 10px;
+      "start"
+      "timer"
+      "actions";
     row-gap: 8px;
     padding: 10px 14px;
   }
-  .brand { grid-area: brand; }
+  .topbar-start { grid-area: start; width: 100%; }
   .top-meta {
-    grid-area: meta;
     max-width: none;
     gap: 5px;
   }
@@ -1046,7 +1060,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .time-watch {
     grid-area: timer;
     width: 100%;
-    padding: 0;
+    padding-left: var(--hero-inline-pad);
     justify-content: flex-start;
   }
   .time-watch .tw-shell {
@@ -1066,7 +1080,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .topbar-actions {
     grid-area: actions;
     width: 100%;
-    margin-left: 0;
+    justify-self: stretch;
     justify-content: flex-end;
     gap: 8px;
   }
@@ -1085,10 +1099,11 @@ body.qr-lightbox-open { overflow: hidden; }
     row-gap: 8px;
     column-gap: 8px;
   }
+  .topbar { --hero-inline-pad: 14px; }
   .top-meta { gap: 4px; }
   .top-meta .chip { font-size: 10.5px; padding: 3px 8px; }
   .top-meta strong { font-size: 14px; line-height: 1.4; }
-  .time-watch { width: 100%; padding: 0; }
+  .time-watch { width: 100%; padding-left: var(--hero-inline-pad); }
   .time-watch .tw-shell {
     gap: 8px;
     padding: 7px 10px;

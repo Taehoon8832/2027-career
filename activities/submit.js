@@ -503,6 +503,9 @@
 
     persistZoom(pageZoom);
     syncZoomControls();
+    if (typeof syncTimeWatchHeroPad === "function") {
+      requestAnimationFrame(syncTimeWatchHeroPad);
+    }
   }
 
   function syncZoomControls() {
@@ -1119,16 +1122,44 @@ body{padding:16px!important;background:#fff!important}
     window.addEventListener("load", syncAll, { once: true });
   }
 
+  function ensureTopbarStart(topbar) {
+    if (!topbar) return null;
+    let start = topbar.querySelector(".topbar-start");
+    if (start) return start;
+    start = document.createElement("div");
+    start.className = "topbar-start";
+    const brand = topbar.querySelector(".brand");
+    const meta = topbar.querySelector(".top-meta");
+    if (brand) start.appendChild(brand);
+    if (meta) start.appendChild(meta);
+    topbar.insertBefore(start, topbar.firstChild);
+    return start;
+  }
+
+  function syncTimeWatchHeroPad() {
+    const topbar = document.querySelector(".topbar");
+    const watch = document.getElementById("timeWatch");
+    const title = document.querySelector(".hero-card h1");
+    if (!topbar || !watch || !title) return;
+    // 시계 열 왼쪽 → 히어로 '1차시' 글자 왼쪽 (보더·패딩 포함 실측)
+    const colLeft = watch.getBoundingClientRect().left;
+    const titleLeft = title.getBoundingClientRect().left;
+    const pad = Math.max(0, Math.round(titleLeft - colLeft));
+    topbar.style.setProperty("--hero-inline-pad", pad + "px");
+  }
+
   function placeTimeWatchInTopbar(el) {
     const topbar = document.querySelector(".topbar");
     if (!topbar || !el) return;
-    const meta = topbar.querySelector(".top-meta");
-    // 파란색 위치: 제목(.top-meta) 바로 오른쪽
-    if (meta) meta.insertAdjacentElement("afterend", el);
-    else {
-      const actions = topbar.querySelector(".topbar-actions");
-      if (actions) topbar.insertBefore(el, actions);
-      else if (el.parentElement !== topbar) topbar.appendChild(el);
+    ensureTopbarStart(topbar);
+    const actions = topbar.querySelector(".topbar-actions");
+    // 가운데 열(본문과 같은 폭)에 배치 → '1차시' 왼쪽선과 맞춤
+    if (actions) topbar.insertBefore(el, actions);
+    else if (el.parentElement !== topbar) topbar.appendChild(el);
+    requestAnimationFrame(syncTimeWatchHeroPad);
+    if (document.documentElement.dataset.twPadBound !== "1") {
+      document.documentElement.dataset.twPadBound = "1";
+      window.addEventListener("resize", () => requestAnimationFrame(syncTimeWatchHeroPad), { passive: true });
     }
   }
 
