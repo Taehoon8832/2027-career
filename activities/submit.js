@@ -10,6 +10,16 @@
     return;
   }
 
+  /** 활동지 인쇄 기본 형식 (프린터 대화상자에서 확인) */
+  const ACTIVITY_PRINT_DEFAULTS = {
+    nUp: "두 장 모아찍기",
+    duplex: "양면",
+    color: "컬러",
+    label() {
+      return `${this.nUp} · ${this.duplex} · ${this.color}`;
+    }
+  };
+
   const sb =
     window.supabase &&
     window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
@@ -910,7 +920,9 @@ body{padding:16px!important;background:#fff!important}
     font-family: Pretendard, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    color-adjust: exact;
   }
+  /* 기본 인쇄: 두 장 모아찍기 · 양면 · 컬러 (프린터 설정에서 선택) */
   .print-sheet { margin: 0; padding: 0; width: 100%; }
   .activity-card { width: 100%; }
   .activity-sheet-bar {
@@ -1158,13 +1170,147 @@ body{padding:16px!important;background:#fff!important}
     grid-template-columns: 1fr 1fr;
     gap: 6px;
   }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); border: 0;
+  }
+  .sheet-dept {
+    display: inline-flex; max-width: 200px; margin-left: auto;
+    padding: 3px 9px; border: 1.5px solid #c5a57a; border-radius: 999px;
+    background: linear-gradient(180deg, #fffaf3 0%, #f3e6d4 100%);
+    color: #6b4a2a; font: 700 11px/1.2 Pretendard, sans-serif;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .sheet-dept-row {
+    display: flex; justify-content: flex-end; align-items: center;
+    margin: 0 0 8px;
+  }
+  .sheet-dept[hidden], .sheet-dept-row[hidden] { display: none !important; }
+
+  /* —— 4차시 SWOT 인쇄 —— */
+  .activity-card--swot { padding: 4px !important; border: 0 !important; box-shadow: none !important; }
+  .swot-report {
+    --swot-ink: #111827;
+    --swot-soft: #374151;
+    --swot-teal: #0d7377;
+    --swot-amber: #c2410c;
+    display: flex; flex-direction: column; gap: 10px; color: #1f2937;
+  }
+  .swot-hero {
+    text-align: center; border-bottom: 2.5px solid var(--swot-ink);
+    padding: 10px 0 8px; position: relative;
+  }
+  .swot-hero::before {
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(90deg, var(--swot-teal) 0 60%, var(--swot-amber) 60% 100%);
+  }
+  .swot-hero h2 {
+    margin: 0; font: 700 16px/1.3 Pretendard, sans-serif;
+    letter-spacing: -0.02em; color: var(--swot-ink);
+  }
+  .swot-hero-sub {
+    margin: 5px 0 0; font: 500 10px/1.45 Pretendard, sans-serif;
+    color: var(--swot-soft); word-break: keep-all;
+  }
+  .swot-block { display: flex; flex-direction: column; gap: 6px; break-inside: avoid; page-break-inside: avoid; }
+  .swot-head { display: flex; align-items: center; gap: 7px; }
+  .swot-num { font: 800 13px/1.2 Pretendard, sans-serif; color: var(--swot-amber); }
+  .swot-head h3 { margin: 0; font: 700 12.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink); }
+  .swot-panel {
+    border: 1.5px solid var(--swot-ink); border-radius: 8px; overflow: hidden; background: #fff;
+  }
+  .swot-row2 { display: grid; grid-template-columns: 1fr 1fr !important; }
+  .swot-cell { padding: 6px 8px; border-right: 1px solid #d1d5db; min-width: 0; }
+  .swot-cell:last-child { border-right: none; }
+  .swot-cell--full { border-right: none; border-top: 1px solid #d1d5db; }
+  .swot-lbl {
+    display: block; margin: 0 0 3px; font: 700 9.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink);
+  }
+  .swot-cell input, .swot-cell textarea, .swot-step input, .swot-card textarea, .swot-plan textarea {
+    width: 100%; border: none; outline: none; background: transparent; resize: none;
+    font: 500 10px/1.4 Pretendard, sans-serif; color: var(--swot-ink); padding: 0; margin: 0;
+  }
+  .swot-cell textarea { min-height: 36px; }
+  .swot-salary {
+    display: grid; grid-template-columns: auto 1fr !important; gap: 8px; align-items: center;
+    padding: 6px 8px; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;
+    background: linear-gradient(90deg, #ecfeff, #fff7ed);
+  }
+  .swot-salary-title { font: 700 9.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink); white-space: nowrap; }
+  .swot-track { display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 6px; position: relative; }
+  .swot-track::before {
+    content: ""; position: absolute; left: 10%; right: 10%; top: 6px; height: 2px;
+    background: linear-gradient(90deg, var(--swot-teal), var(--swot-amber)); z-index: 0;
+  }
+  .swot-step { position: relative; z-index: 1; text-align: center; }
+  .swot-dot {
+    width: 9px; height: 9px; border-radius: 50%; background: var(--swot-teal);
+    border: 1.5px solid #fff; margin: 0 auto 3px; box-shadow: 0 0 0 1.5px var(--swot-teal);
+  }
+  .swot-step:nth-child(2) .swot-dot { background: #ea580c; box-shadow: 0 0 0 1.5px #ea580c; }
+  .swot-step:nth-child(3) .swot-dot { background: var(--swot-amber); box-shadow: 0 0 0 1.5px var(--swot-amber); }
+  .swot-when { font: 600 9px/1.2 Pretendard, sans-serif; color: var(--swot-soft); margin-bottom: 2px; }
+  .swot-step input {
+    text-align: center; background: #fff !important; border: 1px solid #9ca3af !important;
+    border-radius: 4px; padding: 3px 2px !important; min-height: 22px; font-size: 9.5px !important;
+  }
+  .swot-grid { display: grid; grid-template-columns: 1fr 1fr !important; gap: 6px; }
+  .swot-card {
+    border-radius: 7px; padding: 6px 8px; border: 1.5px solid transparent;
+    display: flex; flex-direction: column; gap: 4px; min-width: 0;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .swot-card.is-s { background: #ecfeff; border-color: #67e8f9; }
+  .swot-card.is-w { background: #fef2f2; border-color: #fca5a5; }
+  .swot-card.is-o { background: #f0fdf4; border-color: #86efac; }
+  .swot-card.is-t { background: #fff7ed; border-color: #fdba74; }
+  .swot-card-top { display: flex; align-items: flex-start; gap: 6px; }
+  .swot-badge {
+    width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center;
+    font: 800 11px/1 Pretendard, sans-serif; color: #fff; flex-shrink: 0;
+  }
+  .swot-card.is-s .swot-badge { background: var(--swot-teal); }
+  .swot-card.is-w .swot-badge { background: #dc2626; }
+  .swot-card.is-o .swot-badge { background: #16a34a; }
+  .swot-card.is-t .swot-badge { background: #ea580c; }
+  .swot-tt { font: 700 10px/1.3 Pretendard, sans-serif; color: var(--swot-ink); }
+  .swot-ss { margin-top: 1px; font: 500 8.5px/1.35 Pretendard, sans-serif; color: var(--swot-soft); word-break: keep-all; }
+  .swot-card textarea {
+    min-height: 52px; background: #fff !important; border: 1px solid #d1d5db !important;
+    border-radius: 5px; padding: 5px 6px !important; font-size: 9.5px !important;
+  }
+  .swot-plans { display: flex; flex-direction: column; gap: 5px; }
+  .swot-plan {
+    display: grid; grid-template-columns: minmax(110px, 160px) 1fr !important; gap: 6px;
+    align-items: stretch; border: 1.5px solid #d1d5db; border-radius: 6px; background: #fff;
+    padding: 5px 7px; min-width: 0; break-inside: avoid; page-break-inside: avoid;
+  }
+  .swot-pl {
+    display: flex; align-items: flex-start; gap: 5px;
+    font: 700 9px/1.35 Pretendard, sans-serif; color: var(--swot-ink);
+  }
+  .swot-sn {
+    font: 800 9px/1 Pretendard, sans-serif; color: #fff; background: var(--swot-teal);
+    width: 16px; height: 16px; border-radius: 4px; display: grid; place-items: center; flex-shrink: 0;
+  }
+  .swot-plan textarea { min-height: 40px; padding: 1px 0 !important; font-size: 9.5px !important; }
+  .swot-footer {
+    margin: 2px 0 0; padding-top: 6px; border-top: 1.5px solid var(--swot-ink);
+    text-align: center; font: 500 9px/1.35 Pretendard, sans-serif; color: var(--swot-soft);
+  }
+  .activity-card--swot .reflect-field { margin-top: 4px; }
+  .activity-card--swot .reflect-field textarea { min-height: 40px; }
+  .swot-card, .swot-salary, .swot-badge, .swot-sn, .swot-hero::before, .sheet-dept {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 </style>
 </head>
 <body>
   <div class="print-sheet">
-    <div class="activity-card">
-      ${filledRoot.innerHTML}
-    </div>
+    ${filledRoot.outerHTML}
   </div>
 </body>
 </html>`;
@@ -1175,6 +1321,8 @@ body{padding:16px!important;background:#fff!important}
     const filled = snapshotFilledRoot();
     if (!filled) return;
     const html = buildPrintDocument(filled);
+
+    showDraftToast(`인쇄 기본 형식: ${ACTIVITY_PRINT_DEFAULTS.label()}`, 3200);
 
     const prev = document.getElementById("activityPrintFrame");
     if (prev) prev.remove();
@@ -1215,12 +1363,13 @@ body{padding:16px!important;background:#fff!important}
       }
     };
 
-    const startDelay = mobile ? 320 : 50;
+    // 안내 토스트를 잠깐 보여 준 뒤 인쇄 대화상자 오픈
+    const startDelay = mobile ? 480 : 280;
     if (iframe.contentDocument?.readyState === "complete") {
       setTimeout(runPrint, startDelay);
     } else {
       iframe.onload = () => setTimeout(runPrint, startDelay);
-      setTimeout(runPrint, mobile ? 600 : 220);
+      setTimeout(runPrint, mobile ? 700 : 400);
     }
   }
 
@@ -1233,7 +1382,7 @@ body{padding:16px!important;background:#fff!important}
     tools.setAttribute("role", "group");
     tools.setAttribute("aria-label", "출력 및 저장");
     tools.innerHTML = `
-      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기" title="출력하기">
+      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기 · 기본 두 장 모아찍기 양면 컬러" title="출력하기 (기본: 두 장 모아찍기 · 양면 · 컬러)">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 8V4h10v4"/>
           <path d="M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
@@ -2111,7 +2260,7 @@ body{padding:16px!important;background:#fff!important}
     }
   }
 
-  function showDraftToast(msg) {
+  function showDraftToast(msg, ms) {
     let t = document.getElementById("draftToast");
     if (!t) {
       t = document.createElement("div");
@@ -2124,7 +2273,7 @@ body{padding:16px!important;background:#fff!important}
     t.textContent = msg || "";
     t.classList.add("is-on");
     clearTimeout(showDraftToast._timer);
-    showDraftToast._timer = setTimeout(() => t.classList.remove("is-on"), 2000);
+    showDraftToast._timer = setTimeout(() => t.classList.remove("is-on"), Math.max(1200, Number(ms) || 2000));
   }
 
   function bindDraftAutosave() {

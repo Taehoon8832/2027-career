@@ -2378,8 +2378,9 @@ body.qr-lightbox-open { overflow: hidden; }
     margin: 0 !important;
     min-height: 0 !important;
     height: auto !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   .topbar,
@@ -2589,6 +2590,11 @@ body.qr-lightbox-open { overflow: hidden; }
 .activity-card--swot {
   padding: 16px !important;
 }
+.activity-card--swot .sheet-dept-row {
+  margin: 0 0 14px;
+  position: relative;
+  z-index: 2;
+}
 .swot-report {
   --swot-ink: #111827;
   --swot-soft: #374151;
@@ -2604,7 +2610,7 @@ body.qr-lightbox-open { overflow: hidden; }
 .swot-hero {
   text-align: center;
   border-bottom: 3px solid var(--swot-ink);
-  padding: 2px 0 12px;
+  padding: 14px 0 12px;
   position: relative;
 }
 .swot-hero::before {
@@ -2612,7 +2618,7 @@ body.qr-lightbox-open { overflow: hidden; }
   position: absolute;
   left: 0;
   right: 0;
-  top: -16px;
+  top: 0;
   height: 5px;
   border-radius: 4px 4px 0 0;
   background: linear-gradient(90deg, var(--swot-teal) 0 60%, var(--swot-amber) 60% 100%);
@@ -2898,14 +2904,57 @@ body.qr-lightbox-open { overflow: hidden; }
   .swot-salary,
   .swot-badge,
   .swot-sn,
-  .swot-hero::before {
-    print-color-adjust: exact;
-    -webkit-print-color-adjust: exact;
+  .swot-hero::before,
+  .sheet-dept {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
-  .swot-plan,
-  .swot-card,
-  .swot-panel {
+  .activity-card--swot {
+    padding: 6px !important;
+    border-width: 1.5px !important;
+    box-shadow: none !important;
+  }
+  .activity-card--swot .sheet-dept-row {
+    margin: 0 0 8px !important;
+  }
+  .swot-report { gap: 10px !important; }
+  .swot-hero {
+    padding: 10px 0 8px !important;
+  }
+  .swot-hero h2 { font-size: 16px !important; }
+  .swot-hero-sub { font-size: 10px !important; margin-top: 4px !important; }
+  .swot-head h3 { font-size: 12.5px !important; }
+  .swot-row2,
+  .swot-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .swot-salary {
+    grid-template-columns: auto 1fr !important;
+  }
+  .swot-track {
+    grid-template-columns: 1fr 1fr 1fr !important;
+  }
+  .swot-track::before { display: block !important; }
+  .swot-plan {
+    grid-template-columns: minmax(110px, 160px) 1fr !important;
     break-inside: avoid;
     page-break-inside: avoid;
   }
+  .swot-card,
+  .swot-panel,
+  .swot-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .swot-cell input,
+  .swot-cell textarea,
+  .swot-card textarea,
+  .swot-plan textarea,
+  .swot-step input {
+    font-size: 10px !important;
+  }
+  .swot-card textarea { min-height: 48px !important; }
+  .swot-plan textarea { min-height: 36px !important; }
+  .swot-footer { font-size: 9px !important; }
 }
