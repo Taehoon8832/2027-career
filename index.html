@@ -4009,8 +4009,8 @@
   <div class="backup-modal-overlay" id="backupImportOverlay" hidden>
     <div class="backup-modal" role="dialog" aria-modal="true" aria-labelledby="backupImportTitle">
       <h3 id="backupImportTitle">백업 불러오기</h3>
-      <p>선택한 백업 파일로 시스템을 복원합니다.</p>
-      <div class="backup-warn">기존에 기록된 학급·명단·차시·제출·설정 데이터는 모두 삭제된 뒤, 백업 내용으로 덮어씁니다.</div>
+      <p>선택한 백업의 관리자 설정·전 학급·전 차시·제출 보고서·관찰 기록을 모두 복원합니다.</p>
+      <div class="backup-warn">기존에 기록된 학급·명단·차시·제출 보고서·관리자 설정은 모두 삭제된 뒤, 백업 내용으로 덮어씁니다.</div>
       <div class="backup-modal-stats" id="backupImportStats"></div>
       <div class="backup-modal-actions">
         <button type="button" class="btn btn-ghost" id="btnBackupImportCancel">취소</button>
@@ -4180,7 +4180,7 @@
             <span class="backup-label">백업</span>
           </button>
           <div class="backup-menu" id="backupMenu" role="menu" hidden>
-            <p class="backup-menu-hint">모든 학급·제출·설정 데이터</p>
+            <p class="backup-menu-hint">관리자 페이지 · 전 차시 · 제출 보고서</p>
             <button type="button" role="menuitem" id="btnBackupLoad">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>
               불러오기
@@ -10415,12 +10415,24 @@ ${built.html}
       async function fetchRowsByIds(table, idCol, ids, selectExpr) {
         const out = [];
         if (!ids?.length) return out;
-        const chunk = 80;
-        for (let i = 0; i < ids.length; i += chunk) {
-          const slice = ids.slice(i, i + chunk);
-          const { data, error } = await sb.from(table).select(selectExpr).in(idCol, slice);
-          if (error) throw error;
-          out.push(...(data || []));
+        // 제출(보고서) 등 대량 행이 잘리지 않도록 페이지네이션
+        const idChunk = 40;
+        const pageSize = 1000;
+        for (let i = 0; i < ids.length; i += idChunk) {
+          const slice = ids.slice(i, i + idChunk);
+          let from = 0;
+          for (;;) {
+            const { data, error } = await sb
+              .from(table)
+              .select(selectExpr)
+              .in(idCol, slice)
+              .range(from, from + pageSize - 1);
+            if (error) throw error;
+            const rows = data || [];
+            out.push(...rows);
+            if (rows.length < pageSize) break;
+            from += pageSize;
+          }
         }
         return out;
       }
@@ -10450,8 +10462,11 @@ ${built.html}
         }
       }
 
-      /** 초기화 직전 스냅샷 — 되돌리기로 복구 */
-      async function snapshotTeacherDashboardForUndo() {
+      /** 초기화 직전 스냅샷 — 되돌리기로 복구
+       *  @param {{ strict?: boolean }} opts strict=true 이면 조회 실패 시 중단(백업용)
+       */
+      async function snapshotTeacherDashboardForUndo(opts = {}) {
+        const strict = !!opts.strict;
         if (!sb || !session?.userId) return null;
         let classes = [];
         let cErr = null;
@@ -10470,12 +10485,14 @@ ${built.html}
           try {
             lessons = await fetchRowsByIds("lessons", "class_id", classIds, "*");
           } catch (e) {
+            if (strict) throw e;
             console.warn(e);
             lessons = [];
           }
           try {
             students = await fetchRowsByIds("students", "class_id", classIds, "*");
           } catch (e) {
+            if (strict) throw e;
             console.warn(e);
             students = [];
           }
@@ -10484,6 +10501,7 @@ ${built.html}
             try {
               submissions = await fetchRowsByIds("submissions", "lesson_id", lessonIds, "*");
             } catch (e) {
+              if (strict) throw e;
               console.warn(e);
               submissions = [];
             }
@@ -10606,7 +10624,7 @@ ${built.html}
       }
 
       const BACKUP_FORMAT = "2027career-backup";
-      const BACKUP_VERSION = 1;
+      const BACKUP_VERSION = 2;
       let pendingBackupPayload = null;
 
       function backupFileStamp() {
@@ -10614,6 +10632,29 @@ ${built.html}
         const mm = String(d.getMonth() + 1).padStart(2, "0");
         const dd = String(d.getDate()).padStart(2, "0");
         return `${mm}${dd}`;
+      }
+
+      function wipeCareerLocalKeys() {
+        try {
+          const kill = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k) continue;
+            if (
+              k === CLASS_SETTINGS_KEY ||
+              k === CLASS_OFFICERS_KEY ||
+              k === OFFICER_SEMESTER_KEY ||
+              k === SUMMARY_EDITS_KEY ||
+              k === "career-class-officers-v1" ||
+              k.startsWith(TEACHER_OBS_KEY) ||
+              k.startsWith(STUDENT_ACTIVITY_EDIT_KEY) ||
+              k.startsWith("career-")
+            ) {
+              kill.push(k);
+            }
+          }
+          kill.forEach((k) => localStorage.removeItem(k));
+        } catch (_) {}
       }
 
       function collectLocalBackupExtras() {
@@ -10627,8 +10668,10 @@ ${built.html}
               k === CLASS_OFFICERS_KEY ||
               k === OFFICER_SEMESTER_KEY ||
               k === SUMMARY_EDITS_KEY ||
+              k === "career-class-officers-v1" ||
               k.startsWith(TEACHER_OBS_KEY) ||
-              k.startsWith(STUDENT_ACTIVITY_EDIT_KEY)
+              k.startsWith(STUDENT_ACTIVITY_EDIT_KEY) ||
+              (k.startsWith("career-") && !/supabase|auth|sb-/i.test(k))
             ) {
               folioCache[k] = localStorage.getItem(k);
             }
@@ -10640,14 +10683,6 @@ ${built.html}
       function applyLocalBackupExtras(map) {
         if (!map || typeof map !== "object") return;
         try {
-          const prefixes = [TEACHER_OBS_KEY, STUDENT_ACTIVITY_EDIT_KEY];
-          const toRemove = [];
-          for (let i = 0; i < localStorage.length; i++) {
-            const k = localStorage.key(i);
-            if (!k) continue;
-            if (prefixes.some((p) => k.startsWith(p))) toRemove.push(k);
-          }
-          toRemove.forEach((k) => localStorage.removeItem(k));
           Object.entries(map).forEach(([k, v]) => {
             if (v == null) localStorage.removeItem(k);
             else localStorage.setItem(k, String(v));
@@ -10657,7 +10692,9 @@ ${built.html}
 
       async function buildSystemBackupPayload() {
         if (!sb || !session?.userId) throw new Error("로그인이 필요합니다.");
-        const snap = await snapshotTeacherDashboardForUndo();
+        // 관리자 설정을 최신으로 반영한 뒤 스냅샷
+        persistClassSettingsLocal();
+        const snap = await snapshotTeacherDashboardForUndo({ strict: true });
         if (!snap) throw new Error("백업 데이터를 만들지 못했습니다.");
 
         let profile = null;
@@ -10671,11 +10708,20 @@ ${built.html}
           profile = data || null;
         } catch (e) {
           console.warn(e);
+          throw new Error("관리자(프로필) 정보를 읽지 못했습니다.");
         }
 
-        let officerSemester = null;
+        let officerSemesterVal = null;
         try {
-          officerSemester = localStorage.getItem(OFFICER_SEMESTER_KEY);
+          officerSemesterVal = localStorage.getItem(OFFICER_SEMESTER_KEY);
+        } catch (_) {}
+
+        const localExtras = collectLocalBackupExtras();
+        // classSettings는 메모리 최신본을 파일에도 명시 저장
+        try {
+          localExtras[CLASS_SETTINGS_KEY] = JSON.stringify(
+            snap.classSettings || classSettings || defaultClassSettings()
+          );
         } catch (_) {}
 
         return {
@@ -10685,22 +10731,33 @@ ${built.html}
           capturedAt: Date.now(),
           capturedAtLabel: new Date().toISOString(),
           teacherId: session.userId,
-          loginId: session.loginId || "",
+          loginId: session.loginId || profile?.login_id || "",
+          scope: {
+            adminPage: true,
+            allClasses: true,
+            allLessons: true,
+            allSubmissions: true,
+            folioNotes: true,
+            localSettings: true
+          },
           profile,
           classes: snap.classes || [],
           lessons: snap.lessons || [],
           students: snap.students || [],
           submissions: snap.submissions || [],
-          classSettings: snap.classSettings,
+          classSettings: snap.classSettings || cloneJson(classSettings) || defaultClassSettings(),
           officersLocal: snap.officersLocal,
           summaryEdits: snap.summaryEdits,
-          officerSemester,
-          localExtras: collectLocalBackupExtras(),
+          officerSemester: officerSemesterVal,
+          localExtras,
           stats: {
             classes: (snap.classes || []).length,
             lessons: (snap.lessons || []).length,
             students: (snap.students || []).length,
-            submissions: (snap.submissions || []).length
+            submissions: (snap.submissions || []).length,
+            reportsWithContent: (snap.submissions || []).filter(
+              (s) => s && s.content != null && String(s.content).trim() !== ""
+            ).length
           }
         };
       }
@@ -10739,7 +10796,7 @@ ${built.html}
         const saveBtn = $("btnBackupSave");
         if (saveBtn) saveBtn.disabled = true;
         closeBackupMenu();
-        toast("시스템 데이터 저장 중…");
+        toast("관리자 설정·전 차시·보고서 저장 중…");
         try {
           const payload = await buildSystemBackupPayload();
           const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -10756,7 +10813,7 @@ ${built.html}
           setTimeout(() => URL.revokeObjectURL(url), 2000);
           const s = payload.stats || {};
           toast(
-            `저장 완료 · ${fname} (학급 ${s.classes || 0} · 제출 ${s.submissions || 0})`
+            `저장 완료 · ${fname} (학급 ${s.classes || 0} · 차시 ${s.lessons || 0} · 보고서 ${s.reportsWithContent || 0}/${s.submissions || 0})`
           );
         } catch (err) {
           console.error(err);
@@ -10779,6 +10836,8 @@ ${built.html}
         if (!Array.isArray(data.classes) || !Array.isArray(data.lessons)) {
           throw new Error("백업 파일 형식이 올바르지 않습니다.");
         }
+        if (!Array.isArray(data.students)) data.students = [];
+        if (!Array.isArray(data.submissions)) data.submissions = [];
         return data;
       }
 
@@ -10787,7 +10846,10 @@ ${built.html}
           classes: (payload.classes || []).length,
           lessons: (payload.lessons || []).length,
           students: (payload.students || []).length,
-          submissions: (payload.submissions || []).length
+          submissions: (payload.submissions || []).length,
+          reportsWithContent: (payload.submissions || []).filter(
+            (x) => x && x.content != null && String(x.content).trim() !== ""
+          ).length
         };
         const when = payload.capturedAt
           ? new Date(payload.capturedAt).toLocaleString("ko-KR")
@@ -10796,7 +10858,7 @@ ${built.html}
           <div><span>학급</span><strong>${s.classes || 0}</strong></div>
           <div><span>차시</span><strong>${s.lessons || 0}</strong></div>
           <div><span>학생</span><strong>${s.students || 0}</strong></div>
-          <div><span>제출</span><strong>${s.submissions || 0}</strong></div>
+          <div><span>제출·보고서</span><strong>${s.reportsWithContent != null ? s.reportsWithContent : s.submissions || 0}</strong></div>
           <div style="grid-column:1/-1"><span>백업 시각</span><strong style="font-size:13px">${when}</strong></div>
         `;
       }
@@ -10826,7 +10888,6 @@ ${built.html}
       async function applySystemBackup(payload) {
         if (!payload || !session?.userId) throw new Error("복원할 데이터가 없습니다.");
 
-        // 다른 계정 백업이어도 현재 로그인 교사로 학급 teacher_id 재매핑
         const snapshot = {
           capturedAt: payload.capturedAt || Date.now(),
           classes: payload.classes || [],
@@ -10840,15 +10901,39 @@ ${built.html}
 
         await restoreTeacherDashboardSnapshot(snapshot);
 
+        // 로컬 설정·관찰평가 캐시 전부 교체
+        wipeCareerLocalKeys();
+        if (payload.localExtras && typeof payload.localExtras === "object") {
+          applyLocalBackupExtras(payload.localExtras);
+        } else {
+          try {
+            if (payload.classSettings) {
+              localStorage.setItem(CLASS_SETTINGS_KEY, JSON.stringify(payload.classSettings));
+            }
+            if (payload.officersLocal != null) {
+              localStorage.setItem(CLASS_OFFICERS_KEY, String(payload.officersLocal));
+            }
+            if (payload.summaryEdits != null) {
+              localStorage.setItem(SUMMARY_EDITS_KEY, String(payload.summaryEdits));
+            }
+          } catch (_) {}
+        }
+
         if (payload.officerSemester != null) {
           try {
             localStorage.setItem(OFFICER_SEMESTER_KEY, String(payload.officerSemester));
             officerSemester = Number(payload.officerSemester) === 2 ? 2 : 1;
           } catch (_) {}
         }
-        if (payload.localExtras) applyLocalBackupExtras(payload.localExtras);
 
-        // 프로필 표시 정보만 갱신 (인증 계정은 유지)
+        // 관리자 페이지 설정 메모리 재로드
+        classSettings = loadClassSettings();
+        if (payload.classSettings && typeof payload.classSettings === "object") {
+          classSettings = { ...defaultClassSettings(), ...payload.classSettings };
+        }
+        persistClassSettingsLocal();
+
+        // 프로필(학교·학번체계 등) 복원 — 로그인 계정은 유지
         const p = payload.profile;
         if (p && sb) {
           const patch = {};
@@ -10856,11 +10941,37 @@ ${built.html}
             if (p[col] != null) patch[col] = p[col];
           }
           if (Object.keys(patch).length) {
-            const { error } = await sb.from("profiles").update(patch).eq("id", session.userId);
+            let { error } = await sb.from("profiles").update(patch).eq("id", session.userId);
+            if (error && /student_no_format/i.test(error.message || "")) {
+              const noFmt = { ...patch };
+              delete noFmt.student_no_format;
+              ({ error } = await sb.from("profiles").update(noFmt).eq("id", session.userId));
+            }
+            if (error && /school_type/i.test(error.message || "")) {
+              const noSt = { ...patch };
+              delete noSt.school_type;
+              delete noSt.student_no_format;
+              if (Object.keys(noSt).length) {
+                ({ error } = await sb.from("profiles").update(noSt).eq("id", session.userId));
+              } else {
+                error = null;
+              }
+            }
             if (error) console.warn(error);
-            else await enrichSessionFromProfile();
           }
+          if (p.school_type) classSettings.schoolType = normalizeSchoolType(p.school_type);
+          if (p.student_no_format) {
+            classSettings.studentNoFormat = normalizeStudentNoFormat(p.student_no_format);
+          }
+          if (p.school_name) session.schoolName = p.school_name;
+          if (p.display_name) session.name = p.display_name;
+          persistClassSettingsLocal();
+          await enrichSessionFromProfile();
         }
+
+        renderClassSettingsUI();
+        renderTeacherBarSwitcher();
+        updateSetupLaunchHint();
       }
 
       async function confirmBackupImport() {
@@ -10869,12 +10980,15 @@ ${built.html}
         const cancelBtn = $("btnBackupImportCancel");
         if (confirmBtn) confirmBtn.disabled = true;
         if (cancelBtn) cancelBtn.disabled = true;
-        toast("기존 데이터 삭제 후 백업 불러오는 중…");
+        toast("기존 데이터 삭제 후 관리자·차시·보고서 불러오는 중…");
         try {
           const payload = pendingBackupPayload;
           await applySystemBackup(payload);
+          const s = payload.stats || {};
           closeBackupImportConfirm();
-          toast("백업을 불러왔습니다.");
+          toast(
+            `불러오기 완료 (학급 ${s.classes || (payload.classes || []).length} · 보고서 ${(payload.submissions || []).length})`
+          );
         } catch (err) {
           console.error(err);
           toast(err.message || "불러오기에 실패했습니다.");
