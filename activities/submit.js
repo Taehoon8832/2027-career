@@ -2483,6 +2483,122 @@ body{padding:16px!important;background:#fff!important}
     showDraftToast._timer = setTimeout(() => t.classList.remove("is-on"), Math.max(1200, Number(ms) || 2000));
   }
 
+  const SAVE_KEEP_HINT_TEXT =
+    '추후 "나만의 웹 페이지" 제작을 위해, HTML 저장 후 반드시 보관해두세요~!';
+
+  function hideSaveKeepHint() {
+    const hint = document.getElementById("saveKeepHint");
+    const btn = document.getElementById("btnSaveSheet");
+    btn?.classList.remove("is-save-hint");
+    if (hideSaveKeepHint._onReposition) {
+      window.removeEventListener("resize", hideSaveKeepHint._onReposition);
+      window.removeEventListener("scroll", hideSaveKeepHint._onReposition, true);
+      hideSaveKeepHint._onReposition = null;
+    }
+    if (hint) {
+      hint.hidden = true;
+      hint.setAttribute("aria-hidden", "true");
+    }
+  }
+
+  function placeSaveKeepHint() {
+    const hint = document.getElementById("saveKeepHint");
+    const ring = hint?.querySelector(".save-keep-hint-ring");
+    const text = hint?.querySelector(".save-keep-hint-text");
+    const btn = document.getElementById("btnSaveSheet");
+    if (!hint || hint.hidden || !ring || !text || !btn) return;
+
+    const r = btn.getBoundingClientRect();
+    const pad = 5;
+    ring.style.top = `${Math.round(r.top - pad)}px`;
+    ring.style.left = `${Math.round(r.left - pad)}px`;
+    ring.style.width = `${Math.round(r.width + pad * 2)}px`;
+    ring.style.height = `${Math.round(r.height + pad * 2)}px`;
+
+    text.style.visibility = "hidden";
+    text.style.top = "0";
+    text.style.left = "0";
+    const tw = text.offsetWidth || 220;
+    const th = text.offsetHeight || 72;
+    const gap = 10;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const narrow = vw <= 720;
+
+    let top;
+    let left;
+    if (narrow) {
+      // 좁은 화면: 버튼 아래쪽, 화면 안쪽으로
+      top = r.bottom + gap;
+      left = Math.min(Math.max(8, r.right - tw), vw - tw - 8);
+      if (top + th > vh - 8) top = Math.max(8, r.top - th - gap);
+    } else {
+      // 넓은 화면: 버튼 왼쪽 (오른쪽 가장자리 버튼 기준)
+      top = Math.max(8, r.top + r.height / 2 - th / 2);
+      left = r.left - tw - gap;
+      if (left < 8) {
+        left = Math.min(r.right + gap, vw - tw - 8);
+      }
+      if (top + th > vh - 8) top = Math.max(8, vh - th - 8);
+    }
+
+    text.style.top = `${Math.round(top)}px`;
+    text.style.left = `${Math.round(left)}px`;
+    text.style.visibility = "visible";
+  }
+
+  function showSaveKeepHint() {
+    const btn = document.getElementById("btnSaveSheet");
+    if (!btn) return;
+    hideSaveKeepHint();
+
+    let hint = document.getElementById("saveKeepHint");
+    if (!hint) {
+      hint = document.createElement("div");
+      hint.id = "saveKeepHint";
+      hint.className = "save-keep-hint";
+      hint.innerHTML = `
+        <div class="save-keep-hint-ring" aria-hidden="true"></div>
+        <p class="save-keep-hint-text" role="button" tabindex="0" aria-label="안내 닫기"></p>`;
+      document.body.appendChild(hint);
+      const dismiss = (e) => {
+        e.preventDefault();
+        hideSaveKeepHint();
+      };
+      hint.querySelector(".save-keep-hint-text")?.addEventListener("click", dismiss);
+      hint.querySelector(".save-keep-hint-text")?.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") dismiss(e);
+      });
+    }
+
+    const textEl = hint.querySelector(".save-keep-hint-text");
+    if (textEl) textEl.textContent = SAVE_KEEP_HINT_TEXT;
+
+    btn.classList.add("is-save-hint");
+    if (!btn.dataset.saveHintDismissBound) {
+      btn.dataset.saveHintDismissBound = "1";
+      btn.addEventListener("click", () => {
+        const h = document.getElementById("saveKeepHint");
+        if (h && !h.hidden) hideSaveKeepHint();
+      });
+    }
+    hint.hidden = false;
+    hint.setAttribute("aria-hidden", "false");
+    try {
+      btn.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    } catch (_) {
+      /* ignore */
+    }
+    placeSaveKeepHint();
+
+    const onReposition = () => placeSaveKeepHint();
+    hideSaveKeepHint._onReposition = onReposition;
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+    requestAnimationFrame(placeSaveKeepHint);
+    setTimeout(placeSaveKeepHint, 320);
+  }
+
   function bindDraftAutosave() {
     if (document.documentElement.dataset.draftBound === "1") return;
     document.documentElement.dataset.draftBound = "1";
@@ -3020,6 +3136,7 @@ body{padding:16px!important;background:#fff!important}
       setTimeout(() => {
         document.getElementById("submitOverlay")?.classList.remove("is-open");
         setMsg("");
+        showSaveKeepHint();
       }, 1200);
     } catch (err) {
       console.error(err);
