@@ -2518,25 +2518,29 @@ body{padding:16px!important;background:#fff!important}
     card.style.visibility = "hidden";
     card.style.top = "0";
     card.style.left = "0";
-    const cw = card.offsetWidth || 300;
+    const cw = card.offsetWidth || 320;
     const ch = card.offsetHeight || 120;
-    const gap = 12;
+    const gap = 14;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const edge = 10;
+    const btnCenterX = r.left + r.width / 2;
 
-    // 항상 다운로드 버튼 아래 — 상단 아이콘과 겹치지 않게
+    // 첨부 이미지와 같이: 다운로드 버튼 바로 아래, 화살표가 버튼 중앙을 가리킴
     let top = r.bottom + gap;
-    let left = Math.round(r.right - cw);
+    let left = Math.round(btnCenterX - cw / 2);
     if (left < edge) left = edge;
     if (left + cw > vw - edge) left = Math.max(edge, vw - cw - edge);
 
-    // 아래 공간 부족하면 버튼 위쪽으로 (그래도 아이콘 줄과 분리)
+    let above = false;
     if (top + ch > vh - edge) {
       top = Math.max(edge, r.top - ch - gap);
+      above = top + ch <= r.top;
     }
 
-    card.classList.toggle("is-arrow-left", left + 34 < r.left + r.width / 2);
+    const arrowLeft = Math.min(cw - 16, Math.max(16, btnCenterX - left));
+    card.style.setProperty("--hint-arrow-left", `${Math.round(arrowLeft)}px`);
+    card.classList.toggle("is-above", above);
     card.style.top = `${Math.round(top)}px`;
     card.style.left = `${Math.round(left)}px`;
     card.style.visibility = "visible";

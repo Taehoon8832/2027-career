@@ -404,7 +404,7 @@ button, .submit-fab, a { touch-action: manipulation; }
   position: fixed;
   pointer-events: auto;
   z-index: 56;
-  width: min(320px, calc(100vw - 24px));
+  width: min(340px, calc(100vw - 24px));
   margin: 0;
   padding: 14px 14px 12px;
   border-radius: 14px;
@@ -419,18 +419,23 @@ button, .submit-fab, a { touch-action: manipulation; }
 .save-keep-hint-card::before {
   content: "";
   position: absolute;
-  top: -7px;
+  top: -6px;
+  left: var(--hint-arrow-left, 50%);
   width: 12px;
   height: 12px;
+  margin-left: -6px;
   background: #fff;
   border-left: 1.5px solid #93c5fd;
   border-top: 1.5px solid #93c5fd;
   transform: rotate(45deg);
-  right: 22px;
 }
-.save-keep-hint-card.is-arrow-left::before {
-  right: auto;
-  left: 22px;
+.save-keep-hint-card.is-above::before {
+  top: auto;
+  bottom: -6px;
+  border-left: 0;
+  border-top: 0;
+  border-right: 1.5px solid #93c5fd;
+  border-bottom: 1.5px solid #93c5fd;
 }
 .save-keep-hint-msg {
   margin: 0;
