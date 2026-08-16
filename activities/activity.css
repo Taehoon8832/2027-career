@@ -1184,9 +1184,12 @@ body.qr-lightbox-open { overflow: hidden; }
     grid-area: actions;
     width: 100%;
     justify-self: stretch;
-    justify-content: flex-end;
+    justify-content: flex-start;
     flex-wrap: wrap;
     gap: 8px;
+  }
+  .topbar-actions .draft-fab {
+    margin-left: auto;
   }
 }
 /* 폰·좁은 화면: 제목 아래 QR을 가운데 배치 */
@@ -1352,7 +1355,7 @@ body.qr-lightbox-open { overflow: hidden; }
     display: flex;
     flex-wrap: nowrap;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: 6px;
     width: 100%;
     max-width: 100%;
@@ -1362,6 +1365,9 @@ body.qr-lightbox-open { overflow: hidden; }
     padding-bottom: 1px;
   }
   .topbar-actions::-webkit-scrollbar { display: none; }
+  .topbar-actions .draft-fab {
+    margin-left: auto;
+  }
   .sheet-tools { height: 40px; flex-shrink: 0; }
   .tool-btn { width: 36px; min-width: 36px; }
   .tool-btn svg { width: 16px; height: 16px; }
@@ -1431,8 +1437,11 @@ body.qr-lightbox-open { overflow: hidden; }
   .time-watch .tw-act svg { width: 16px; height: 16px; }
   .topbar-actions {
     gap: 5px;
-    justify-content: flex-end;
+    justify-content: flex-start;
     flex-wrap: nowrap;
+  }
+  .topbar-actions .draft-fab {
+    margin-left: auto;
   }
   .sheet-tools { height: 38px; }
   .tool-btn { width: 34px; min-width: 34px; }
