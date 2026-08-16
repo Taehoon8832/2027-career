@@ -133,18 +133,16 @@
     .usage-tour-veil {
       position: absolute;
       inset: 0;
-      background: rgba(18, 16, 14, 0.58);
-      backdrop-filter: blur(1.5px);
-      -webkit-backdrop-filter: blur(1.5px);
+      background: rgba(15, 14, 13, 0.62);
       opacity: 0;
-      animation: usage-veil-in 0.4s ease forwards;
+      animation: usage-veil-in 0.35s ease forwards;
       pointer-events: auto;
-      transition: clip-path 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+      /* mask로 네모 구멍만 뚫음 — clip-path 미사용 */
     }
     @keyframes usage-veil-in {
       to { opacity: 1; }
     }
-    /* 하이라이트 네모 — 지정 요소만, 클릭 가능 */
+    /* 하이라이트 네모 — 지정 요소만 얇은 테두리 */
     .usage-tour-holes {
       position: fixed;
       inset: 0;
@@ -153,37 +151,14 @@
     }
     .usage-tour-hole {
       position: fixed;
-      border-radius: 12px;
+      border-radius: 10px;
       background: transparent;
-      box-shadow:
-        0 0 0 2px #fff,
-        0 0 0 5px rgba(201, 100, 66, 0.45),
-        0 8px 24px rgba(0, 0, 0, 0.18);
-      transition:
-        top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        border-radius 0.35s ease,
-        opacity 0.25s ease;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px rgba(201, 100, 66, 0.55);
       pointer-events: none;
-      animation: usage-hole-pulse 2.8s ease-in-out infinite;
+      transition: none;
     }
-    .usage-tour-holes.is-moving .usage-tour-hole { animation: none; }
-    @keyframes usage-hole-pulse {
-      0%, 100% {
-        box-shadow:
-          0 0 0 2px #fff,
-          0 0 0 5px rgba(201, 100, 66, 0.4),
-          0 8px 24px rgba(0, 0, 0, 0.16);
-      }
-      50% {
-        box-shadow:
-          0 0 0 2px #fff,
-          0 0 0 7px rgba(201, 100, 66, 0.28),
-          0 8px 28px rgba(0, 0, 0, 0.2);
-      }
-    }
+    .usage-tour-holes.is-moving .usage-tour-hole { opacity: 0.9; }
     .usage-tour-aura { display: none; }
     .usage-tour-beacon { display: none; }
     .usage-tour-click-cue {
@@ -224,9 +199,8 @@
         0 0 0 1px rgba(201, 100, 66, 0.12);
       pointer-events: auto;
       overflow: hidden;
-      transform: translateY(10px);
-      opacity: 0;
-      animation: usage-card-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      opacity: 1;
+      transform: none;
     }
     .usage-tour-card::before {
       content: "";
@@ -241,9 +215,6 @@
       z-index: 1;
       padding: 18px 18px 14px;
       background: #fffefb;
-    }
-    @keyframes usage-card-in {
-      to { transform: translateY(0); opacity: 1; }
     }
     .usage-tour-kicker {
       display: flex;
@@ -5558,6 +5529,7 @@
       let usageTourActive = false;
       let usageTourResizeBound = false;
       let usageTourPaintSeq = 0;
+      let usageTourHoleRects = [];
 
       const USAGE_TOUR_STEPS = [
         {
@@ -5605,10 +5577,8 @@
           }
         },
         {
-          targets: [
-            { sel: "#rosterClassChips", grow: ".setup-field" },
-            { sel: "#studentCountControl", grow: ".setup-field" }
-          ],
+          // 반 선택 + 학생 수 한 줄(roster-controls)만 네모로
+          targets: [{ sel: ".roster-controls" }],
           title: "학급 명단 설정",
           body: "반을 고른 뒤 학생 수를 맞추고 「학급 저장」을 눌러 주세요. 이 단계까지면 기본 학급이 준비됩니다.",
           tip: "하이라이트 영역에서 반·학생 수를 직접 조작해 보세요.",
@@ -5744,7 +5714,7 @@
 
       /** 단계별 지정 요소마다 개별 사각형 (합집합 박스로 합치지 않음) */
       function rectsForTourStep(step) {
-        const pad = 5;
+        const pad = 4;
         const specs = step?.targets || [];
         const seen = new Set();
         const rects = [];
@@ -5754,10 +5724,10 @@
           seen.add(el);
           const r = el.getBoundingClientRect();
           rects.push({
-            top: Math.max(4, r.top - pad),
-            left: Math.max(4, r.left - pad),
-            width: Math.min(window.innerWidth - 8, r.width + pad * 2),
-            height: Math.min(window.innerHeight - 8, r.height + pad * 2)
+            top: Math.max(0, r.top - pad),
+            left: Math.max(0, r.left - pad),
+            width: Math.min(window.innerWidth, r.width + pad * 2),
+            height: Math.min(window.innerHeight, r.height + pad * 2)
           });
         });
         if (!rects.length) {
@@ -5806,16 +5776,13 @@
           hole.style.left = `${Math.round(rect.left)}px`;
           hole.style.width = `${Math.round(rect.width)}px`;
           hole.style.height = `${Math.round(rect.height)}px`;
-          hole.style.borderRadius = rect.height > 72 ? "12px" : "10px";
+          hole.style.borderRadius = "10px";
         });
       }
 
       function placeUsageTourCard(hole) {
         const card = $("usageTourCard");
         if (!card || !hole) return;
-        card.style.animation = "none";
-        void card.offsetWidth;
-        card.style.animation = "";
 
         const gap = 18;
         const cw = card.offsetWidth || 380;
@@ -5878,34 +5845,59 @@
         cue.style.left = `${Math.round(chosen.left)}px`;
       }
 
-      /** 지정 하이라이트 + 설명 카드만 베일에서 잘라냄 */
+      /** 지정 영역만 네모로 밝게 (SVG 마스크 — 삼각형/번짐 방지) */
       function updateUsageTourVeilClip(rects) {
         const veil = $("usageTourVeil");
-        const card = $("usageTourCard");
         if (!veil) return;
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        const pad = 1;
-        let poly = `polygon(evenodd, 0px 0px, ${vw}px 0px, ${vw}px ${vh}px, 0px ${vh}px, 0px 0px`;
-        (rects || []).forEach((hole) => {
-          const hL = Math.max(0, hole.left - pad);
-          const hT = Math.max(0, hole.top - pad);
-          const hR = Math.min(vw, hole.left + hole.width + pad);
-          const hB = Math.min(vh, hole.top + hole.height + pad);
-          poly += `, ${hL}px ${hT}px, ${hL}px ${hB}px, ${hR}px ${hB}px, ${hR}px ${hT}px`;
-        });
-        if (card) {
-          const cr = card.getBoundingClientRect();
-          if (cr.width > 8 && cr.height > 8) {
-            const cL = Math.max(0, cr.left - 2);
-            const cT = Math.max(0, cr.top - 2);
-            const cR = Math.min(vw, cr.right + 2);
-            const cB = Math.min(vh, cr.bottom + 2);
-            poly += `, ${cL}px ${cT}px, ${cL}px ${cB}px, ${cR}px ${cB}px, ${cR}px ${cT}px`;
-          }
-        }
-        poly += ")";
-        veil.style.clipPath = poly;
+        usageTourHoleRects = (rects || []).map((r) => ({ ...r }));
+        const vw = Math.max(1, window.innerWidth);
+        const vh = Math.max(1, window.innerHeight);
+        const holes = (rects || [])
+          .map((hole) => {
+            const x = Math.round(Math.max(0, hole.left));
+            const y = Math.round(Math.max(0, hole.top));
+            const w = Math.round(Math.max(0, Math.min(vw - x, hole.width)));
+            const h = Math.round(Math.max(0, Math.min(vh - y, hole.height)));
+            if (w < 2 || h < 2) return "";
+            return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" ry="10" fill="black"/>`;
+          })
+          .join("");
+        const svg =
+          `<svg xmlns="http://www.w3.org/2000/svg" width="${vw}" height="${vh}" viewBox="0 0 ${vw} ${vh}">` +
+          `<rect x="0" y="0" width="${vw}" height="${vh}" fill="white"/>` +
+          holes +
+          `</svg>`;
+        const url = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+        veil.style.clipPath = "";
+        veil.style.webkitMaskImage = url;
+        veil.style.maskImage = url;
+        veil.style.webkitMaskMode = "luminance";
+        veil.style.maskMode = "luminance";
+        veil.style.webkitMaskRepeat = "no-repeat";
+        veil.style.maskRepeat = "no-repeat";
+        veil.style.webkitMaskSize = "100% 100%";
+        veil.style.maskSize = "100% 100%";
+      }
+
+      function pointInUsageTourHole(x, y) {
+        return usageTourHoleRects.some(
+          (r) => x >= r.left && x <= r.left + r.width && y >= r.top && y <= r.top + r.height
+        );
+      }
+
+      function forwardUsageTourHoleClick(e) {
+        if (!usageTourActive) return;
+        if (!pointInUsageTourHole(e.clientX, e.clientY)) return;
+        const veil = $("usageTourVeil");
+        if (!veil) return;
+        e.preventDefault();
+        e.stopPropagation();
+        veil.style.pointerEvents = "none";
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        veil.style.pointerEvents = "auto";
+        if (!under || under === veil || under.closest?.("#usageTour")) return;
+        if (typeof under.click === "function") under.click();
+        else under.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window }));
       }
 
       function renderUsageTourProgress() {
@@ -5994,6 +5986,7 @@
       function stopUsageTour() {
         usageTourActive = false;
         usageTourPaintSeq += 1;
+        usageTourHoleRects = [];
         const root = $("usageTour");
         if (root) {
           root.hidden = true;
@@ -6004,7 +5997,12 @@
         const holes = $("usageTourHoles");
         if (holes) holes.innerHTML = "";
         const veil = $("usageTourVeil");
-        if (veil) veil.style.clipPath = "";
+        if (veil) {
+          veil.style.clipPath = "";
+          veil.style.webkitMaskImage = "";
+          veil.style.maskImage = "";
+          veil.style.pointerEvents = "auto";
+        }
       }
 
       async function startUsageTour() {
@@ -6049,6 +6047,7 @@
       function bindUsageTourControls() {
         if (document.documentElement.dataset.usageTourBound === "1") return;
         document.documentElement.dataset.usageTourBound = "1";
+        $("usageTourVeil")?.addEventListener("click", forwardUsageTourHoleClick);
         $("usageTourSkip")?.addEventListener("click", () => {
           stopUsageTour();
           toast("사용법 안내를 건너뛰었습니다.");
