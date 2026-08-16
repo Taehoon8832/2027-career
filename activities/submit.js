@@ -1725,6 +1725,21 @@ body{padding:16px!important;background:#fff!important}
     };
   }
 
+  function draftHasMeaningfulContent(payload) {
+    if (!payload || typeof payload !== "object") return false;
+    if (String(payload.studentNo || "").trim() || String(payload.studentName || "").trim()) {
+      return true;
+    }
+    const fields = payload.fields;
+    if (!fields || typeof fields !== "object") return false;
+    return Object.keys(fields).some((key) => {
+      const val = fields[key];
+      if (typeof val === "boolean") return val === true;
+      if (val == null) return false;
+      return String(val).trim().length > 0;
+    });
+  }
+
   function applyDraftFields(payload) {
     if (!payload || !payload.fields || typeof payload.fields !== "object") return false;
     const root = document.getElementById("activity-root");
@@ -1782,7 +1797,9 @@ body{padding:16px!important;background:#fff!important}
       const ok = applyDraftFields(payload);
       if (ok) {
         ensureAutosizeTextareas();
-        showDraftToast("저장된 내용을 불러왔습니다");
+        if (draftHasMeaningfulContent(payload)) {
+          showDraftToast("저장된 내용을 불러왔습니다");
+        }
       }
       return ok;
     } catch (e) {
@@ -1854,7 +1871,7 @@ body{padding:16px!important;background:#fff!important}
         <path d="M17 21v-8H7v8"/>
         <path d="M7 3v5h8"/>
       </svg>
-      <span class="label">임시 저장</span>`;
+      <span class="label">임시</span>`;
     btn.addEventListener("click", () => saveActivityDraft({ toast: true }));
     // 제출하기 앞에 배치
     const submit = document.getElementById("btnSubmitActivity");
@@ -1893,7 +1910,7 @@ body{padding:16px!important;background:#fff!important}
         <path d="M12 5l7 7-7 7"/>
         <path d="M4 19V5"/>
       </svg>
-      <span class="label">제출하기</span>`;
+      <span class="label">제출</span>`;
 
     const actions = document.createElement("div");
     actions.className = "topbar-actions";

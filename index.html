@@ -1231,6 +1231,92 @@
     .detail-action-strip .btns .btn-secondary:hover:not(:disabled) {
       background: var(--color-primary-50);
     }
+    .detail-timer {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px 14px;
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border: 1.5px solid #1f1e1d;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #fffefb 0%, #f3eee6 100%);
+    }
+    .detail-timer-label {
+      font: 800 11px/1 "Noto Sans KR", var(--font-sans);
+      color: var(--color-primary-700);
+      letter-spacing: -0.02em;
+      flex-shrink: 0;
+    }
+    .detail-timer-shell {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+    .detail-timer-set {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .detail-timer-set input {
+      width: 52px;
+      height: 36px;
+      border: 1.5px solid #cbb8a4;
+      border-radius: 10px;
+      text-align: center;
+      font: 700 15px/1 "Noto Sans KR", var(--font-sans);
+      background: #fff;
+      color: var(--text-primary);
+    }
+    .detail-timer-set input:disabled {
+      opacity: 0.55;
+      background: #f3f0ea;
+    }
+    .detail-timer-set .unit {
+      font: 700 12px/1 var(--font-sans);
+      color: var(--text-secondary);
+    }
+    .detail-timer-display {
+      min-width: 4.6em;
+      font: 700 22px/1 "Noto Sans KR", var(--font-sans);
+      letter-spacing: 0.04em;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+    }
+    .detail-timer-display.is-alert { color: #c62828; }
+    .detail-timer-display.is-done { color: #4f7a35; }
+    .detail-timer-btns {
+      display: inline-flex;
+      gap: 6px;
+    }
+    .detail-timer-btns button {
+      height: 36px;
+      min-width: 36px;
+      padding: 0 12px;
+      border: 1.5px solid #1f1e1d;
+      border-radius: 999px;
+      background: #fff;
+      font: 700 12px/1 "Noto Sans KR", var(--font-sans);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .detail-timer-btns button.is-primary {
+      background: linear-gradient(145deg, #d88861, var(--color-primary-500) 55%, var(--color-primary-700));
+      color: #fff;
+      border-color: #8c4022;
+    }
+    .detail-timer-btns button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .detail-timer-hint {
+      flex: 1 1 160px;
+      margin: 0;
+      font: 500 11px/1.35 "Noto Sans KR", var(--font-sans);
+      color: var(--text-tertiary);
+    }
     .detail-toolbar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
       margin: 0 0 8px;
@@ -3068,6 +3154,7 @@
       let lessons = [];
       let selectedLessonId = null;
       let realtimeChannel = null;
+      let detailTimerCtl = null;
       let toastTimer = 0;
       let studentLesson = null;
       let teacherClass = null;
@@ -8008,9 +8095,352 @@ ${built.html}
         }
       }
 
+      function stopDetailLessonTimer() {
+        if (!detailTimerCtl) return;
+        try {
+          detailTimerCtl.destroy();
+        } catch (_) {}
+        detailTimerCtl = null;
+      }
+
+      function bindDetailLessonTimer(lesson, submitCode) {
+        stopDetailLessonTimer();
+        const root = $("detailTimer");
+        const input = $("detailTwMinutes");
+        const display = $("detailTwDisplay");
+        const toggleBtn = $("detailTwToggle");
+        const resetBtn = $("detailTwReset");
+        const hint = $("detailTwHint");
+        if (!root || !input || !display || !toggleBtn || !resetBtn) return;
+
+        const code = String(submitCode || "").trim();
+        const sessionNo = Number(lesson?.session_no);
+        if (!code || code === "--------" || !Number.isFinite(sessionNo) || sessionNo < 1) {
+          root.hidden = true;
+          return;
+        }
+        root.hidden = false;
+
+        let mode = "idle";
+        let remainMs = 50 * 60 * 1000;
+        let endsAt = 0;
+        let clockSkewMs = 0;
+        let tickId = 0;
+        let pollId = 0;
+        let pushing = false;
+        let channel = null;
+        let destroyed = false;
+        input.value = "50";
+
+        const pad2 = (n) => (n < 10 ? "0" + n : String(n));
+        const formatMs = (ms) => {
+          const total = Math.max(0, Math.ceil(ms / 1000));
+          return pad2(Math.floor(total / 60)) + ":" + pad2(total % 60);
+        };
+        const readMinutes = () => {
+          const n = Math.floor(Number(input.value));
+          if (!Number.isFinite(n) || n < 1) return null;
+          return Math.min(300, n);
+        };
+        const nowMs = () => Date.now() - clockSkewMs;
+        const currentMs = () =>
+          mode === "running" ? Math.max(0, endsAt - nowMs()) : Math.max(0, remainMs);
+
+        function paint() {
+          if (destroyed) return;
+          const ms = currentMs();
+          const totalSec = Math.ceil(ms / 1000);
+          display.textContent = formatMs(ms);
+          display.classList.toggle("is-alert", totalSec > 0 && totalSec <= 300);
+          display.classList.toggle("is-done", mode === "done" || (totalSec === 0 && mode !== "idle"));
+          input.disabled = mode === "running";
+          const running = mode === "running";
+          toggleBtn.textContent = running ? "일시정지" : mode === "paused" ? "계속" : "시작";
+          toggleBtn.disabled = false;
+          resetBtn.disabled = false;
+        }
+
+        function stopTick() {
+          if (tickId) {
+            clearInterval(tickId);
+            tickId = 0;
+          }
+        }
+
+        function finishLocal() {
+          stopTick();
+          mode = "done";
+          remainMs = 0;
+          endsAt = 0;
+          paint();
+        }
+
+        function startTick() {
+          stopTick();
+          tickId = setInterval(() => {
+            if (destroyed || mode !== "running") return;
+            if (nowMs() >= endsAt) {
+              finishLocal();
+              void pushTimer("done", { remainSec: 0 });
+              return;
+            }
+            paint();
+          }, 250);
+        }
+
+        function applyRemoteRow(row) {
+          if (!row || pushing || destroyed) return;
+          const status = String(row.status || "idle");
+          const durationSec = Number(row.duration_sec) || 0;
+          const remainSec = Number(row.remain_sec);
+          if (row.server_now) {
+            const serverMs = new Date(row.server_now).getTime();
+            if (Number.isFinite(serverMs)) clockSkewMs = Date.now() - serverMs;
+          }
+          if (durationSec > 0 && document.activeElement !== input) {
+            input.value = String(Math.max(1, Math.round(durationSec / 60)));
+          }
+          if (status === "running" && row.ends_at) {
+            endsAt = new Date(row.ends_at).getTime();
+            remainMs = Math.max(0, endsAt - nowMs());
+            mode = remainMs > 0 ? "running" : "done";
+            if (mode === "running") startTick();
+            else {
+              stopTick();
+              remainMs = 0;
+              endsAt = 0;
+            }
+            paint();
+            return;
+          }
+          stopTick();
+          endsAt = 0;
+          mode = status === "paused" || status === "done" || status === "idle" ? status : "idle";
+          if (mode === "done") remainMs = 0;
+          else if (Number.isFinite(remainSec)) remainMs = Math.max(0, remainSec) * 1000;
+          else remainMs = durationSec > 0 ? durationSec * 1000 : 0;
+          paint();
+        }
+
+        async function fetchRemoteTimer() {
+          if (!sb) return null;
+          const { data, error } = await sb.rpc("get_lesson_timer", {
+            p_submit_code: code,
+            p_session_no: sessionNo
+          });
+          if (error) throw error;
+          const row = Array.isArray(data) ? data[0] : data;
+          return row || null;
+        }
+
+        async function pushTimer(status, opts = {}) {
+          if (!sb || destroyed) return;
+          const mins = readMinutes();
+          const durationSec =
+            opts.durationSec != null
+              ? opts.durationSec
+              : mins
+                ? mins * 60
+                : Math.max(60, Math.round(remainMs / 1000) || 50 * 60);
+          const remainSec =
+            opts.remainSec != null
+              ? opts.remainSec
+              : status === "running" || status === "paused"
+                ? Math.max(0, Math.ceil(currentMs() / 1000))
+                : durationSec;
+          pushing = true;
+          try {
+            const { data, error } = await sb.rpc("set_lesson_timer", {
+              p_submit_code: code,
+              p_session_no: sessionNo,
+              p_status: status,
+              p_duration_sec: durationSec,
+              p_remain_sec: remainSec
+            });
+            if (error) throw error;
+            const row = Array.isArray(data) ? data[0] : data;
+            if (row) {
+              pushing = false;
+              applyRemoteRow(row);
+            }
+            if (channel) {
+              channel
+                .send({
+                  type: "broadcast",
+                  event: "timer",
+                  payload: row || { status, duration_sec: durationSec, remain_sec: remainSec }
+                })
+                .catch(() => {});
+            }
+          } catch (err) {
+            console.warn(err);
+            const msg = String(err?.message || "");
+            if (/schema cache|Could not find the function|권한이 없습니다|로그인/i.test(msg)) {
+              if (hint) {
+                hint.textContent =
+                  "동기화 실패: Supabase에서 supabase-lesson-timer.sql 실행·교사 로그인을 확인해 주세요.";
+              }
+              toast("타이머 저장 실패: SQL 실행·로그인을 확인해 주세요.");
+            } else {
+              toast(msg || "타이머 동기화에 실패했습니다.");
+            }
+          } finally {
+            pushing = false;
+          }
+        }
+
+        function syncFromInput() {
+          if (mode === "running" || mode === "paused") return;
+          const mins = readMinutes();
+          remainMs = mins ? mins * 60 * 1000 : 0;
+          mode = "idle";
+          paint();
+        }
+
+        async function startOrResume() {
+          if (mode === "running") {
+            remainMs = currentMs();
+            mode = "paused";
+            stopTick();
+            paint();
+            await pushTimer("paused", { remainSec: Math.ceil(remainMs / 1000) });
+            return;
+          }
+          if (mode === "idle" || mode === "done") {
+            const mins = readMinutes();
+            if (!mins) {
+              input.focus();
+              input.select?.();
+              return;
+            }
+            remainMs = mins * 60 * 1000;
+          }
+          if (remainMs <= 0) {
+            finishLocal();
+            await pushTimer("done", { remainSec: 0 });
+            return;
+          }
+          mode = "running";
+          endsAt = nowMs() + remainMs;
+          paint();
+          startTick();
+          await pushTimer("running", {
+            durationSec: readMinutes() ? readMinutes() * 60 : Math.round(remainMs / 1000),
+            remainSec: Math.ceil(remainMs / 1000)
+          });
+        }
+
+        async function reset() {
+          stopTick();
+          mode = "idle";
+          endsAt = 0;
+          const mins = readMinutes() || 50;
+          if (!readMinutes()) input.value = String(mins);
+          remainMs = mins * 60 * 1000;
+          paint();
+          await pushTimer("idle", { durationSec: mins * 60, remainSec: mins * 60 });
+        }
+
+        async function bindRealtime() {
+          if (!sb) return;
+          try {
+            if (channel) {
+              await sb.removeChannel(channel);
+              channel = null;
+            }
+            channel = sb.channel(`lesson-timer:${code}`, {
+              config: { broadcast: { self: false } }
+            });
+            channel.on("broadcast", { event: "timer" }, ({ payload }) => {
+              applyRemoteRow(payload);
+            });
+            await channel.subscribe();
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+
+        const onToggle = () => void startOrResume();
+        const onReset = () => void reset();
+        const onInput = () => syncFromInput();
+        const onChange = () => {
+          syncFromInput();
+          if (mode === "idle") void pushTimer("idle");
+        };
+
+        toggleBtn.addEventListener("click", onToggle);
+        resetBtn.addEventListener("click", onReset);
+        input.addEventListener("input", onInput);
+        input.addEventListener("change", onChange);
+
+        paint();
+
+        void (async () => {
+          try {
+            const { data: can, error: canErr } = await sb.rpc("can_control_lesson_timer", {
+              p_submit_code: code,
+              p_session_no: sessionNo
+            });
+            if (canErr) throw canErr;
+            if (!can) {
+              if (hint) {
+                hint.textContent =
+                  "이 차시 타이머를 제어할 권한이 없습니다. 학급·제출코드를 확인해 주세요.";
+              }
+              toggleBtn.disabled = true;
+              resetBtn.disabled = true;
+              input.disabled = true;
+            }
+          } catch (e) {
+            console.warn(e);
+            if (hint) {
+              hint.textContent =
+                "타이머 RPC를 찾을 수 없습니다. Supabase에서 supabase-lesson-timer.sql을 실행해 주세요.";
+            }
+          }
+          try {
+            const row = await fetchRemoteTimer();
+            if (destroyed) return;
+            if (row) applyRemoteRow(row);
+            else syncFromInput();
+          } catch (e) {
+            console.warn(e);
+          }
+          if (destroyed) return;
+          await bindRealtime();
+          if (destroyed) return;
+          pollId = setInterval(() => {
+            if (destroyed || document.visibilityState === "hidden" || pushing) return;
+            fetchRemoteTimer()
+              .then((row) => {
+                if (row) applyRemoteRow(row);
+              })
+              .catch(() => {});
+          }, 4000);
+        })();
+
+        detailTimerCtl = {
+          destroy() {
+            destroyed = true;
+            stopTick();
+            if (pollId) clearInterval(pollId);
+            pollId = 0;
+            toggleBtn.removeEventListener("click", onToggle);
+            resetBtn.removeEventListener("click", onReset);
+            input.removeEventListener("input", onInput);
+            input.removeEventListener("change", onChange);
+            if (channel && sb) {
+              sb.removeChannel(channel).catch(() => {});
+              channel = null;
+            }
+          }
+        };
+      }
+
       async function renderDetail(lesson, opts = {}) {
         showRightPanel("lesson");
         const card = $("detailCard");
+        stopDetailLessonTimer();
         if (!lesson) {
           card.innerHTML = `<p class="sub-empty">왼쪽에서 차시를 선택하면 제출코드와 학번별 보고서를 확인할 수 있습니다.</p>`;
           return;
@@ -8063,6 +8493,22 @@ ${built.html}
               </div>
               <div class="class-tag">${escapeHtml(classLabel || "학급 선택")}</div>
             </div>
+          </div>
+
+          <div class="detail-timer" id="detailTimer" hidden>
+            <span class="detail-timer-label">수업 타이머</span>
+            <div class="detail-timer-shell">
+              <label class="detail-timer-set">
+                <input id="detailTwMinutes" type="number" min="1" max="300" step="1" inputmode="numeric" value="50" aria-label="분 입력" />
+                <span class="unit">분</span>
+              </label>
+              <div class="detail-timer-display" id="detailTwDisplay" aria-live="polite">50:00</div>
+              <div class="detail-timer-btns">
+                <button type="button" class="is-primary" id="detailTwToggle">시작</button>
+                <button type="button" id="detailTwReset">리셋</button>
+              </div>
+            </div>
+            <p class="detail-timer-hint" id="detailTwHint">QR로 접속한 학생 화면에 같은 시간이 동기화됩니다.</p>
           </div>
 
           <div class="detail-toolbar">
@@ -8142,6 +8588,8 @@ ${built.html}
             toast(submitCode);
           }
         });
+
+        bindDetailLessonTimer(lesson, submitCode);
 
         if (!classId) return;
         const students = await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no);
