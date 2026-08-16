@@ -143,6 +143,8 @@ button, .submit-fab, a { touch-action: manipulation; }
   align-items: center;
   font: 700 10px/1 var(--sans);
   letter-spacing: -0.01em;
+  pointer-events: none;
+  user-select: none;
 }
 .time-watch.is-teacher .tw-role {
   background: var(--accent-soft);

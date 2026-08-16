@@ -991,6 +991,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
+      align-items: stretch;
       padding: 12px;
       border: 1.5px solid #1f1e1d;
       border-radius: 14px;
@@ -998,52 +999,70 @@
     }
     .folio-eval-col {
       display: grid;
+      grid-template-rows: auto 1fr;
       gap: 8px;
       min-width: 0;
+      min-height: 0;
+      align-content: start;
     }
     .folio-eval-col header {
       display: flex;
-      align-items: baseline;
+      align-items: center;
       justify-content: space-between;
       gap: 8px;
+      min-height: 22px;
     }
     .folio-eval-col header strong {
-      font: 700 13px/1.3 var(--font-sans);
+      font: 700 13px/1.3 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       color: var(--text-primary);
     }
     .folio-eval-col header span {
-      font: 600 11px/1 var(--font-sans);
+      font: 600 11px/1 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       color: var(--text-tertiary);
+      flex-shrink: 0;
     }
     .folio-eval-col header span.is-over { color: #b23a2c; }
     .folio-eval-col textarea,
     .folio-eval-col .folio-seteuk {
       width: 100%;
-      min-height: 160px;
+      height: 100%;
+      min-height: 168px;
       padding: 12px;
       border: 1.5px solid #ddd5c8;
       border-radius: 12px;
       background: #faf9f5;
-      font: 500 13px/1.65 var(--font-serif);
+      font: 500 13px/1.65 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       color: var(--text-primary);
       resize: vertical;
       outline: none;
       white-space: pre-wrap;
       word-break: keep-all;
+      box-sizing: border-box;
     }
     .folio-eval-col textarea:focus {
       border-color: #1a4f9c;
       box-shadow: 0 0 0 3px rgba(26, 79, 156, 0.12);
     }
+    .folio-eval-col--activity {
+      position: relative;
+    }
     .folio-seteuk {
       background: linear-gradient(180deg, #f7fbff 0%, #eef4fa 100%);
       border-color: #b7c9de;
       overflow: auto;
+      padding-bottom: 40px;
     }
     .folio-seteuk-actions {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
       display: flex;
       gap: 8px;
       justify-content: flex-end;
+      pointer-events: none;
+    }
+    .folio-seteuk-actions .btn-tiny {
+      pointer-events: auto;
     }
     @media (max-width: 820px) {
       .folio-eval { grid-template-columns: 1fr; }
@@ -5659,7 +5678,7 @@
         return 0;
       }
 
-      /** 학생별 응답을 반영한 세특 관찰문 (3인칭, 음슴체, 개별화) */
+      /** 학생별 응답을 반영한 세특 관찰문 (3인칭, 개별화) */
       function buildSeteukObservationTail(ctx) {
         const {
           lessonTitle,
@@ -5896,28 +5915,28 @@
       }
 
       function neisByteLength(text) {
-        // 나이스(EUC-KR) 기준: ASCII 1바이트, 한글·기타 2바이트
-        let n = 0;
-        const s = String(text || "");
-        for (let i = 0; i < s.length; i++) {
-          const code = s.charCodeAt(i);
-          n += code <= 0x7f ? 1 : 2;
+        // 나이스 UTF-8 기준: 공백 포함 바이트 수
+        try {
+          return new TextEncoder().encode(String(text ?? "")).length;
+        } catch {
+          return String(text ?? "").length;
         }
-        return n;
       }
 
       function truncateToNeisBytes(text, maxBytes) {
-        const s = String(text || "").replace(/\s+/g, " ").trim();
+        const s = String(text ?? "");
         if (neisByteLength(s) <= maxBytes) return s;
+        const enc = new TextEncoder();
         let out = "";
         let n = 0;
+        const ellipsisBytes = enc.encode("…").length;
         for (const ch of s) {
-          const add = ch.codePointAt(0) <= 0x7f ? 1 : 2;
-          if (n + add > maxBytes - 3) break;
+          const add = enc.encode(ch).length;
+          if (n + add > maxBytes - ellipsisBytes) break;
           out += ch;
           n += add;
         }
-        return (out.replace(/[,\s]+$/g, "") + "…").trim();
+        return out.replace(/[,\s]+$/g, "") + "…";
       }
 
       function teacherObsStorageKey(classId, studentNo) {
@@ -5950,22 +5969,15 @@
           delete sub._yukha;
           delete sub._yukhaWhere;
           const y = buildYukhaSummary(sub);
-          let para = sanitizeSeteukText(y?.paragraph || "");
+          const para = sanitizeSeteukText(y?.paragraph || "");
           if (!para) continue;
-          // 누적 세특: 반복되는 도입부를 차시 연결형으로 다듬음
-          if (chunks.length) {
-            para = sanitizeSeteukText(
-              para.replace(/^진로 시간에\s*/, `${sn}차시에서는 `)
-            );
-          }
-          chunks.push(para);
+          chunks.push(`(${sn}차시)\n${para}`);
         }
         if (!chunks.length) {
-          return "제출된 활동 기록이 없어 세특 초안을 작성하지 못함.";
+          return "제출된 학생 활동이 없습니다.";
         }
-        // 음슴체·세특 문장들을 자연스럽게 이어 붙이고 나이스 1,500바이트로 제한
-        const joined = sanitizeSeteukText(chunks.join(" "));
-        return truncateToNeisBytes(joined, NEIS_SETEUK_MAX_BYTES);
+        // 차시별 줄바꿈 유지, 나이스 UTF-8 공백 포함 1,500바이트로 제한
+        return truncateToNeisBytes(chunks.join("\n\n"), NEIS_SETEUK_MAX_BYTES);
       }
 
       function closeStudentFolio() {
@@ -6038,9 +6050,9 @@
                 <strong>교사 관찰 평가</strong>
                 <span id="folioObsBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
               </header>
-              <textarea id="folioTeacherObs" placeholder="수업 중 관찰한 태도, 협력, 성장 포인트 등을 음슴체로 기록해 주세요.">${escapeHtml(obsSaved)}</textarea>
+              <textarea id="folioTeacherObs" placeholder="수업 중 관찰한 태도, 협력, 성장 포인트 등을 기록해 주세요.">${escapeHtml(obsSaved)}</textarea>
             </div>
-            <div class="folio-eval-col">
+            <div class="folio-eval-col folio-eval-col--activity">
               <header>
                 <strong>학생 활동</strong>
                 <span id="folioSeteukBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
@@ -6679,29 +6691,25 @@ ${built.html}
         const u = new URL(`activities/${file}`, base);
         const code = String(submitCode || "").trim().toUpperCase();
         if (code) u.searchParams.set("code", code);
-        // 깨진 HTML 캐시 회피
-        u.searchParams.set("v", "fix3");
+        // QR·공유용: 캐시버스트 파라미터 넣지 않음 (학생이 스캔해 바로 활동지로 이동)
         return u.href;
       }
 
-      /** </title> 등이 /title> 로 깨진 활동지 HTML 복구 */
-      function repairCorruptedActivityHtml(html) {
-        let s = String(html || "");
-        // "<" 가 빠져 "/tag>" 만 남은 닫는 태그 복구
-        s = s.replace(
-          /([^<])\/(title|head|body|html|div|span|strong|em|h1|h2|h3|p|label|button|section|header|footer|a|ul|li|nav)>/gi,
-          "$1</$2>"
-        );
-        if (!/<\/title>/i.test(s) && /<title[\s>]/i.test(s)) {
-          s = s.replace(/<title([^>]*)>([\s\S]*?)(?=<link|<meta|<script|<\/head)/i, "<title$1>$2</title>\n  ");
+      /** 활동지 열기 — 실제 활동지 URL로 이동 (QR에 찍히는 주소와 동일해야 함) */
+      function openActivitySheet(url) {
+        const href = String(url || "").trim();
+        if (!href) {
+          toast("활동지 주소를 만들 수 없습니다.");
+          return;
         }
-        if (!/<meta[^>]+charset\s*=/i.test(s)) {
-          s = s.replace(/<head([^>]*)>/i, '<head$1>\n  <meta charset="UTF-8" />');
+        if (location.protocol === "file:") {
+          toast("로컬 파일(file://) QR은 학생 휴대폰에서 열리지 않습니다. 웹 주소(https)로 배포·접속해 주세요.");
+          location.assign(href);
+          return;
         }
-        return s;
-      }
-
-      function navigateToActivity(href) {
+        if (!/^https?:/i.test(href)) {
+          toast("학생용 QR은 http(s) 주소여야 합니다.");
+        }
         const a = document.createElement("a");
         a.href = href;
         a.target = "_blank";
@@ -6710,109 +6718,6 @@ ${built.html}
         document.body.appendChild(a);
         a.click();
         a.remove();
-      }
-
-      /** 활동지 열기: 캐시된 깨진 HTML·file://·팝업 차단 대비 */
-      async function openActivitySheet(url) {
-        const href = String(url || "").trim();
-        if (!href) {
-          toast("활동지 주소를 만들 수 없습니다.");
-          return;
-        }
-
-        let target = href;
-        try {
-          const u = new URL(href, location.href);
-          u.searchParams.set("_", Date.now().toString(36));
-          target = u.href;
-        } catch {
-          /* keep href */
-        }
-
-        // file:// 에서는 fetch가 막히는 경우가 많아 직접 이동 (디스크 파일은 UTF-8 정상본)
-        if (location.protocol === "file:") {
-          location.assign(target);
-          return;
-        }
-
-        // await 이전에 동기 오픈 → 팝업 차단 방지
-        const win = window.open("about:blank", "_blank");
-        if (win) {
-          try {
-            win.document.write(
-              "<!DOCTYPE html><html lang=\"ko\"><head><meta charset=\"UTF-8\"/><title>불러오는 중</title></head>" +
-                "<body style=\"margin:0;padding:24px;font:600 15px/1.5 sans-serif;color:#4a4845;background:#f7f4ee\">활동지를 불러오는 중…</body></html>"
-            );
-            win.document.close();
-          } catch {
-            /* ignore */
-          }
-        }
-
-        const finish = (html) => {
-          const fixed = toAbsoluteActivityAssets(repairCorruptedActivityHtml(html), target);
-          if (!/<\/title>/i.test(fixed)) {
-            if (win && !win.closed) win.close();
-            toast("활동지 파일이 손상되어 열 수 없습니다.");
-            return;
-          }
-          if (win && !win.closed) {
-            try {
-              win.document.open();
-              win.document.write(fixed);
-              win.document.close();
-              return;
-            } catch (e) {
-              console.warn(e);
-            }
-          }
-          const blob = new Blob([fixed], { type: "text/html;charset=utf-8" });
-          const blobUrl = URL.createObjectURL(blob);
-          navigateToActivity(blobUrl);
-          setTimeout(() => {
-            try {
-              URL.revokeObjectURL(blobUrl);
-            } catch {
-              /* ignore */
-            }
-          }, 120000);
-        };
-
-        try {
-          const res = await fetch(target, { cache: "no-store" });
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          finish(await res.text());
-        } catch (e) {
-          console.warn(e);
-          if (win && !win.closed) {
-            try {
-              win.location.replace(target);
-              return;
-            } catch {
-              /* ignore */
-            }
-          }
-          navigateToActivity(target);
-        }
-      }
-
-      function toAbsoluteActivityAssets(html, activityPageUrl) {
-        let base;
-        try {
-          base = new URL(".", activityPageUrl).href;
-        } catch {
-          return html;
-        }
-        return String(html || "").replace(
-          /\b(href|src)=["'](\.\/|\.\.\/)([^"']+)["']/gi,
-          (_m, attr, prefix, rel) => {
-            try {
-              return `${attr}="${new URL(prefix + rel, base).href}"`;
-            } catch {
-              return _m;
-            }
-          }
-        );
       }
 
       function ensureQrcodeLib() {

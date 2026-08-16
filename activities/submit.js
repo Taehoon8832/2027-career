@@ -29,18 +29,27 @@
   }
 
   /**
-   * 현재 열린 활동지 주소 그대로 사용.
+   * 학생이 스캔할 활동지 주소.
+   * about:blank / blob 에서는 QR을 만들지 않음.
    * 경로를 다시 조립하면 file:// · 한글 폴더명에서 ERR_FILE_NOT_FOUND 가 난다.
    */
   function activityPageUrl() {
     try {
       const u = new URL(location.href);
+      if (u.protocol === "blob:" || u.protocol === "about:" || u.href === "about:blank") {
+        return "";
+      }
       u.hash = "";
+      // 캐시용 파라미터는 QR에서 제거
+      u.searchParams.delete("_");
+      u.searchParams.delete("v");
       const code = (u.searchParams.get("code") || "").trim().toUpperCase();
       if (code) u.searchParams.set("code", code);
       return u.href;
     } catch {
-      return String(location.href || "").split("#")[0];
+      const raw = String(location.href || "").split("#")[0];
+      if (!raw || raw.startsWith("about:") || raw.startsWith("blob:")) return "";
+      return raw;
     }
   }
 
@@ -123,13 +132,13 @@
         }
       }
       if (el.tagName === "A") {
-        el.href = "#";
-        el.removeAttribute("target");
+        el.href = url;
+        el.target = "_blank";
         el.rel = "noopener noreferrer";
       }
       el.innerHTML = "";
-      el.title = "눌러서 QR 크게 보기";
-      el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
+      el.title = "QR 스캔 시 이 활동지로 이동합니다";
+      el.setAttribute("aria-label", "활동지 QR — 스캔하면 활동지 열림");
       el.dataset.qrUrl = url;
       el.dataset.painted = "1";
       canvas.className = "qr-img";
@@ -154,19 +163,18 @@
     if (!el || !text) return;
     const displayPx = Math.max(100, Number(size) || 108);
     const url = String(text).trim();
+    if (!url || url.startsWith("about:") || url.startsWith("blob:")) return;
     if (el.tagName === "A") {
-      el.href = "#";
-      el.removeAttribute("target");
+      el.href = url;
+      el.target = "_blank";
       el.rel = "noopener noreferrer";
     }
-    el.title = "눌러서 QR 크게 보기";
-    el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
+    el.title = "QR 스캔 시 이 활동지로 이동합니다";
+    el.setAttribute("aria-label", "활동지 QR — 스캔하면 활동지 열림");
     el.dataset.qrUrl = url;
 
     if (paintScannableQr(el, url, displayPx)) {
-      if (el.tagName === "A") el.href = "#";
-      el.title = "눌러서 QR 크게 보기";
-      el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
+      if (el.tagName === "A") el.href = url;
       return;
     }
 
@@ -174,9 +182,7 @@
       if (!paintScannableQr(el, url, displayPx)) {
         el.textContent = "QR";
       } else if (el.tagName === "A") {
-        el.href = "#";
-        el.title = "눌러서 QR 크게 보기";
-        el.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
+        el.href = url;
       }
     });
   }
@@ -250,15 +256,16 @@
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "hero-qr-cap";
-      btn.textContent = "눌러서 열기";
+      btn.textContent = "크게 보기";
       btn.setAttribute("aria-label", "QR 코드 크게 보기");
       cap.replaceWith(btn);
       cap = btn;
     } else if (cap) {
-      cap.textContent = "눌러서 열기";
+      cap.textContent = "크게 보기";
       cap.setAttribute("aria-label", "QR 코드 크게 보기");
     }
 
+    // QR 클릭은 크게 보기(스캔 데이터는 활동지 URL 유지)
     el?.addEventListener("click", toggleQrLightbox);
     cap?.addEventListener("click", toggleQrLightbox);
 
@@ -295,18 +302,26 @@
     if (!el) return;
 
     const url = activityPageUrl();
+    if (!url) {
+      if (el) {
+        el.removeAttribute("href");
+        el.title = "웹 주소(https)로 연 활동지에서만 QR을 사용할 수 있습니다";
+        el.textContent = "QR";
+      }
+      return;
+    }
 
     if (el.tagName !== "A") {
       const a = document.createElement("a");
       a.id = el.id || "activityPageQr";
       a.className = el.className || "hero-qr";
-      a.setAttribute("aria-label", "활동지 QR — 눌러서 크게 보기");
+      a.setAttribute("aria-label", "활동지 QR — 스캔하면 활동지 열림");
       el.replaceWith(a);
       el = a;
     }
 
-    el.href = "#";
-    el.removeAttribute("target");
+    el.href = url;
+    el.target = "_blank";
     el.rel = "noopener noreferrer";
     bindQrLightboxControls(wrap, el);
 
@@ -1189,10 +1204,10 @@ body{padding:16px!important;background:#fff!important}
   function ensureTimeWatch() {
     const existing = document.getElementById("timeWatch");
     if (existing) {
-      const face = existing.querySelector(".tw-face");
-      const display = existing.querySelector("#twDisplay");
-      if (face && display) face.replaceWith(display);
       placeTimeWatchInTopbar(existing);
+      if (typeof existing._twRefresh === "function") {
+        void existing._twRefresh();
+      }
       return;
     }
     const topbar = document.querySelector(".topbar");
@@ -1246,6 +1261,7 @@ body{padding:16px!important;background:#fff!important}
     let isTeacher = false;
     let pushing = false;
     let channel = null;
+    let boundCode = "";
     const authSb = createAuthClient();
 
     const pad2 = (n) => (n < 10 ? "0" + n : String(n));
@@ -1396,17 +1412,25 @@ body{padding:16px!important;background:#fff!important}
           applyRemoteRow(row);
         }
         if (channel) {
-          channel.send({
-            type: "broadcast",
-            event: "timer",
-            payload: row || { status, duration_sec: durationSec, remain_sec: remainSec }
-          }).catch(() => {});
+          channel
+            .send({
+              type: "broadcast",
+              event: "timer",
+              payload: row || { status, duration_sec: durationSec, remain_sec: remainSec }
+            })
+            .catch(() => {});
         }
       } catch (err) {
         console.warn(err);
         const msg = err?.message || "";
         if (/schema cache|Could not find the function|권한이 없습니다|로그인/i.test(msg)) {
-          wrap.title = "타이머 동기화 실패: Supabase에서 supabase-lesson-timer.sql 실행·교사 로그인을 확인해 주세요.";
+          wrap.title =
+            "타이머 동기화 실패: Supabase에서 supabase-lesson-timer.sql 실행·교사 로그인을 확인해 주세요.";
+          showDraftToast?.(
+            "타이머 저장 실패: SQL 실행·교사 로그인·제출코드를 확인해 주세요."
+          );
+        } else {
+          showDraftToast?.(msg || "타이머 동기화에 실패했습니다.");
         }
       } finally {
         pushing = false;
@@ -1476,11 +1500,17 @@ body{padding:16px!important;background:#fff!important}
       if (roleBadge) {
         roleBadge.hidden = false;
         roleBadge.textContent = isTeacher ? "교사" : "동기화";
+        roleBadge.title = isTeacher
+          ? "로그인한 교사만 분을 설정·시작·정지할 수 있습니다"
+          : "교사가 설정한 시간이 QR로 접속한 전원에게 동일하게 표시됩니다";
       }
       wrap.setAttribute(
         "aria-label",
         isTeacher ? "수업 타임워치 (교사 제어)" : "수업 타임워치 (교사 설정값 동기화)"
       );
+      wrap.title = isTeacher
+        ? "교사 전용: 분을 입력한 뒤 시작하세요. QR로 들어온 학생 화면에 같은 시간이 동기화됩니다."
+        : "학생용: 교사가 설정한 타이머가 자동 동기화됩니다. (조작 불가)";
       paint();
     }
 
@@ -1491,7 +1521,9 @@ body{padding:16px!important;background:#fff!important}
           await sb.removeChannel(channel);
           channel = null;
         }
-        channel = sb.channel(`lesson-timer:${code}`);
+        channel = sb.channel(`lesson-timer:${code}`, {
+          config: { broadcast: { self: false } }
+        });
         channel.on("broadcast", { event: "timer" }, ({ payload }) => {
           applyRemoteRow(payload);
         });
@@ -1510,65 +1542,49 @@ body{padding:16px!important;background:#fff!important}
             if (row) applyRemoteRow(row);
           })
           .catch(() => {});
-      }, isTeacher ? 4000 : 1500);
+      }, isTeacher ? 4000 : 1200);
     }
 
-    input?.addEventListener("input", syncFromInput);
-    input?.addEventListener("change", () => {
-      syncFromInput();
-      if (isTeacher && (mode === "idle" || mode === "done")) {
-        const mins = readMinutes();
-        if (mins) void pushTimer("idle", { durationSec: mins * 60, remainSec: mins * 60 });
+    async function resolveTeacherControl(code) {
+      if (!code || !authSb) return false;
+      try {
+        const { data: sessionData } = await authSb.auth.getSession();
+        if (!sessionData?.session) return false;
+        const { data, error } = await authSb.rpc("can_control_lesson_timer", {
+          p_submit_code: code,
+          p_session_no: sessionNo
+        });
+        if (error) {
+          console.warn(error);
+          return false;
+        }
+        return !!data;
+      } catch (e) {
+        console.warn(e);
+        return false;
       }
-    });
-    input?.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        void startOrResume();
-      }
-    });
-    toggleBtn?.addEventListener("click", () => void startOrResume());
-    resetBtn?.addEventListener("click", () => void reset());
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && mode === "running") {
-        if (nowMs() >= endsAt) finishLocal();
-        else paint();
-        fetchRemoteTimer()
-          .then((row) => {
-            if (row) applyRemoteRow(row);
-          })
-          .catch(() => {});
-      }
-    });
+    }
 
-    paint();
-
-    (async () => {
+    async function bootstrap(force) {
       const code = getSubmitCodeFromPage();
       if (!code) {
+        boundCode = "";
         setTeacherMode(false);
-        wrap.title = "QR(제출코드)가 있는 활동지에서 교사가 설정한 타이머가 동기화됩니다.";
+        wrap.title =
+          "QR(제출코드)가 있는 활동지에서 교사가 설정한 타이머가 동기화됩니다.";
         if (input) input.value = "";
         paint();
         return;
       }
-
-      let canControl = false;
-      try {
-        if (authSb) {
-          const { data: sessionData } = await authSb.auth.getSession();
-          if (sessionData?.session) {
-            const { data, error } = await authSb.rpc("can_control_lesson_timer", {
-              p_submit_code: code,
-              p_session_no: sessionNo
-            });
-            if (!error) canControl = !!data;
-          }
-        }
-      } catch (e) {
-        console.warn(e);
+      if (!force && code === boundCode) {
+        // 세션만 재확인
+        const can = await resolveTeacherControl(code);
+        if (can !== isTeacher) setTeacherMode(can);
+        return;
       }
+      boundCode = code;
 
+      const canControl = await resolveTeacherControl(code);
       setTeacherMode(canControl);
 
       try {
@@ -1590,7 +1606,51 @@ body{padding:16px!important;background:#fff!important}
 
       await bindRealtime(code);
       startPolling();
-    })();
+    }
+
+    wrap._twRefresh = () => bootstrap(false);
+
+    input?.addEventListener("input", syncFromInput);
+    input?.addEventListener("change", () => {
+      syncFromInput();
+      if (isTeacher && (mode === "idle" || mode === "done")) {
+        const mins = readMinutes();
+        if (mins) void pushTimer("idle", { durationSec: mins * 60, remainSec: mins * 60 });
+      }
+    });
+    input?.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        void startOrResume();
+      }
+    });
+    toggleBtn?.addEventListener("click", () => void startOrResume());
+    resetBtn?.addEventListener("click", () => void reset());
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      void bootstrap(false);
+      if (mode === "running") {
+        if (nowMs() >= endsAt) finishLocal();
+        else paint();
+      }
+      fetchRemoteTimer()
+        .then((row) => {
+          if (row) applyRemoteRow(row);
+        })
+        .catch(() => {});
+    });
+
+    // 제출코드 입력·변경 시 동기화 채널 재연결
+    const codeInput = document.getElementById("submitCodeInput");
+    codeInput?.addEventListener("change", () => void bootstrap(true));
+    codeInput?.addEventListener("blur", () => void bootstrap(true));
+
+    authSb?.auth.onAuthStateChange(() => {
+      void bootstrap(true);
+    });
+
+    paint();
+    void bootstrap(true);
   }
 
   function ensureReflectField() {
