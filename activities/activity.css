@@ -105,11 +105,14 @@ button, .submit-fab, a { touch-action: manipulation; }
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-left: 0;
   justify-self: end;
+  max-width: 100%;
 }
+.submit-fab .label-short { display: none; }
+.submit-fab .label-long { display: inline; }
 
 /* —— 수업 타임워치 (본문 '1차시' 정렬 − 0.3cm · sticky) —— */
 .time-watch {
@@ -1185,12 +1188,18 @@ body.qr-lightbox-open { overflow: hidden; }
     width: 100%;
     justify-self: stretch;
     justify-content: flex-start;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+  .topbar-actions::-webkit-scrollbar { display: none; }
   .topbar-actions .draft-fab {
     margin-left: auto;
   }
+  .submit-fab .label-short { display: none; }
+  .submit-fab .label-long { display: inline; }
 }
 /* 폰·좁은 화면: 제목 아래 QR을 가운데 배치 */
 @media (max-width: 720px) {
@@ -1368,6 +1377,9 @@ body.qr-lightbox-open { overflow: hidden; }
   .topbar-actions .draft-fab {
     margin-left: auto;
   }
+  /* 폰: 짧은 라벨 */
+  .submit-fab .label-long { display: none !important; }
+  .submit-fab .label-short { display: inline !important; }
   .sheet-tools { height: 40px; flex-shrink: 0; }
   .tool-btn { width: 36px; min-width: 36px; }
   .tool-btn svg { width: 16px; height: 16px; }

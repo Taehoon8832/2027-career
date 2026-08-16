@@ -401,6 +401,86 @@
       letter-spacing: -0.01em;
     }
     .roster-board-bar .grow { flex: 1; min-width: 4px; }
+    .roster-session-filter {
+      display: flex;
+      align-items: center;
+      flex: 1 1 160px;
+      min-width: 140px;
+      max-width: 340px;
+      margin: 0 4px;
+    }
+    .roster-session-filter select {
+      width: 100%;
+      height: 30px;
+      padding: 0 28px 0 10px;
+      border: 1.5px solid #9eb0c0;
+      border-radius: 8px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%3d5f7a' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+        no-repeat right 8px center,
+        linear-gradient(180deg, #f7fafc 0%, #eef3f7 100%);
+      color: #1f3a4d;
+      font: 600 12px/1 "Noto Sans KR", var(--font-sans);
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+    .roster-session-filter select:focus {
+      outline: none;
+      border-color: #5a87a8;
+      box-shadow: 0 0 0 3px rgba(90, 135, 168, 0.16);
+    }
+    .roster-session-preview {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 100%;
+      margin-top: 2px;
+      padding: 7px 8px;
+      border: 1px solid #d5dde6;
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fbfcfd 0%, #f3f6f9 100%);
+      text-align: left;
+      cursor: default;
+      box-sizing: border-box;
+    }
+    button.roster-session-preview {
+      cursor: pointer;
+      font: inherit;
+      color: inherit;
+    }
+    button.roster-session-preview:hover {
+      border-color: #8eb0cc;
+      background: linear-gradient(180deg, #f5f9fc 0%, #e8f0f7 100%);
+    }
+    .roster-session-preview.is-empty {
+      border-style: dashed;
+      background: #f7f7f5;
+      opacity: 0.92;
+    }
+    .roster-preview-kicker {
+      font: 700 10px/1.2 "Noto Sans KR", var(--font-sans);
+      color: #3d6a8c;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .roster-preview-text {
+      font: 500 11px/1.45 "Noto Sans KR", var(--font-sans);
+      color: var(--text-primary);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: keep-all;
+      min-height: 2.8em;
+    }
+    .roster-preview-text.is-empty {
+      color: var(--text-tertiary);
+      font-weight: 600;
+    }
     .btn-batch-input {
       display: inline-flex;
       align-items: center;
@@ -1066,19 +1146,6 @@
       border-color: #3d7eab;
       box-shadow: 0 0 0 3px rgba(61, 126, 171, 0.14);
     }
-    .folio-eval-hint {
-      grid-column: 1 / -1;
-      margin: 0;
-      font: 500 11.5px/1.45 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
-      color: var(--text-tertiary);
-    }
-    .folio-eval-hint .folio-save-status {
-      color: #2f6f9c;
-      font-weight: 600;
-    }
-    .folio-eval-hint .folio-save-status.is-err {
-      color: #b23a2c;
-    }
     @media (max-width: 820px) {
       .folio-eval { grid-template-columns: 1fr; }
       .folio-session-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1368,12 +1435,14 @@
       position: relative;
       display: flex; flex-direction: column; gap: 5px;
       padding: 28px 9px 9px; border: 1.5px solid var(--border-default);
-      border-radius: 10px; background: var(--bg-subtle); min-height: 0;
+      border-radius: 10px;
+      background: linear-gradient(165deg, #fafafa 0%, #f5f5f5 55%, #f0f0f0 100%);
+      min-height: 0;
       contain: content;
     }
     .detail-roster-cell.has-sub {
       border-color: #1f1e1d;
-      background: #fff;
+      background: linear-gradient(165deg, #fcfcfc 0%, #f6f6f6 48%, #efefef 100%);
       box-shadow: 0 2px 0 rgba(31, 30, 29, 0.06);
     }
     .detail-roster-cell.is-president,
@@ -1382,20 +1451,20 @@
     }
     .detail-roster-cell.is-president {
       border-color: #8C4022;
-      background: #fffaf6;
+      background: linear-gradient(165deg, #fffaf7 0%, #f7f2ee 55%, #f1ebe6 100%);
       box-shadow: inset 5px 0 0 #C96442;
     }
     .detail-roster-cell.is-vice {
       border-color: #6b6358;
-      background: #faf9f6;
+      background: linear-gradient(165deg, #faf9f7 0%, #f4f3f0 55%, #eeece8 100%);
       box-shadow: inset 5px 0 0 #9a8f7e;
     }
     .detail-roster-cell.is-president.has-sub {
-      background: #fff4ec;
+      background: linear-gradient(165deg, #fff8f3 0%, #f6f0ea 50%, #efe8e1 100%);
       box-shadow: inset 5px 0 0 #C96442, 0 2px 0 rgba(31, 30, 29, 0.06);
     }
     .detail-roster-cell.is-vice.has-sub {
-      background: #f3efe8;
+      background: linear-gradient(165deg, #f7f5f1 0%, #f0eee9 50%, #e9e6e0 100%);
       box-shadow: inset 5px 0 0 #9a8f7e, 0 2px 0 rgba(31, 30, 29, 0.06);
     }
     .detail-roster-cell .officer-band {
@@ -1652,47 +1721,47 @@
     .setup-launch {
       width: 100%; display: flex; align-items: center; gap: 12px;
       margin: 0 0 14px; padding: 12px 14px;
-      border: 2px solid #8eb8d4;
+      border: 1.5px solid #d5dde6;
       border-radius: var(--radius-lg);
       background:
-        linear-gradient(145deg, #f7fbfe 0%, #eef7fc 48%, #e4f1f9 100%);
+        linear-gradient(105deg, rgba(232, 244, 252, 0.55) 0%, rgba(255, 255, 255, 0.92) 38%, #fffdfb 100%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.85),
-        0 1px 2px rgba(70, 130, 170, 0.08),
-        0 6px 16px rgba(70, 130, 170, 0.08);
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 1px 2px rgba(45, 70, 95, 0.05),
+        0 4px 12px rgba(45, 70, 95, 0.05);
       cursor: pointer; text-align: left;
       transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce), box-shadow var(--duration-fast) ease;
     }
     .setup-launch:hover {
-      border-color: #6fa3c8;
+      border-color: #b7c9da;
       transform: translateY(-1px);
       background:
-        linear-gradient(145deg, #f2f8fd 0%, #e6f3fb 48%, #d8ecf7 100%);
+        linear-gradient(105deg, rgba(220, 238, 250, 0.7) 0%, rgba(255, 255, 255, 0.96) 42%, #fffefc 100%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 2px 4px rgba(70, 130, 170, 0.1),
-        0 10px 22px rgba(70, 130, 170, 0.12);
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 2px 4px rgba(45, 70, 95, 0.06),
+        0 8px 18px rgba(45, 70, 95, 0.08);
     }
     .setup-launch.is-active {
-      border-color: #3d7eab;
+      border-color: #8eb4d0;
       background:
-        linear-gradient(145deg, #d4ebf7 0%, #b9ddf0 45%, #9ecfe8 100%);
+        linear-gradient(105deg, rgba(210, 232, 247, 0.85) 0%, rgba(240, 248, 253, 0.95) 36%, #ffffff 100%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.55),
-        0 1px 2px rgba(40, 100, 140, 0.14),
-        0 0 0 1px rgba(61, 126, 171, 0.18),
-        0 8px 18px rgba(40, 100, 140, 0.16);
+        inset 3px 0 0 #6fa3c8,
+        inset 0 1px 0 rgba(255, 255, 255, 0.95),
+        0 1px 2px rgba(45, 70, 95, 0.06),
+        0 6px 14px rgba(70, 130, 170, 0.1);
     }
     .setup-icon {
       width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px;
       display: grid; place-items: center;
-      background: linear-gradient(145deg, #7eb8d9 0%, #4f97c4 55%, #2f6f9c 100%);
-      color: #f5fbff;
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 6px 14px rgba(47, 111, 156, 0.28);
+      background: linear-gradient(145deg, #9ec9e4 0%, #6fa3c8 55%, #4f87b0 100%);
+      color: #f7fbff;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 10px rgba(79, 135, 176, 0.22);
     }
     .setup-launch.is-active .setup-icon {
-      background: linear-gradient(145deg, #5aa4d0 0%, #3480b5 55%, #1f5f8c 100%);
-      box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 14px rgba(31, 95, 140, 0.32);
+      background: linear-gradient(145deg, #8ebfe0 0%, #5f98c0 55%, #3f7aaa 100%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 12px rgba(63, 122, 170, 0.26);
     }
     .setup-icon svg {
       width: 22px; height: 22px; stroke: currentColor; fill: none;
@@ -2548,6 +2617,16 @@
         z-index: 2;
       }
       .roster-board-bar strong { font-size: 13px; }
+      .roster-session-filter {
+        flex: 1 1 100%;
+        max-width: none;
+        margin: 0;
+        order: 3;
+      }
+      .roster-session-filter select {
+        height: 40px;
+        font-size: 14px;
+      }
       .officer-tools { gap: 6px; }
       .btn-officer {
         min-height: 40px;
@@ -3001,6 +3080,11 @@
                   <span class="btn-officer-label">부반장</span>
                 </button>
               </div>
+              <label class="roster-session-filter">
+                <select id="rosterSessionSelect" aria-label="차시 미리보기 선택" title="종합 또는 차시를 고르면 학생 카드에 미리보기가 표시됩니다">
+                  <option value="0">종합 · 1~30차시 현황</option>
+                </select>
+              </label>
               <span class="grow" aria-hidden="true"></span>
               <button type="button" class="btn-batch-input" id="btnBatchNameInput" title="학번·이름 일괄 입력" aria-label="일괄 입력">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -3188,6 +3272,8 @@
       let rosterSubMap = new Map();
       let classOfficers = loadClassOfficers();
       let officerPickMode = null; // null | "president" | "vice"
+      let rosterPreviewSession = 0; // 0=종합, 1~30=해당 차시 미리보기
+      let rosterSessionPreviewSeq = 0;
       let officersDbReady = null; // null=미확인, true/false
       let folioNotesDbReady = null; // null=미확인, true/false
       let folioSaveTimer = 0;
@@ -3316,6 +3402,7 @@
           classGrade: 1,
           classCount: 1,
           byGrade: {},
+          studentCountByClassId: {},
           needsResave: false
         };
       }
@@ -3348,12 +3435,51 @@
         const key = String(grade);
         const cur = classSettings.byGrade[key];
         if (!cur || typeof cur !== "object") {
-          classSettings.byGrade[key] = { classCount: 1, departments: {}, units: [] };
+          classSettings.byGrade[key] = {
+            classCount: 1,
+            departments: {},
+            units: [],
+            studentCounts: {}
+          };
         } else {
           if (!cur.departments || typeof cur.departments !== "object") cur.departments = {};
           if (!Array.isArray(cur.units)) cur.units = [];
+          if (!cur.studentCounts || typeof cur.studentCounts !== "object") cur.studentCounts = {};
+          if (cur.classCount != null) cur.classCount = clampClassCount(cur.classCount);
         }
         return classSettings.byGrade[key];
+      }
+
+      function getGradeClassCount(grade) {
+        const g = Number(grade) || classSettings.classGrade || 1;
+        const bag = ensureByGradeBag(g);
+        return clampClassCount(bag.classCount || 1);
+      }
+
+      /** 학년별 학급 수 — 다른 학년 값과 절대 공유하지 않음 */
+      function setGradeClassCount(grade, count) {
+        const g = Number(grade) || 1;
+        const bag = ensureByGradeBag(g);
+        bag.classCount = clampClassCount(count);
+        if (Number(classSettings.classGrade) === g) {
+          classSettings.classCount = bag.classCount;
+        }
+        return bag.classCount;
+      }
+
+      function rememberStudentCountForClass(classId, count) {
+        if (!classId) return;
+        const meta = classMetaById(classId);
+        const n = clampStudentCount(count);
+        if (n == null) return;
+        if (!classSettings.studentCountByClassId || typeof classSettings.studentCountByClassId !== "object") {
+          classSettings.studentCountByClassId = {};
+        }
+        classSettings.studentCountByClassId[classId] = n;
+        if (meta?.grade && meta?.class_no) {
+          const bag = ensureByGradeBag(meta.grade);
+          bag.studentCounts[String(meta.class_no)] = n;
+        }
       }
 
       function getDepartmentsMap(grade) {
@@ -3369,11 +3495,14 @@
 
       /** 특성화고: 학급 수만큼 { classNo, department } 슬롯 */
       function getGradeUnits(grade) {
-        const bag = ensureByGradeBag(grade);
-        const count = clampClassCount(
-          grade === classSettings.classGrade ? classSettings.classCount : bag.classCount || 1
-        );
+        const g = Number(grade) || 1;
+        const bag = ensureByGradeBag(g);
+        // 항상 해당 학년 bag.classCount만 사용 (현재 UI classCount로 타 학년을 덮지 않음)
+        const count = clampClassCount(bag.classCount || 1);
         bag.classCount = count;
+        if (Number(classSettings.classGrade) === g) {
+          classSettings.classCount = count;
+        }
         if (!Array.isArray(bag.units)) bag.units = [];
 
         if (!bag.units.length) {
@@ -3397,7 +3526,7 @@
           classNo: normalizeUnitClassNo(u?.classNo, idx + 1),
           department: String(u?.department || "").trim()
         }));
-        syncUnitsToDepartmentsMap(grade);
+        syncUnitsToDepartmentsMap(g);
         return bag.units;
       }
 
@@ -3693,17 +3822,42 @@
               byGrade[k] = {
                 classCount: clampClassCount(bag.classCount || units.length || 1),
                 departments: deps,
-                units
+                units,
+                studentCounts:
+                  bag.studentCounts && typeof bag.studentCounts === "object"
+                    ? { ...bag.studentCounts }
+                    : {}
               };
             });
           }
+          // 상위 classCount는 ‘현재 학년’ 표시용 — byGrade와 맞춘다
+          const grade = [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1;
+          const gradeBag = byGrade[String(grade)];
+          const resolvedCount = clampClassCount(
+            gradeBag?.classCount || classCount || 1
+          );
+          if (!byGrade[String(grade)]) {
+            byGrade[String(grade)] = {
+              classCount: resolvedCount,
+              departments: {},
+              units: [],
+              studentCounts: {}
+            };
+          } else {
+            byGrade[String(grade)].classCount = resolvedCount;
+          }
+          const studentCountByClassId =
+            raw.studentCountByClassId && typeof raw.studentCountByClassId === "object"
+              ? { ...raw.studentCountByClassId }
+              : {};
           return {
             mode: "class",
             schoolType: normalizeSchoolType(raw.schoolType),
             studentNoFormat: normalizeStudentNoFormat(raw.studentNoFormat),
-            classGrade: [1, 2, 3].includes(Number(raw.classGrade)) ? Number(raw.classGrade) : 1,
-            classCount: clampClassCount(classCount || 1),
+            classGrade: grade,
+            classCount: resolvedCount,
             byGrade,
+            studentCountByClassId,
             needsResave: !!raw.needsResave
           };
         } catch {
@@ -3712,8 +3866,7 @@
       }
 
       function rememberGradeCount() {
-        const bag = ensureByGradeBag(classSettings.classGrade);
-        bag.classCount = clampClassCount(classSettings.classCount);
+        setGradeClassCount(classSettings.classGrade, classSettings.classCount);
         getGradeUnits(classSettings.classGrade);
       }
 
@@ -3744,7 +3897,7 @@
         classSettings.mode = "class";
         classSettings.schoolType = normalizeSchoolType(classSettings.schoolType);
         classSettings.studentNoFormat = normalizeStudentNoFormat(classSettings.studentNoFormat);
-        classSettings.classCount = clampClassCount(classSettings.classCount);
+        classSettings.classCount = getGradeClassCount(classSettings.classGrade);
         classSettings.needsResave = false;
         rememberGradeCount();
         persistClassSettingsLocal();
@@ -3789,14 +3942,21 @@
         const typeLabel = isVocational() ? "학과 있음" : "학과 없음";
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
         if (!active.length) {
-          const n = clampClassCount(classSettings.classCount);
-          return `${typeLabel} · ${classSettings.classGrade}학년 1~${n}반`;
+          const g = Number(classSettings.classGrade) || 1;
+          const n = getGradeClassCount(g);
+          return `${typeLabel} · ${g}학년 1~${n}반`;
         }
         const byG = new Map();
         active.forEach((c) => {
           const g = Number(c.grade) || 1;
           if (!byG.has(g)) byG.set(g, []);
           byG.get(g).push(Number(c.class_no));
+        });
+        // DB에 없는 학년은 byGrade 로컬 설정도 표시
+        [1, 2, 3].forEach((g) => {
+          if (byG.has(g)) return;
+          const bag = classSettings.byGrade?.[String(g)];
+          if (bag?.classCount) byG.set(g, classNosFromCount(bag.classCount));
         });
         const parts = [...byG.keys()].sort((a, b) => a - b).map((g) => {
           const nos = byG.get(g).sort((a, b) => a - b);
@@ -3899,7 +4059,7 @@
             return dept ? `${g}학년 ${no}반 · ${dept}` : `${g}학년 ${no}반`;
           });
         }
-        return classNosFromCount(classSettings.classCount).map((n) => `${g}학년 ${n}반`);
+        return classNosFromCount(getGradeClassCount(g)).map((n) => `${g}학년 ${n}반`);
       }
 
       function desiredUnitsFromSettings() {
@@ -3917,7 +4077,7 @@
             };
           });
         }
-        return classNosFromCount(classSettings.classCount).map((class_no) => ({
+        return classNosFromCount(getGradeClassCount(g)).map((class_no) => ({
           mode: "class",
           grade: g,
           class_no,
@@ -4315,7 +4475,8 @@
         classSettings.mode = "class";
         classSettings.schoolType = normalizeSchoolType(classSettings.schoolType);
         classSettings.studentNoFormat = normalizeStudentNoFormat(classSettings.studentNoFormat);
-        classSettings.classCount = clampClassCount(classSettings.classCount);
+        // 현재 학년 표시값은 해당 학년 bag에서만
+        classSettings.classCount = getGradeClassCount(classSettings.classGrade);
         const classGradeRoot = $("classGradeChips");
         if (!classGradeRoot) return;
 
@@ -4339,7 +4500,7 @@
 
         const input = $("classCountInput");
         if (input && document.activeElement !== input) {
-          input.value = String(classSettings.classCount);
+          input.value = String(getGradeClassCount(classSettings.classGrade));
         }
 
         renderDeptFields();
@@ -4350,8 +4511,7 @@
       function applyClassCountInput() {
         const input = $("classCountInput");
         if (!input) return;
-        const next = clampClassCount(input.value);
-        classSettings.classCount = next;
+        const next = setGradeClassCount(classSettings.classGrade, input.value);
         classSettings.needsResave = true;
         rememberGradeCount();
         persistClassSettingsLocal();
@@ -4364,37 +4524,29 @@
       function changeClassGrade(g) {
         if (classSettings.classGrade === g) return;
         flushDeptFieldsFromDom();
+        // 떠나는 학년의 학급 수를 byGrade에 먼저 고정
         rememberGradeCount();
         const wasDirty = !!classSettings.needsResave;
         classSettings.classGrade = g;
 
         const fromDb = activeClassesForGrade(g);
         const bag = ensureByGradeBag(g);
-        // 편집 중이 아닐 때만 DB로 슬롯 채움 (미저장 반·학과 보호)
+
+        // 이 학년의 저장값만 복원 (이전 학년 classCount를 절대 가져오지 않음)
+        let nextCount = clampClassCount(bag.classCount || 0);
         if (!wasDirty && fromDb.length) {
-          classSettings.classCount = clampClassCount(fromDb.length);
-          bag.classCount = classSettings.classCount;
+          nextCount = clampClassCount(fromDb.length);
           bag.units = fromDb.map((c) => ({
             classNo: normalizeUnitClassNo(c.class_no, 1),
             department: String(c.department_name || "").trim()
           }));
           syncUnitsToDepartmentsMap(g);
-        } else if (Array.isArray(bag.units) && bag.units.length) {
-          classSettings.classCount = clampClassCount(bag.units.length || bag.classCount || 1);
-          bag.classCount = classSettings.classCount;
-        } else if (bag.classCount) {
-          classSettings.classCount = clampClassCount(bag.classCount);
-        } else if (fromDb.length) {
-          classSettings.classCount = clampClassCount(fromDb.length);
-          bag.classCount = classSettings.classCount;
-          bag.units = fromDb.map((c) => ({
-            classNo: normalizeUnitClassNo(c.class_no, 1),
-            department: String(c.department_name || "").trim()
-          }));
-          syncUnitsToDepartmentsMap(g);
-        } else {
-          classSettings.classCount = 1;
+        } else if (!nextCount) {
+          nextCount = fromDb.length ? clampClassCount(fromDb.length) : 1;
         }
+        setGradeClassCount(g, nextCount);
+        getGradeUnits(g);
+
         classSettings.needsResave = wasDirty;
         persistClassSettingsLocal();
 
@@ -4427,13 +4579,14 @@
       }
 
       function adjustClassCount(delta) {
-        const next = clampClassCount(classSettings.classCount + delta);
-        if (next === classSettings.classCount) {
+        const current = getGradeClassCount(classSettings.classGrade);
+        const next = clampClassCount(current + delta);
+        if (next === current) {
           if (delta > 0) toast(`학급은 최대 ${MAX_CLASS_COUNT}개까지입니다.`);
           return;
         }
         flushDeptFieldsFromDom();
-        classSettings.classCount = next;
+        setGradeClassCount(classSettings.classGrade, next);
         classSettings.needsResave = true;
         rememberGradeCount();
         persistClassSettingsLocal();
@@ -4675,9 +4828,7 @@
         const used = new Set();
 
         if (!isVocational()) {
-          const count = clampClassCount(
-            g === classSettings.classGrade ? classSettings.classCount : ensureByGradeBag(g).classCount || 1
-          );
+          const count = getGradeClassCount(g);
           const slots = [];
           for (let i = 1; i <= count; i++) {
             const hit = fromDb.find((c) => !used.has(c.id) && Number(c.class_no) === i);
@@ -5376,9 +5527,78 @@
         }
       }
 
+      function ensureRosterSessionSelectOptions() {
+        const sel = $("rosterSessionSelect");
+        if (!sel) return;
+        if (sel.dataset.ready !== "1") {
+          const opts = [`<option value="0">종합 · 1~30차시 현황</option>`];
+          for (let sn = 1; sn <= 30; sn++) {
+            const meta = getLessonMeta(sn);
+            const month = meta.monthLabel ? `${meta.monthLabel} · ` : "";
+            opts.push(
+              `<option value="${sn}">${sn}차시 · ${escapeHtml(month)}${escapeHtml(meta.title || "")}</option>`
+            );
+          }
+          sel.innerHTML = opts.join("");
+          sel.dataset.ready = "1";
+        }
+        const v = String(rosterPreviewSession || 0);
+        if (sel.value !== v) sel.value = v;
+      }
+
+      function setRosterPreviewSession(sessionNo) {
+        const sn = Math.max(0, Math.min(30, Math.floor(Number(sessionNo) || 0)));
+        rosterPreviewSession = sn;
+        ensureRosterSessionSelectOptions();
+        renderRosterList();
+      }
+
+      async function hydrateRosterSessionPreviews() {
+        const sn = Number(rosterPreviewSession) || 0;
+        if (sn < 1 || sn > 30) return;
+        const root = $("rosterList");
+        if (!root) return;
+        const seq = ++rosterSessionPreviewSeq;
+        const classId = rosterClassId;
+        const nodes = [...root.querySelectorAll("[data-roster-preview]")];
+        const chunkSize = 8;
+        for (let i = 0; i < nodes.length; i += chunkSize) {
+          if (seq !== rosterSessionPreviewSeq || rosterClassId !== classId) return;
+          if (Number(rosterPreviewSession) !== sn) return;
+          const chunk = nodes.slice(i, i + chunkSize);
+          await Promise.all(
+            chunk.map(async (el) => {
+              const id = el.getAttribute("data-roster-preview");
+              const sub = findSubmissionById(id);
+              if (!sub) {
+                el.textContent = "내용 없음";
+                el.classList.add("is-empty");
+                return;
+              }
+              try {
+                await ensureSubmissionContent(sub);
+                delete sub._yukha;
+                const y = buildYukhaSummary(sub);
+                const text = y?.oneLine || y?.paragraph || "제출됨";
+                if (seq !== rosterSessionPreviewSeq) return;
+                el.textContent = text;
+                el.classList.toggle("is-empty", !text || text === "제출됨");
+              } catch (e) {
+                console.warn(e);
+                if (seq === rosterSessionPreviewSeq) {
+                  el.textContent = "미리보기 실패";
+                  el.classList.add("is-empty");
+                }
+              }
+            })
+          );
+        }
+      }
+
       function renderRosterList() {
         const root = $("rosterList");
         if (!root) return;
+        ensureRosterSessionSelectOptions();
         syncStudentCountInput();
         syncRosterBoardDept();
         bindRosterListEvents(root);
@@ -5391,7 +5611,7 @@
         const deptHtml = dept
           ? `<span class="roster-dept" title="학과: ${escapeHtml(dept)}">${escapeHtml(dept)}</span>`
           : "";
-        // 문서조각 없이 한 번에 그려 모바일에서 빠르게 갱신
+        const previewSn = Number(rosterPreviewSession) || 0;
         const officers = getClassOfficers(rosterClassId);
         const parts = new Array(rosterStudents.length);
         for (let i = 0; i < rosterStudents.length; i++) {
@@ -5432,6 +5652,36 @@
               <div class="session-track" aria-hidden="true">${trackCells.join("")}</div>
               <div class="session-track-legend" aria-hidden="true"><span>1</span><span>15</span><span>30</span></div>
             </button>`;
+
+          let bodyHtml = subListHtml;
+          let metaHtml = bySession.size
+            ? `제출 <span class="sub-count">${bySession.size}건</span>`
+            : "미제출";
+          let cardHasSub = !!bySession.size;
+
+          if (previewSn >= 1 && previewSn <= 30) {
+            const meta = getLessonMeta(previewSn);
+            const sub = bySession.get(previewSn);
+            cardHasSub = !!sub;
+            metaHtml = sub
+              ? `<span class="sub-count">${previewSn}차시 제출</span>`
+              : `${previewSn}차시 미제출`;
+            const kick = `${previewSn}차시 · ${meta.title || ""}`;
+            if (sub) {
+              bodyHtml = `
+                <button type="button" class="roster-session-preview is-done" data-tab-sub="${sub.id}" title="새 탭에서 ${escapeHtml(kick)} 보기" aria-label="${escapeHtml(labelNo)} ${escapeHtml(kick)} 미리보기">
+                  <span class="roster-preview-kicker">${escapeHtml(kick)}</span>
+                  <span class="roster-preview-text" data-roster-preview="${sub.id}">불러오는 중…</span>
+                </button>`;
+            } else {
+              bodyHtml = `
+                <div class="roster-session-preview is-empty" role="status">
+                  <span class="roster-preview-kicker">${escapeHtml(kick)}</span>
+                  <span class="roster-preview-text is-empty">미제출</span>
+                </div>`;
+            }
+          }
+
           const isP = s.id === officers.president;
           const isV = s.id === officers.vice;
           const bandHtml = isP
@@ -5441,20 +5691,21 @@
               : "";
           const officerCls = isP ? " is-president" : isV ? " is-vice" : "";
           parts[i] = `
-          <div class="roster-cell${bySession.size ? " has-sub" : ""}${officerCls}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
+          <div class="roster-cell${cardHasSub ? " has-sub" : ""}${officerCls}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
             ${bandHtml}
             <div class="roster-cell-head">
               <div class="no">${escapeHtml(labelNo)}</div>
               ${deptHtml}
             </div>
             <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" autocomplete="off" />
-            <div class="sub-meta">${bySession.size ? `제출 <span class="sub-count">${bySession.size}건</span>` : "미제출"}</div>
-            ${subListHtml}
+            <div class="sub-meta">${metaHtml}</div>
+            ${bodyHtml}
             <button type="button" class="del" data-del="${s.id}">학생 삭제</button>
           </div>`;
         }
         root.innerHTML = parts.join("");
         syncOfficerPickButtons();
+        if (previewSn >= 1) void hydrateRosterSessionPreviews();
       }
 
       let viewingSubmissionId = null;
@@ -6081,13 +6332,6 @@
         return /teacher_observation|student_activity_text|schema cache|Could not find/i.test(msg);
       }
 
-      function setFolioSaveStatus(text, isErr) {
-        const el = $("folioSaveStatus");
-        if (!el) return;
-        el.textContent = text || "";
-        el.classList.toggle("is-err", !!isErr);
-      }
-
       async function resolveFolioStudentId(classId, studentId, studentNo) {
         if (studentId && !String(studentId).startsWith("tmp-")) return studentId;
         if (!sb || !classId || !studentNo) return "";
@@ -6151,7 +6395,6 @@
           if (error) {
             if (isFolioColumnMissing(error)) {
               folioNotesDbReady = false;
-              setFolioSaveStatus("· SQL 실행 필요(supabase-folio-notes.sql)", true);
             }
             throw error;
           }
@@ -6166,7 +6409,6 @@
       function scheduleFolioNotesSave(studentRowId, getPayload) {
         clearTimeout(folioSaveTimer);
         const seq = ++folioSaveSeq;
-        setFolioSaveStatus("· 저장 중…");
         folioSaveTimer = setTimeout(async () => {
           const payload = getPayload();
           // 로컬에도 백업 (SQL 미적용·오프라인 대비)
@@ -6176,22 +6418,13 @@
             localStorage.setItem(teacherObsStorageKey(classId, key), payload.observation || "");
             localStorage.setItem(studentActivityEditKey(classId, key), payload.activity || "");
           } catch (_) {}
-          if (!studentRowId || folioNotesDbReady === false) {
-            setFolioSaveStatus(
-              folioNotesDbReady === false
-                ? "· 이 기기 임시 저장 (웹 동기화: SQL 실행 필요)"
-                : "· 이 기기에 임시 저장됨",
-              folioNotesDbReady === false
-            );
-            return;
-          }
-          const ok = await saveFolioNotesToCloud(
+          if (!studentRowId || folioNotesDbReady === false) return;
+          if (seq !== folioSaveSeq) return;
+          await saveFolioNotesToCloud(
             studentRowId,
             payload.observation,
             payload.activity
           );
-          if (seq !== folioSaveSeq) return;
-          setFolioSaveStatus(ok ? "· 웹에 임시 저장됨" : "· 저장 실패 · 잠시 후 다시 시도", !ok);
         }, 550);
       }
 
@@ -6316,10 +6549,6 @@
             <div class="folio-session-grid" id="folioSessionGrid"></div>
           </section>
           <section class="folio-eval">
-            <p class="folio-eval-hint">
-              기록한 내용은 웹에 임시 저장되며, 다른 PC에서 로그인해도 동일하게 표시됩니다.
-              <span class="folio-save-status" id="folioSaveStatus"></span>
-            </p>
             <div class="folio-eval-col">
               <header>
                 <strong>교사 관찰 평가</strong>
@@ -6434,12 +6663,7 @@
           (String(obsSaved || "").trim() ||
             (localAct != null && String(localAct).trim() !== ""));
         if (needMigrate) {
-          const ok = await saveFolioNotesToCloud(studentRowId, obsSaved || "", activityText || "");
-          setFolioSaveStatus(ok ? "· 웹에 임시 저장됨" : "", !ok);
-        } else if (folioNotesDbReady === false) {
-          setFolioSaveStatus("· 이 기기 임시 저장 (웹 동기화: supabase-folio-notes.sql 실행)", true);
-        } else if (studentRowId) {
-          setFolioSaveStatus("· 웹에 임시 저장됨");
+          await saveFolioNotesToCloud(studentRowId, obsSaved || "", activityText || "");
         }
       }
 
@@ -6788,6 +7012,8 @@ ${built.html}
           }
           await loadRoster(rosterClassId);
           syncStudentCountInput(target);
+          rememberStudentCountForClass(rosterClassId, target);
+          persistClassSettingsLocal();
           toast(`학생 수 ${target}명으로 적용했습니다.`);
         } catch (e) {
           console.error(e);
@@ -7354,23 +7580,23 @@ ${built.html}
               });
             if (!rows.length) return;
             const bag = ensureByGradeBag(g);
-            bag.classCount = clampClassCount(rows.length);
-            bag.units = rows.map((c) => ({
-              classNo: normalizeUnitClassNo(c.class_no, 1),
-              department: String(c.department_name || "").trim()
-            }));
-            syncUnitsToDepartmentsMap(g);
+            const dbCount = clampClassCount(rows.length);
+            const localCount = clampClassCount(bag.classCount || 0);
+            const isCurrent = Number(g) === Number(classSettings.classGrade);
+            // 현재 저장·조회 중인 학년만 DB로 확정.
+            // 다른 학년은 로컬에 따로 잡아 둔 학급 수(미저장 포함)를 유지한다.
+            if (isCurrent || !localCount || localCount === dbCount) {
+              bag.classCount = dbCount;
+              bag.units = rows.map((c) => ({
+                classNo: normalizeUnitClassNo(c.class_no, 1),
+                department: String(c.department_name || "").trim()
+              }));
+              syncUnitsToDepartmentsMap(g);
+            }
           });
 
-          const cur = activeClassesForGrade(classSettings.classGrade);
-          if (cur.length) {
-            classSettings.classCount = clampClassCount(cur.length);
-          } else if (classSettings.byGrade[String(classSettings.classGrade)]?.classCount) {
-            classSettings.classCount = clampClassCount(
-              classSettings.byGrade[String(classSettings.classGrade)].classCount
-            );
-          }
-          rememberGradeCount();
+          // 현재 학년 UI 카운트만 해당 학년 bag에서 복원
+          classSettings.classCount = getGradeClassCount(classSettings.classGrade);
           persistClassSettingsLocal();
         }
 
@@ -7632,12 +7858,11 @@ ${built.html}
           }
         }
 
-        // 로컬 설정을 방금 저장한 슬롯으로 확정 (고교 유형 유지)
+        // 로컬 설정을 방금 저장한 슬롯으로 확정 (고교 유형 유지) — 해당 학년만
         classSettings.schoolType = lockedSchoolType;
         classSettings.studentNoFormat = lockedNoFormat;
-        classSettings.classCount = desired.length;
+        setGradeClassCount(grade, desired.length);
         const bag = ensureByGradeBag(grade);
-        bag.classCount = desired.length;
         bag.units = desired.map((u) => ({
           classNo: Number(u.class_no) || 1,
           department: String(u.department_name || "").trim()
@@ -7650,6 +7875,8 @@ ${built.html}
         await loadTeacherClassesFromDb();
         classSettings.schoolType = lockedSchoolType;
         classSettings.studentNoFormat = lockedNoFormat;
+        // load 후에도 현재 학년 카운트 재동기화 (타 학년 byGrade 유지)
+        classSettings.classCount = getGradeClassCount(classSettings.classGrade);
         persistClassSettingsLocal();
 
         const slots = rosterSlotsForGrade(grade);
@@ -7666,11 +7893,7 @@ ${built.html}
 
       function orderClassesByUnits(grade, list) {
         if (!isVocational()) {
-          const count = clampClassCount(
-            Number(grade) === classSettings.classGrade
-              ? classSettings.classCount
-              : ensureByGradeBag(grade).classCount || list.length || 1
-          );
+          const count = getGradeClassCount(grade);
           const ordered = [];
           const used = new Set();
           for (let i = 1; i <= count; i++) {
@@ -9230,6 +9453,10 @@ ${built.html}
       $("btnStudentCountMinus")?.addEventListener("click", () => adjustStudentCount(-1));
       $("btnStudentCountPlus")?.addEventListener("click", () => adjustStudentCount(1));
       $("btnBatchNameInput")?.addEventListener("click", () => openBatchNameInput());
+      $("rosterSessionSelect")?.addEventListener("change", (e) => {
+        setRosterPreviewSession(e.target.value);
+      });
+      ensureRosterSessionSelectOptions();
       $("btnPickPresident")?.addEventListener("click", () => setOfficerPickMode("president"));
       $("btnPickVice")?.addEventListener("click", () => setOfficerPickMode("vice"));
       document.addEventListener("keydown", (e) => {
@@ -9283,7 +9510,7 @@ ${built.html}
         flushDeptFieldsFromDom();
         applyClassCountInput();
         flushDeptFieldsFromDom();
-        if (!clampClassCount(classSettings.classCount)) {
+        if (!getGradeClassCount(classSettings.classGrade)) {
           return toast("학급 수를 1개 이상으로 설정해 주세요.");
         }
         // needsResave를 유지한 채 저장 → 프로필 enrich가 고교 유형을 되돌리지 않음
@@ -9306,7 +9533,9 @@ ${built.html}
           const labels = desiredUnitsFromSettings()
             .map((u) => (u.department_name ? `${u.class_no}반·${u.department_name}` : `${u.class_no}반`))
             .join(", ");
-          toast(`학급 ${classSettings.classCount}개 저장: ${labels}`);
+          toast(
+            `${classSettings.classGrade}학년 학급 ${getGradeClassCount(classSettings.classGrade)}개 저장: ${labels}`
+          );
           setSetupFrameCollapsed(true);
         } catch (e) {
           console.error(e);

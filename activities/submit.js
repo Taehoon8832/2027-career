@@ -1879,6 +1879,18 @@ body{padding:16px!important;background:#fff!important}
     else actionsHost.appendChild(btn);
   }
 
+  function syncSubmitFabLabel() {
+    const fab = document.getElementById("btnSubmitActivity");
+    if (!fab) return;
+    if (fab.querySelector(".label-long") && fab.querySelector(".label-short")) return;
+    const svg = fab.querySelector("svg");
+    fab.innerHTML = `
+      ${svg ? svg.outerHTML : ""}
+      <span class="label label-long">제출하기</span>
+      <span class="label label-short">제출</span>`;
+    fab.setAttribute("aria-label", "제출하기");
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
@@ -1893,6 +1905,7 @@ body{padding:16px!important;background:#fff!important}
       ensureSheetTools(host);
       ensureZoomControls(host);
       ensureDraftControls(host);
+      syncSubmitFabLabel();
       ensureTimeWatch();
       bindDraftAutosave();
       restoreActivityDraft();
@@ -1910,7 +1923,8 @@ body{padding:16px!important;background:#fff!important}
         <path d="M12 5l7 7-7 7"/>
         <path d="M4 19V5"/>
       </svg>
-      <span class="label">제출</span>`;
+      <span class="label label-long">제출하기</span>
+      <span class="label label-short">제출</span>`;
 
     const actions = document.createElement("div");
     actions.className = "topbar-actions";
