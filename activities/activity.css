@@ -530,6 +530,11 @@ button, .submit-fab, a { touch-action: manipulation; }
   color: var(--ink);
   word-break: break-all;
 }
+.hero-card .hero-code-value .code-digit,
+.code-digit {
+  color: #7a1f2b;
+  font-weight: 800;
+}
 .hero-card .hero-qr-wrap {
   grid-column: auto;
   grid-row: auto;

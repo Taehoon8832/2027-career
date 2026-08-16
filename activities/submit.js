@@ -277,6 +277,16 @@
     }
   }
 
+  function formatCodeWithWineDigits(code) {
+    const raw = String(code || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    if (!raw || raw === "—") return raw || "—";
+    return raw.replace(/[0-9]/g, (d) => `<span class="code-digit">${d}</span>`);
+  }
+
   function ensureHeroCode(hero) {
     if (!hero) return;
     let side = hero.querySelector(".hero-side");
@@ -315,7 +325,7 @@
       code = (input?.value || "").trim().toUpperCase();
     }
     const valueEl = codeEl.querySelector(".hero-code-value") || document.getElementById("heroCodeValue");
-    if (valueEl) valueEl.textContent = code || "—";
+    if (valueEl) valueEl.innerHTML = formatCodeWithWineDigits(code || "—");
     codeEl.hidden = false;
     codeEl.setAttribute("aria-label", code ? `코드번호 ${code}` : "코드번호 없음");
 

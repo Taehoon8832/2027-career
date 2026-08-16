@@ -1984,6 +1984,11 @@
       font: 800 18px/1 var(--font-sans); color: var(--text-primary);
       letter-spacing: 0.04em;
     }
+    .detail-action-strip .code-row strong .code-digit,
+    .code-digit {
+      color: #7a1f2b;
+      font-weight: 800;
+    }
     .detail-action-strip .class-tag {
       font: 600 11px/1 var(--font-sans); color: var(--text-tertiary);
     }
@@ -5615,7 +5620,7 @@
             { sel: ".detail-action-strip .code-row" }
           ],
           title: "QR · 코드번호",
-          body: "학생은 워크북 입장 QR에서 이 「코드번호」를 입력합니다. 교실 화면을 보여줄 때는 여기 QR을 크게 보여 주세요.",
+          body: "학생은 워크북 입장 QR에서 이 「코드번호」를 입력합니다. 노트북 화면을 보여줄 때는 여기 QR을 크게 보여 주세요.",
           tip: "QR이나 코드번호 복사를 클릭해 바로 확인할 수 있습니다.",
           prepare: async () => {
             await prepareUsageTourLessonDetail();
@@ -13281,7 +13286,7 @@ ${built.html}
             <div class="meta">
               <div class="code-row">
                 <span class="label">코드번호</span>
-                <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
+                <strong id="lessonSubmitCodeValue">${formatCodeWithWineDigits(submitCode)}</strong>
                 <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
               </div>
               <div class="class-tag">${escapeHtml(classLabel || "학급 선택")}</div>
@@ -13439,6 +13444,13 @@ ${built.html}
           .replace(/</g, "&lt;")
           .replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;");
+      }
+
+      /** 코드번호 숫자만 와인색으로 구분해 표시 */
+      function formatCodeWithWineDigits(code) {
+        const raw = String(code || "");
+        if (!raw) return "—";
+        return escapeHtml(raw).replace(/[0-9]/g, (d) => `<span class="code-digit">${d}</span>`);
       }
 
       async function selectLesson(lessonId, silent) {
