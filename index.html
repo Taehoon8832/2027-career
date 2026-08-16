@@ -1223,13 +1223,17 @@
       letter-spacing: -0.01em;
       word-break: keep-all;
     }
-    .detail-toolbar .detail-missing-list .missing-count {
+    .detail-toolbar .detail-missing-list .missing-head {
       color: #c62828;
       font-weight: 800;
     }
     .detail-toolbar .detail-missing-list .missing-label {
       text-decoration: underline;
       text-underline-offset: 2px;
+    }
+    .detail-toolbar .detail-missing-list .missing-names {
+      color: #1565c0;
+      font-weight: 600;
     }
     .detail-section-title {
       margin: 0;
@@ -1300,23 +1304,23 @@
       font: 600 10px/1.2 var(--font-sans); color: var(--text-tertiary);
     }
     .detail-sub-preview {
-      border: 1px solid var(--border-default); border-radius: 8px;
+      border: 1px solid var(--border-default); border-radius: 6px;
       background: #faf9f5; overflow: hidden;
-      min-height: 28px;
+      min-height: 0;
     }
     .detail-sub-stack {
       display: grid;
-      gap: 6px;
+      gap: 4px;
       max-height: 240px;
       overflow-y: auto;
       padding-right: 1px;
     }
     .detail-sub-block {
       display: grid;
-      gap: 5px;
-      padding: 6px;
+      gap: 3px;
+      padding: 4px 5px;
       border: 1px solid var(--border-default);
-      border-radius: 8px;
+      border-radius: 7px;
       background: #fffaf5;
     }
     .detail-sub-block.is-latest {
@@ -1327,15 +1331,15 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 6px;
+      gap: 4px;
     }
     .detail-sub-block .sub-ver {
-      font: 700 9px/1 var(--font-sans);
+      font: 700 8px/1 var(--font-sans);
       color: var(--color-primary-700);
       letter-spacing: -0.01em;
     }
     .detail-sub-block .sub-time {
-      font: 600 9px/1.2 var(--font-sans);
+      font: 600 8px/1.2 var(--font-sans);
       color: var(--text-tertiary);
       white-space: nowrap;
     }
@@ -1351,21 +1355,21 @@
       cursor: pointer;
     }
     .detail-sub-preview .plain-mini {
-      padding: 6px 8px;
-      font: 500 12px/1.35 var(--font-sans);
+      padding: 3px 6px;
+      font: 500 10px/1.25 var(--font-sans);
       color: var(--text-secondary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .detail-sub-preview .plain-mini.is-empty { color: var(--text-tertiary); font-weight: 600; }
     .detail-sub-actions {
       display: flex; justify-content: space-between; align-items: center;
-      gap: 10px; flex-wrap: nowrap;
+      gap: 5px; flex-wrap: nowrap;
     }
     .detail-sub-actions button {
-      flex: 1; min-height: 30px; padding: 0 10px;
-      border: 1.5px solid var(--border-default); border-radius: 999px;
+      flex: 1; min-height: 22px; height: 22px; padding: 0 6px;
+      border: 1px solid var(--border-default); border-radius: 999px;
       background: #fff; cursor: pointer;
-      font: 700 11px/1 var(--font-sans);
+      font: 700 9px/1 var(--font-sans);
       color: var(--color-primary-700);
     }
     .detail-sub-actions button:hover { background: var(--color-primary-50); }
@@ -1740,7 +1744,7 @@
     }
     .setup-page-head h2 {
       margin: 0;
-      font: 700 17px/1.2 var(--font-serif);
+      font: 700 17px/1.2 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       letter-spacing: -0.02em;
       color: var(--text-primary);
     }
@@ -2516,7 +2520,7 @@
         box-shadow: inset 6px 0 0 #9a8f7e, 0 2px 0 rgba(31, 30, 29, 0.06);
       }
       .detail-roster-cell .name { font-size: 14px; }
-      .detail-sub-actions button { font-size: 12px; min-height: 36px; }
+      .detail-sub-actions button { font-size: 10px; min-height: 26px; height: 26px; }
       .batch-sheet {
         padding: 0;
         align-items: stretch;
@@ -2769,7 +2773,7 @@
         <div class="class-settings" id="classSettings" hidden>
           <section class="admin-panel" id="adminPanel" aria-label="관리자 페이지">
           <header class="setup-page-head">
-            <h2>관리자 페이지</h2>
+            <h2>[관리자 페이지]</h2>
             <button type="button" class="setup-fold-btn" id="btnToggleSetupFrame" aria-expanded="true" aria-controls="setupFrame" title="학급 설정 접기/펼치기">
               <span class="setup-fold-label" id="setupFoldLabel">접기</span>
               <svg class="setup-fold-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -6675,23 +6679,140 @@ ${built.html}
         const u = new URL(`activities/${file}`, base);
         const code = String(submitCode || "").trim().toUpperCase();
         if (code) u.searchParams.set("code", code);
+        // 깨진 HTML 캐시 회피
+        u.searchParams.set("v", "fix3");
         return u.href;
       }
 
-      /** 활동지 열기: file:// 의 target=_blank 차단·팝업 차단 대비 */
-      function openActivitySheet(url) {
+      /** </title> 등이 /title> 로 깨진 활동지 HTML 복구 */
+      function repairCorruptedActivityHtml(html) {
+        let s = String(html || "");
+        // "<" 가 빠져 "/tag>" 만 남은 닫는 태그 복구
+        s = s.replace(
+          /([^<])\/(title|head|body|html|div|span|strong|em|h1|h2|h3|p|label|button|section|header|footer|a|ul|li|nav)>/gi,
+          "$1</$2>"
+        );
+        if (!/<\/title>/i.test(s) && /<title[\s>]/i.test(s)) {
+          s = s.replace(/<title([^>]*)>([\s\S]*?)(?=<link|<meta|<script|<\/head)/i, "<title$1>$2</title>\n  ");
+        }
+        if (!/<meta[^>]+charset\s*=/i.test(s)) {
+          s = s.replace(/<head([^>]*)>/i, '<head$1>\n  <meta charset="UTF-8" />');
+        }
+        return s;
+      }
+
+      function navigateToActivity(href) {
+        const a = document.createElement("a");
+        a.href = href;
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+
+      /** 활동지 열기: 캐시된 깨진 HTML·file://·팝업 차단 대비 */
+      async function openActivitySheet(url) {
         const href = String(url || "").trim();
         if (!href) {
           toast("활동지 주소를 만들 수 없습니다.");
           return;
         }
+
+        let target = href;
+        try {
+          const u = new URL(href, location.href);
+          u.searchParams.set("_", Date.now().toString(36));
+          target = u.href;
+        } catch {
+          /* keep href */
+        }
+
+        // file:// 에서는 fetch가 막히는 경우가 많아 직접 이동 (디스크 파일은 UTF-8 정상본)
         if (location.protocol === "file:") {
-          // Chrome 등은 file:// → file:// 새 탭을 막는 경우가 많음
-          location.assign(href);
+          location.assign(target);
           return;
         }
-        const win = window.open(href, "_blank", "noopener,noreferrer");
-        if (!win) location.assign(href);
+
+        // await 이전에 동기 오픈 → 팝업 차단 방지
+        const win = window.open("about:blank", "_blank");
+        if (win) {
+          try {
+            win.document.write(
+              "<!DOCTYPE html><html lang=\"ko\"><head><meta charset=\"UTF-8\"/><title>불러오는 중</title></head>" +
+                "<body style=\"margin:0;padding:24px;font:600 15px/1.5 sans-serif;color:#4a4845;background:#f7f4ee\">활동지를 불러오는 중…</body></html>"
+            );
+            win.document.close();
+          } catch {
+            /* ignore */
+          }
+        }
+
+        const finish = (html) => {
+          const fixed = toAbsoluteActivityAssets(repairCorruptedActivityHtml(html), target);
+          if (!/<\/title>/i.test(fixed)) {
+            if (win && !win.closed) win.close();
+            toast("활동지 파일이 손상되어 열 수 없습니다.");
+            return;
+          }
+          if (win && !win.closed) {
+            try {
+              win.document.open();
+              win.document.write(fixed);
+              win.document.close();
+              return;
+            } catch (e) {
+              console.warn(e);
+            }
+          }
+          const blob = new Blob([fixed], { type: "text/html;charset=utf-8" });
+          const blobUrl = URL.createObjectURL(blob);
+          navigateToActivity(blobUrl);
+          setTimeout(() => {
+            try {
+              URL.revokeObjectURL(blobUrl);
+            } catch {
+              /* ignore */
+            }
+          }, 120000);
+        };
+
+        try {
+          const res = await fetch(target, { cache: "no-store" });
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          finish(await res.text());
+        } catch (e) {
+          console.warn(e);
+          if (win && !win.closed) {
+            try {
+              win.location.replace(target);
+              return;
+            } catch {
+              /* ignore */
+            }
+          }
+          navigateToActivity(target);
+        }
+      }
+
+      function toAbsoluteActivityAssets(html, activityPageUrl) {
+        let base;
+        try {
+          base = new URL(".", activityPageUrl).href;
+        } catch {
+          return html;
+        }
+        return String(html || "").replace(
+          /\b(href|src)=["'](\.\/|\.\.\/)([^"']+)["']/gi,
+          (_m, attr, prefix, rel) => {
+            try {
+              return `${attr}="${new URL(prefix + rel, base).href}"`;
+            } catch {
+              return _m;
+            }
+          }
+        );
       }
 
       function ensureQrcodeLib() {
@@ -8093,12 +8214,12 @@ ${built.html}
           paintQr(qrEl, url, qrSize);
           qrEl.addEventListener("click", (e) => {
             e.preventDefault();
-            openActivitySheet(url);
+            void openActivitySheet(url);
           });
         }
         $("btnOpenActivity")?.addEventListener("click", (e) => {
           e.preventDefault();
-          openActivitySheet(url);
+          void openActivitySheet(url);
         });
         $("btnCopyLink").addEventListener("click", async () => {
           try {
@@ -8155,10 +8276,10 @@ ${built.html}
             missingEl.textContent = "";
           } else {
             const labels = missing
-              .map((m) => `${escapeHtml(m.no)}_${escapeHtml(m.name)}`)
+              .map((m) => `${escapeHtml(m.no)} ${escapeHtml(m.name)}`)
               .join(", ");
             missingEl.innerHTML =
-              `- [<span class="missing-label">미제출자</span> 총: <span class="missing-count">${missing.length}명</span>(${labels})]`;
+              `- [<span class="missing-head"><span class="missing-label">미제출자</span> 총: ${missing.length}명</span>(<span class="missing-names">${labels}</span>)]`;
           }
         }
         const grid = $("detailRosterGrid");
