@@ -1821,11 +1821,39 @@
       border-color: var(--color-primary-300);
       background: var(--color-primary-50);
     }
+    .detail-sub-block.is-incomplete {
+      border-color: #e8a598;
+      background: #fff6f4;
+    }
+    .detail-sub-block.is-incomplete.is-latest {
+      border-color: #d8897a;
+      background: #ffefeb;
+    }
+    .sub-incomplete-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      min-height: 16px;
+      padding: 0 6px;
+      border-radius: 999px;
+      border: 1px solid #e0a090;
+      background: #fff;
+      color: #a33b2c;
+      font: 800 8px/1 var(--font-sans);
+      letter-spacing: -0.02em;
+    }
     .detail-sub-block .sub-meta-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 4px;
+    }
+    .detail-sub-block .sub-meta-left {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 0;
     }
     .detail-sub-block .sub-ver {
       font: 700 8px/1 var(--font-sans);
@@ -1855,6 +1883,10 @@
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
     .detail-sub-preview .plain-mini.is-empty { color: var(--text-tertiary); font-weight: 600; }
+    .detail-sub-preview .plain-mini.is-incomplete {
+      color: #a33b2c;
+      font-weight: 700;
+    }
     .detail-sub-actions {
       display: flex; justify-content: space-between; align-items: center;
       gap: 4px; flex-wrap: nowrap;
@@ -6600,8 +6632,30 @@
         }
         delete sub._yukha;
         const yukha = buildYukhaSummary(sub);
+        const incomplete = assessSubmissionCompleteness(sub);
         const preview = grid.querySelector(`.detail-sub-preview[data-tab-detail="${sub.id}"] .plain-mini`);
-        if (preview) preview.textContent = yukha.oneLine || yukha.paragraph || "내용 없음";
+        if (preview) {
+          const summary = yukha.oneLine || yukha.paragraph || "내용 없음";
+          preview.textContent = incomplete.incomplete ? `미비 · ${summary}` : summary;
+          preview.classList.toggle("is-incomplete", !!incomplete.incomplete);
+          const block = preview.closest(".detail-sub-block");
+          block?.classList.toggle("is-incomplete", !!incomplete.incomplete);
+          const row = block?.querySelector(".sub-meta-left");
+          if (row) {
+            let badge = row.querySelector(".sub-incomplete-badge");
+            if (incomplete.incomplete) {
+              if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "sub-incomplete-badge";
+                row.appendChild(badge);
+              }
+              badge.textContent = "미비";
+              badge.title = incomplete.title;
+            } else if (badge) {
+              badge.remove();
+            }
+          }
+        }
       }
 
       /** 관찰 평가 → 해당 학생 폴리오(교사 관찰 평가 + 학생 활동) 열기 */
@@ -7054,6 +7108,69 @@
           .trim();
       }
 
+      /**
+       * 나이스 입력용 음슴체 변환.
+       * 교사 관찰 평가·학생 활동 요약은 항상 이 문체로 맞춤.
+       */
+      function toNeisEumseumStyle(text) {
+        let t = sanitizeSeteukText(String(text || "")).replace(/\s+/g, " ").trim();
+        if (!t) return "";
+
+        // 연결·종결 어미를 음슴체로
+        const pairs = [
+          [/하였습니다/g, "함"],
+          [/했습니다/g, "함"],
+          [/되었습니다/g, "됨"],
+          [/됐습니다/g, "됨"],
+          [/였습니다/g, "였음"],
+          [/이었습니다/g, "이었음"],
+          [/였었어요/g, "였음"],
+          [/보입니다/g, "보임"],
+          [/입니다/g, "임"],
+          [/합니다/g, "함"],
+          [/됩니다/g, "됨"],
+          [/있습니다/g, "있음"],
+          [/없습니다/g, "없음"],
+          [/습니다/g, "음"],
+          [/관찰되었다/g, "관찰됨"],
+          [/확인되었다/g, "확인됨"],
+          [/돋보였다/g, "돋보임"],
+          [/드러났다/g, "드러남"],
+          [/이어졌다/g, "이어짐"],
+          [/나타났다/g, "나타남"],
+          [/보였다/g, "보임"],
+          [/하였다/g, "함"],
+          [/했다/g, "함"],
+          [/되었다/g, "됨"],
+          [/됐다/g, "됨"],
+          [/이었고/g, "이었음,"],
+          [/였고/g, "였음,"],
+          [/하였고/g, "함,"],
+          [/했고/g, "함,"],
+          [/되었고/g, "됨,"],
+          [/됐고/g, "됨,"],
+          [/한다(?=[.。]|$)/g, "함"],
+          [/된다(?=[.。]|$)/g, "됨"],
+          [/킨다(?=[.。]|$)/g, "킴"],
+          [/이며(?=\s|$)/g, "임,"],
+          [/이고(?=\s|$)/g, "임,"],
+          [/이다(?=[.。]|$)/g, "임"]
+        ];
+        for (const [re, rep] of pairs) t = t.replace(re, rep);
+
+        // 문장 끝 하다/이다 잔여 정리
+        t = t
+          .replace(/(함|음|됨|임|움),(?=\s*[함음됨임])/g, "$1.")
+          .replace(/,{2,}/g, ",")
+          .replace(/\.\s*\./g, ".")
+          .replace(/\s+,/g, ",")
+          .replace(/,\s*\./g, ".")
+          .replace(/\s{2,}/g, " ")
+          .trim();
+
+        return t.replace(/\s+/g, " ").trim();
+      }
+
       /** 학생 원문 반복 제거 후 짧은 근거 조각으로 압축 */
       function compactStudentSnippet(text, maxLen = 40) {
         let t = sanitizeSeteukText(
@@ -7167,6 +7284,104 @@
           return true;
         }
         return false;
+      }
+
+      /**
+       * 제출물 미비 여부.
+       * - 입력란을 제대로 채우지 않음
+       * - 최종 단계(예: 직업 월드컵 결과)에 도달하지 않고 제출
+       */
+      function assessSubmissionCompleteness(sub) {
+        const html = String(sub?.content || "");
+        const whoName = sub?.student_name || "";
+        const whoNo = sub?.student_no || "";
+        const sessionNo = Number(sub?.session_no) || 0;
+        const reasons = [];
+
+        const exportAttr = /data-complete=["']([01])["']/i.exec(html);
+        const reasonAttr = /data-incomplete-reasons=["']([^"']*)["']/i.exec(html);
+        const finalAttr = /data-reached-final=["']([01])["']/i.exec(html);
+        if (exportAttr) {
+          if (exportAttr[1] === "0") {
+            const listed = String(reasonAttr?.[1] || "")
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+            if (listed.length) reasons.push(...listed);
+            else reasons.push("sparse");
+          }
+          if (finalAttr && finalAttr[1] === "0" && !reasons.includes("no-final")) {
+            reasons.push("no-final");
+          }
+          if (reasons.length) {
+            return {
+              incomplete: true,
+              reasons: [...new Set(reasons)],
+              label: "미비",
+              title: incompletenessTitle(reasons)
+            };
+          }
+          return { incomplete: false, reasons: [], label: "", title: "" };
+        }
+
+        const isWc =
+          sessionNo === 3 ||
+          /id=["']wc-result["']/i.test(html) ||
+          /activity-card--worldcup/i.test(html) ||
+          /name=["']wcWinner["']/i.test(html);
+
+        if (isWc) {
+          const wc = typeof extractWorldcupFieldMap === "function" ? extractWorldcupFieldMap(html) : {};
+          const winner = String(wc.wcWinner || "").trim();
+          const resultHidden = /id=["']wc-result["'][^>]*\bhidden\b/i.test(html);
+          const markedDone = /is-wc-done/i.test(html);
+          const reachedFinal = !!winner || markedDone || ( /id=["']wc-result["']/i.test(html) && !resultHidden);
+          if (!reachedFinal) reasons.push("no-final");
+
+          let jobFilled = 0;
+          const jobRe = /<input\b[^>]*(?:id|name)=["']job-\d+["'][^>]*>/gi;
+          let jm;
+          while ((jm = jobRe.exec(html))) {
+            const v = /value=["']([^"']*)["']/i.exec(jm[0]);
+            if (v && String(v[1] || "").trim()) jobFilled++;
+          }
+          if (!reachedFinal && jobFilled < 16) reasons.push("sparse");
+
+          const qGood = ["wcQ1", "wcQ2", "wcQ3", "wcQ4"].filter(
+            (k) => !isLowQualityAnswer(wc[k] || "", whoName, whoNo)
+          ).length;
+          if (reachedFinal && qGood < 2) reasons.push("sparse");
+        } else {
+          const filled = extractActivityAnswersFast(html)
+            .filter((a) => a.value)
+            .filter((a) => !/느낀\s*점|세특\s*참조|학번|이름/.test(a.label || ""))
+            .filter((a) => !isLowQualityAnswer(a.value, whoName, whoNo));
+          const fieldGuess = Math.max(
+            filled.length,
+            (html.match(/<textarea\b/gi) || []).length
+          );
+          const need = Math.max(2, Math.ceil(fieldGuess * 0.3));
+          if (fieldGuess >= 3 && filled.length < need) reasons.push("sparse");
+          if (fieldGuess >= 1 && filled.length === 0) reasons.push("sparse");
+        }
+
+        const uniq = [...new Set(reasons)];
+        if (!uniq.length) {
+          return { incomplete: false, reasons: [], label: "", title: "" };
+        }
+        return {
+          incomplete: true,
+          reasons: uniq,
+          label: "미비",
+          title: incompletenessTitle(uniq)
+        };
+      }
+
+      function incompletenessTitle(reasons) {
+        const bits = [];
+        if ((reasons || []).includes("no-final")) bits.push("최종 단계 미도달");
+        if ((reasons || []).includes("sparse")) bits.push("입력 미비");
+        return bits.length ? `제출 미비 · ${bits.join(", ")}` : "제출 미비";
       }
 
       /** 1차시 활동지 필드 id 기준 추출 */
@@ -7468,10 +7683,10 @@
         const parts = [];
         if (winner) {
           parts.push(
-            `직업 월드컵 활동에서 최종적으로 「${winner}」${objectParticleKo(winner)} 선택하였다`
+            `직업 월드컵 활동에서 최종적으로 ${winner}${objectParticleKo(winner)} 선택함`
           );
         } else {
-          parts.push("직업 월드컵 활동을 통해 관심 직업을 탐색하고 최종 선택을 정리하였다");
+          parts.push("직업 월드컵 활동을 통해 관심 직업을 탐색하고 최종 선택을 정리함");
         }
 
         const reasonBits = [];
@@ -7494,30 +7709,27 @@
 
         if (reasonBits.length) {
           parts.push(
-            `선택 이유 정리에서는 ${reasonBits.join(", ")}으로써 자신의 가치·관심과 진로 방향을 일목요연하게 연결하여 설명하였다`
+            `선택 이유 정리에서는 ${reasonBits.join(", ")}으로써 자신의 가치·관심과 진로 방향을 일목요연하게 연결하여 설명함`
           );
         } else if (winner) {
           parts.push(
-            "선택 과정에서의 비교·판단을 바탕으로 관심 직업에 대한 인식을 정리하는 모습이 관찰되었다"
+            "선택 과정에서의 비교·판단을 바탕으로 관심 직업에 대한 인식을 정리하는 모습이 관찰됨"
           );
         }
 
         const reflectText = reflect || map.fReflect || "";
         if (isSubstantiveReflect(reflectText)) {
-          parts.push(
-            `느낀점에서는 ${snip(reflectText, 48)}${objectParticleKo(snip(reflectText, 48))} 기록하며 배움을 성찰하였다`
-          );
+          const s = snip(reflectText, 48);
+          parts.push(`느낀점에서 ${s}${objectParticleKo(s)} 기록하며 배움을 성찰함`);
         } else if (reasonBits.length >= 2) {
           parts.push(
-            "직업 선택의 근거를 다각도로 정리하며 자기주도적 진로 탐색 태도가 돋보였다"
+            "직업 선택의 근거를 다각도로 정리하며 자기주도적 진로 탐색 태도가 돋보임"
           );
         } else {
-          parts.push("활동에 성실히 참여하며 진로 탐색의 기초를 다지는 모습이 확인되었다");
+          parts.push("활동에 성실히 참여하며 진로 탐색의 기초를 다지는 모습이 확인됨");
         }
 
-        return sanitizeSeteukText(parts.join(". ").replace(/\.\.+/g, ".") + ".")
-          .replace(/\s+/g, " ")
-          .trim();
+        return toNeisEumseumStyle(parts.join(". ").replace(/\.\.+/g, "."));
       }
 
       function buildYukhaSummary(sub, opts = {}) {
@@ -7525,7 +7737,7 @@
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v8|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v9|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -7603,7 +7815,7 @@
             whoNo
           });
           paragraph = sanitizeSeteukText(
-            `진로 시간에 ${lessonTitle} 활동에 참여하여 ${whatCore} 등을 정리하였고, ${observation}`
+            `진로 시간에 ${lessonTitle} 활동에 참여하여 ${whatCore} 등을 정리함. ${observation}`
           )
             .replace(/\s+/g, " ")
             .trim();
@@ -7613,7 +7825,7 @@
           ? `느낀점을 정리하며 배움을 성찰함, ${compactStudentSnippet(reflectRaw, 36)}`
           : sanitizeSeteukText(
               sessionNo === 3 && winnerJob
-                ? `「${winnerJob}」 선택을 중심으로 진로 탐색에 성실히 참여함`
+                ? `${winnerJob} 선택을 중심으로 진로 탐색에 성실히 참여함`
                 : `진로, 자아 탐색을 위해 ${whatCore}를 중심으로 활동에 성실히 참여함`
             );
 
@@ -7625,9 +7837,11 @@
           { k: "어떻게", v: howCore },
           { k: "왜", v: whyCore }
         ];
-        if (editedEarly) paragraph = editedEarly;
+        // 교사 관찰 평가·학생 활동 요약은 항상 나이스 음슴체
+        paragraph = toNeisEumseumStyle(paragraph);
+        if (editedEarly) paragraph = toNeisEumseumStyle(editedEarly);
         const oneLine = previewText(
-          sanitizeSeteukText(
+          toNeisEumseumStyle(
             sessionNo === 1
               ? `${whoName}, ${lessonTitle}, 자기이해 탐구`
               : sessionNo === 3 && winnerJob
@@ -8108,7 +8322,7 @@
           delete sub._yukha;
           delete sub._yukhaWhere;
           const y = buildYukhaSummary(sub);
-          const para = sanitizeSeteukText(y?.paragraph || "");
+          const para = toNeisEumseumStyle(y?.paragraph || "");
           if (!para) continue;
           chunks.push(`(${sn}차시)\n${para}`);
         }
@@ -8341,7 +8555,7 @@
               await ensureSubmissionContent(sub);
               delete sub._yukha;
               const y = buildYukhaSummary(sub);
-              const para = sanitizeSeteukText(y?.paragraph || "");
+              const para = toNeisEumseumStyle(y?.paragraph || "");
               if (para) folioRuntime.autoAct[String(sn)] = para;
             }
             const obsCum =
@@ -8350,17 +8564,26 @@
               }) || "";
             const actParts = [];
             const legacyAct = String(folioRuntime.actBlob.legacy || "").trim();
-            if (legacyAct) actParts.push(legacyAct);
+            if (legacyAct) actParts.push(toNeisEumseumStyle(legacyAct));
             for (let sn = 1; sn <= 30; sn++) {
               const saved = getSessionNote(folioRuntime.actBlob, sn).trim();
               const auto = String(folioRuntime.autoAct[String(sn)] || "").trim();
-              const t = saved || auto;
+              const t = toNeisEumseumStyle(saved || auto);
               if (t) actParts.push(`(${sn}차시)\n${t}`);
             }
             const actCum = actParts.length
               ? truncateToNeisBytes(actParts.join("\n\n"), NEIS_SETEUK_MAX_BYTES)
               : "제출된 학생 활동이 없습니다.";
-            obsTa.value = obsCum;
+            obsTa.value = obsCum
+              ? obsCum
+                  .split(/\n{2,}/)
+                  .map((block) => {
+                    const m = block.match(/^(\(\d+차시\)\s*\n?)([\s\S]*)$/);
+                    if (m) return m[1] + toNeisEumseumStyle(m[2]);
+                    return toNeisEumseumStyle(block);
+                  })
+                  .join("\n\n")
+              : "";
             actTa.value = actCum;
             obsTa.readOnly = true;
             actTa.readOnly = true;
@@ -8376,12 +8599,14 @@
               await ensureSubmissionContent(sub);
               delete sub._yukha;
               const y = buildYukhaSummary(sub);
-              auto = sanitizeSeteukText(y?.paragraph || "");
+              auto = toNeisEumseumStyle(y?.paragraph || "");
               folioRuntime.autoAct[String(sn)] = auto;
             }
             const savedAct = getSessionNote(folioRuntime.actBlob, sn);
-            obsTa.value = getSessionNote(folioRuntime.obsBlob, sn);
-            actTa.value = savedAct.trim() ? savedAct : auto;
+            const savedObs = getSessionNote(folioRuntime.obsBlob, sn);
+            // 저장된 문장도 나이스 음슴체로 맞춤 (교사 관찰·학생 활동 공통)
+            obsTa.value = savedObs.trim() ? toNeisEumseumStyle(savedObs) : "";
+            actTa.value = savedAct.trim() ? toNeisEumseumStyle(savedAct) : auto;
             obsTa.readOnly = false;
             actTa.readOnly = false;
             obsTa.classList.remove("is-readonly");
@@ -10452,8 +10677,20 @@ ${built.html}
 
       /** 교사 관찰 평가·학생 활동을 줄바꿈으로 구분해 전부 표시 */
       function folioExportCellText(observation, activity) {
-        const obs = normalizeFolioExportBody(observation) || "—";
-        const act = normalizeFolioExportBody(activity) || "—";
+        const styleBlock = (text) => {
+          const raw = normalizeFolioExportBody(text);
+          if (!raw) return "";
+          return raw
+            .split(/\n{2,}/)
+            .map((block) => {
+              const m = block.match(/^(\(\d+차시\)\s*\n?)([\s\S]*)$/);
+              if (m) return m[1] + toNeisEumseumStyle(m[2]);
+              return toNeisEumseumStyle(block);
+            })
+            .join("\n\n");
+        };
+        const obs = styleBlock(observation) || "—";
+        const act = styleBlock(activity) || "—";
         return ["【교사 관찰 평가】", obs, "", "【학생 활동】", act].join("\n");
       }
 
@@ -10962,7 +11199,7 @@ ${built.html}
                       await ensureSubmissionContent(sub);
                       delete sub._yukha;
                       const y = buildYukhaSummary(sub);
-                      const para = sanitizeSeteukText(y?.paragraph || "");
+                      const para = toNeisEumseumStyle(y?.paragraph || "");
                       if (para) merged.s[String(sn)] = para;
                     }
                     const mergedText = (() => {
@@ -11065,6 +11302,7 @@ ${built.html}
               .map((sub, idx) => {
                 const yukha = buildYukhaSummary(sub);
                 const summary = yukha?.oneLine || "내용 없음";
+                const incomplete = assessSubmissionCompleteness(sub);
                 // list는 최신순. 라벨은 제출 순서 기준: 처음 → N번 제출 → 최근 제출
                 const n = list.length;
                 const chronoIdx = n - 1 - idx; // 0 = 최초 제출
@@ -11074,14 +11312,26 @@ ${built.html}
                   else if (chronoIdx === n - 1) verLabel = "최근 제출";
                   else verLabel = `${chronoIdx}번 제출`;
                 }
+                const badge = incomplete.incomplete
+                  ? `<span class="sub-incomplete-badge" title="${escapeHtml(incomplete.title)}">미비</span>`
+                  : "";
+                const previewTitle = incomplete.incomplete
+                  ? incomplete.title
+                  : "새 탭으로 보기";
+                const previewText = incomplete.incomplete
+                  ? `미비 · ${summary}`
+                  : summary;
                 return `
-                <div class="detail-sub-block${idx === 0 ? " is-latest" : ""}">
+                <div class="detail-sub-block${idx === 0 ? " is-latest" : ""}${incomplete.incomplete ? " is-incomplete" : ""}">
                   <div class="sub-meta-row">
-                    <span class="sub-ver">${escapeHtml(verLabel)}</span>
+                    <span class="sub-meta-left">
+                      <span class="sub-ver">${escapeHtml(verLabel)}</span>
+                      ${badge}
+                    </span>
                     <span class="sub-time">${escapeHtml(formatTime(sub.created_at) || "")}</span>
                   </div>
-                  <div class="detail-sub-preview" data-tab-detail="${sub.id}" title="새 탭으로 보기">
-                    <div class="plain-mini">${escapeHtml(summary)}</div>
+                  <div class="detail-sub-preview" data-tab-detail="${sub.id}" title="${escapeHtml(previewTitle)}">
+                    <div class="plain-mini${incomplete.incomplete ? " is-incomplete" : ""}">${escapeHtml(previewText)}</div>
                   </div>
                   <div class="detail-sub-actions">
                     <button type="button" data-tab-detail="${sub.id}">새 탭</button>

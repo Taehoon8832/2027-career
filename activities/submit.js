@@ -670,23 +670,32 @@
     const root = document.getElementById("activity-root");
     if (!root) return null;
 
+    // cloneNode는 사용자가 입력한 live value를 복사하지 않음 → 원본에서 읽어 주입
+    const live = [...root.querySelectorAll("input, textarea, select")];
     const clone = root.cloneNode(true);
-    clone.querySelectorAll("input, textarea, select").forEach((el) => {
+    const cloned = [...clone.querySelectorAll("input, textarea, select")];
+    live.forEach((src, idx) => {
+      const el = cloned[idx];
+      if (!el) return;
       if (el.tagName === "TEXTAREA") {
-        el.textContent = el.value;
+        el.textContent = src.value;
+        el.value = src.value;
       } else if (el.tagName === "SELECT") {
+        el.value = src.value;
         [...el.options].forEach((opt) => {
-          if (opt.value === el.value) opt.setAttribute("selected", "selected");
+          if (opt.value === src.value) opt.setAttribute("selected", "selected");
           else opt.removeAttribute("selected");
         });
       } else if (el.type === "checkbox" || el.type === "radio") {
-        if (el.checked) el.setAttribute("checked", "checked");
+        if (src.checked) el.setAttribute("checked", "checked");
         else el.removeAttribute("checked");
+        el.checked = !!src.checked;
       } else {
-        el.setAttribute("value", el.value);
+        el.setAttribute("value", src.value);
+        el.value = src.value;
       }
     });
-    clone.querySelectorAll("input, textarea, select").forEach((el) => {
+    cloned.forEach((el) => {
       el.setAttribute("readonly", "readonly");
       if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
     });
@@ -1765,16 +1774,24 @@ body{padding:16px!important;background:#fff!important}
     return "nocode";
   }
 
-  function draftStorageKey() {
-    return `career-activity-draft:v1:${sessionNo}:${getDraftCodeKey()}`;
+  function draftStorageKey(codeKey) {
+    const code = codeKey || getDraftCodeKey();
+    return `career-activity-draft:v1:${sessionNo}:${code}`;
   }
+
+  /** 제출코드가 바뀌어도 같은 차시 초안을 찾기 위한 보조 키 */
+  function draftSessionFallbackKey() {
+    return `career-activity-draft:v1:${sessionNo}:__session__`;
+  }
+
+  let draftRestored = false;
 
   function collectDraftFields() {
     const fields = {};
     const root = document.getElementById("activity-root");
     const scope = root || document;
     scope.querySelectorAll("input, textarea, select").forEach((el) => {
-      if (el.disabled || el.type === "hidden") return;
+      if (el.disabled) return;
       const key = el.id || el.name;
       if (!key) return;
       if (el.type === "checkbox" || el.type === "radio") {
@@ -1803,11 +1820,29 @@ body{padding:16px!important;background:#fff!important}
     const fields = payload.fields;
     if (!fields || typeof fields !== "object") return false;
     return Object.keys(fields).some((key) => {
+      if (/^(sheetHakbun|sheetDisplayName)$/i.test(key)) return false;
       const val = fields[key];
       if (typeof val === "boolean") return val === true;
       if (val == null) return false;
       return String(val).trim().length > 0;
     });
+  }
+
+  function readStoredDraftPayload() {
+    const keys = [draftStorageKey(), draftSessionFallbackKey()];
+    let best = null;
+    for (const key of keys) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) continue;
+        const payload = JSON.parse(raw);
+        if (!payload || Number(payload.sessionNo) !== sessionNo) continue;
+        if (!best || (payload.savedAt || 0) > (best.savedAt || 0)) best = payload;
+      } catch {
+        /* ignore */
+      }
+    }
+    return best;
   }
 
   function applyDraftFields(payload) {
@@ -1831,18 +1866,28 @@ body{padding:16px!important;background:#fff!important}
         el.value = String(val);
       }
       el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
     });
     const noEl = document.getElementById("sheetHakbun");
     const nameEl = document.getElementById("sheetDisplayName");
-    if (noEl && payload.studentNo && !noEl.value.trim()) noEl.value = payload.studentNo;
-    if (nameEl && payload.studentName && !nameEl.value.trim()) nameEl.value = payload.studentName;
+    // 저장된 학번·이름이 있으면 덮어씀 (빈 기본 화면 방지)
+    if (noEl && payload.studentNo) noEl.value = payload.studentNo;
+    if (nameEl && payload.studentName) nameEl.value = payload.studentName;
     return true;
   }
 
   function saveActivityDraft(opts = {}) {
     try {
+      // 복원 전에 빈 폼이 pagehide/visibility로 덮어쓰지 않도록
+      if (!draftRestored && !opts.force) return false;
       const payload = collectDraftFields();
-      localStorage.setItem(draftStorageKey(), JSON.stringify(payload));
+      if (!opts.force && !draftHasMeaningfulContent(payload)) {
+        const existing = readStoredDraftPayload();
+        if (draftHasMeaningfulContent(existing)) return false;
+      }
+      const raw = JSON.stringify(payload);
+      localStorage.setItem(draftStorageKey(), raw);
+      localStorage.setItem(draftSessionFallbackKey(), raw);
       if (opts.toast !== false) showDraftToast("임시 저장되었습니다");
       const btn = document.getElementById("btnDraftSave");
       if (btn) {
@@ -1860,10 +1905,8 @@ body{padding:16px!important;background:#fff!important}
 
   function restoreActivityDraft() {
     try {
-      const raw = localStorage.getItem(draftStorageKey());
-      if (!raw) return false;
-      const payload = JSON.parse(raw);
-      if (!payload || Number(payload.sessionNo) !== sessionNo) return false;
+      const payload = readStoredDraftPayload();
+      if (!payload) return false;
       const ok = applyDraftFields(payload);
       if (ok) {
         ensureAutosizeTextareas();
@@ -1875,6 +1918,8 @@ body{padding:16px!important;background:#fff!important}
     } catch (e) {
       console.warn(e);
       return false;
+    } finally {
+      draftRestored = true;
     }
   }
 
@@ -1942,7 +1987,7 @@ body{padding:16px!important;background:#fff!important}
         <path d="M7 3v5h8"/>
       </svg>
       <span class="label">임시</span>`;
-    btn.addEventListener("click", () => saveActivityDraft({ toast: true }));
+    btn.addEventListener("click", () => saveActivityDraft({ toast: true, force: true }));
     // 제출하기 앞에 배치
     const submit = document.getElementById("btnSubmitActivity");
     if (submit && submit.parentNode === actionsHost) actionsHost.insertBefore(btn, submit);
@@ -1976,8 +2021,10 @@ body{padding:16px!important;background:#fff!important}
       ensureDraftControls(host);
       syncSubmitFabLabel();
       ensureTimeWatch();
-      bindDraftAutosave();
+      // 복원 먼저 → 이후 pagehide/visibility가 빈 폼으로 덮어쓰지 않음
       restoreActivityDraft();
+      draftRestored = true;
+      bindDraftAutosave();
       return;
     }
 
@@ -2013,8 +2060,9 @@ body{padding:16px!important;background:#fff!important}
     ensureDraftControls(actions);
     actions.appendChild(fab);
     ensureTimeWatch();
-    bindDraftAutosave();
     restoreActivityDraft();
+    draftRestored = true;
+    bindDraftAutosave();
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";
@@ -2076,6 +2124,106 @@ body{padding:16px!important;background:#fff!important}
     if (type) el.classList.add(type === "error" ? "is-error" : "is-ok");
   }
 
+  function isMeaningfulFieldValue(text, whoName, whoNo) {
+    const raw = String(text || "").trim();
+    if (!raw) return false;
+    const compact = raw.replace(/\s+/g, "");
+    const letters = compact.replace(/[^0-9A-Za-z가-힣]/g, "");
+    if (letters.length < 2) return false;
+    const name = String(whoName || "").replace(/\s+/g, "");
+    const no = String(whoNo || "").replace(/\s+/g, "");
+    if (name && (compact === name || letters === name)) return false;
+    if (no && (compact === no || letters === no)) return false;
+    if (
+      /^(없음|없어요|없습니다|모름|몰라요|비밀|패스|스킵|보통|그냥|있어요|좋아요|싫어요|ㅎㅎ+|ㅋㅋ+|ㅠㅠ+|ㅜㅜ+|ㅇㅇ|ㄴㄴ)$/i.test(
+        compact
+      )
+    ) {
+      return false;
+    }
+    const laughOnly = letters.replace(/[하호히헤키크흐흫ㅋㅎㅜㅠㅡ]/g, "");
+    if (letters.length >= 2 && laughOnly.length / letters.length < 0.35) return false;
+    if (/오늘 활동에서 느낀 점|내용을 작성|예:\s*|적어\s*주세요/.test(raw) && letters.length < 24) {
+      return false;
+    }
+    return true;
+  }
+
+  /** 활동지 입력·최종 단계 도달 여부 판정 (미비 제출 표시용) */
+  function assessActivityCompleteness() {
+    const root = document.getElementById("activity-root");
+    const id = readSheetIdentity();
+    const reasons = [];
+    const isWc =
+      sessionNo === 3 ||
+      !!document.getElementById("wc-result") ||
+      !!root?.classList.contains("activity-card--worldcup");
+
+    if (isWc) {
+      const winner = (document.getElementById("wc-winner")?.value || "").trim();
+      const result = document.getElementById("wc-result");
+      const reachedFinal =
+        !!root?.classList.contains("is-wc-done") ||
+        !!(result && !result.hidden) ||
+        !!winner;
+      if (!reachedFinal) reasons.push("no-final");
+
+      let jobFilled = 0;
+      for (let i = 1; i <= 32; i++) {
+        const el = document.getElementById(`job-${i}`);
+        if (el && String(el.value || "").trim()) jobFilled++;
+      }
+      if (!reachedFinal && jobFilled < 16) reasons.push("sparse");
+
+      const qGood = ["wc-q1", "wc-q2", "wc-q3", "wc-q4"].filter((qid) =>
+        isMeaningfulFieldValue(document.getElementById(qid)?.value, id.studentName, id.studentNo)
+      ).length;
+      if (reachedFinal && qGood < 2) reasons.push("sparse");
+
+      return {
+        complete: reasons.length === 0,
+        reasons: [...new Set(reasons)],
+        reachedFinal,
+        filledCount: jobFilled + qGood + (winner ? 1 : 0),
+        fieldCount: 32 + 4
+      };
+    }
+
+    const skip = /^(sheetHakbun|sheetDisplayName|submitCodeInput|studentNoInput|studentNameInput|twMinutes)$/i;
+    const fields = [];
+    (root || document).querySelectorAll("textarea, input[type='text'], input:not([type])").forEach((el) => {
+      if (el.disabled || el.type === "hidden") return;
+      const key = el.id || el.name || "";
+      if (skip.test(key)) return;
+      if (el.closest(".time-watch, .topbar, .overlay, .hero-qr-wrap")) return;
+      fields.push(el);
+    });
+    const filled = fields.filter((el) =>
+      isMeaningfulFieldValue(el.value, id.studentName, id.studentNo)
+    );
+    const need = Math.max(2, Math.ceil(fields.length * 0.3));
+    if (fields.length >= 3 && filled.length < need) reasons.push("sparse");
+    if (fields.length >= 1 && filled.length === 0) reasons.push("sparse");
+
+    const reflect = document.getElementById("fReflect")?.value || "";
+    // 느낀점만 있고 본문이 거의 없으면 미비
+    if (
+      fields.length >= 4 &&
+      filled.length <= 1 &&
+      isMeaningfulFieldValue(reflect, id.studentName, id.studentNo)
+    ) {
+      reasons.push("sparse");
+    }
+
+    return {
+      complete: reasons.length === 0,
+      reasons: [...new Set(reasons)],
+      reachedFinal: true,
+      filledCount: filled.length,
+      fieldCount: fields.length
+    };
+  }
+
   function collectActivityHtml(studentNo, studentName) {
     const clone = snapshotFilledRoot();
     if (!clone) return "";
@@ -2083,8 +2231,12 @@ body{padding:16px!important;background:#fff!important}
     const meta = activityMeta();
     const title = meta.title || `${sessionNo}차시`;
     const topTitle = meta.topTitle || title;
+    const completeness = assessActivityCompleteness();
+    const completeAttr = completeness.complete ? "1" : "0";
+    const reasonAttr = escapeHtml((completeness.reasons || []).join(","));
+    const finalAttr = completeness.reachedFinal ? "1" : "0";
     return `
-<div class="student-activity-export" data-session="${sessionNo}" data-student-no="${escapeHtml(studentNo)}" data-student-name="${escapeHtml(studentName)}">
+<div class="student-activity-export" data-session="${sessionNo}" data-student-no="${escapeHtml(studentNo)}" data-student-name="${escapeHtml(studentName)}" data-complete="${completeAttr}" data-reached-final="${finalAttr}" data-incomplete-reasons="${reasonAttr}" data-filled="${completeness.filledCount || 0}" data-fields="${completeness.fieldCount || 0}">
   <div class="topbar">
     <div class="brand" aria-hidden="true">✳</div>
     <div class="top-meta">
