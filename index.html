@@ -1976,10 +1976,13 @@
       stroke-width: 2.2;
       stroke-linecap: round;
       stroke-linejoin: round;
+      /* 기본(펼쳐진 상태·접기): 위 화살표 */
+      transform: rotate(180deg);
       transition: transform var(--duration-base) var(--ease-out);
     }
     .class-settings.is-setup-collapsed .setup-fold-icon {
-      transform: rotate(-180deg);
+      /* 접힌 상태·펼치기: 아래 화살표 */
+      transform: rotate(0deg);
     }
     .class-settings.is-setup-collapsed .setup-page-head {
       border-bottom: 0;
