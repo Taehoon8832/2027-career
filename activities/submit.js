@@ -463,7 +463,7 @@
       el.id = "sheetDept";
       el.className = "sheet-dept";
       el.setAttribute("aria-label", "학과");
-      const host = document.querySelector(".na-manual-head, .bingo-head, .q100-head");
+      const host = document.querySelector(".na-manual-head, .bingo-head, .q100-head, .wc-head");
       if (host) {
         host.appendChild(el);
       } else {
@@ -1952,12 +1952,10 @@ body{padding:16px!important;background:#fff!important}
   function syncSubmitFabLabel() {
     const fab = document.getElementById("btnSubmitActivity");
     if (!fab) return;
-    if (fab.querySelector(".label-long") && fab.querySelector(".label-short")) return;
     const svg = fab.querySelector("svg");
     fab.innerHTML = `
       ${svg ? svg.outerHTML : ""}
-      <span class="label label-long">제출하기</span>
-      <span class="label label-short">제출</span>`;
+      <span class="label">제출하기</span>`;
     fab.setAttribute("aria-label", "제출하기");
   }
 
@@ -1994,8 +1992,7 @@ body{padding:16px!important;background:#fff!important}
         <path d="M12 5l7 7-7 7"/>
         <path d="M4 19V5"/>
       </svg>
-      <span class="label label-long">제출하기</span>
-      <span class="label label-short">제출</span>`;
+      <span class="label">제출하기</span>`;
 
     const actions = document.createElement("div");
     actions.className = "topbar-actions";
