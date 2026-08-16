@@ -1774,14 +1774,16 @@ body{padding:16px!important;background:#fff!important}
     return "nocode";
   }
 
+  const DRAFT_PREFIX = `career-activity-draft:v2:${sessionNo}:`;
+
   function draftStorageKey(codeKey) {
     const code = codeKey || getDraftCodeKey();
-    return `career-activity-draft:v1:${sessionNo}:${code}`;
+    return `${DRAFT_PREFIX}${code}`;
   }
 
   /** 제출코드가 바뀌어도 같은 차시 초안을 찾기 위한 보조 키 */
   function draftSessionFallbackKey() {
-    return `career-activity-draft:v1:${sessionNo}:__session__`;
+    return `${DRAFT_PREFIX}__session__`;
   }
 
   let draftRestored = false;
@@ -1802,7 +1804,7 @@ body{padding:16px!important;background:#fff!important}
     });
     const id = readSheetIdentity();
     return {
-      v: 1,
+      v: 2,
       sessionNo,
       code: getDraftCodeKey(),
       savedAt: Date.now(),
@@ -1812,35 +1814,108 @@ body{padding:16px!important;background:#fff!important}
     };
   }
 
+  /** 본문(학번·이름 제외) 입력량 점수 */
+  function draftFieldScore(payload) {
+    if (!payload || typeof payload !== "object") return 0;
+    const fields = payload.fields;
+    if (!fields || typeof fields !== "object") return 0;
+    let score = 0;
+    Object.keys(fields).forEach((key) => {
+      if (/^(sheetHakbun|sheetDisplayName)$/i.test(key)) return;
+      const val = fields[key];
+      if (typeof val === "boolean") {
+        if (val) score += 2;
+        return;
+      }
+      const str = String(val ?? "").trim();
+      if (str) score += Math.min(48, str.length);
+    });
+    return score;
+  }
+
+  function draftHasActivityContent(payload) {
+    return draftFieldScore(payload) > 0;
+  }
+
   function draftHasMeaningfulContent(payload) {
     if (!payload || typeof payload !== "object") return false;
-    if (String(payload.studentNo || "").trim() || String(payload.studentName || "").trim()) {
-      return true;
-    }
-    const fields = payload.fields;
-    if (!fields || typeof fields !== "object") return false;
-    return Object.keys(fields).some((key) => {
-      if (/^(sheetHakbun|sheetDisplayName)$/i.test(key)) return false;
-      const val = fields[key];
-      if (typeof val === "boolean") return val === true;
-      if (val == null) return false;
-      return String(val).trim().length > 0;
+    if (draftHasActivityContent(payload)) return true;
+    return !!(String(payload.studentNo || "").trim() || String(payload.studentName || "").trim());
+  }
+
+  /** 빈 값으로 본문을 지우지 않도록 병합 */
+  function mergeDraftPayload(existing, incoming) {
+    if (!existing) return incoming;
+    if (!incoming) return existing;
+    const aFields = existing.fields && typeof existing.fields === "object" ? existing.fields : {};
+    const bFields = incoming.fields && typeof incoming.fields === "object" ? incoming.fields : {};
+    const keys = new Set([...Object.keys(aFields), ...Object.keys(bFields)]);
+    const fields = {};
+    keys.forEach((key) => {
+      const a = aFields[key];
+      const b = bFields[key];
+      if (typeof a === "boolean" || typeof b === "boolean") {
+        fields[key] = typeof b === "boolean" ? b : !!a;
+        return;
+      }
+      const bStr = String(b ?? "").trim();
+      fields[key] = bStr !== "" ? b : a;
     });
+    return {
+      v: 2,
+      sessionNo,
+      code: incoming.code || existing.code || getDraftCodeKey(),
+      savedAt: Date.now(),
+      studentNo: String(incoming.studentNo || existing.studentNo || "").trim(),
+      studentName: String(incoming.studentName || existing.studentName || "").trim(),
+      fields
+    };
+  }
+
+  function parseDraftRaw(raw) {
+    if (!raw) return null;
+    try {
+      const payload = JSON.parse(raw);
+      if (!payload || Number(payload.sessionNo) !== sessionNo) return null;
+      return payload;
+    } catch {
+      return null;
+    }
+  }
+
+  function preferDraftPayload(a, b) {
+    if (!a) return b;
+    if (!b) return a;
+    const sa = draftFieldScore(a);
+    const sb = draftFieldScore(b);
+    if (sb !== sa) return sb > sa ? b : a;
+    return (b.savedAt || 0) >= (a.savedAt || 0) ? b : a;
   }
 
   function readStoredDraftPayload() {
-    const keys = [draftStorageKey(), draftSessionFallbackKey()];
     let best = null;
-    for (const key of keys) {
+    const tryKey = (key) => {
       try {
-        const raw = localStorage.getItem(key);
-        if (!raw) continue;
-        const payload = JSON.parse(raw);
-        if (!payload || Number(payload.sessionNo) !== sessionNo) continue;
-        if (!best || (payload.savedAt || 0) > (best.savedAt || 0)) best = payload;
+        best = preferDraftPayload(best, parseDraftRaw(localStorage.getItem(key)));
       } catch {
         /* ignore */
       }
+    };
+    tryKey(draftStorageKey());
+    tryKey(draftSessionFallbackKey());
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (
+          key.startsWith(DRAFT_PREFIX) ||
+          key.startsWith(`career-activity-draft:v1:${sessionNo}:`)
+        ) {
+          tryKey(key);
+        }
+      }
+    } catch {
+      /* ignore */
     }
     return best;
   }
@@ -1849,6 +1924,7 @@ body{padding:16px!important;background:#fff!important}
     if (!payload || !payload.fields || typeof payload.fields !== "object") return false;
     const root = document.getElementById("activity-root");
     const scope = root || document;
+    let applied = 0;
     Object.keys(payload.fields).forEach((key) => {
       let el = null;
       try {
@@ -1865,25 +1941,34 @@ body{padding:16px!important;background:#fff!important}
       } else if (val != null) {
         el.value = String(val);
       }
+      applied += 1;
       el.dispatchEvent(new Event("input", { bubbles: true }));
       el.dispatchEvent(new Event("change", { bubbles: true }));
     });
     const noEl = document.getElementById("sheetHakbun");
     const nameEl = document.getElementById("sheetDisplayName");
-    // 저장된 학번·이름이 있으면 덮어씀 (빈 기본 화면 방지)
     if (noEl && payload.studentNo) noEl.value = payload.studentNo;
     if (nameEl && payload.studentName) nameEl.value = payload.studentName;
-    return true;
+    return applied > 0 || !!(payload.studentNo || payload.studentName);
   }
 
   function saveActivityDraft(opts = {}) {
     try {
-      // 복원 전에 빈 폼이 pagehide/visibility로 덮어쓰지 않도록
       if (!draftRestored && !opts.force) return false;
-      const payload = collectDraftFields();
-      if (!opts.force && !draftHasMeaningfulContent(payload)) {
-        const existing = readStoredDraftPayload();
-        if (draftHasMeaningfulContent(existing)) return false;
+      const live = collectDraftFields();
+      const existing = readStoredDraftPayload();
+      let payload = existing && !opts.force ? mergeDraftPayload(existing, live) : live;
+      if (!opts.force && existing && draftFieldScore(payload) < draftFieldScore(existing)) {
+        payload = {
+          ...existing,
+          studentNo: live.studentNo || existing.studentNo,
+          studentName: live.studentName || existing.studentName,
+          code: live.code || existing.code,
+          savedAt: Date.now()
+        };
+      }
+      if (!opts.force && !draftHasMeaningfulContent(payload) && draftHasMeaningfulContent(existing)) {
+        return false;
       }
       const raw = JSON.stringify(payload);
       localStorage.setItem(draftStorageKey(), raw);
@@ -1903,14 +1988,21 @@ body{padding:16px!important;background:#fff!important}
     }
   }
 
-  function restoreActivityDraft() {
+  function restoreActivityDraft(opts = {}) {
     try {
       const payload = readStoredDraftPayload();
       if (!payload) return false;
       const ok = applyDraftFields(payload);
       if (ok) {
         ensureAutosizeTextareas();
-        if (draftHasMeaningfulContent(payload)) {
+        try {
+          if (typeof window.__careerWorldcupAfterDraft === "function") {
+            window.__careerWorldcupAfterDraft();
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+        if (opts.toast !== false && draftHasActivityContent(payload)) {
           showDraftToast("저장된 내용을 불러왔습니다");
         }
       }
@@ -2004,6 +2096,15 @@ body{padding:16px!important;background:#fff!important}
     fab.setAttribute("aria-label", "제출하기");
   }
 
+  function scheduleDraftRestore() {
+    restoreActivityDraft({ toast: true });
+    // 월드컵처럼 동적 생성 필드가 있는 활동지는 조금 더 늦게 한 번 더 적용
+    const delays = document.getElementById("wc-job-inputs") ? [50, 200, 500] : [80];
+    delays.forEach((ms) => {
+      setTimeout(() => restoreActivityDraft({ toast: false }), ms);
+    });
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
@@ -2022,7 +2123,7 @@ body{padding:16px!important;background:#fff!important}
       syncSubmitFabLabel();
       ensureTimeWatch();
       // 복원 먼저 → 이후 pagehide/visibility가 빈 폼으로 덮어쓰지 않음
-      restoreActivityDraft();
+      scheduleDraftRestore();
       draftRestored = true;
       bindDraftAutosave();
       return;
@@ -2060,7 +2161,7 @@ body{padding:16px!important;background:#fff!important}
     ensureDraftControls(actions);
     actions.appendChild(fab);
     ensureTimeWatch();
-    restoreActivityDraft();
+    scheduleDraftRestore();
     draftRestored = true;
     bindDraftAutosave();
 

@@ -8069,6 +8069,13 @@
         return next;
       }
 
+      function sessionCumulHeader(sessionNo) {
+        const sn = Number(sessionNo) || 0;
+        if (sn < 1) return "(차시)";
+        const title = sanitizeSeteukText(getLessonMeta(sn)?.title || "").trim();
+        return title ? `(${sn}차시 · ${title})` : `(${sn}차시)`;
+      }
+
       function buildCumulativeFromBlob(blob, opts = {}) {
         const maxBytes = opts.maxBytes;
         const parts = [];
@@ -8077,7 +8084,7 @@
         for (let sn = 1; sn <= 30; sn++) {
           const t = String(blob?.s?.[String(sn)] || "").trim();
           if (!t) continue;
-          parts.push(`(${sn}차시)\n${t}`);
+          parts.push(`${sessionCumulHeader(sn)}\n${t}`);
         }
         const joined = parts.join("\n\n").trim();
         if (!joined) return "";
@@ -8324,7 +8331,7 @@
           const y = buildYukhaSummary(sub);
           const para = toNeisEumseumStyle(y?.paragraph || "");
           if (!para) continue;
-          chunks.push(`(${sn}차시)\n${para}`);
+          chunks.push(`${sessionCumulHeader(sn)}\n${para}`);
         }
         if (!chunks.length) {
           return "제출된 학생 활동이 없습니다.";
@@ -8569,7 +8576,7 @@
               const saved = getSessionNote(folioRuntime.actBlob, sn).trim();
               const auto = String(folioRuntime.autoAct[String(sn)] || "").trim();
               const t = toNeisEumseumStyle(saved || auto);
-              if (t) actParts.push(`(${sn}차시)\n${t}`);
+              if (t) actParts.push(`${sessionCumulHeader(sn)}\n${t}`);
             }
             const actCum = actParts.length
               ? truncateToNeisBytes(actParts.join("\n\n"), NEIS_SETEUK_MAX_BYTES)
@@ -8578,7 +8585,7 @@
               ? obsCum
                   .split(/\n{2,}/)
                   .map((block) => {
-                    const m = block.match(/^(\(\d+차시\)\s*\n?)([\s\S]*)$/);
+                    const m = block.match(/^(\(\d+차시(?:\s*·[^)]*)?\)\s*\n?)([\s\S]*)$/);
                     if (m) return m[1] + toNeisEumseumStyle(m[2]);
                     return toNeisEumseumStyle(block);
                   })
@@ -10683,7 +10690,7 @@ ${built.html}
           return raw
             .split(/\n{2,}/)
             .map((block) => {
-              const m = block.match(/^(\(\d+차시\)\s*\n?)([\s\S]*)$/);
+              const m = block.match(/^(\(\d+차시(?:\s*·[^)]*)?\)\s*\n?)([\s\S]*)$/);
               if (m) return m[1] + toNeisEumseumStyle(m[2]);
               return toNeisEumseumStyle(block);
             })
@@ -11027,12 +11034,12 @@ ${built.html}
             )
             .slice()
             .sort((a, b) => {
-              const dn = String(a.department_name || "").localeCompare(
+              const c = Number(a.class_no) - Number(b.class_no);
+              if (c) return c;
+              return String(a.department_name || "").localeCompare(
                 String(b.department_name || ""),
                 "ko"
               );
-              if (dn) return dn;
-              return Number(a.class_no) - Number(b.class_no);
             });
 
           if (settingsCount < 1 && !dbForGrade.length) continue;
@@ -11093,23 +11100,41 @@ ${built.html}
           usedIds.add(c.id);
         }
 
-        return out.sort((a, b) => {
-          const g = Number(a.grade) - Number(b.grade);
-          if (g) return g;
-          const dn = String(a.department_name || "").localeCompare(
-            String(b.department_name || ""),
-            "ko"
-          );
-          if (dn) return dn;
-          return Number(a.class_no) - Number(b.class_no);
-        });
+        // 시트 순서: 항상 학년 → 반 (학과는 동점일 때만)
+        return out.sort(compareClassesByGradeClass);
+      }
+
+      function compareClassesByGradeClass(a, b) {
+        const g = (Number(a?.grade) || 0) - (Number(b?.grade) || 0);
+        if (g) return g;
+        const c = (Number(a?.class_no) || 0) - (Number(b?.class_no) || 0);
+        if (c) return c;
+        return String(a?.department_name || "").localeCompare(
+          String(b?.department_name || ""),
+          "ko"
+        );
+      }
+
+      function parseExportSheetOrder(name) {
+        const s = String(name || "");
+        const grade = Number((/(\d+)\s*학년/.exec(s) || [])[1]) || 0;
+        const classNo = Number((/(\d+)\s*반/.exec(s) || [])[1]) || 0;
+        return { grade, classNo };
+      }
+
+      function compareExportSheetNames(a, b) {
+        const pa = parseExportSheetOrder(a);
+        const pb = parseExportSheetOrder(b);
+        if (pa.grade !== pb.grade) return pa.grade - pb.grade;
+        if (pa.classNo !== pb.classNo) return pa.classNo - pb.classNo;
+        return String(a || "").localeCompare(String(b || ""), "ko");
       }
 
       function folioExportSheetBaseName(grade, classNo, dept, withDept) {
         const g = Number(grade) || 1;
         const no = Number(classNo) || 1;
         const d = String(dept || "").trim();
-        if (withDept && d) return `${g}학년_${d}_${no}반`;
+        if (withDept && d) return `${g}학년_${no}반_${d}`;
         return `${g}학년_${no}반`;
       }
 
@@ -11208,7 +11233,7 @@ ${built.html}
                       if (legacy) parts.push(legacy);
                       for (let sn = 1; sn <= 30; sn++) {
                         const t = String(merged.s[String(sn)] || "").trim();
-                        if (t) parts.push(`(${sn}차시)\n${t}`);
+                        if (t) parts.push(`${sessionCumulHeader(sn)}\n${t}`);
                       }
                       return parts.join("\n\n").trim();
                     })();
@@ -11245,6 +11270,9 @@ ${built.html}
             toast("내보낼 학급 시트가 없습니다.");
             return;
           }
+
+          // 시트 탭 순서를 학년 → 반으로 고정
+          book.SheetNames.sort(compareExportSheetNames);
 
           const stamp = new Date().toISOString().slice(0, 10);
           const sheetCount = book.SheetNames.length;

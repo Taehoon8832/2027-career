@@ -558,4 +558,52 @@
       else ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     })();
   }
+
+  /** 임시저장 복원 후 체크 표시·최종 화면 동기화 */
+  function applyDraftToWorldcupUi() {
+    for (let i = 1; i <= 32; i++) {
+      const input = document.getElementById(`job-${i}`);
+      const cell = input?.closest(".wc-job-cell");
+      if (!input || !cell) continue;
+      const val = String(input.value || "").trim();
+      if (!val) {
+        cell.classList.remove("is-checked");
+        continue;
+      }
+      const meta = jobMeta(val);
+      const emoji = cell.querySelector(".wc-job-emoji");
+      const cat = cell.querySelector(".wc-job-cat");
+      if (emoji) {
+        emoji.textContent = meta.emoji;
+        emoji.style.setProperty("--icon-bg", meta.color || "#EFF6FF");
+      }
+      if (cat) cat.textContent = meta.cat;
+      cell.dataset.cat = meta.cat;
+      cell.classList.add("is-checked");
+    }
+    updateFillMeter();
+
+    const winner = String(document.getElementById("wc-winner")?.value || "").trim();
+    const runner = String(document.getElementById("wc-runner-up")?.value || "").trim();
+    if (!winner) return;
+
+    historyData.winner = winner;
+    historyData.runnerUp = runner;
+    showScreen("result");
+    setStep(3);
+    const meta = jobMeta(winner);
+    setText("wc-winner-display", winner);
+    setText("wc-winner-emoji", meta.emoji);
+    setText("wc-podium-champ", winner);
+    setText("wc-podium-second", runner || "-");
+    setText("wc-podium-semi", "-");
+    const hint = document.getElementById("wc-competitor-hint");
+    if (hint) hint.textContent = runner ? `(결승 상대: ${runner})` : "";
+    ["wc-q1", "wc-q2", "wc-q3", "wc-q4", "fReflect"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) autoGrow(el);
+    });
+  }
+
+  window.__careerWorldcupAfterDraft = applyDraftToWorldcupUi;
 })();
