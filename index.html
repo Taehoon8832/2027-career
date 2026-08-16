@@ -8927,10 +8927,20 @@ ${built.html}
         return name.slice(0, 31);
       }
 
+      function normalizeFolioExportBody(text) {
+        return String(text || "")
+          .replace(/\r\n/g, "\n")
+          .replace(/\r/g, "\n")
+          .replace(/[ \t]+\n/g, "\n")
+          .replace(/\n{3,}/g, "\n\n")
+          .trim();
+      }
+
+      /** 교사 관찰 평가·학생 활동을 줄바꿈으로 구분해 전부 표시 */
       function folioExportCellText(observation, activity) {
-        const obs = String(observation || "").trim() || "—";
-        const act = String(activity || "").trim() || "—";
-        return `교사 관찰 평가\n${obs}\n\n학생 활동\n${act}`;
+        const obs = normalizeFolioExportBody(observation) || "—";
+        const act = normalizeFolioExportBody(activity) || "—";
+        return ["【교사 관찰 평가】", obs, "", "【학생 활동】", act].join("\n");
       }
 
       function uniqueExcelSheetName(book, base) {
@@ -9002,19 +9012,23 @@ ${built.html}
         return null;
       }
 
-      /** openStudentFolio와 동일: 클라우드(비어 있지 않으면) → 로컬 */
+      /** 누락 없이 더 긴(완전한) 텍스트 우선 */
+      function pickFullerFolioText(cloudVal, localVal) {
+        const c = String(cloudVal || "").trim();
+        const l = String(localVal || "").trim();
+        if (!c) return l;
+        if (!l) return c;
+        return l.length > c.length ? l : c;
+      }
+
+      /** 학생 카드(폴리오)와 동일 출처 · 전부 보존 */
       function resolveFolioExportTexts(st, localMaps, keyVariants) {
-        let observation = String(st?.teacher_observation || "").trim();
-        let activity = String(st?.student_activity_text || "").trim();
-        if (!observation) {
-          const localObs = pickFromLocalMap(localMaps.obs, keyVariants);
-          if (localObs) observation = localObs.trim();
-        }
-        if (!activity) {
-          const localAct = pickFromLocalMap(localMaps.act, keyVariants);
-          if (localAct != null) activity = String(localAct).trim();
-        }
-        return { observation, activity };
+        const localObs = pickFromLocalMap(localMaps.obs, keyVariants);
+        const localAct = pickFromLocalMap(localMaps.act, keyVariants);
+        return {
+          observation: pickFullerFolioText(st?.teacher_observation, localObs),
+          activity: pickFullerFolioText(st?.student_activity_text, localAct)
+        };
       }
 
       async function fetchStudentsForFolioExport(classId) {
@@ -9051,6 +9065,20 @@ ${built.html}
         return data || [];
       }
 
+      const FOLIO_EXPORT_CONTENT_WCH = Math.round(72 * 1.7); // D열 기존 대비 1.7배
+
+      function estimateFolioExportRowHeight(text, contentWch) {
+        const body = String(text || "");
+        const charsPerLine = Math.max(18, Math.floor(contentWch * 0.85));
+        let lines = 0;
+        for (const part of body.split("\n")) {
+          const len = part.length || 1;
+          lines += Math.max(1, Math.ceil(len / charsPerLine));
+        }
+        // 행 높이를 충분히 잡아 줄바꿈·전체 내용이 잘리지 않게
+        return Math.min(900, Math.max(64, 20 + lines * 15));
+      }
+
       function applyFolioSheetStyle(sheet, rowCount, colCount, contentColIndex) {
         const range = XLSX.utils.decode_range(sheet["!ref"] || "A1");
         const headerStyle = {
@@ -9072,19 +9100,21 @@ ${built.html}
             const cell = sheet[addr];
             if (!cell) continue;
             cell.s = R === 0 ? headerStyle : C === contentColIndex ? contentStyle : bodyStyle;
+            if (C === contentColIndex && R > 0 && typeof cell.v === "string") {
+              // 개행 유지
+              cell.t = "s";
+            }
           }
         }
-        const rowsMeta = [{ hpt: 22 }];
+        const rowsMeta = [{ hpt: 24 }];
         for (let i = 1; i < rowCount; i++) {
           const addr = XLSX.utils.encode_cell({ r: i, c: contentColIndex });
           const text = String(sheet[addr]?.v || "");
-          const lines = text.split(/\n/).length;
-          const est = Math.min(220, Math.max(48, 18 + lines * 13));
-          rowsMeta.push({ hpt: est });
+          rowsMeta.push({ hpt: estimateFolioExportRowHeight(text, FOLIO_EXPORT_CONTENT_WCH) });
         }
         sheet["!rows"] = rowsMeta;
         sheet["!cols"] = Array.from({ length: colCount }, (_, i) => {
-          if (i === contentColIndex) return { wch: 72 };
+          if (i === contentColIndex) return { wch: FOLIO_EXPORT_CONTENT_WCH };
           if (colCount === 4 && i === 0) return { wch: 12 };
           if ((colCount === 4 && i === 1) || (colCount === 3 && i === 0)) return { wch: 10 };
           return { wch: 12 };
