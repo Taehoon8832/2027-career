@@ -759,46 +759,64 @@
     }
     .roster-board-bar .roster-board-dept[hidden] { display: none !important; }
     .officer-tools {
+      position: relative;
       display: inline-flex;
       align-items: center;
       gap: 4px;
       flex-shrink: 0;
       margin-left: 2px;
     }
-    .officer-sem {
-      display: inline-flex;
-      align-items: stretch;
-      border: 1.5px solid #c4b5a5;
-      border-radius: 8px;
-      overflow: hidden;
-      background: #fffdfb;
-      flex-shrink: 0;
+    .officer-sem-pop {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      z-index: 40;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 148px;
+      padding: 8px;
+      border: 1.5px solid #1f1e1d;
+      border-radius: 12px;
+      background: #fffefb;
+      box-shadow: 0 10px 28px rgba(31, 30, 29, 0.16);
+    }
+    .officer-sem-pop.is-open { display: flex; }
+    .officer-sem-pop-label {
+      margin: 0;
+      padding: 0 2px;
+      font: 700 11px/1.3 "Noto Sans KR", var(--font-sans);
+      color: #6b5c4e;
+      letter-spacing: -0.02em;
+    }
+    .officer-sem-pop-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
     }
     .btn-officer-sem {
       appearance: none;
-      border: 0;
+      border: 1.5px solid #c4b5a5;
       margin: 0;
-      height: 30px;
+      height: 32px;
       padding: 0 8px;
-      background: transparent;
-      color: #6b5c4e;
-      font: 700 11px/1 "Noto Sans KR", var(--font-sans);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #fffdfb 0%, #f7f1ea 100%);
+      color: #4a3d32;
+      font: 700 12px/1 "Noto Sans KR", var(--font-sans);
       letter-spacing: -0.02em;
       cursor: pointer;
       touch-action: manipulation;
       white-space: nowrap;
     }
-    .btn-officer-sem + .btn-officer-sem {
-      border-left: 1px solid #ddd2c4;
-    }
     .btn-officer-sem:hover {
-      background: #f7f1ea;
-      color: #4a3d32;
+      border-color: #a67c52;
+      background: linear-gradient(180deg, #fff7ef 0%, #f0e2d0 100%);
     }
     .btn-officer-sem.is-on {
-      background: linear-gradient(180deg, #efe4d6 0%, #e4d5c3 100%);
-      color: #3d2f24;
-      box-shadow: inset 0 -2px 0 #a67c52;
+      border-color: #6E3A24;
+      background: linear-gradient(180deg, #6E3A24 0%, #5A2F1C 100%);
+      color: #fffdfb;
     }
     .btn-officer {
       display: inline-flex;
@@ -2839,6 +2857,10 @@
         font-size: 14px;
       }
       .officer-tools { gap: 6px; }
+      .officer-sem-pop {
+        min-width: 168px;
+        padding: 10px;
+      }
       .btn-officer-sem {
         min-height: 40px;
         height: 40px;
@@ -3160,7 +3182,7 @@
         <button type="button" class="btn-tiny btn-icon" id="btnUndoAction" title="되돌리기 (최근 삭제 복구)" aria-label="되돌리기" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
         </button>
-        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="교사 관찰 평가·학생 활동 엑셀">XLSX</button>
+        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 교사 관찰 평가·학생 활동 엑셀">XLSX</button>
         <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
         <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
       </div>
@@ -3288,18 +3310,21 @@
               <strong>학생 카드</strong>
               <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
               <div class="officer-tools" role="group" aria-label="반장·부반장 지정">
-                <div class="officer-sem" role="group" aria-label="학기 선택">
-                  <button type="button" class="btn-officer-sem is-on" id="btnOfficerSem1" data-officer-sem="1" aria-pressed="true" title="1학기 반장·부반장">1학기</button>
-                  <button type="button" class="btn-officer-sem" id="btnOfficerSem2" data-officer-sem="2" aria-pressed="false" title="2학기 반장·부반장">2학기</button>
-                </div>
-                <button type="button" class="btn-officer" id="btnPickPresident" title="1학기 반장 지정" aria-label="반장 지정" aria-pressed="false">
+                <button type="button" class="btn-officer" id="btnPickPresident" title="반장 지정" aria-label="반장 지정" aria-pressed="false">
                   <span class="btn-officer-mark" aria-hidden="true">반</span>
                   <span class="btn-officer-label">반장</span>
                 </button>
-                <button type="button" class="btn-officer btn-officer--vice" id="btnPickVice" title="1학기 부반장 지정" aria-label="부반장 지정" aria-pressed="false">
+                <button type="button" class="btn-officer btn-officer--vice" id="btnPickVice" title="부반장 지정" aria-label="부반장 지정" aria-pressed="false">
                   <span class="btn-officer-mark" aria-hidden="true">부</span>
                   <span class="btn-officer-label">부반장</span>
                 </button>
+                <div class="officer-sem-pop" id="officerSemPop" hidden aria-hidden="true">
+                  <p class="officer-sem-pop-label" id="officerSemPopLabel">학기 선택</p>
+                  <div class="officer-sem-pop-actions" role="group" aria-label="학기 선택">
+                    <button type="button" class="btn-officer-sem" id="btnOfficerSem1" data-officer-sem="1">1학기</button>
+                    <button type="button" class="btn-officer-sem" id="btnOfficerSem2" data-officer-sem="2">2학기</button>
+                  </div>
+                </div>
               </div>
               <div class="roster-unit-filter" role="group" aria-label="학년·반 선택">
                 <select id="rosterBoardGradeSelect" aria-label="학년 선택" title="학년">
@@ -3519,6 +3544,7 @@
       let rosterSubMap = new Map();
       let classOfficers = loadClassOfficers();
       let officerPickMode = null; // null | "president" | "vice"
+      let pendingOfficerRole = null; // 학기 선택 대기 중 role
       let officerSemester = (() => {
         try {
           const n = Number(localStorage.getItem(OFFICER_SEMESTER_KEY) || "1");
@@ -4081,43 +4107,90 @@
         void syncOfficersToDb(classId);
       }
 
+      function roleHasAnySemester(classId, role) {
+        const o = getClassOfficers(classId);
+        return !!(o[1]?.[role] || o[2]?.[role]);
+      }
+
+      function closeOfficerSemPop() {
+        pendingOfficerRole = null;
+        const pop = $("officerSemPop");
+        if (!pop) return;
+        pop.classList.remove("is-open");
+        pop.hidden = true;
+        pop.setAttribute("aria-hidden", "true");
+      }
+
+      function openOfficerSemPop(role) {
+        pendingOfficerRole = role;
+        const pop = $("officerSemPop");
+        const label = $("officerSemPopLabel");
+        if (!pop) return;
+        if (label) {
+          label.textContent = role === "president" ? "반장 · 학기 선택" : "부반장 · 학기 선택";
+        }
+        const btnS1 = $("btnOfficerSem1");
+        const btnS2 = $("btnOfficerSem2");
+        const o = getClassOfficers(rosterClassId);
+        if (btnS1) {
+          btnS1.classList.toggle("is-on", !!o[1]?.[role]);
+          btnS1.title = o[1]?.[role] ? "1학기 지정됨 · 다시 지정/해제할 학생 선택" : "1학기 지정";
+        }
+        if (btnS2) {
+          btnS2.classList.toggle("is-on", !!o[2]?.[role]);
+          btnS2.title = o[2]?.[role] ? "2학기 지정됨 · 다시 지정/해제할 학생 선택" : "2학기 지정";
+        }
+        pop.hidden = false;
+        pop.classList.add("is-open");
+        pop.setAttribute("aria-hidden", "false");
+      }
+
       function setOfficerSemester(sem) {
         officerSemester = normalizeOfficerSemester(sem);
         persistOfficerSemester();
         syncOfficerPickButtons();
       }
 
-      function syncOfficerPickButtons() {
-        const bag = getOfficersForSemester(rosterClassId, officerSemester);
+      function beginOfficerPickWithSemester(sem) {
+        const role = pendingOfficerRole;
+        if (!role) return;
+        setOfficerSemester(sem);
+        officerPickMode = role;
+        closeOfficerSemPop();
+        syncOfficerPickButtons();
         const semLabel = `${officerSemester}학기`;
+        toast(
+          role === "president"
+            ? `${semLabel} 반장으로 지정할 학생 카드를 눌러 주세요.`
+            : `${semLabel} 부반장으로 지정할 학생 카드를 눌러 주세요.`
+        );
+      }
+
+      function syncOfficerPickButtons() {
         const btnP = $("btnPickPresident");
         const btnV = $("btnPickVice");
-        const btnS1 = $("btnOfficerSem1");
-        const btnS2 = $("btnOfficerSem2");
-        if (btnS1) {
-          btnS1.classList.toggle("is-on", officerSemester === 1);
-          btnS1.setAttribute("aria-pressed", officerSemester === 1 ? "true" : "false");
-        }
-        if (btnS2) {
-          btnS2.classList.toggle("is-on", officerSemester === 2);
-          btnS2.setAttribute("aria-pressed", officerSemester === 2 ? "true" : "false");
-        }
+        const picking = !!officerPickMode;
+        const semLabel = picking ? `${officerSemester}학기 ` : "";
         if (btnP) {
-          btnP.classList.toggle("is-on", officerPickMode === "president");
-          btnP.classList.toggle("is-assigned", !!bag.president);
+          btnP.classList.toggle("is-on", officerPickMode === "president" || pendingOfficerRole === "president");
+          btnP.classList.toggle("is-assigned", roleHasAnySemester(rosterClassId, "president"));
           btnP.setAttribute("aria-pressed", officerPickMode === "president" ? "true" : "false");
-          btnP.title = `${semLabel} 반장 지정`;
-          btnP.setAttribute("aria-label", `${semLabel} 반장 지정`);
+          btnP.title = picking && officerPickMode === "president"
+            ? `${semLabel}반장 지정 중 · 학생 카드를 누르세요`
+            : "반장 지정 (학기 선택)";
+          btnP.setAttribute("aria-label", "반장 지정");
         }
         if (btnV) {
-          btnV.classList.toggle("is-on", officerPickMode === "vice");
-          btnV.classList.toggle("is-assigned", !!bag.vice);
+          btnV.classList.toggle("is-on", officerPickMode === "vice" || pendingOfficerRole === "vice");
+          btnV.classList.toggle("is-assigned", roleHasAnySemester(rosterClassId, "vice"));
           btnV.setAttribute("aria-pressed", officerPickMode === "vice" ? "true" : "false");
-          btnV.title = `${semLabel} 부반장 지정`;
-          btnV.setAttribute("aria-label", `${semLabel} 부반장 지정`);
+          btnV.title = picking && officerPickMode === "vice"
+            ? `${semLabel}부반장 지정 중 · 학생 카드를 누르세요`
+            : "부반장 지정 (학기 선택)";
+          btnV.setAttribute("aria-label", "부반장 지정");
         }
         const root = $("rosterList");
-        if (root) root.classList.toggle("is-picking", !!officerPickMode);
+        if (root) root.classList.toggle("is-picking", picking);
       }
 
       function paintOfficerBandOnCell(cell, officers) {
@@ -4168,11 +4241,23 @@
       }
 
       function setOfficerPickMode(mode) {
-        officerPickMode = officerPickMode === mode ? null : mode;
+        // 지정 중이면 취소
+        if (officerPickMode === mode) {
+          officerPickMode = null;
+          closeOfficerSemPop();
+          syncOfficerPickButtons();
+          toast("지정을 취소했습니다.");
+          return;
+        }
+        // 다른 역할 지정 중이면 전환을 위해 학기 선택부터
+        officerPickMode = null;
+        if (pendingOfficerRole === mode) {
+          closeOfficerSemPop();
+          syncOfficerPickButtons();
+          return;
+        }
+        openOfficerSemPop(mode);
         syncOfficerPickButtons();
-        const semLabel = `${officerSemester}학기`;
-        if (officerPickMode === "president") toast(`${semLabel} 반장으로 지정할 학생 카드를 눌러 주세요.`);
-        else if (officerPickMode === "vice") toast(`${semLabel} 부반장으로 지정할 학생 카드를 눌러 주세요.`);
       }
 
       function assignOfficerFromCard(studentId) {
@@ -4196,6 +4281,7 @@
         o[sem] = bag;
         setClassOfficersLocal(rosterClassId, o);
         officerPickMode = null;
+        closeOfficerSemPop();
         applyOfficerBands();
         void syncOfficersToDb(rosterClassId);
       }
@@ -8858,8 +8944,83 @@ ${built.html}
         return sanitizeExcelSheetName(`${base}_${Date.now().toString(36)}`);
       }
 
+      function studentNoKeyVariants(studentNo, grade, classNo) {
+        const keys = [];
+        const seen = new Set();
+        const push = (v) => {
+          const s = String(v || "").trim();
+          if (!s || seen.has(s)) return;
+          seen.add(s);
+          keys.push(s);
+        };
+        push(studentNo);
+        push(normalizeStudentNo(studentNo));
+        push(resolveRosterStudentKey(studentNo, grade, classNo));
+        return keys;
+      }
+
+      /** 해당 학급의 로컬 관찰·활동 메모를 학번 키별로 수집 */
+      function readLocalFolioMapsForClass(classId) {
+        const obs = new Map();
+        const act = new Map();
+        if (!classId) return { obs, act };
+        const obsPrefix = `${TEACHER_OBS_KEY}:${classId}:`;
+        const actPrefix = `${STUDENT_ACTIVITY_EDIT_KEY}:${classId}:`;
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (!k) continue;
+            if (k.startsWith(obsPrefix)) {
+              obs.set(k.slice(obsPrefix.length), localStorage.getItem(k) || "");
+            } else if (k.startsWith(actPrefix)) {
+              act.set(k.slice(actPrefix.length), localStorage.getItem(k) || "");
+            }
+          }
+        } catch (_) {
+          /* ignore */
+        }
+        return { obs, act };
+      }
+
+      function pickFromLocalMap(map, keyVariants) {
+        if (!map?.size) return null;
+        for (const key of keyVariants) {
+          if (map.has(key)) {
+            const v = map.get(key);
+            if (v != null && String(v).trim() !== "") return String(v);
+          }
+        }
+        // 숫자만 맞춰 재시도 (선행 0 등)
+        for (const [k, v] of map) {
+          if (v == null || String(v).trim() === "") continue;
+          for (const key of keyVariants) {
+            if (String(k).replace(/^0+/, "") === String(key).replace(/^0+/, "")) {
+              return String(v);
+            }
+          }
+        }
+        return null;
+      }
+
+      /** openStudentFolio와 동일: 클라우드(비어 있지 않으면) → 로컬 */
+      function resolveFolioExportTexts(st, localMaps, keyVariants) {
+        let observation = String(st?.teacher_observation || "").trim();
+        let activity = String(st?.student_activity_text || "").trim();
+        if (!observation) {
+          const localObs = pickFromLocalMap(localMaps.obs, keyVariants);
+          if (localObs) observation = localObs.trim();
+        }
+        if (!activity) {
+          const localAct = pickFromLocalMap(localMaps.act, keyVariants);
+          if (localAct != null) activity = String(localAct).trim();
+        }
+        return { observation, activity };
+      }
+
       async function fetchStudentsForFolioExport(classId) {
         if (!sb || !classId) return [];
+        // 내보내기 직전에 컬럼 존재 여부 재시도
+        if (folioNotesDbReady === false) folioNotesDbReady = null;
         const baseCols = "id, student_no, student_name, sort_order";
         let data = null;
         let error = null;
@@ -8930,22 +9091,39 @@ ${built.html}
         });
       }
 
+      /** 설정된(저장된) 모든 학년·학과·학급 목록 */
+      function listConfiguredClassesForExport() {
+        return teacherClasses
+          .filter((c) => c.is_active && c.class_no && c.mode !== "personal")
+          .slice()
+          .sort((a, b) => {
+            const g = Number(a.grade) - Number(b.grade);
+            if (g) return g;
+            const dn = String(a.department_name || "").localeCompare(String(b.department_name || ""), "ko");
+            if (dn) return dn;
+            return Number(a.class_no) - Number(b.class_no);
+          });
+      }
+
       async function exportAllSubmissionsXlsx() {
         const btn = $("btnExportAllXlsx");
         if (btn) btn.disabled = true;
-        toast("엑셀 준비 중…");
+        toast("엑셀 준비 중… 모든 학급 명단·관찰 평가를 모으는 중");
         try {
+          // 열려 있는 학생 보고서 입력이 있으면 먼저 저장
+          if ($("studentFolio")?.classList.contains("is-open")) {
+            closeStudentFolio();
+            await new Promise((r) => setTimeout(r, 120));
+          }
           await loadXlsxLib();
-          const active = teacherClasses
-            .filter((c) => c.is_active && c.class_no)
-            .slice()
-            .sort((a, b) => {
-              const g = Number(a.grade) - Number(b.grade);
-              if (g) return g;
-              const dn = String(a.department_name || "").localeCompare(String(b.department_name || ""), "ko");
-              if (dn) return dn;
-              return Number(a.class_no) - Number(b.class_no);
-            });
+          // 최신 학급·명단 기준으로 다시 불러오기
+          try {
+            await loadTeacherClassesFromDb();
+          } catch (e) {
+            console.warn(e);
+          }
+
+          const active = listConfiguredClassesForExport();
           if (!active.length) {
             toast("저장된 학급이 없습니다. 관리자 페이지에서 학급을 저장해 주세요.");
             return;
@@ -8954,12 +9132,21 @@ ${built.html}
           const withDept = isVocational();
           const book = XLSX.utils.book_new();
           let totalStudents = 0;
+          let filledNotes = 0;
 
           for (const cls of active) {
-            const grade = cls.grade || 1;
-            const classNo = cls.class_no || 1;
+            const grade = Number(cls.grade) || 1;
+            const classNo = Number(cls.class_no) || 1;
             const dept = withDept ? departmentNameFor(grade, classNo, cls) : "";
+
+            try {
+              await seedDefaultStudents(cls.id, { migrate: false });
+            } catch (e) {
+              console.warn(e);
+            }
+
             const students = await fetchStudentsForFolioExport(cls.id);
+            const localMaps = readLocalFolioMapsForClass(cls.id);
             const aoa = [];
             const headers = withDept
               ? ["학과", "학번", "이름", "교사 관찰 평가 · 학생 활동"]
@@ -8980,17 +9167,16 @@ ${built.html}
                 resolveRosterStudentKey(st.student_no, grade, classNo) ||
                 normalizeStudentNo(st.student_no) ||
                 String(st.student_no || "");
-              let observation = String(st.teacher_observation || "").trim();
-              let activity = String(st.student_activity_text || "").trim();
-              if (!observation) observation = String(readLocalTeacherObservation(cls.id, key) || "").trim();
-              if (!activity) {
-                const localAct = readLocalStudentActivityEdit(cls.id, key);
-                if (localAct != null) activity = String(localAct).trim();
-              }
+              const keyVariants = studentNoKeyVariants(st.student_no, grade, classNo);
+              if (key && !keyVariants.includes(key)) keyVariants.unshift(key);
+
+              const { observation, activity } = resolveFolioExportTexts(st, localMaps, keyVariants);
+              if (observation || activity) filledNotes += 1;
 
               const content = folioExportCellText(observation, activity);
-              if (withDept) aoa.push([dept || "", key, (st.student_name || "").trim() || "이름", content]);
-              else aoa.push([key, (st.student_name || "").trim() || "이름", content]);
+              const name = (st.student_name || "").trim() || "이름";
+              if (withDept) aoa.push([dept || "", key, name, content]);
+              else aoa.push([key, name, content]);
             }
 
             totalStudents += Math.max(0, aoa.length - 1);
@@ -8998,9 +9184,10 @@ ${built.html}
             const contentCol = withDept ? 3 : 2;
             applyFolioSheetStyle(sheet, aoa.length, headers.length, contentCol);
 
-            const sheetBase = withDept && dept
-              ? `${grade}학년_${dept}_${classNo}반`
-              : `${grade}학년_${classNo}반`;
+            const sheetBase =
+              withDept && dept
+                ? `${grade}학년_${dept}_${classNo}반`
+                : `${grade}학년_${classNo}반`;
             XLSX.utils.book_append_sheet(book, sheet, uniqueExcelSheetName(book, sheetBase));
           }
 
@@ -9010,9 +9197,11 @@ ${built.html}
           }
 
           const stamp = new Date().toISOString().slice(0, 10);
-          const fileDept = withDept ? "_학과포함" : "";
-          XLSX.writeFile(book, `관찰평가_학생활동${fileDept}_${stamp}.xlsx`);
-          toast(`xlsx 저장 완료 · ${active.length}개 학급 · ${totalStudents}명`);
+          XLSX.writeFile(book, `관찰평가_학생활동_${stamp}.xlsx`);
+          toast(
+            `xlsx 저장 완료 · ${active.length}개 학급 · ${totalStudents}명` +
+              (filledNotes ? ` · 기록 ${filledNotes}명` : "")
+          );
         } catch (e) {
           console.error(e);
           toast("xlsx 다운로드 실패: " + (e.message || e));
@@ -10179,13 +10368,39 @@ ${built.html}
       });
       ensureRosterSessionSelectOptions();
       syncRosterBoardUnitSelects();
-      $("btnPickPresident")?.addEventListener("click", () => setOfficerPickMode("president"));
-      $("btnPickVice")?.addEventListener("click", () => setOfficerPickMode("vice"));
-      $("btnOfficerSem1")?.addEventListener("click", () => setOfficerSemester(1));
-      $("btnOfficerSem2")?.addEventListener("click", () => setOfficerSemester(2));
+      $("btnPickPresident")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setOfficerPickMode("president");
+      });
+      $("btnPickVice")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setOfficerPickMode("vice");
+      });
+      $("btnOfficerSem1")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        beginOfficerPickWithSemester(1);
+      });
+      $("btnOfficerSem2")?.addEventListener("click", (e) => {
+        e.stopPropagation();
+        beginOfficerPickWithSemester(2);
+      });
+      document.addEventListener("click", (e) => {
+        const pop = $("officerSemPop");
+        if (!pop?.classList.contains("is-open")) return;
+        if (e.target.closest(".officer-tools")) return;
+        closeOfficerSemPop();
+        syncOfficerPickButtons();
+      });
       syncOfficerPickButtons();
       document.addEventListener("keydown", (e) => {
-        if (e.key !== "Escape" || !officerPickMode) return;
+        if (e.key !== "Escape") return;
+        if ($("officerSemPop")?.classList.contains("is-open")) {
+          e.preventDefault();
+          closeOfficerSemPop();
+          syncOfficerPickButtons();
+          return;
+        }
+        if (!officerPickMode) return;
         officerPickMode = null;
         syncOfficerPickButtons();
       });
