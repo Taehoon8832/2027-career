@@ -12,10 +12,10 @@
   <!-- 폰트는 화면을 막지 않도록 비동기 로드 (시스템 폰트로 먼저 그림) -->
   <link rel="preload" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" media="print" onload="this.media='all'" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;600;700;800&family=Noto+Serif+KR:wght@600;700&display=swap" media="print" onload="this.media='all'" />
   <noscript>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;600;700;800&family=Noto+Serif+KR:wght@600;700&display=swap" />
   </noscript>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <!-- qrcode는 필요할 때만 로드 -->
@@ -576,8 +576,9 @@
       background: #f7f4ee;
     }
     .roster-cell {
+      position: relative;
       display: flex; flex-direction: column; gap: 4px;
-      padding: 6px;
+      padding: 26px 6px 6px;
       border: 1px solid var(--border-default);
       border-radius: 8px;
       background: #fff;
@@ -715,13 +716,19 @@
       background: #f3efe8;
     }
     .officer-band {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 4px;
-      margin: -6px -6px 2px;
+      margin: 0;
       min-height: 18px;
       padding: 3px 6px;
+      border-radius: 7px 7px 0 0;
       font: 800 10px/1 var(--font-sans);
       letter-spacing: 0.14em;
       color: #fff;
@@ -1212,8 +1219,17 @@
     .detail-toolbar .grow { flex: 1; min-width: 8px; }
     .detail-toolbar .detail-missing-list {
       color: var(--text-secondary);
-      font-weight: 600;
+      font: 600 10px/1.35 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      letter-spacing: -0.01em;
       word-break: keep-all;
+    }
+    .detail-toolbar .detail-missing-list .missing-count {
+      color: #c62828;
+      font-weight: 800;
+    }
+    .detail-toolbar .detail-missing-list .missing-label {
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
     .detail-section-title {
       margin: 0;
@@ -1225,8 +1241,9 @@
       gap: 6px;
     }
     .detail-roster-cell {
+      position: relative;
       display: flex; flex-direction: column; gap: 5px;
-      padding: 9px; border: 1.5px solid var(--border-default);
+      padding: 28px 9px 9px; border: 1.5px solid var(--border-default);
       border-radius: 10px; background: var(--bg-subtle); min-height: 0;
       contain: content;
     }
@@ -1258,10 +1275,11 @@
       box-shadow: inset 5px 0 0 #9a8f7e, 0 2px 0 rgba(31, 30, 29, 0.06);
     }
     .detail-roster-cell .officer-band {
-      margin: -9px -9px 2px;
+      margin: 0;
       min-height: 18px;
       font-size: 10px;
       letter-spacing: 0.14em;
+      border-radius: 8px 8px 0 0;
     }
     .detail-roster-cell .head {
       display: flex; align-items: center; justify-content: space-between; gap: 4px;
@@ -1365,11 +1383,12 @@
     }
     @media (max-width: 900px) {
       .detail-roster-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-      .detail-roster-cell { padding: 10px; }
+      .detail-roster-cell { padding: 28px 10px 10px; }
       .detail-roster-cell .officer-band {
-        margin: -10px -10px 3px;
+        margin: 0;
         min-height: 20px;
         font-size: 10.5px;
+        border-radius: 8px 8px 0 0;
       }
       .detail-roster-cell .no { font-size: 12px; }
       .detail-roster-cell .name { font-size: 14px; }
@@ -2217,6 +2236,7 @@
       .btn-officer { height: 36px; min-height: 36px; font-size: 12px; }
       .btn-officer-mark { width: 20px; height: 20px; font-size: 10px; }
       .officer-band { min-height: 20px; font-size: 10.5px; }
+      .roster-cell { padding-top: 28px; }
       .roster-list { grid-template-columns: repeat(3, minmax(0, 1fr)); max-height: none; }
       .roster-cell input { height: 38px; font-size: 15px; }
       .detail-roster-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
@@ -2413,11 +2433,12 @@
         border-radius: 6px;
       }
       .officer-band {
-        margin: -10px -10px 4px;
+        margin: 0;
         min-height: 22px;
         font-size: 11px;
         letter-spacing: 0.16em;
       }
+      .roster-cell { padding: 30px 10px 10px; gap: 6px; }
       @media (max-width: 400px) {
         .btn-officer-label {
           position: absolute;
@@ -2449,7 +2470,6 @@
         gap: 8px;
         padding: 10px;
       }
-      .roster-cell { padding: 10px; gap: 6px; }
       .roster-cell .no { font-size: 13px; }
       .roster-dept { font-size: 11px; max-width: 55%; padding: 3px 7px; }
       .roster-cell input { height: 40px; font-size: 16px; }
@@ -2479,12 +2499,13 @@
         width: 100%; min-height: 44px; font-size: 14px;
       }
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .detail-roster-cell { padding: 10px; gap: 6px; }
+      .detail-roster-cell { padding: 30px 10px 10px; gap: 6px; }
       .detail-roster-cell .officer-band {
-        margin: -10px -10px 4px;
+        margin: 0;
         min-height: 22px;
         font-size: 11px;
         letter-spacing: 0.16em;
+        border-radius: 8px 8px 0 0;
       }
       .detail-roster-cell.is-president { box-shadow: inset 6px 0 0 #C96442; }
       .detail-roster-cell.is-vice { box-shadow: inset 6px 0 0 #9a8f7e; }
@@ -6017,7 +6038,7 @@
             </div>
             <div class="folio-eval-col">
               <header>
-                <strong>세특 초안 (음슴체)</strong>
+                <strong>학생 활동</strong>
                 <span id="folioSeteukBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
               </header>
               <div class="folio-seteuk" id="folioSeteukText" aria-live="polite">활동 내용을 분석하는 중…</div>
@@ -8114,7 +8135,7 @@ ${built.html}
           const meta = classMetaById(classId);
           const grade = meta?.grade || 1;
           const classNo = meta?.class_no || 1;
-          const missingNos = students
+          const missing = students
             .map((st) => {
               const key =
                 resolveRosterStudentKey(st.student_no, grade, classNo) ||
@@ -8124,13 +8145,21 @@ ${built.html}
                 detailSubMap.get(normalizeStudentNo(st.student_no)) ||
                 [];
               if (list.length) return null;
-              return key || normalizeStudentNo(st.student_no) || String(st.student_no || "");
+              const no = key || normalizeStudentNo(st.student_no) || String(st.student_no || "");
+              const name = String(st.student_name || "").trim() || "이름 없음";
+              return { no, name };
             })
             .filter(Boolean)
-            .sort((a, b) => String(a).localeCompare(String(b), "ko", { numeric: true }));
-          missingEl.textContent = missingNos.length
-            ? `- [미제출자 총: ${missingNos.length}명(${missingNos.join(", ")})]`
-            : "";
+            .sort((a, b) => String(a.no).localeCompare(String(b.no), "ko", { numeric: true }));
+          if (!missing.length) {
+            missingEl.textContent = "";
+          } else {
+            const labels = missing
+              .map((m) => `${escapeHtml(m.no)}_${escapeHtml(m.name)}`)
+              .join(", ");
+            missingEl.innerHTML =
+              `- [<span class="missing-label">미제출자</span> 총: <span class="missing-count">${missing.length}명</span>(${labels})]`;
+          }
         }
         const grid = $("detailRosterGrid");
         if (grid) grid.classList.remove("is-loading");
