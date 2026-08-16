@@ -662,8 +662,8 @@
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
       gap: 6px;
-      max-height: min(58vh, 520px);
-      overflow-y: auto;
+      max-height: none;
+      overflow: visible;
       margin: 0;
       padding: 10px 14px 14px;
       border: 0;
@@ -1721,36 +1721,37 @@
     .setup-launch {
       width: 100%; display: flex; align-items: center; gap: 12px;
       margin: 0 0 14px; padding: 12px 14px;
-      border: 1.5px solid #d5dde6;
+      border: 2.5px solid #1f1e1d;
       border-radius: var(--radius-lg);
       background:
         linear-gradient(105deg, rgba(232, 244, 252, 0.55) 0%, rgba(255, 255, 255, 0.92) 38%, #fffdfb 100%);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.9),
-        0 1px 2px rgba(45, 70, 95, 0.05),
-        0 4px 12px rgba(45, 70, 95, 0.05);
+        0 1px 2px rgba(31, 30, 29, 0.08),
+        0 4px 12px rgba(45, 70, 95, 0.06);
       cursor: pointer; text-align: left;
       transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease, transform var(--duration-fast) var(--ease-bounce), box-shadow var(--duration-fast) ease;
     }
     .setup-launch:hover {
-      border-color: #b7c9da;
+      border-color: #0f0e0d;
       transform: translateY(-1px);
       background:
         linear-gradient(105deg, rgba(220, 238, 250, 0.7) 0%, rgba(255, 255, 255, 0.96) 42%, #fffefc 100%);
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.95),
-        0 2px 4px rgba(45, 70, 95, 0.06),
-        0 8px 18px rgba(45, 70, 95, 0.08);
+        0 2px 4px rgba(31, 30, 29, 0.1),
+        0 8px 18px rgba(45, 70, 95, 0.1);
     }
     .setup-launch.is-active {
-      border-color: #8eb4d0;
+      border-color: #1f1e1d;
+      border-width: 2.5px;
       background:
         linear-gradient(105deg, rgba(210, 232, 247, 0.85) 0%, rgba(240, 248, 253, 0.95) 36%, #ffffff 100%);
       box-shadow:
         inset 3px 0 0 #6fa3c8,
         inset 0 1px 0 rgba(255, 255, 255, 0.95),
-        0 1px 2px rgba(45, 70, 95, 0.06),
-        0 6px 14px rgba(70, 130, 170, 0.1);
+        0 1px 2px rgba(31, 30, 29, 0.1),
+        0 6px 14px rgba(70, 130, 170, 0.12);
     }
     .setup-icon {
       width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px;
