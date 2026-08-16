@@ -98,6 +98,180 @@
       display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
       margin-left: auto;
     }
+    .btn-usage {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-color: rgba(201, 100, 66, 0.35) !important;
+      color: var(--color-primary-600) !important;
+      background: linear-gradient(180deg, #fff8f4 0%, #fff 100%) !important;
+    }
+    .btn-usage:hover {
+      border-color: var(--color-primary-500) !important;
+      background: linear-gradient(180deg, #ffefe6 0%, #fff8f4 100%) !important;
+    }
+    .btn-usage .usage-ico {
+      width: 14px;
+      height: 14px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+    .btn-usage .usage-label { font-weight: 700; }
+
+    /* 사용법 튜토리얼 · 스포트라이트 */
+    .usage-tour {
+      position: fixed;
+      inset: 0;
+      z-index: 120;
+      pointer-events: auto;
+    }
+    .usage-tour[hidden] { display: none !important; }
+    .usage-tour-hole {
+      position: fixed;
+      z-index: 121;
+      border-radius: 14px;
+      box-shadow:
+        0 0 0 9999px rgba(12, 10, 9, 0.78),
+        0 0 0 1.5px rgba(255, 236, 220, 0.95),
+        0 0 0 6px rgba(201, 100, 66, 0.28),
+        0 12px 48px rgba(201, 100, 66, 0.35);
+      transition:
+        top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        border-radius 0.35s ease;
+      pointer-events: none;
+      animation: usage-pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes usage-pulse {
+      0%, 100% { box-shadow:
+        0 0 0 9999px rgba(12, 10, 9, 0.78),
+        0 0 0 1.5px rgba(255, 236, 220, 0.95),
+        0 0 0 6px rgba(201, 100, 66, 0.28),
+        0 12px 48px rgba(201, 100, 66, 0.35); }
+      50% { box-shadow:
+        0 0 0 9999px rgba(12, 10, 9, 0.78),
+        0 0 0 1.5px rgba(255, 244, 232, 1),
+        0 0 0 10px rgba(201, 100, 66, 0.18),
+        0 16px 56px rgba(201, 100, 66, 0.48); }
+    }
+    .usage-tour-card {
+      position: fixed;
+      z-index: 122;
+      width: min(360px, calc(100vw - 28px));
+      padding: 18px 18px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background:
+        linear-gradient(155deg, rgba(255, 252, 248, 0.98) 0%, rgba(255, 244, 234, 0.96) 48%, rgba(255, 255, 255, 0.97) 100%);
+      box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.38),
+        0 0 0 1px rgba(201, 100, 66, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+      pointer-events: auto;
+      transform: translateY(8px);
+      opacity: 0;
+      animation: usage-card-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    @keyframes usage-card-in {
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .usage-tour-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .usage-tour-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(145deg, #e08a62, #c96442 55%, #a84e30);
+      color: #fffefb;
+      font: 800 13px/1 var(--font-sans);
+      box-shadow: 0 4px 12px rgba(168, 78, 48, 0.35);
+    }
+    .usage-tour-meta {
+      font: 700 11px/1.2 var(--font-sans);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--color-primary-600);
+    }
+    .usage-tour-title {
+      margin: 0 0 8px;
+      font: 600 18px/1.3 var(--font-serif);
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .usage-tour-body {
+      margin: 0 0 16px;
+      font: 500 13.5px/1.55 var(--font-sans);
+      color: var(--text-secondary);
+      word-break: keep-all;
+    }
+    .usage-tour-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .usage-tour-skip {
+      margin-right: auto;
+      border: 0;
+      background: transparent;
+      color: var(--text-tertiary);
+      font: 700 12px/1 var(--font-sans);
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      padding: 8px 4px;
+    }
+    .usage-tour-skip:hover { color: var(--text-primary); }
+    .usage-tour-nav {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border-default);
+      background: #fff;
+      font: 700 12px/1 var(--font-sans);
+      cursor: pointer;
+      color: var(--text-primary);
+    }
+    .usage-tour-nav:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+    .usage-tour-nav.is-primary {
+      border-color: transparent;
+      color: #fffefb;
+      background: linear-gradient(145deg, #e08a62, #c96442 55%, #a84e30);
+      box-shadow: 0 4px 14px rgba(168, 78, 48, 0.32);
+    }
+    .usage-tour-nav.is-primary:hover { filter: brightness(1.05); }
+    .usage-tour-progress {
+      display: flex;
+      gap: 5px;
+      margin-bottom: 12px;
+    }
+    .usage-tour-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(61, 52, 44, 0.18);
+    }
+    .usage-tour-dot.is-on {
+      width: 18px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #e08a62, #c96442);
+    }
+    body.is-usage-tour-lock {
+      overflow: hidden;
+    }
     .brand-mark {
       width: 28px; height: 28px; border-radius: 8px;
       background: var(--color-primary-500); color: var(--text-on-primary);
@@ -257,70 +431,35 @@
       box-shadow: 0 0 0 4px rgba(201, 100, 66, 0.14);
     }
     .hero-copy h1 {
-      margin: 0;
+      margin: 0 0 14px;
       font: 500 clamp(28px, 4.6vw, 48px)/1.18 var(--font-serif);
       letter-spacing: -0.03em;
     }
     .hero-copy h1 .accent { color: var(--color-primary-500); }
-    .hero-lead {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: end;
-      gap: 16px 20px;
-      margin-bottom: 14px;
+    .hero-copy .lede {
+      margin: 0; max-width: 34em; color: var(--text-secondary);
+      font: 400 16px/1.7 var(--font-serif);
     }
-    .landing-enter {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
-      min-width: 0;
-    }
-    .landing-qr-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      margin: 0;
+    .landing-qr-link {
+      display: inline-flex;
+      align-self: flex-start;
+      margin: 12px 0 0;
       padding: 0;
       border: 0;
       background: transparent;
+      color: var(--color-primary-600);
+      font: 600 14px/1.45 var(--font-sans);
+      letter-spacing: -0.01em;
       cursor: pointer;
-      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 3px;
       -webkit-tap-highlight-color: transparent;
     }
-    .landing-qr {
-      width: 104px;
-      height: 104px;
-      box-sizing: border-box;
-      border: 2px solid #111110;
-      border-radius: 12px;
-      background: #fff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      padding: 8px;
-      transition: transform 0.12s ease, box-shadow 0.12s ease;
-    }
-    .landing-qr-btn:hover .landing-qr {
-      box-shadow: 0 4px 12px rgba(31, 30, 29, 0.14);
-    }
-    .landing-qr-btn:active .landing-qr { transform: scale(0.96); }
-    .landing-qr canvas,
-    .landing-qr img {
-      width: 100% !important;
-      height: 100% !important;
-      display: block;
-      object-fit: contain;
-    }
-    .landing-qr-cap {
-      font: 700 11px/1.2 var(--font-sans);
-      color: var(--text-secondary);
-      letter-spacing: -0.01em;
-    }
+    .landing-qr-link:hover { color: var(--color-primary-500); }
+    .landing-qr-link[aria-expanded="true"] { color: var(--color-primary-500); }
     .landing-code-box {
-      width: min(100%, 260px);
+      width: min(100%, 320px);
+      margin-top: 12px;
       padding: 12px;
       border: 1.5px solid var(--border-default);
       border-radius: var(--radius-md);
@@ -370,9 +509,179 @@
     }
     .landing-code-msg.is-error { color: #b42318; }
     .landing-code-msg.is-ok { color: #027a48; }
-    .hero-copy .lede {
-      margin: 0; max-width: 34em; color: var(--text-secondary);
-      font: 400 16px/1.7 var(--font-serif);
+
+    /* QR 스캔 후 학생 입장 전용 화면 */
+    .student-enter-gate {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+      padding: max(20px, var(--safe-top)) max(18px, var(--safe-right)) max(28px, var(--safe-bottom)) max(18px, var(--safe-left));
+    }
+    #viewLanding.is-student-enter {
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 18%, rgba(201, 100, 66, 0.14) 0%, transparent 55%),
+        var(--bg-canvas, #f3f1ea);
+    }
+    #viewLanding.is-student-enter .stage { display: none !important; }
+    #viewLanding.is-student-enter .landing-qr-lightbox { display: none !important; }
+    #viewLanding.is-student-enter .topbar-title { display: none; }
+    #viewLanding.is-student-enter .year-chip { display: none; }
+    #viewLanding.is-student-enter .student-enter-gate {
+      display: flex;
+      min-height: calc(100dvh - 56px);
+    }
+    .student-enter-inner {
+      width: min(420px, 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      text-align: center;
+      animation: enter-bounce 0.55s var(--ease-bounce) both;
+    }
+    .student-enter-kicker {
+      margin: 0;
+      padding: 6px 12px;
+      border: 1px solid var(--border-default);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.88);
+      color: var(--text-secondary);
+      font: 700 12px/1.3 var(--font-sans);
+      letter-spacing: -0.01em;
+    }
+    .student-enter-title {
+      margin: 0;
+      font: 600 clamp(22px, 6vw, 28px)/1.25 var(--font-serif);
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .student-enter-title span { color: var(--color-primary-500); }
+    .student-enter-qr {
+      width: min(280px, 72vw);
+      height: min(280px, 72vw);
+      box-sizing: border-box;
+      border: 2.5px solid #111110;
+      border-radius: 18px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 14px;
+      box-shadow: 0 12px 32px rgba(31, 30, 29, 0.12);
+    }
+    .student-enter-qr canvas,
+    .student-enter-qr img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      object-fit: contain;
+    }
+    .student-enter-cap {
+      margin: 0;
+      max-width: 22em;
+      color: var(--text-secondary);
+      font: 500 14px/1.5 var(--font-sans);
+    }
+    .student-enter-inner .landing-code-box {
+      width: 100%;
+      margin-top: 4px;
+      padding: 16px;
+      border: 2px solid #111110;
+      border-radius: 16px;
+      background: #fffefb;
+      box-shadow: var(--shadow-sm);
+      text-align: left;
+    }
+    .student-enter-inner .landing-code-box label {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+    .student-enter-inner .landing-code-row input {
+      height: 48px;
+      font-size: 16px;
+      letter-spacing: 0.08em;
+    }
+    .student-enter-inner .landing-code-row .btn {
+      height: 48px;
+      min-width: 76px;
+      font-size: 15px;
+    }
+    .student-enter-foot {
+      margin: 4px 0 0;
+      font: 500 12px/1.4 var(--font-sans);
+      color: var(--text-tertiary);
+    }
+
+    .landing-qr-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, var(--safe-top)) max(16px, var(--safe-right)) max(16px, var(--safe-bottom)) max(16px, var(--safe-left));
+      background: rgba(31, 30, 29, 0.52);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .landing-qr-lightbox.is-open { display: flex; }
+    .landing-qr-dialog {
+      width: min(360px, 100%);
+      padding: 22px 20px 18px;
+      border: 2px solid #111110;
+      border-radius: var(--radius-lg);
+      background: #fffefb;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      animation: enter-bounce 0.42s var(--ease-bounce) both;
+    }
+    .landing-qr-pop {
+      width: min(260px, 72vw);
+      height: min(260px, 72vw);
+      box-sizing: border-box;
+      border: 2px solid #111110;
+      border-radius: 14px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 12px;
+    }
+    .landing-qr-pop canvas,
+    .landing-qr-pop img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      object-fit: contain;
+    }
+    .landing-qr-pop-cap {
+      margin: 0;
+      font: 700 14px/1.35 var(--font-sans);
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+    .landing-qr-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      width: 100%;
+    }
+    .landing-qr-actions .btn { min-height: 42px; padding: 0 16px; }
+    .landing-qr-hint {
+      margin: 0;
+      font: 500 12px/1.4 var(--font-sans);
+      color: var(--text-tertiary);
+      text-align: center;
     }
     .auth-panel {
       min-width: 0; display: flex; align-items: center; justify-content: center;
@@ -2957,13 +3266,7 @@
       }
       .hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 18px 20px; border-radius: var(--radius-lg); }
       .hero-copy h1 { font-size: clamp(26px, 7vw, 34px); }
-      .hero-lead {
-        grid-template-columns: 1fr;
-        align-items: start;
-        gap: 14px;
-      }
-      .landing-enter { align-items: flex-start; }
-      .landing-code-box { width: min(100%, 320px); }
+      .landing-code-box { width: min(100%, 100%); }
       .dash-mobile-tabs {
         display: flex;
         position: sticky;
@@ -3010,6 +3313,8 @@
         padding-top: 2px;
       }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
+      .btn-usage .usage-label { display: inline; }
+      .usage-tour-card { width: min(360px, calc(100vw - 24px)); }
       .class-settings { gap: 12px; padding-bottom: 0; }
       .setup-page-head h2 { font-size: 18px; }
       .setup-frame { gap: 10px; padding: 12px; border-radius: 0; }
@@ -3374,6 +3679,25 @@
   </style>
 </head>
 <body>
+  <!-- 사용법 튜토리얼 -->
+  <div class="usage-tour" id="usageTour" hidden aria-live="polite">
+    <div class="usage-tour-hole" id="usageTourHole" aria-hidden="true"></div>
+    <div class="usage-tour-card" id="usageTourCard" role="dialog" aria-modal="true" aria-labelledby="usageTourTitle">
+      <div class="usage-tour-progress" id="usageTourProgress" aria-hidden="true"></div>
+      <div class="usage-tour-badge">
+        <span class="usage-tour-num" id="usageTourNum">1</span>
+        <span class="usage-tour-meta" id="usageTourMeta">STEP 01</span>
+      </div>
+      <h3 class="usage-tour-title" id="usageTourTitle">관리자 페이지</h3>
+      <p class="usage-tour-body" id="usageTourBody"></p>
+      <div class="usage-tour-actions">
+        <button type="button" class="usage-tour-skip" id="usageTourSkip">SKIP</button>
+        <button type="button" class="usage-tour-nav" id="usageTourPrev">이전</button>
+        <button type="button" class="usage-tour-nav is-primary" id="usageTourNext">다음</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Landing -->
   <div class="view is-active" id="viewLanding">
     <header class="topbar">
@@ -3385,33 +3709,15 @@
       <section class="hero" aria-label="진로설계 시작">
         <div class="hero-copy">
           <span class="kicker">진로·학업설계 워크북</span>
-          <div class="hero-lead">
-            <h1>AI와 함께 하는 고교학점제 <span class="accent">진로설계</span></h1>
-            <div class="landing-enter">
-              <button type="button" class="landing-qr-btn" id="btnLandingQr" aria-expanded="false" aria-controls="landingCodeBox" title="눌러서 코드 입력">
-                <span class="landing-qr" id="landingQrHost" aria-hidden="true"></span>
-                <span class="landing-qr-cap">코드로 입장</span>
-              </button>
-              <div class="landing-code-box" id="landingCodeBox" hidden>
-                <label for="landingCodeInput">코드 입력</label>
-                <div class="landing-code-row">
-                  <input
-                    id="landingCodeInput"
-                    type="text"
-                    inputmode="text"
-                    autocomplete="off"
-                    spellcheck="false"
-                    maxlength="16"
-                    placeholder="예: 0F4E6BE3"
-                    aria-describedby="landingCodeMsg"
-                  />
-                  <button type="button" class="btn btn-primary" id="btnLandingCodeGo">열기</button>
-                </div>
-                <p class="landing-code-msg" id="landingCodeMsg" role="status" aria-live="polite"></p>
-              </div>
-            </div>
-          </div>
+          <h1>AI와 함께 하는 고교학점제 <span class="accent">진로설계</span></h1>
           <p class="lede">30차시 프로젝트로 완성하는 진로·학업설계 워크북</p>
+          <button
+            type="button"
+            class="landing-qr-link"
+            id="btnLandingQrPopup"
+            aria-expanded="false"
+            aria-controls="landingQrLightbox"
+          >(학생용 활동지 입장 QR)</button>
         </div>
         <div class="auth-panel">
           <div class="auth-card">
@@ -3472,6 +3778,50 @@
         </div>
       </section>
     </main>
+    <section class="student-enter-gate" id="studentEnterGate" aria-label="학생 활동지 입장" hidden>
+      <div class="student-enter-inner">
+        <p class="student-enter-kicker">학생용 · 활동지 입장</p>
+        <h2 class="student-enter-title">코드로 <span>활동지</span> 열기</h2>
+        <div class="student-enter-qr" id="studentEnterQrHost" aria-hidden="true"></div>
+        <p class="student-enter-cap">교사가 알려준 코드번호를 아래에 입력하세요</p>
+        <div class="landing-code-box" id="landingCodeBox">
+          <label for="landingCodeInput">코드 입력</label>
+          <div class="landing-code-row">
+            <input
+              id="landingCodeInput"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              maxlength="16"
+              placeholder="예: 0F4E6BE3"
+              aria-describedby="landingCodeMsg"
+            />
+            <button type="button" class="btn btn-primary" id="btnLandingCodeGo">열기</button>
+          </div>
+          <p class="landing-code-msg" id="landingCodeMsg" role="status" aria-live="polite"></p>
+        </div>
+        <p class="student-enter-foot">코드 입력 후 열기를 누르면 활동지로 이동합니다</p>
+      </div>
+    </section>
+    <div
+      class="landing-qr-lightbox"
+      id="landingQrLightbox"
+      hidden
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="landingQrPopCap"
+    >
+      <div class="landing-qr-dialog" id="landingQrDialog">
+        <div class="landing-qr-pop" id="landingQrHost" aria-hidden="true"></div>
+        <p class="landing-qr-pop-cap" id="landingQrPopCap">학생용 활동지 입장 QR</p>
+        <div class="landing-qr-actions">
+          <button type="button" class="btn btn-primary" id="btnLandingQrDownload">QR 이미지 저장</button>
+          <button type="button" class="btn btn-secondary" id="btnLandingQrClose">닫기</button>
+        </div>
+        <p class="landing-qr-hint">문구를 다시 누르거나 바깥을 누르면 닫힙니다</p>
+      </div>
+    </div>
   </div>
 
   <!-- Teacher -->
@@ -3491,6 +3841,14 @@
       </div>
       <span class="topbar-spacer"></span>
       <div class="topbar-actions">
+        <button type="button" class="btn-tiny btn-usage" id="btnUsageTour" title="초기 설정 사용법 안내" aria-label="사용법">
+          <svg class="usage-ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 10v7"/>
+            <path d="M12 7h.01"/>
+          </svg>
+          <span class="usage-label">사용법</span>
+        </button>
         <button type="button" class="btn-tiny" id="btnResetDashboard" title="모든 학급·제출 데이터 삭제 후 다시 시작 (되돌리기로 복구 가능)">초기화</button>
         <button type="button" class="btn-tiny btn-undo" id="btnUndoAction" title="되돌리기 (Ctrl+Z) · 삭제·이동·초기화 복구" aria-label="되돌리기">
           <svg class="undo-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
@@ -5050,6 +5408,244 @@
             setSetupFrameCollapsed(false);
           }
         }
+      }
+
+      /* ── 사용법 스포트라이트 튜토리얼 ── */
+      let usageTourIndex = 0;
+      let usageTourActive = false;
+      let usageTourResizeBound = false;
+
+      const USAGE_TOUR_STEPS = [
+        {
+          selectors: ["#btnOpenSetup"],
+          title: "관리자 페이지",
+          body: "왼쪽의 「관리자 페이지」를 눌러 학급 설정을 시작하세요. 모든 초기 설정의 출발점입니다.",
+          prepare: async () => {
+            setDashPanel("list");
+            showRightPanel("lessons");
+          }
+        },
+        {
+          selectors: ["#schoolTypeChips"],
+          title: "고교 유형 선택",
+          body: "고교 유형을 고르세요. 학과가 있으면 「학과 있음」을 선택합니다. (특성화고·특목고 등)",
+          prepare: async () => {
+            await prepareUsageTourSetup();
+          }
+        },
+        {
+          selectors: ["#classGradeChips", "#classCountControl"],
+          title: "학년 · 학급 수",
+          body: "담당 학년과 학급 수를 선택하세요. 예: 1학년 10개 반, 2학년 3개 반처럼 학년마다 다르게 둘 수 있습니다.",
+          prepare: async () => {
+            await prepareUsageTourSetup();
+          }
+        },
+        {
+          selectors: ["#studentCountControl", "#btnBatchNameInput"],
+          title: "학생 수 · 일괄 입력",
+          body: "학생 수를 맞춘 뒤 「학급 저장」하고, 「일괄 입력」으로 이름을 넣으면 초기 설정이 끝납니다!",
+          prepare: async () => {
+            await prepareUsageTourSetup();
+            const roster = $("rosterBox");
+            roster?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        }
+      ];
+
+      async function prepareUsageTourSetup() {
+        showRightPanel("setup");
+        setSetupFrameCollapsed(false);
+        setDashPanel("detail");
+        try {
+          await loadTeacherClassesFromDb();
+          renderClassSettingsUI();
+        } catch (e) {
+          console.warn(e);
+        }
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }
+
+      function unionRectForSelectors(selectors) {
+        const pad = 10;
+        let top = Infinity;
+        let left = Infinity;
+        let right = -Infinity;
+        let bottom = -Infinity;
+        let found = false;
+        (selectors || []).forEach((sel) => {
+          const el = document.querySelector(sel);
+          if (!el || el.hidden) return;
+          const r = el.getBoundingClientRect();
+          if (r.width < 2 && r.height < 2) return;
+          found = true;
+          top = Math.min(top, r.top);
+          left = Math.min(left, r.left);
+          right = Math.max(right, r.right);
+          bottom = Math.max(bottom, r.bottom);
+        });
+        if (!found) {
+          const cx = window.innerWidth / 2;
+          const cy = window.innerHeight / 2;
+          return { top: cy - 40, left: cx - 80, width: 160, height: 80 };
+        }
+        return {
+          top: Math.max(8, top - pad),
+          left: Math.max(8, left - pad),
+          width: Math.min(window.innerWidth - 16, right - left + pad * 2),
+          height: Math.min(window.innerHeight - 16, bottom - top + pad * 2)
+        };
+      }
+
+      function placeUsageTourCard(hole) {
+        const card = $("usageTourCard");
+        if (!card || !hole) return;
+        card.style.animation = "none";
+        void card.offsetWidth;
+        card.style.animation = "";
+
+        const gap = 16;
+        const cw = card.offsetWidth || 360;
+        const ch = card.offsetHeight || 200;
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const spaceBelow = vh - (hole.top + hole.height);
+        const spaceAbove = hole.top;
+        let top;
+        if (spaceBelow >= ch + gap + 12 || spaceBelow >= spaceAbove) {
+          top = hole.top + hole.height + gap;
+        } else {
+          top = hole.top - ch - gap;
+        }
+        top = Math.max(12, Math.min(top, vh - ch - 12));
+        let left = hole.left + hole.width / 2 - cw / 2;
+        left = Math.max(12, Math.min(left, vw - cw - 12));
+        card.style.top = `${Math.round(top)}px`;
+        card.style.left = `${Math.round(left)}px`;
+      }
+
+      function renderUsageTourProgress() {
+        const root = $("usageTourProgress");
+        if (!root) return;
+        root.innerHTML = USAGE_TOUR_STEPS.map(
+          (_, i) => `<span class="usage-tour-dot${i === usageTourIndex ? " is-on" : ""}"></span>`
+        ).join("");
+      }
+
+      async function paintUsageTourStep() {
+        if (!usageTourActive) return;
+        const step = USAGE_TOUR_STEPS[usageTourIndex];
+        if (!step) {
+          stopUsageTour();
+          return;
+        }
+        if (typeof step.prepare === "function") {
+          try {
+            await step.prepare();
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+        await new Promise((r) => setTimeout(r, 80));
+
+        const holeEl = $("usageTourHole");
+        const rect = unionRectForSelectors(step.selectors);
+        if (holeEl) {
+          holeEl.style.top = `${Math.round(rect.top)}px`;
+          holeEl.style.left = `${Math.round(rect.left)}px`;
+          holeEl.style.width = `${Math.round(rect.width)}px`;
+          holeEl.style.height = `${Math.round(rect.height)}px`;
+        }
+
+        $("usageTourNum").textContent = String(usageTourIndex + 1);
+        $("usageTourMeta").textContent = `STEP ${String(usageTourIndex + 1).padStart(2, "0")}`;
+        $("usageTourTitle").textContent = step.title;
+        $("usageTourBody").textContent = step.body;
+        renderUsageTourProgress();
+
+        const prev = $("usageTourPrev");
+        const next = $("usageTourNext");
+        if (prev) prev.disabled = usageTourIndex <= 0;
+        if (next) next.textContent = usageTourIndex >= USAGE_TOUR_STEPS.length - 1 ? "완료" : "다음";
+
+        placeUsageTourCard(rect);
+        // 대상이 보이도록 스크롤 보정 후 한 번 더
+        const first = document.querySelector(step.selectors[0]);
+        first?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        setTimeout(() => {
+          if (!usageTourActive) return;
+          const r2 = unionRectForSelectors(step.selectors);
+          if (holeEl) {
+            holeEl.style.top = `${Math.round(r2.top)}px`;
+            holeEl.style.left = `${Math.round(r2.left)}px`;
+            holeEl.style.width = `${Math.round(r2.width)}px`;
+            holeEl.style.height = `${Math.round(r2.height)}px`;
+          }
+          placeUsageTourCard(r2);
+        }, 320);
+      }
+
+      function stopUsageTour() {
+        usageTourActive = false;
+        const root = $("usageTour");
+        if (root) root.hidden = true;
+        document.body.classList.remove("is-usage-tour-lock");
+      }
+
+      async function startUsageTour() {
+        if (!views.teacher?.classList.contains("is-active")) {
+          toast("교사 워크북 화면에서 사용법을 볼 수 있습니다.");
+          return;
+        }
+        usageTourIndex = 0;
+        usageTourActive = true;
+        const root = $("usageTour");
+        if (root) root.hidden = false;
+        document.body.classList.add("is-usage-tour-lock");
+        if (!usageTourResizeBound) {
+          usageTourResizeBound = true;
+          window.addEventListener(
+            "resize",
+            () => {
+              if (usageTourActive) void paintUsageTourStep();
+            },
+            { passive: true }
+          );
+          document.addEventListener("keydown", (e) => {
+            if (!usageTourActive) return;
+            if (e.key === "Escape") {
+              e.preventDefault();
+              stopUsageTour();
+            } else if (e.key === "ArrowRight" || e.key === "Enter") {
+              e.preventDefault();
+              $("usageTourNext")?.click();
+            } else if (e.key === "ArrowLeft") {
+              e.preventDefault();
+              $("usageTourPrev")?.click();
+            }
+          });
+        }
+        await paintUsageTourStep();
+      }
+
+      function bindUsageTourControls() {
+        if (document.documentElement.dataset.usageTourBound === "1") return;
+        document.documentElement.dataset.usageTourBound = "1";
+        $("usageTourSkip")?.addEventListener("click", () => stopUsageTour());
+        $("usageTourPrev")?.addEventListener("click", () => {
+          if (usageTourIndex <= 0) return;
+          usageTourIndex -= 1;
+          void paintUsageTourStep();
+        });
+        $("usageTourNext")?.addEventListener("click", () => {
+          if (usageTourIndex >= USAGE_TOUR_STEPS.length - 1) {
+            stopUsageTour();
+            toast("초기 설정 안내를 마쳤습니다.");
+            return;
+          }
+          usageTourIndex += 1;
+          void paintUsageTourStep();
+        });
       }
 
       function previewText(content, maxLen) {
@@ -9750,7 +10346,7 @@ ${built.html}
       }
 
       /** 활동지 열기 — 실제 활동지 URL로 이동 (QR에 찍히는 주소와 동일해야 함) */
-      function openActivitySheet(url) {
+      function openActivitySheet(url, opts = {}) {
         const href = String(url || "").trim();
         if (!href) {
           toast("활동지 주소를 만들 수 없습니다.");
@@ -9763,6 +10359,11 @@ ${built.html}
         }
         if (!/^https?:/i.test(href)) {
           toast("학생용 QR은 http(s) 주소여야 합니다.");
+        }
+        // 학생 입장 화면·모바일: 같은 탭에서 바로 이동 (팝업 차단 방지)
+        if (opts.sameTab || document.documentElement.dataset.studentEnter === "1") {
+          location.assign(href);
+          return;
         }
         const a = document.createElement("a");
         a.href = href;
@@ -9787,6 +10388,14 @@ ${built.html}
         return u.toString();
       }
 
+      function wantsStudentEnterMode() {
+        try {
+          return new URLSearchParams(location.search).get("enter") === "1";
+        } catch {
+          return false;
+        }
+      }
+
       function setLandingCodeMsg(text, type) {
         const el = $("landingCodeMsg");
         if (!el) return;
@@ -9795,48 +10404,110 @@ ${built.html}
         el.classList.toggle("is-ok", type === "ok");
       }
 
-      function isLandingCodePanelOpen() {
-        const box = $("landingCodeBox");
-        return !!(box && !box.hidden);
-      }
-
-      function openLandingCodePanel(opts = {}) {
-        const box = $("landingCodeBox");
-        const btn = $("btnLandingQr");
-        if (!box) return;
-        box.hidden = false;
-        btn?.setAttribute("aria-expanded", "true");
-        if (opts.focus !== false) {
-          requestAnimationFrame(() => $("landingCodeInput")?.focus());
-        }
-      }
-
-      function closeLandingCodePanel() {
-        const box = $("landingCodeBox");
-        const btn = $("btnLandingQr");
-        if (!box) return;
-        box.hidden = true;
-        btn?.setAttribute("aria-expanded", "false");
-        setLandingCodeMsg("");
-      }
-
-      function toggleLandingCodePanel() {
-        if (isLandingCodePanelOpen()) closeLandingCodePanel();
-        else openLandingCodePanel();
+      function paintQrIntoHost(host, url, size) {
+        if (!host || !url) return;
+        paintQr(host, url, size);
+        host.removeAttribute("title");
+        host.setAttribute("aria-hidden", "true");
       }
 
       function paintLandingEnterQr() {
         const host = $("landingQrHost");
         if (!host) return;
-        const url = landingEnterUrl();
-        paintQr(host, url, 104);
-        host.removeAttribute("title");
-        host.setAttribute("aria-hidden", "true");
-        const btn = $("btnLandingQr");
-        if (btn) {
-          btn.title = "눌러서 코드 입력";
-          btn.setAttribute("aria-label", "학생 코드 입력 — QR을 누르거나 스캔하세요");
+        const size = Math.min(260, Math.floor(window.innerWidth * 0.72));
+        paintQrIntoHost(host, landingEnterUrl(), Math.max(200, size));
+      }
+
+      function paintStudentEnterQr() {
+        const host = $("studentEnterQrHost");
+        if (!host) return;
+        const size = Math.min(280, Math.floor(window.innerWidth * 0.72));
+        paintQrIntoHost(host, landingEnterUrl(), Math.max(220, size));
+      }
+
+      function activateStudentEnterMode() {
+        const landing = $("viewLanding");
+        const gate = $("studentEnterGate");
+        if (!landing || !gate) return;
+        landing.classList.add("is-student-enter");
+        gate.hidden = false;
+        document.documentElement.dataset.studentEnter = "1";
+        document.title = "학생 활동지 입장";
+        closeLandingQrPopup();
+        paintStudentEnterQr();
+        requestAnimationFrame(() => $("landingCodeInput")?.focus());
+      }
+
+      function isLandingQrPopupOpen() {
+        return !!$("landingQrLightbox")?.classList.contains("is-open");
+      }
+
+      function openLandingQrPopup() {
+        const light = $("landingQrLightbox");
+        const link = $("btnLandingQrPopup");
+        if (!light || wantsStudentEnterMode()) return;
+        light.hidden = false;
+        light.classList.add("is-open");
+        link?.setAttribute("aria-expanded", "true");
+        paintLandingEnterQr();
+      }
+
+      function closeLandingQrPopup() {
+        const light = $("landingQrLightbox");
+        const link = $("btnLandingQrPopup");
+        if (!light) return;
+        light.classList.remove("is-open");
+        light.hidden = true;
+        link?.setAttribute("aria-expanded", "false");
+      }
+
+      function toggleLandingQrPopup() {
+        if (isLandingQrPopupOpen()) closeLandingQrPopup();
+        else openLandingQrPopup();
+      }
+
+      async function downloadLandingQrImage() {
+        const host = $("landingQrHost");
+        if (!host) {
+          toast("QR을 먼저 열어 주세요.");
+          return;
         }
+        try {
+          await ensureQrcodeLib();
+        } catch {
+          /* paintQr가 폴백 처리 */
+        }
+        paintLandingEnterQr();
+        await new Promise((r) => setTimeout(r, 60));
+
+        const canvas = host.querySelector("canvas");
+        const img = host.querySelector("img");
+        let href = "";
+        let ext = "png";
+        if (canvas) {
+          try {
+            href = canvas.toDataURL("image/png");
+          } catch (e) {
+            console.warn(e);
+          }
+        }
+        if (!href && img?.src) {
+          href = img.src;
+          if (/^data:image\/jpeg/i.test(href)) ext = "jpg";
+          else if (/^data:image\/webp/i.test(href)) ext = "webp";
+        }
+        if (!href) {
+          toast("저장할 QR 이미지를 만들지 못했습니다.");
+          return;
+        }
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = `학생용-활동지-입장-QR.${ext}`;
+        a.rel = "noopener";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        toast("QR 이미지를 저장했습니다.");
       }
 
       async function lookupLessonBySubmitCode(code) {
@@ -9899,7 +10570,7 @@ ${built.html}
           const submitCode = String(lesson.submit_code || code).trim().toUpperCase();
           const url = activityUrl(sessionNo, submitCode);
           setLandingCodeMsg(`${sessionNo}차시 활동지를 엽니다.`, "ok");
-          openActivitySheet(url);
+          openActivitySheet(url, { sameTab: true });
           return true;
         } catch (e) {
           console.warn(e);
@@ -9912,14 +10583,32 @@ ${built.html}
 
       function initLandingStudentEntry() {
         if (document.documentElement.dataset.landingEnterBound === "1") {
-          paintLandingEnterQr();
+          if (wantsStudentEnterMode()) activateStudentEnterMode();
           return;
         }
         document.documentElement.dataset.landingEnterBound = "1";
 
-        $("btnLandingQr")?.addEventListener("click", () => {
-          toggleLandingCodePanel();
+        $("btnLandingQrPopup")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          toggleLandingQrPopup();
         });
+        $("btnLandingQrClose")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          closeLandingQrPopup();
+        });
+        $("btnLandingQrDownload")?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (!isLandingQrPopupOpen()) openLandingQrPopup();
+          void downloadLandingQrImage();
+        });
+        $("landingQrLightbox")?.addEventListener("click", (e) => {
+          if (e.target === $("landingQrLightbox")) closeLandingQrPopup();
+        });
+        $("landingQrDialog")?.addEventListener("click", (e) => e.stopPropagation());
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && isLandingQrPopupOpen()) closeLandingQrPopup();
+        });
+
         $("btnLandingCodeGo")?.addEventListener("click", () => {
           void openActivityBySubmitCode($("landingCodeInput")?.value);
         });
@@ -9935,15 +10624,15 @@ ${built.html}
           setLandingCodeMsg("");
         });
 
-        paintLandingEnterQr();
+        window.addEventListener(
+          "resize",
+          () => {
+            if (document.documentElement.dataset.studentEnter === "1") paintStudentEnterQr();
+          },
+          { passive: true }
+        );
 
-        try {
-          if (new URLSearchParams(location.search).get("enter") === "1") {
-            openLandingCodePanel({ focus: true });
-          }
-        } catch {
-          /* ignore */
-        }
+        if (wantsStudentEnterMode()) activateStudentEnterMode();
       }
 
       function ensureQrcodeLib() {
@@ -12868,6 +13557,8 @@ ${built.html}
       });
       $("topClassSelect")?.addEventListener("change", () => queueSwitchFromTopbar());
       $("btnResetDashboard")?.addEventListener("click", () => resetTeacherDashboard());
+      $("btnUsageTour")?.addEventListener("click", () => startUsageTour());
+      bindUsageTourControls();
       $("btnUndoAction")?.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
