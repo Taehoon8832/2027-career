@@ -122,7 +122,7 @@
     }
     .btn-usage .usage-label { font-weight: 700; }
 
-    /* 사용법 튜토리얼 · 스포트라이트 */
+    /* 사용법 튜토리얼 · 시네마틱 스포트라이트 */
     .usage-tour {
       position: fixed;
       inset: 0;
@@ -130,92 +130,167 @@
       pointer-events: auto;
     }
     .usage-tour[hidden] { display: none !important; }
+    .usage-tour-veil {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 55% at 50% 40%, rgba(80, 42, 28, 0.18) 0%, transparent 62%),
+        rgba(8, 6, 5, 0.55);
+      backdrop-filter: blur(2.5px);
+      -webkit-backdrop-filter: blur(2.5px);
+      opacity: 0;
+      animation: usage-veil-in 0.5s ease forwards;
+      pointer-events: auto;
+    }
+    @keyframes usage-veil-in {
+      to { opacity: 1; }
+    }
     .usage-tour-hole {
       position: fixed;
       z-index: 121;
-      border-radius: 14px;
+      border-radius: 16px;
+      background: transparent;
       box-shadow:
-        0 0 0 9999px rgba(12, 10, 9, 0.78),
-        0 0 0 1.5px rgba(255, 236, 220, 0.95),
-        0 0 0 6px rgba(201, 100, 66, 0.28),
-        0 12px 48px rgba(201, 100, 66, 0.35);
+        0 0 0 9999px rgba(8, 6, 5, 0.72),
+        0 0 0 1px rgba(255, 248, 240, 0.95),
+        0 0 0 8px rgba(201, 100, 66, 0.22),
+        0 0 48px 8px rgba(201, 100, 66, 0.28),
+        inset 0 0 0 1px rgba(255, 255, 255, 0.35);
       transition:
-        top 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        left 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        width 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        height 0.45s cubic-bezier(0.22, 1, 0.36, 1),
-        border-radius 0.35s ease;
+        top 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        left 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        width 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        height 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+        border-radius 0.4s ease;
       pointer-events: none;
-      animation: usage-pulse 2.4s ease-in-out infinite;
+      animation: usage-pulse 2.6s ease-in-out infinite;
     }
+    .usage-tour-hole.is-moving { animation: none; }
     @keyframes usage-pulse {
-      0%, 100% { box-shadow:
-        0 0 0 9999px rgba(12, 10, 9, 0.78),
-        0 0 0 1.5px rgba(255, 236, 220, 0.95),
-        0 0 0 6px rgba(201, 100, 66, 0.28),
-        0 12px 48px rgba(201, 100, 66, 0.35); }
-      50% { box-shadow:
-        0 0 0 9999px rgba(12, 10, 9, 0.78),
-        0 0 0 1.5px rgba(255, 244, 232, 1),
-        0 0 0 10px rgba(201, 100, 66, 0.18),
-        0 16px 56px rgba(201, 100, 66, 0.48); }
+      0%, 100% {
+        box-shadow:
+          0 0 0 9999px rgba(8, 6, 5, 0.72),
+          0 0 0 1px rgba(255, 248, 240, 0.95),
+          0 0 0 8px rgba(201, 100, 66, 0.22),
+          0 0 48px 8px rgba(201, 100, 66, 0.28),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+      }
+      50% {
+        box-shadow:
+          0 0 0 9999px rgba(8, 6, 5, 0.72),
+          0 0 0 1.5px rgba(255, 252, 246, 1),
+          0 0 0 12px rgba(201, 100, 66, 0.14),
+          0 0 64px 12px rgba(224, 138, 98, 0.38),
+          inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+      }
+    }
+    .usage-tour-beacon {
+      position: fixed;
+      z-index: 121;
+      width: 18px;
+      height: 18px;
+      margin: -9px 0 0 -9px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #ffe7d6, #c96442 55%, #8c4022);
+      box-shadow: 0 0 0 0 rgba(201, 100, 66, 0.55);
+      pointer-events: none;
+      opacity: 0;
+      transition: top 0.55s cubic-bezier(0.22, 1, 0.36, 1), left 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      animation: usage-beacon 2s ease-out infinite;
+    }
+    .usage-tour.is-on .usage-tour-beacon { opacity: 1; }
+    @keyframes usage-beacon {
+      0% { box-shadow: 0 0 0 0 rgba(201, 100, 66, 0.5); transform: scale(0.85); }
+      70% { box-shadow: 0 0 0 18px rgba(201, 100, 66, 0); transform: scale(1); }
+      100% { box-shadow: 0 0 0 0 rgba(201, 100, 66, 0); transform: scale(1); }
     }
     .usage-tour-card {
       position: fixed;
       z-index: 122;
-      width: min(360px, calc(100vw - 28px));
-      padding: 18px 18px 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      width: min(380px, calc(100vw - 28px));
+      padding: 0;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
       background:
-        linear-gradient(155deg, rgba(255, 252, 248, 0.98) 0%, rgba(255, 244, 234, 0.96) 48%, rgba(255, 255, 255, 0.97) 100%);
+        linear-gradient(160deg, rgba(255, 253, 250, 0.98) 0%, rgba(255, 243, 232, 0.97) 42%, rgba(255, 255, 255, 0.98) 100%);
       box-shadow:
-        0 24px 64px rgba(0, 0, 0, 0.38),
-        0 0 0 1px rgba(201, 100, 66, 0.12),
-        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+        0 28px 80px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(201, 100, 66, 0.14),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
       pointer-events: auto;
-      transform: translateY(8px);
+      overflow: hidden;
+      transform: translateY(14px) scale(0.98);
       opacity: 0;
-      animation: usage-card-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation: usage-card-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .usage-tour-card::before {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; top: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #e8a07a, #c96442 40%, #8c4022 100%);
     }
     @keyframes usage-card-in {
-      to { transform: translateY(0); opacity: 1; }
+      to { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .usage-tour-card-inner { padding: 18px 18px 14px; }
+    .usage-tour-kicker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
     }
     .usage-tour-badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      margin-bottom: 10px;
     }
     .usage-tour-num {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       display: grid;
       place-items: center;
-      background: linear-gradient(145deg, #e08a62, #c96442 55%, #a84e30);
+      background: linear-gradient(145deg, #e89a72, #c96442 55%, #a84e30);
       color: #fffefb;
-      font: 800 13px/1 var(--font-sans);
-      box-shadow: 0 4px 12px rgba(168, 78, 48, 0.35);
+      font: 800 14px/1 var(--font-sans);
+      box-shadow: 0 6px 16px rgba(168, 78, 48, 0.38);
     }
     .usage-tour-meta {
-      font: 700 11px/1.2 var(--font-sans);
-      letter-spacing: 0.08em;
+      font: 800 11px/1.2 var(--font-sans);
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--color-primary-600);
     }
+    .usage-tour-count {
+      font: 700 11px/1 var(--font-sans);
+      color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+    }
     .usage-tour-title {
       margin: 0 0 8px;
-      font: 600 18px/1.3 var(--font-serif);
-      letter-spacing: -0.02em;
+      font: 600 20px/1.25 var(--font-serif);
+      letter-spacing: -0.025em;
       color: var(--text-primary);
     }
     .usage-tour-body {
       margin: 0 0 16px;
-      font: 500 13.5px/1.55 var(--font-sans);
+      font: 500 13.5px/1.6 var(--font-sans);
       color: var(--text-secondary);
       word-break: keep-all;
     }
+    .usage-tour-tip {
+      margin: -8px 0 14px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(201, 100, 66, 0.08);
+      border: 1px solid rgba(201, 100, 66, 0.16);
+      color: var(--color-primary-600);
+      font: 600 12px/1.45 var(--font-sans);
+      word-break: keep-all;
+    }
+    .usage-tour-tip[hidden] { display: none !important; }
     .usage-tour-actions {
       display: flex;
       align-items: center;
@@ -226,22 +301,24 @@
       border: 0;
       background: transparent;
       color: var(--text-tertiary);
-      font: 700 12px/1 var(--font-sans);
-      letter-spacing: 0.06em;
+      font: 800 11px/1 var(--font-sans);
+      letter-spacing: 0.12em;
       cursor: pointer;
       padding: 8px 4px;
     }
     .usage-tour-skip:hover { color: var(--text-primary); }
     .usage-tour-nav {
-      height: 36px;
-      padding: 0 14px;
+      height: 38px;
+      padding: 0 16px;
       border-radius: 999px;
       border: 1.5px solid var(--border-default);
       background: #fff;
       font: 700 12px/1 var(--font-sans);
       cursor: pointer;
       color: var(--text-primary);
+      transition: transform 0.12s ease, filter 0.15s ease;
     }
+    .usage-tour-nav:active { transform: scale(0.97); }
     .usage-tour-nav:disabled {
       opacity: 0.35;
       cursor: default;
@@ -249,28 +326,62 @@
     .usage-tour-nav.is-primary {
       border-color: transparent;
       color: #fffefb;
-      background: linear-gradient(145deg, #e08a62, #c96442 55%, #a84e30);
-      box-shadow: 0 4px 14px rgba(168, 78, 48, 0.32);
+      background: linear-gradient(145deg, #e89a72, #c96442 55%, #a84e30);
+      box-shadow: 0 6px 18px rgba(168, 78, 48, 0.36);
     }
-    .usage-tour-nav.is-primary:hover { filter: brightness(1.05); }
+    .usage-tour-nav.is-primary:hover { filter: brightness(1.06); }
     .usage-tour-progress {
       display: flex;
-      gap: 5px;
+      gap: 4px;
       margin-bottom: 12px;
+      flex-wrap: wrap;
     }
     .usage-tour-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background: rgba(61, 52, 44, 0.18);
+      background: rgba(61, 52, 44, 0.16);
+      transition: width 0.25s ease, background 0.25s ease;
+    }
+    .usage-tour-dot.is-done {
+      background: rgba(201, 100, 66, 0.45);
     }
     .usage-tour-dot.is-on {
-      width: 18px;
+      width: 20px;
       border-radius: 999px;
-      background: linear-gradient(90deg, #e08a62, #c96442);
+      background: linear-gradient(90deg, #e89a72, #c96442);
+    }
+    .usage-tour-rail {
+      position: fixed;
+      z-index: 122;
+      top: max(12px, var(--safe-top));
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(20, 16, 14, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color: rgba(255, 248, 240, 0.92);
+      font: 700 11px/1 var(--font-sans);
+      letter-spacing: 0.06em;
+      pointer-events: none;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+    .usage-tour-rail strong {
+      color: #ffd7c0;
+      font-weight: 800;
     }
     body.is-usage-tour-lock {
       overflow: hidden;
+    }
+    body.is-usage-tour-lock .viewTeacher,
+    body.is-usage-tour-lock #viewTeacher {
+      filter: saturate(0.92);
     }
     .brand-mark {
       width: 28px; height: 28px; border-radius: 8px;
@@ -2304,6 +2415,11 @@
       color: #a33b2c;
       font-weight: 700;
     }
+    .detail-sub-preview .wc-final-job {
+      color: #1d4ed8;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
     .detail-sub-actions {
       display: flex; justify-content: space-between; align-items: center;
       gap: 4px; flex-wrap: nowrap;
@@ -3681,19 +3797,30 @@
 <body>
   <!-- 사용법 튜토리얼 -->
   <div class="usage-tour" id="usageTour" hidden aria-live="polite">
+    <div class="usage-tour-veil" aria-hidden="true"></div>
     <div class="usage-tour-hole" id="usageTourHole" aria-hidden="true"></div>
+    <div class="usage-tour-beacon" id="usageTourBeacon" aria-hidden="true"></div>
+    <div class="usage-tour-rail" id="usageTourRail" aria-hidden="true">
+      GUIDE · <strong id="usageTourRailStep">01</strong> / <span id="usageTourRailTotal">08</span>
+    </div>
     <div class="usage-tour-card" id="usageTourCard" role="dialog" aria-modal="true" aria-labelledby="usageTourTitle">
-      <div class="usage-tour-progress" id="usageTourProgress" aria-hidden="true"></div>
-      <div class="usage-tour-badge">
-        <span class="usage-tour-num" id="usageTourNum">1</span>
-        <span class="usage-tour-meta" id="usageTourMeta">STEP 01</span>
-      </div>
-      <h3 class="usage-tour-title" id="usageTourTitle">관리자 페이지</h3>
-      <p class="usage-tour-body" id="usageTourBody"></p>
-      <div class="usage-tour-actions">
-        <button type="button" class="usage-tour-skip" id="usageTourSkip">SKIP</button>
-        <button type="button" class="usage-tour-nav" id="usageTourPrev">이전</button>
-        <button type="button" class="usage-tour-nav is-primary" id="usageTourNext">다음</button>
+      <div class="usage-tour-card-inner">
+        <div class="usage-tour-progress" id="usageTourProgress" aria-hidden="true"></div>
+        <div class="usage-tour-kicker">
+          <div class="usage-tour-badge">
+            <span class="usage-tour-num" id="usageTourNum">1</span>
+            <span class="usage-tour-meta" id="usageTourMeta">STEP 01</span>
+          </div>
+          <span class="usage-tour-count" id="usageTourCount">1 / 8</span>
+        </div>
+        <h3 class="usage-tour-title" id="usageTourTitle">관리자 페이지</h3>
+        <p class="usage-tour-body" id="usageTourBody"></p>
+        <p class="usage-tour-tip" id="usageTourTip" hidden></p>
+        <div class="usage-tour-actions">
+          <button type="button" class="usage-tour-skip" id="usageTourSkip">SKIP</button>
+          <button type="button" class="usage-tour-nav" id="usageTourPrev">이전</button>
+          <button type="button" class="usage-tour-nav is-primary" id="usageTourNext">다음</button>
+        </div>
       </div>
     </div>
   </div>
@@ -5414,12 +5541,14 @@
       let usageTourIndex = 0;
       let usageTourActive = false;
       let usageTourResizeBound = false;
+      let usageTourPaintSeq = 0;
 
       const USAGE_TOUR_STEPS = [
         {
           selectors: ["#btnOpenSetup"],
           title: "관리자 페이지",
-          body: "왼쪽의 「관리자 페이지」를 눌러 학급 설정을 시작하세요. 모든 초기 설정의 출발점입니다.",
+          body: "왼쪽 「관리자 페이지」에서 학급 구성을 시작합니다. 학년·반·학생 수를 여기서 먼저 정해 주세요.",
+          tip: "저장이 끝나면 차시 목록으로 수업이 열립니다.",
           prepare: async () => {
             setDashPanel("list");
             showRightPanel("lessons");
@@ -5427,8 +5556,9 @@
         },
         {
           selectors: ["#schoolTypeChips"],
-          title: "고교 유형 선택",
-          body: "고교 유형을 고르세요. 학과가 있으면 「학과 있음」을 선택합니다. (특성화고·특목고 등)",
+          title: "고교 유형",
+          body: "고교 유형을 선택하세요. 특성화·특목고처럼 학과가 있으면 「학과 있음」을 고릅니다.",
+          tip: "일반고는 「학과 없음」으로 두면 됩니다.",
           prepare: async () => {
             await prepareUsageTourSetup();
           }
@@ -5436,19 +5566,58 @@
         {
           selectors: ["#classGradeChips", "#classCountControl"],
           title: "학년 · 학급 수",
-          body: "담당 학년과 학급 수를 선택하세요. 예: 1학년 10개 반, 2학년 3개 반처럼 학년마다 다르게 둘 수 있습니다.",
+          body: "담당 학년과 학급 수를 맞춥니다. 예: 1학년 10반, 2학년 3반처럼 학년마다 다르게 둘 수 있습니다.",
+          tip: "학년을 바꿀 때마다 그 학년의 학급 수가 따로 기억됩니다.",
           prepare: async () => {
             await prepareUsageTourSetup();
           }
         },
         {
-          selectors: ["#studentCountControl", "#btnBatchNameInput"],
-          title: "학생 수 · 일괄 입력",
-          body: "학생 수를 맞춘 뒤 「학급 저장」하고, 「일괄 입력」으로 이름을 넣으면 초기 설정이 끝납니다!",
+          selectors: ["#studentNoFormatChips"],
+          title: "학번 표시유형",
+          body: "우리 학교 학번 자리수에 맞는 유형을 고르세요. 예시는 1학년 2반 3번 기준입니다.",
+          tip: "유형1(5자리) 10203 · 유형2(4자리) 1203",
           prepare: async () => {
             await prepareUsageTourSetup();
-            const roster = $("rosterBox");
-            roster?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            $("rosterBox")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        },
+        {
+          selectors: ["#rosterClassChips", "#studentCountControl"],
+          title: "학급 명단 설정",
+          body: "반을 고른 뒤 학생 수를 맞추고 「학급 저장」을 눌러 주세요. 이 단계까지면 기본 학급이 준비됩니다.",
+          tip: "학과가 있는 학교는 위에서 반·학과 이름도 함께 확인해 주세요.",
+          prepare: async () => {
+            await prepareUsageTourSetup();
+            $("rosterBox")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        },
+        {
+          selectors: ["#btnBatchNameInput", ".roster-board-bar"],
+          title: "이름 일괄 입력",
+          body: "「일괄 입력」으로 학번·이름을 한 번에 넣으면 초기 설정이 끝납니다.",
+          tip: "반장·부반장 지정과 학생 카드도 이 아래에서 관리합니다.",
+          prepare: async () => {
+            await prepareUsageTourSetup();
+            document.querySelector(".roster-board")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        },
+        {
+          selectors: [".lesson-item"],
+          title: "차시 선택",
+          body: "왼쪽 목록에서 오늘 수업 차시를 고르세요. 차시를 열면 QR·코드번호·제출 현황이 나타납니다.",
+          tip: "숫자 배지는 해당 차시 제출 수입니다.",
+          prepare: async () => {
+            await prepareUsageTourLessonList();
+          }
+        },
+        {
+          selectors: [".detail-action-strip", "#detailQr"],
+          title: "QR · 코드번호",
+          body: "학생은 워크북 입장 QR에서 이 「코드번호」를 입력합니다. 교실 화면을 보여줄 때는 여기 QR을 크게 보여 주세요.",
+          tip: "활동지 열기 · 링크 복사로 바로 수업 화면도 열 수 있습니다.",
+          prepare: async () => {
+            await prepareUsageTourLessonDetail();
           }
         }
       ];
@@ -5466,28 +5635,75 @@
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       }
 
+      async function prepareUsageTourLessonList() {
+        showRightPanel("lessons");
+        setDashPanel("list");
+        try {
+          if (!lessons?.length) {
+            const classId = activeClassId || teacherClass?.id || rosterClassId;
+            if (classId) {
+              lessons = await fetchLessonsForClass(classId, { seed: !lessonsCache.has(classId) });
+              await renderLessonList();
+            }
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }
+
+      async function prepareUsageTourLessonDetail() {
+        setDashPanel("list");
+        try {
+          const classId = activeClassId || teacherClass?.id || rosterClassId;
+          if (classId && !lessons?.length) {
+            lessons = await fetchLessonsForClass(classId, { seed: !lessonsCache.has(classId) });
+            await renderLessonList();
+          }
+          const first =
+            lessons.find((l) => Number(l.session_no) === 1) ||
+            lessons[0] ||
+            null;
+          if (first?.id) {
+            await selectLesson(first.id, true);
+          } else {
+            showRightPanel("lesson");
+          }
+        } catch (e) {
+          console.warn(e);
+          showRightPanel("lesson");
+        }
+        setDashPanel("detail");
+        await new Promise((r) => setTimeout(r, 120));
+        $("detailQr")?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+
       function unionRectForSelectors(selectors) {
-        const pad = 10;
+        const pad = 12;
         let top = Infinity;
         let left = Infinity;
         let right = -Infinity;
         let bottom = -Infinity;
         let found = false;
         (selectors || []).forEach((sel) => {
-          const el = document.querySelector(sel);
-          if (!el || el.hidden) return;
-          const r = el.getBoundingClientRect();
-          if (r.width < 2 && r.height < 2) return;
-          found = true;
-          top = Math.min(top, r.top);
-          left = Math.min(left, r.left);
-          right = Math.max(right, r.right);
-          bottom = Math.max(bottom, r.bottom);
+          const nodes = document.querySelectorAll(sel);
+          nodes.forEach((el, idx) => {
+            if (!el || el.hidden) return;
+            // lesson-item은 첫 카드만
+            if (sel === ".lesson-item" && idx > 0) return;
+            const r = el.getBoundingClientRect();
+            if (r.width < 2 && r.height < 2) return;
+            found = true;
+            top = Math.min(top, r.top);
+            left = Math.min(left, r.left);
+            right = Math.max(right, r.right);
+            bottom = Math.max(bottom, r.bottom);
+          });
         });
         if (!found) {
           const cx = window.innerWidth / 2;
           const cy = window.innerHeight / 2;
-          return { top: cy - 40, left: cx - 80, width: 160, height: 80 };
+          return { top: cy - 48, left: cx - 100, width: 200, height: 96 };
         }
         return {
           top: Math.max(8, top - pad),
@@ -5504,41 +5720,83 @@
         void card.offsetWidth;
         card.style.animation = "";
 
-        const gap = 16;
-        const cw = card.offsetWidth || 360;
-        const ch = card.offsetHeight || 200;
+        const gap = 18;
+        const cw = card.offsetWidth || 380;
+        const ch = card.offsetHeight || 220;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
         const spaceBelow = vh - (hole.top + hole.height);
         const spaceAbove = hole.top;
         let top;
-        if (spaceBelow >= ch + gap + 12 || spaceBelow >= spaceAbove) {
+        if (spaceBelow >= ch + gap + 20 || spaceBelow >= spaceAbove) {
           top = hole.top + hole.height + gap;
         } else {
           top = hole.top - ch - gap;
         }
-        top = Math.max(12, Math.min(top, vh - ch - 12));
+        top = Math.max(52, Math.min(top, vh - ch - 12));
         let left = hole.left + hole.width / 2 - cw / 2;
         left = Math.max(12, Math.min(left, vw - cw - 12));
         card.style.top = `${Math.round(top)}px`;
         card.style.left = `${Math.round(left)}px`;
       }
 
+      function placeUsageTourBeacon(hole) {
+        const beacon = $("usageTourBeacon");
+        if (!beacon || !hole) return;
+        beacon.style.top = `${Math.round(hole.top + 10)}px`;
+        beacon.style.left = `${Math.round(hole.left + hole.width - 10)}px`;
+      }
+
       function renderUsageTourProgress() {
         const root = $("usageTourProgress");
         if (!root) return;
-        root.innerHTML = USAGE_TOUR_STEPS.map(
-          (_, i) => `<span class="usage-tour-dot${i === usageTourIndex ? " is-on" : ""}"></span>`
-        ).join("");
+        root.innerHTML = USAGE_TOUR_STEPS.map((_, i) => {
+          const cls =
+            i === usageTourIndex ? " is-on" : i < usageTourIndex ? " is-done" : "";
+          return `<span class="usage-tour-dot${cls}"></span>`;
+        }).join("");
+      }
+
+      function syncUsageTourChrome(step) {
+        const total = USAGE_TOUR_STEPS.length;
+        const n = usageTourIndex + 1;
+        $("usageTourNum").textContent = String(n);
+        $("usageTourMeta").textContent = `STEP ${String(n).padStart(2, "0")}`;
+        $("usageTourCount").textContent = `${n} / ${total}`;
+        $("usageTourRailStep").textContent = String(n).padStart(2, "0");
+        $("usageTourRailTotal").textContent = String(total).padStart(2, "0");
+        $("usageTourTitle").textContent = step.title;
+        $("usageTourBody").textContent = step.body;
+        const tip = $("usageTourTip");
+        if (tip) {
+          if (step.tip) {
+            tip.hidden = false;
+            tip.textContent = step.tip;
+          } else {
+            tip.hidden = true;
+            tip.textContent = "";
+          }
+        }
+        renderUsageTourProgress();
+        const prev = $("usageTourPrev");
+        const next = $("usageTourNext");
+        if (prev) prev.disabled = usageTourIndex <= 0;
+        if (next) next.textContent = usageTourIndex >= total - 1 ? "완료" : "다음";
       }
 
       async function paintUsageTourStep() {
         if (!usageTourActive) return;
+        const seq = ++usageTourPaintSeq;
         const step = USAGE_TOUR_STEPS[usageTourIndex];
         if (!step) {
           stopUsageTour();
           return;
         }
+        const root = $("usageTour");
+        root?.classList.add("is-on");
+        const holeEl = $("usageTourHole");
+        holeEl?.classList.add("is-moving");
+
         if (typeof step.prepare === "function") {
           try {
             await step.prepare();
@@ -5546,50 +5804,44 @@
             console.warn(e);
           }
         }
-        await new Promise((r) => setTimeout(r, 80));
+        if (seq !== usageTourPaintSeq || !usageTourActive) return;
+        await new Promise((r) => setTimeout(r, 90));
+        if (seq !== usageTourPaintSeq || !usageTourActive) return;
 
-        const holeEl = $("usageTourHole");
-        const rect = unionRectForSelectors(step.selectors);
-        if (holeEl) {
+        syncUsageTourChrome(step);
+
+        const applyRect = (rect) => {
+          if (!holeEl) return;
           holeEl.style.top = `${Math.round(rect.top)}px`;
           holeEl.style.left = `${Math.round(rect.left)}px`;
           holeEl.style.width = `${Math.round(rect.width)}px`;
           holeEl.style.height = `${Math.round(rect.height)}px`;
-        }
+          placeUsageTourBeacon(rect);
+          placeUsageTourCard(rect);
+        };
 
-        $("usageTourNum").textContent = String(usageTourIndex + 1);
-        $("usageTourMeta").textContent = `STEP ${String(usageTourIndex + 1).padStart(2, "0")}`;
-        $("usageTourTitle").textContent = step.title;
-        $("usageTourBody").textContent = step.body;
-        renderUsageTourProgress();
-
-        const prev = $("usageTourPrev");
-        const next = $("usageTourNext");
-        if (prev) prev.disabled = usageTourIndex <= 0;
-        if (next) next.textContent = usageTourIndex >= USAGE_TOUR_STEPS.length - 1 ? "완료" : "다음";
-
-        placeUsageTourCard(rect);
-        // 대상이 보이도록 스크롤 보정 후 한 번 더
-        const first = document.querySelector(step.selectors[0]);
+        const firstSel = step.selectors[0];
+        const first = document.querySelector(firstSel);
         first?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        applyRect(unionRectForSelectors(step.selectors));
+
         setTimeout(() => {
-          if (!usageTourActive) return;
-          const r2 = unionRectForSelectors(step.selectors);
-          if (holeEl) {
-            holeEl.style.top = `${Math.round(r2.top)}px`;
-            holeEl.style.left = `${Math.round(r2.left)}px`;
-            holeEl.style.width = `${Math.round(r2.width)}px`;
-            holeEl.style.height = `${Math.round(r2.height)}px`;
-          }
-          placeUsageTourCard(r2);
-        }, 320);
+          if (seq !== usageTourPaintSeq || !usageTourActive) return;
+          applyRect(unionRectForSelectors(step.selectors));
+          holeEl?.classList.remove("is-moving");
+        }, 360);
       }
 
       function stopUsageTour() {
         usageTourActive = false;
+        usageTourPaintSeq += 1;
         const root = $("usageTour");
-        if (root) root.hidden = true;
+        if (root) {
+          root.hidden = true;
+          root.classList.remove("is-on");
+        }
         document.body.classList.remove("is-usage-tour-lock");
+        $("usageTourHole")?.classList.remove("is-moving");
       }
 
       async function startUsageTour() {
@@ -5600,7 +5852,10 @@
         usageTourIndex = 0;
         usageTourActive = true;
         const root = $("usageTour");
-        if (root) root.hidden = false;
+        if (root) {
+          root.hidden = false;
+          root.classList.add("is-on");
+        }
         document.body.classList.add("is-usage-tour-lock");
         if (!usageTourResizeBound) {
           usageTourResizeBound = true;
@@ -5631,7 +5886,10 @@
       function bindUsageTourControls() {
         if (document.documentElement.dataset.usageTourBound === "1") return;
         document.documentElement.dataset.usageTourBound = "1";
-        $("usageTourSkip")?.addEventListener("click", () => stopUsageTour());
+        $("usageTourSkip")?.addEventListener("click", () => {
+          stopUsageTour();
+          toast("사용법 안내를 건너뛰었습니다.");
+        });
         $("usageTourPrev")?.addEventListener("click", () => {
           if (usageTourIndex <= 0) return;
           usageTourIndex -= 1;
@@ -5640,7 +5898,7 @@
         $("usageTourNext")?.addEventListener("click", () => {
           if (usageTourIndex >= USAGE_TOUR_STEPS.length - 1) {
             stopUsageTour();
-            toast("초기 설정 안내를 마쳤습니다.");
+            toast("사용법 안내를 마쳤습니다. 수업을 시작해 보세요!");
             return;
           }
           usageTourIndex += 1;
@@ -7372,7 +7630,8 @@
         const preview = grid.querySelector(`.detail-sub-preview[data-tab-detail="${sub.id}"] .plain-mini`);
         if (preview) {
           const summary = yukha.oneLine || yukha.paragraph || "내용 없음";
-          preview.textContent = incomplete.incomplete ? `미비 · ${summary}` : summary;
+          const previewText = incomplete.incomplete ? `미비 · ${summary}` : summary;
+          preview.innerHTML = formatDetailSubPreviewHtml(previewText, yukha.winnerJob);
           preview.classList.toggle("is-incomplete", !!incomplete.incomplete);
           const block = preview.closest(".detail-sub-block");
           block?.classList.toggle("is-incomplete", !!incomplete.incomplete);
@@ -8473,7 +8732,7 @@
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v9|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v10|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -8588,8 +8847,30 @@
         );
         const sheetText = lines.map((l) => `${l.k}: ${l.v}`).join(" / ");
         sub._yukhaWhere = cacheKey;
-        sub._yukha = { oneLine, paragraph, lines, sheetText };
+        sub._yukha = {
+          oneLine,
+          paragraph,
+          lines,
+          sheetText,
+          winnerJob: sessionNo === 3 ? winnerJob : "",
+          sessionNo
+        };
         return sub._yukha;
+      }
+
+      /** 제출 현황 한 줄 요약 — 3차시 최종 직업을 파란 강조 */
+      function formatDetailSubPreviewHtml(summaryText, winnerJob) {
+        const text = String(summaryText || "");
+        const job = String(winnerJob || "").trim();
+        if (!text) return "";
+        if (!job) return escapeHtml(text);
+        const idx = text.lastIndexOf(job);
+        if (idx < 0) return escapeHtml(text);
+        return (
+          escapeHtml(text.slice(0, idx)) +
+          `<span class="wc-final-job">${escapeHtml(job)}</span>` +
+          escapeHtml(text.slice(idx + job.length))
+        );
       }
 
       function buildSubmissionReportBody(sub) {
@@ -12360,7 +12641,7 @@ ${built.html}
                     <span class="sub-time">${escapeHtml(formatTime(sub.created_at) || "")}</span>
                   </div>
                   <div class="detail-sub-preview" data-tab-detail="${sub.id}" title="${escapeHtml(previewTitle)}">
-                    <div class="plain-mini${incomplete.incomplete ? " is-incomplete" : ""}">${escapeHtml(previewText)}</div>
+                    <div class="plain-mini${incomplete.incomplete ? " is-incomplete" : ""}">${formatDetailSubPreviewHtml(previewText, yukha?.winnerJob)}</div>
                   </div>
                   <div class="detail-sub-actions">
                     <button type="button" data-tab-detail="${sub.id}">새 탭</button>
