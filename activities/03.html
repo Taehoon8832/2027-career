@@ -7,7 +7,7 @@
   <title>3차시 · 직업 월드컵</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=2054" />
+  <link rel="stylesheet" href="./activity.css?v=2057" />
   <script>window.ACTIVITY_SESSION = 3;</script>
 </head>
 <body>
@@ -198,8 +198,16 @@
                 <textarea id="wc-q4" name="wcQ4" placeholder="수업, 동아리, 체험, 인턴, 포트폴리오, 인터뷰 등"></textarea>
               </div>
             </div>
-            <div class="wc-btn-row no-print" style="margin-top:8px;">
+            <div class="wc-btn-row wc-result-actions no-print">
               <button type="button" class="wc-btn wc-btn-sub" id="wc-btn-reset">처음부터 다시</button>
+              <button type="button" class="wc-btn wc-btn-submit" id="wc-btn-submit" aria-label="제출하기">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 12h11"/>
+                  <path d="M12 5l7 7-7 7"/>
+                  <path d="M4 19V5"/>
+                </svg>
+                제출하기
+              </button>
             </div>
           </div>
 
@@ -217,6 +225,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
   <script src="./worldcup.js?v=2040"></script>
-  <script src="./submit.js?v=2054"></script>
+  <script src="./submit.js?v=2057"></script>
 </body>
 </html>

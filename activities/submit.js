@@ -2483,8 +2483,8 @@ body{padding:16px!important;background:#fff!important}
     showDraftToast._timer = setTimeout(() => t.classList.remove("is-on"), Math.max(1200, Number(ms) || 2000));
   }
 
-  const SAVE_KEEP_HINT_TEXT =
-    '추후 "나만의 웹 페이지" 제작을 위해, HTML 저장 후 반드시 보관해두세요~!';
+  const SAVE_KEEP_HINT_HTML =
+    '추후 "나만의 웹 페이지" 제작을 위해, HTML 저장 후 반드시 <span class="save-keep-hint-keep">보관해두세요~!</span>';
 
   function hideSaveKeepHint() {
     const hint = document.getElementById("saveKeepHint");
@@ -2504,9 +2504,9 @@ body{padding:16px!important;background:#fff!important}
   function placeSaveKeepHint() {
     const hint = document.getElementById("saveKeepHint");
     const ring = hint?.querySelector(".save-keep-hint-ring");
-    const text = hint?.querySelector(".save-keep-hint-text");
+    const card = hint?.querySelector(".save-keep-hint-card");
     const btn = document.getElementById("btnSaveSheet");
-    if (!hint || hint.hidden || !ring || !text || !btn) return;
+    if (!hint || hint.hidden || !ring || !card || !btn) return;
 
     const r = btn.getBoundingClientRect();
     const pad = 5;
@@ -2515,36 +2515,31 @@ body{padding:16px!important;background:#fff!important}
     ring.style.width = `${Math.round(r.width + pad * 2)}px`;
     ring.style.height = `${Math.round(r.height + pad * 2)}px`;
 
-    text.style.visibility = "hidden";
-    text.style.top = "0";
-    text.style.left = "0";
-    const tw = text.offsetWidth || 220;
-    const th = text.offsetHeight || 72;
-    const gap = 10;
+    card.style.visibility = "hidden";
+    card.style.top = "0";
+    card.style.left = "0";
+    const cw = card.offsetWidth || 300;
+    const ch = card.offsetHeight || 120;
+    const gap = 12;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    const narrow = vw <= 720;
+    const edge = 10;
 
-    let top;
-    let left;
-    if (narrow) {
-      // 좁은 화면: 버튼 아래쪽, 화면 안쪽으로
-      top = r.bottom + gap;
-      left = Math.min(Math.max(8, r.right - tw), vw - tw - 8);
-      if (top + th > vh - 8) top = Math.max(8, r.top - th - gap);
-    } else {
-      // 넓은 화면: 버튼 왼쪽 (오른쪽 가장자리 버튼 기준)
-      top = Math.max(8, r.top + r.height / 2 - th / 2);
-      left = r.left - tw - gap;
-      if (left < 8) {
-        left = Math.min(r.right + gap, vw - tw - 8);
-      }
-      if (top + th > vh - 8) top = Math.max(8, vh - th - 8);
+    // 항상 다운로드 버튼 아래 — 상단 아이콘과 겹치지 않게
+    let top = r.bottom + gap;
+    let left = Math.round(r.right - cw);
+    if (left < edge) left = edge;
+    if (left + cw > vw - edge) left = Math.max(edge, vw - cw - edge);
+
+    // 아래 공간 부족하면 버튼 위쪽으로 (그래도 아이콘 줄과 분리)
+    if (top + ch > vh - edge) {
+      top = Math.max(edge, r.top - ch - gap);
     }
 
-    text.style.top = `${Math.round(top)}px`;
-    text.style.left = `${Math.round(left)}px`;
-    text.style.visibility = "visible";
+    card.classList.toggle("is-arrow-left", left + 34 < r.left + r.width / 2);
+    card.style.top = `${Math.round(top)}px`;
+    card.style.left = `${Math.round(left)}px`;
+    card.style.visibility = "visible";
   }
 
   function showSaveKeepHint() {
@@ -2559,20 +2554,22 @@ body{padding:16px!important;background:#fff!important}
       hint.className = "save-keep-hint";
       hint.innerHTML = `
         <div class="save-keep-hint-ring" aria-hidden="true"></div>
-        <p class="save-keep-hint-text" role="button" tabindex="0" aria-label="안내 닫기"></p>`;
+        <div class="save-keep-hint-card" role="dialog" aria-modal="true" aria-labelledby="saveKeepHintMsg">
+          <p class="save-keep-hint-msg" id="saveKeepHintMsg"></p>
+          <div class="save-keep-hint-actions">
+            <button type="button" class="save-keep-hint-ok" id="btnSaveKeepHintOk">확인</button>
+          </div>
+        </div>`;
       document.body.appendChild(hint);
-      const dismiss = (e) => {
+      hint.querySelector("#btnSaveKeepHintOk")?.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         hideSaveKeepHint();
-      };
-      hint.querySelector(".save-keep-hint-text")?.addEventListener("click", dismiss);
-      hint.querySelector(".save-keep-hint-text")?.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") dismiss(e);
       });
     }
 
-    const textEl = hint.querySelector(".save-keep-hint-text");
-    if (textEl) textEl.textContent = SAVE_KEEP_HINT_TEXT;
+    const msgEl = hint.querySelector(".save-keep-hint-msg");
+    if (msgEl) msgEl.innerHTML = SAVE_KEEP_HINT_HTML;
 
     btn.classList.add("is-save-hint");
     if (!btn.dataset.saveHintDismissBound) {
@@ -2597,6 +2594,7 @@ body{padding:16px!important;background:#fff!important}
     window.addEventListener("scroll", onReposition, true);
     requestAnimationFrame(placeSaveKeepHint);
     setTimeout(placeSaveKeepHint, 320);
+    setTimeout(() => hint.querySelector("#btnSaveKeepHintOk")?.focus(), 80);
   }
 
   function bindDraftAutosave() {
@@ -2923,6 +2921,9 @@ body{padding:16px!important;background:#fff!important}
       if (noInput && id.studentNo) noInput.value = id.studentNo;
       if (nameInput && id.studentName) nameInput.value = id.studentName;
       document.getElementById("submitCodeInput")?.focus();
+    });
+    document.getElementById("wc-btn-submit")?.addEventListener("click", () => {
+      fab.click();
     });
     document.getElementById("btnCancelSubmit").addEventListener("click", () => {
       overlay.classList.remove("is-open");

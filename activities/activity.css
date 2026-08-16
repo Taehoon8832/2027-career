@@ -397,44 +397,93 @@ button, .submit-fab, a { touch-action: manipulation; }
   border: 2.5px solid #2563eb;
   border-radius: 12px;
   background: transparent;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
-  padding: 0;
-  appearance: none;
-  -webkit-appearance: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
   animation: save-keep-pulse 1.6s ease-in-out infinite;
 }
-.save-keep-hint-text {
+.save-keep-hint-card {
   position: fixed;
   pointer-events: auto;
+  z-index: 56;
+  width: min(320px, calc(100vw - 24px));
   margin: 0;
-  max-width: min(280px, calc(100vw - 24px));
-  padding: 0;
-  color: #2563eb;
-  font: 800 clamp(15px, 3.8vw, 20px)/1.35 var(--sans);
-  letter-spacing: -0.03em;
-  word-break: keep-all;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
+  padding: 14px 14px 12px;
+  border-radius: 14px;
+  border: 1.5px solid #93c5fd;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
 }
+.save-keep-hint-card::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-left: 1.5px solid #93c5fd;
+  border-top: 1.5px solid #93c5fd;
+  transform: rotate(45deg);
+  right: 22px;
+}
+.save-keep-hint-card.is-arrow-left::before {
+  right: auto;
+  left: 22px;
+}
+.save-keep-hint-msg {
+  margin: 0;
+  padding: 0;
+  color: #1e3a8a;
+  font: 700 14px/1.55 var(--sans);
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  text-align: left;
+}
+.save-keep-hint-keep {
+  white-space: nowrap;
+}
+.save-keep-hint-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.save-keep-hint-ok {
+  appearance: none;
+  border: 0;
+  border-radius: 10px;
+  min-height: 36px;
+  padding: 0 16px;
+  background: #2563eb;
+  color: #fff;
+  font: 700 13px/1 var(--sans);
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+}
+.save-keep-hint-ok:hover { background: #1d4ed8; }
+.save-keep-hint-ok:active { transform: scale(0.98); }
 @keyframes save-keep-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18); }
-  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.1); }
+  0%, 100% { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16); }
+  50% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.08); }
 }
 @media (max-width: 720px) {
-  .save-keep-hint-text {
-    font-size: clamp(14px, 4.2vw, 17px);
-    max-width: min(260px, calc(100vw - 20px));
+  .save-keep-hint-card {
+    width: min(300px, calc(100vw - 20px));
+    padding: 12px 12px 10px;
+    gap: 10px;
   }
+  .save-keep-hint-msg { font-size: 13.5px; line-height: 1.5; }
   .save-keep-hint-ring { border-radius: 10px; }
 }
 @media (max-width: 420px) {
-  .save-keep-hint-text {
-    font-size: 13.5px;
-    line-height: 1.4;
-    max-width: min(220px, calc(100vw - 16px));
+  .save-keep-hint-card {
+    width: calc(100vw - 16px);
+    padding: 12px;
   }
+  .save-keep-hint-msg { font-size: 13px; }
+  .save-keep-hint-ok { min-height: 40px; width: 100%; }
+  .save-keep-hint-actions { justify-content: stretch; }
 }
 @media print {
   .save-keep-hint { display: none !important; }
@@ -1568,11 +1617,38 @@ body.qr-lightbox-open { overflow: hidden; }
   border: 1px solid #e5e7eb;
 }
 .wc-btn-sub:hover { background: #e5e7eb; }
+.wc-btn-submit {
+  background: linear-gradient(145deg, #d88861, var(--accent, #c96442) 50%, var(--accent-deep, #8c4022));
+  color: #f7f1ea;
+  border: 0;
+  box-shadow: 0 8px 18px rgba(201, 100, 66, 0.28);
+  font-weight: 800;
+}
+.wc-btn-submit:hover { filter: brightness(1.04); }
+.wc-btn-submit svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 .wc-btn-row {
   display: grid;
   grid-template-columns: 1fr;
   gap: 6px;
   margin-top: 8px;
+}
+.wc-result-actions {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+@media (max-width: 420px) {
+  .wc-result-actions {
+    grid-template-columns: 1fr;
+  }
 }
 @media (min-width: 520px) {
   .wc-btn-row { grid-template-columns: 1fr 1fr; }
