@@ -928,6 +928,7 @@ body{padding:16px!important;background:#fff!important}
   }
 
   async function saveActivityHtml() {
+    if (!guardWorldCupPrintSave()) return;
     const filled = snapshotFilledRoot();
     if (!filled) return;
     const cssText = await loadActivityCssText();
@@ -1500,7 +1501,29 @@ body{padding:16px!important;background:#fff!important}
 </html>`;
   }
 
+  function isWorldCupActivity() {
+    return !!document.querySelector(".activity-card--worldcup, #wc-result, #wc-job-inputs");
+  }
+
+  /** 3차시 월드컵: 결과 정리(최종) 화면인지 */
+  function isWorldCupFinalPage() {
+    if (!isWorldCupActivity()) return true;
+    const root = document.getElementById("activity-root");
+    const result = document.getElementById("wc-result");
+    if (root?.classList.contains("is-wc-done")) return true;
+    if (result && !result.hidden && !result.hasAttribute("hidden")) return true;
+    return false;
+  }
+
+  /** 월드컵 미완료 시 인쇄·다운로드 차단 */
+  function guardWorldCupPrintSave() {
+    if (!isWorldCupActivity() || isWorldCupFinalPage()) return true;
+    showDraftToast("최종 페이지에서 인쇄, 다운로드가 가능합니다.", 2800);
+    return false;
+  }
+
   function printActivitySheet() {
+    if (!guardWorldCupPrintSave()) return;
     syncPrintLessonTitle();
     const filled = snapshotFilledRoot();
     if (!filled) return;
