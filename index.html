@@ -601,8 +601,62 @@
     .topbar-switcher select:disabled {
       opacity: 0.55; cursor: not-allowed;
     }
-    .topbar-spacer { flex: 1; }
-    #viewTeacher .topbar-spacer { display: none; }
+    .topbar-spacer { flex: 1; min-width: 8px; }
+    #viewTeacher .topbar-spacer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 0;
+      flex: 1 1 auto;
+      padding: 0 8px;
+    }
+    .db-usage-banner {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      max-width: 100%;
+      min-width: 0;
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1.5px solid rgba(220, 38, 38, 0.28);
+      background: linear-gradient(180deg, #fff7f7 0%, #fff 100%);
+      color: #b91c1c;
+      font: 700 12px/1.25 var(--font-sans);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 2px 8px rgba(185, 28, 28, 0.08);
+    }
+    .db-usage-banner.is-on { display: inline-flex; }
+    .db-usage-banner .db-usage-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #ef4444;
+      flex-shrink: 0;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18);
+    }
+    .db-usage-banner .db-usage-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .db-usage-banner.is-warn {
+      border-color: rgba(234, 88, 12, 0.35);
+      background: linear-gradient(180deg, #fff7ed 0%, #fff 100%);
+      color: #c2410c;
+    }
+    .db-usage-banner.is-warn .db-usage-dot {
+      background: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.18);
+    }
+    .db-usage-banner.is-danger {
+      border-color: rgba(185, 28, 28, 0.4);
+      background: linear-gradient(180deg, #fef2f2 0%, #fff 100%);
+      color: #991b1b;
+    }
     .topbar .btn-tiny {
       min-height: 36px; padding: 0 11px; border: 1px solid var(--border-default);
       border-radius: var(--radius-full); background: var(--bg-elevated);
@@ -3590,6 +3644,17 @@
         order: 3;
         padding-top: 2px;
       }
+      #viewTeacher .topbar-spacer {
+        order: 2;
+        width: 100%;
+        flex: 1 1 100%;
+        justify-content: flex-start;
+        padding: 4px 0 0;
+      }
+      .db-usage-banner {
+        max-width: 100%;
+        width: auto;
+      }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
       .btn-usage .usage-label { display: inline; }
       .btn-backup .backup-label { display: inline; }
@@ -3897,6 +3962,11 @@
       .topbar-title { display: none; }
       .btn-backup .backup-label,
       .btn-usage .usage-label { display: none; }
+      .db-usage-banner {
+        font-size: 11px;
+        padding: 5px 8px;
+        max-width: min(42vw, 180px);
+      }
       .backup-menu {
         right: 0;
         left: auto;
@@ -4160,7 +4230,12 @@
           <option value="">학급</option>
         </select>
       </div>
-      <span class="topbar-spacer"></span>
+      <span class="topbar-spacer" id="teacherDbUsageSlot">
+        <span class="db-usage-banner" id="dbUsageBanner" hidden title="내 계정 데이터 사용량">
+          <span class="db-usage-dot" aria-hidden="true"></span>
+          <span class="db-usage-text" id="dbUsageText"></span>
+        </span>
+      </span>
       <div class="topbar-actions">
         <button type="button" class="btn-tiny btn-usage" id="btnUsageTour" title="초기 설정 사용법 안내" aria-label="사용법">
           <svg class="usage-ico" viewBox="0 0 24 24" aria-hidden="true">
@@ -10626,6 +10701,84 @@ ${built.html}
       const BACKUP_FORMAT = "2027career-backup";
       const BACKUP_VERSION = 2;
       let pendingBackupPayload = null;
+      const DB_USAGE_THRESHOLDS_MB = [100, 200, 300, 400, 500, 600, 700, 800, 900];
+      let dbUsageCache = { bytes: 0, at: 0 };
+
+      function formatDbUsageMb(bytes) {
+        const mb = Number(bytes) / (1024 * 1024);
+        if (!Number.isFinite(mb) || mb < 0) return 0;
+        return Math.round(mb * 10) / 10;
+      }
+
+      function highestDbUsageThresholdMb(bytes) {
+        const mb = Number(bytes) / (1024 * 1024);
+        let hit = 0;
+        for (const t of DB_USAGE_THRESHOLDS_MB) {
+          if (mb > t) hit = t;
+        }
+        return hit;
+      }
+
+      function paintDbUsageBanner(bytes) {
+        const banner = $("dbUsageBanner");
+        const text = $("dbUsageText");
+        if (!banner || !text) return;
+        const threshold = highestDbUsageThresholdMb(bytes);
+        if (!threshold) {
+          banner.hidden = true;
+          banner.classList.remove("is-on", "is-warn", "is-danger");
+          text.textContent = "";
+          return;
+        }
+        const usedMb = formatDbUsageMb(bytes);
+        text.textContent = `DB 사용량 약 ${usedMb}MB · ${threshold}MB 초과`;
+        banner.title = `내 계정 데이터 약 ${usedMb}MB (임계 ${threshold}MB 초과)`;
+        banner.hidden = false;
+        banner.classList.add("is-on");
+        banner.classList.toggle("is-warn", threshold >= 100 && threshold < 500);
+        banner.classList.toggle("is-danger", threshold >= 500);
+      }
+
+      async function estimateTeacherDataBytesClient() {
+        try {
+          const snap = await snapshotTeacherDashboardForUndo({ strict: false });
+          if (!snap) return 0;
+          const payload = {
+            classes: snap.classes,
+            lessons: snap.lessons,
+            students: snap.students,
+            submissions: snap.submissions,
+            classSettings: snap.classSettings
+          };
+          return new Blob([JSON.stringify(payload)]).size;
+        } catch (e) {
+          console.warn(e);
+          return 0;
+        }
+      }
+
+      async function refreshDbUsageBanner(force) {
+        if (!sb || !session?.userId) {
+          paintDbUsageBanner(0);
+          return;
+        }
+        const now = Date.now();
+        if (!force && dbUsageCache.at && now - dbUsageCache.at < 20000) {
+          paintDbUsageBanner(dbUsageCache.bytes);
+          return;
+        }
+        let bytes = 0;
+        try {
+          const { data, error } = await sb.rpc("get_my_teacher_data_bytes");
+          if (error) throw error;
+          bytes = Number(data) || 0;
+        } catch (e) {
+          console.warn("get_my_teacher_data_bytes", e);
+          bytes = await estimateTeacherDataBytesClient();
+        }
+        dbUsageCache = { bytes, at: now };
+        paintDbUsageBanner(bytes);
+      }
 
       function backupFileStamp() {
         const d = new Date();
@@ -10989,6 +11142,7 @@ ${built.html}
           toast(
             `불러오기 완료 (학급 ${s.classes || (payload.classes || []).length} · 보고서 ${(payload.submissions || []).length})`
           );
+          void refreshDbUsageBanner(true);
         } catch (err) {
           console.error(err);
           toast(err.message || "불러오기에 실패했습니다.");
@@ -11141,6 +11295,7 @@ ${built.html}
           renderTeacherBarSwitcher();
           updateSetupLaunchHint();
           toast("모든 데이터를 삭제했습니다. 되돌리기(Ctrl+Z)로 복구할 수 있습니다.");
+          void refreshDbUsageBanner(true);
         } catch (e) {
           console.error(e);
           toast(
@@ -14238,6 +14393,7 @@ ${built.html}
           await loadLessons();
           await renderLessonList();
           renderTeacherBarSwitcher();
+          void refreshDbUsageBanner();
           if (isClassSettingsReady() && lessons.length) await selectLesson(lessons[0].id);
         } catch (e) {
           console.error(e);
