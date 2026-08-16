@@ -173,7 +173,7 @@
       color: var(--color-primary-700);
       background: var(--color-primary-50);
     }
-    .topbar .btn-tiny:disabled { opacity: 0.55; cursor: wait; }
+    .topbar .btn-tiny:disabled { opacity: 0.55; cursor: not-allowed; }
     .topbar .btn-icon {
       width: 36px; min-width: 36px; min-height: 36px; padding: 0;
       display: inline-grid; place-items: center;
@@ -182,7 +182,39 @@
       width: 16px; height: 16px;
       stroke: currentColor; fill: none;
       stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      pointer-events: none;
     }
+    .topbar .btn-undo {
+      min-width: auto;
+      padding: 0 12px;
+      color: var(--color-primary-700);
+      border-color: var(--color-primary-300);
+      background: var(--color-primary-50);
+    }
+    .topbar .btn-undo:hover:not(:disabled) {
+      background: #f3e4d8;
+    }
+    .topbar .btn-undo.is-empty {
+      opacity: 0.55;
+      color: var(--text-tertiary);
+      border-color: var(--border-default);
+      background: #fff;
+    }
+    .topbar .btn-undo:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      color: var(--text-tertiary);
+      border-color: var(--border-default);
+      background: #fff;
+    }
+    .topbar .btn-undo .undo-ico {
+      display: none;
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      pointer-events: none;
+    }
+    .topbar .btn-undo .undo-label { display: inline; }
     .topbar .btn-icon:disabled {
       opacity: 0.35; cursor: not-allowed;
     }
@@ -3288,10 +3320,11 @@
       <span class="topbar-spacer"></span>
       <div class="topbar-actions">
         <button type="button" class="btn-tiny" id="btnResetDashboard" title="모든 학급·제출 데이터 삭제 후 다시 시작 (되돌리기로 복구 가능)">초기화</button>
-        <button type="button" class="btn-tiny btn-icon" id="btnUndoAction" title="되돌리기 (Ctrl+Z) · 삭제·초기화 복구" aria-label="되돌리기" disabled>
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+        <button type="button" class="btn-tiny btn-undo" id="btnUndoAction" title="되돌리기 (Ctrl+Z) · 삭제·이동·초기화 복구" aria-label="되돌리기">
+          <svg class="undo-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
+          <span class="undo-label">되돌리기</span>
         </button>
-        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 교사 관찰 평가·학생 활동 엑셀">XLSX</button>
+        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="모든 학년·학급 교사 관찰 평가·학생 활동 엑셀">XLSX 다운로드</button>
         <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
         <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
       </div>
@@ -3512,7 +3545,7 @@
                 <button type="button" class="btn-tiny" id="btnMoveSubClose">닫기</button>
                 <button type="button" class="btn-tiny is-apply" id="btnMoveSubSave">이동</button>
               </div>
-              <p class="sub" id="moveSubSub">보고서를 아래 입력된 곳으로 이동합니다.</p>
+              <p class="sub" id="moveSubSub">선택한 보고서 1건을 아래 입력된 곳으로 이동합니다.</p>
             </div>
             <div class="obs-eval-body">
               <div class="move-sub-body">
@@ -3524,7 +3557,7 @@
                   <label for="moveSubName">이름</label>
                   <input id="moveSubName" type="text" autocomplete="off" maxlength="20" placeholder="이름" />
                 </div>
-                <p class="move-sub-hint" id="moveSubHint">해당 학번을 수정하면 학번에 맞는 학급으로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다.</p>
+                <p class="move-sub-hint" id="moveSubHint">해당 학번을 수정하면 학번에 맞는 학급으로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다. 같은 학번의 다른 제출은 그대로 둡니다.</p>
               </div>
             </div>
           </div>
@@ -3721,7 +3754,16 @@
 
       function syncUndoButton() {
         const btn = $("btnUndoAction");
-        if (btn) btn.disabled = !undoStack.length;
+        if (!btn) return;
+        const n = undoStack.length;
+        // 클릭은 항상 가능(비어 있으면 안내 토스트). 작업 중일 때만 disabled.
+        if (!btn.dataset.busy) btn.disabled = false;
+        btn.classList.toggle("is-empty", n === 0);
+        btn.setAttribute("aria-disabled", n === 0 ? "true" : "false");
+        btn.title =
+          n > 0
+            ? `되돌리기 (Ctrl+Z) · 대기 ${n}건`
+            : "되돌리기 (Ctrl+Z) · 삭제·이동·초기화 후 사용할 수 있습니다";
       }
 
       function pushUndo(entry) {
@@ -6612,6 +6654,7 @@
       }
 
       let moveSubSubmissionId = null;
+      let moveSubMeta = null;
 
       function closeMoveSubSheet() {
         const sheet = $("moveSubSheet");
@@ -6619,6 +6662,7 @@
         sheet.classList.remove("is-open");
         sheet.setAttribute("aria-hidden", "true");
         moveSubSubmissionId = null;
+        moveSubMeta = null;
       }
 
       /** 학번 문자열 → 학년·반·번호 (숫자만·1~2자리면 현재 반의 번호로 처리) */
@@ -6670,21 +6714,63 @@
         );
       }
 
+      function isSubmissionUuid(id) {
+        return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          String(id || "").trim()
+        );
+      }
+
+      function describeSubmissionMoveLabel(sub, classId) {
+        if (!sub) return "선택한 보고서";
+        const meta = classMetaById(classId) || teacherClass;
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
+        const key =
+          resolveRosterStudentKey(sub.student_no, grade, classNo) ||
+          normalizeStudentNo(sub.student_no) ||
+          String(sub.student_no || "");
+        const list = detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(sub.student_no)) || [];
+        const n = list.length;
+        const idx = list.findIndex((s) => s.id === sub.id);
+        let verLabel = "제출";
+        if (n > 1 && idx >= 0) {
+          const chronoIdx = n - 1 - idx;
+          if (chronoIdx === 0) verLabel = "처음";
+          else if (chronoIdx === n - 1) verLabel = "최근 제출";
+          else verLabel = `${chronoIdx}번 제출`;
+        }
+        const when = formatTime(sub.created_at) || "";
+        return when ? `${verLabel} · ${when}` : verLabel;
+      }
+
       function openMoveSubSheet(submissionId) {
-        const sub = findSubmissionById(submissionId);
+        const targetId = String(submissionId || "").trim();
+        const sub = findSubmissionById(targetId);
         const sheet = $("moveSubSheet");
         const hakbunEl = $("moveSubHakbun");
         const nameEl = $("moveSubName");
         const subEl = $("moveSubSub");
         const hint = $("moveSubHint");
         if (!sub || !sheet || !hakbunEl || !nameEl) return;
-        moveSubSubmissionId = sub.id;
+        if (!isSubmissionUuid(sub.id || targetId)) {
+          toast("이동할 보고서를 찾지 못했습니다. 화면을 새로고침한 뒤 다시 시도해 주세요.");
+          return;
+        }
+        moveSubSubmissionId = String(sub.id || targetId);
+        moveSubMeta = {
+          id: moveSubSubmissionId,
+          fromNo: String(sub.student_no || ""),
+          fromName: String(sub.student_name || ""),
+          lessonId: sub.lesson_id || null,
+          label: describeSubmissionMoveLabel(sub, activeClassId || teacherClass?.id)
+        };
         const who = `${sub.student_no || ""} ${sub.student_name || ""}`.trim() || "학생";
         if (subEl) {
-          subEl.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${who} 보고서를 아래 입력된 곳으로 이동합니다.`;
+          subEl.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${who} · ${moveSubMeta.label} 보고서를 아래 입력된 곳으로 이동합니다. (이 제출 1건만)`;
         }
         if (hint) {
-          hint.textContent = "해당 학번을 수정하면 학번에 맞는 학급으로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다.";
+          hint.textContent =
+            "해당 학번을 수정하면 학번에 맞는 학급으로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다. 같은 학번의 다른 제출은 그대로 둡니다.";
         }
         hakbunEl.value = String(sub.student_no || "");
         nameEl.value = String(sub.student_name || "");
@@ -6700,11 +6786,16 @@
 
       async function saveMoveSubSheet() {
         if (!sb || !moveSubSubmissionId) return;
-        const sub = findSubmissionById(moveSubSubmissionId);
+        const targetId = String(moveSubSubmissionId || "").trim();
+        if (!isSubmissionUuid(targetId)) {
+          toast("이동할 보고서 ID가 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.");
+          return;
+        }
+        const sub = findSubmissionById(targetId) || { id: targetId, ...(moveSubMeta || {}) };
         const hakbunEl = $("moveSubHakbun");
         const nameEl = $("moveSubName");
         const saveBtn = $("btnMoveSubSave");
-        if (!sub || !hakbunEl || !nameEl) return;
+        if (!hakbunEl || !nameEl) return;
 
         const srcMeta = classMetaById(activeClassId || teacherClass?.id) || teacherClass;
         const srcGrade = Number(srcMeta?.grade) || 1;
@@ -6717,9 +6808,13 @@
         }
         const nextName = String(nameEl.value || "").trim();
         const nextNo = formatHakbun(parts.grade, parts.class_no, parts.seat);
-        const sameNo = resolveRosterStudentKey(sub.student_no, srcGrade, srcClassNo) === nextNo
-          || normalizeStudentNo(sub.student_no) === normalizeStudentNo(nextNo);
-        const sameName = String(sub.student_name || "").trim() === nextName;
+        const fromNoRaw = String(sub.student_no || moveSubMeta?.fromNo || "");
+        const fromKey =
+          resolveRosterStudentKey(fromNoRaw, srcGrade, srcClassNo) ||
+          normalizeStudentNo(fromNoRaw);
+        const sameNo =
+          fromKey === nextNo || normalizeStudentNo(fromNoRaw) === normalizeStudentNo(nextNo);
+        const sameName = String(sub.student_name || moveSubMeta?.fromName || "").trim() === nextName;
         if (sameNo && sameName) {
           closeMoveSubSheet();
           toast("변경된 내용이 없습니다.");
@@ -6732,8 +6827,11 @@
           return;
         }
 
-        const sessionNo = Number(sub.session_no) || Number(lessons.find((l) => l.id === sub.lesson_id)?.session_no) || null;
-        let nextLessonId = sub.lesson_id;
+        const sessionNo =
+          Number(sub.session_no) ||
+          Number(lessons.find((l) => l.id === (sub.lesson_id || moveSubMeta?.lessonId))?.session_no) ||
+          null;
+        let nextLessonId = sub.lesson_id || moveSubMeta?.lessonId;
         if (targetClass.id !== (activeClassId || teacherClass?.id)) {
           if (!sessionNo) {
             toast("차시 정보를 찾을 수 없어 다른 학급으로 옮길 수 없습니다.");
@@ -6762,17 +6860,25 @@
             student_no: nextNo,
             student_name: nextName
           };
-          if (nextLessonId !== sub.lesson_id) patch.lesson_id = nextLessonId;
-          const { data: updatedRows, error } = await sb
+          if (nextLessonId && nextLessonId !== (sub.lesson_id || moveSubMeta?.lessonId)) {
+            patch.lesson_id = nextLessonId;
+          }
+
+          // 반드시 제출 id 1건만 갱신 (학번 조건으로 묶음 갱신 금지)
+          const { data: updatedRow, error } = await sb
             .from("submissions")
             .update(patch)
-            .eq("id", sub.id)
-            .select("id, lesson_id, student_no, student_name");
+            .eq("id", targetId)
+            .select("id, lesson_id, student_no, student_name")
+            .maybeSingle();
           if (error) throw error;
-          if (!updatedRows?.length) {
+          if (!updatedRow?.id || String(updatedRow.id) !== targetId) {
             throw new Error(
-              "제출을 수정할 권한이 없습니다. Supabase에서 supabase-submissions-update.sql 을 실행해 주세요."
+              "제출을 수정할 권한이 없거나 대상 보고서를 찾지 못했습니다. Supabase에서 supabase-submissions-update.sql 을 실행해 주세요."
             );
+          }
+          if (String(updatedRow.student_no || "") !== nextNo) {
+            throw new Error("학번이 원하는 값으로 바뀌지 않았습니다. 다시 시도해 주세요.");
           }
 
           // 대상 좌석 명단 이름도 함께 맞춤
@@ -6792,17 +6898,34 @@
             console.warn(e);
           }
 
-          if (sub.lesson_id) subCountCache.delete(sub.lesson_id);
-          if (nextLessonId && nextLessonId !== sub.lesson_id) subCountCache.delete(nextLessonId);
-          submissionById.set(sub.id, { ...sub, ...patch, session_no: sessionNo || sub.session_no });
+          const prevLessonId = sub.lesson_id || moveSubMeta?.lessonId;
+          if (prevLessonId) subCountCache.delete(prevLessonId);
+          if (nextLessonId && nextLessonId !== prevLessonId) subCountCache.delete(nextLessonId);
+          submissionById.set(targetId, {
+            ...(findSubmissionById(targetId) || sub),
+            ...updatedRow,
+            session_no: sessionNo || sub.session_no
+          });
+
+          pushUndo({
+            type: "submission-move",
+            data: {
+              id: targetId,
+              from_student_no: String(sub.student_no || moveSubMeta?.fromNo || fromNoRaw || ""),
+              from_student_name: String(sub.student_name || moveSubMeta?.fromName || ""),
+              from_lesson_id: prevLessonId || null,
+              to_student_no: nextNo,
+              to_student_name: nextName,
+              to_lesson_id: nextLessonId || null
+            }
+          });
 
           closeMoveSubSheet();
-          const movedClass =
-            targetClass.id !== (activeClassId || teacherClass?.id);
+          const movedClass = targetClass.id !== (activeClassId || teacherClass?.id);
           toast(
             movedClass
-              ? `제출을 ${parts.grade}학년 ${parts.class_no}반 ${parts.seat}번으로 옮겼습니다.`
-              : `보고서를 ${nextNo}${nextName ? ` · ${nextName}` : ""}(으)로 이동했습니다.`
+              ? `보고서 1건을 ${parts.grade}학년 ${parts.class_no}반 ${parts.seat}번으로 옮겼습니다.`
+              : `보고서 1건을 ${nextNo}${nextName ? ` · ${nextName}` : ""}(으)로 이동했습니다.`
           );
 
           if (movedClass && sessionNo) {
@@ -7293,17 +7416,123 @@
         return paragraph.replace(/\s+/g, " ").trim();
       }
 
+      /** 조사: 받침 있으면 을, 없으면 를 */
+      function objectParticleKo(word) {
+        const w = String(word || "").trim();
+        if (!w) return "을";
+        const ch = w.charAt(w.length - 1);
+        const code = ch.charCodeAt(0);
+        if (code >= 0xac00 && code <= 0xd7a3) {
+          return (code - 0xac00) % 28 === 0 ? "를" : "을";
+        }
+        return "을";
+      }
+
+      /** 3차시 직업 월드컵 필드 추출 */
+      function extractWorldcupFieldMap(html) {
+        const s = String(html || "");
+        const map = {};
+        const inputRe =
+          /<input\b([^>]*?(?:id|name)=["'](wcWinner|wcRunnerUp)["'][^>]*)>/gi;
+        let m;
+        while ((m = inputRe.exec(s))) {
+          const attrs = m[1] || "";
+          const key = m[2];
+          const v =
+            /value=["']([^"']*)["']/i.exec(attrs) ||
+            /value=([^\s>]+)/i.exec(attrs);
+          map[key] = htmlToPlainTextFast(v ? v[1] : "").trim();
+        }
+        const taRe =
+          /<textarea[^>]*(?:id|name)=["'](wcQ[1-4]|fReflect)["'][^>]*>([\s\S]*?)<\/textarea>/gi;
+        while ((m = taRe.exec(s))) {
+          map[m[1]] = htmlToPlainTextFast(m[2] || "").trim();
+        }
+        return map;
+      }
+
+      /**
+       * 3차시(직업 월드컵) 세특 문단.
+       * 최종 선택 직업명을 반드시 언급하고, 선택 이유(Q1~Q4)가 있으면 이를 바탕으로 요약 평가.
+       */
+      function buildSession3WorldcupParagraph({ html, whoName, whoNo, reflect }) {
+        const map = extractWorldcupFieldMap(html);
+        const winner = sanitizeSeteukText(map.wcWinner || "").trim();
+        const q1 = map.wcQ1 || "";
+        const q2 = map.wcQ2 || "";
+        const q3 = map.wcQ3 || "";
+        const q4 = map.wcQ4 || "";
+        const good = (v) => !isLowQualityAnswer(v, whoName, whoNo);
+        const snip = (v, n = 42) => paraphraseSession1Snippet(v, n) || compactStudentSnippet(v, n);
+
+        const parts = [];
+        if (winner) {
+          parts.push(
+            `직업 월드컵 활동에서 최종적으로 「${winner}」${objectParticleKo(winner)} 선택하였다`
+          );
+        } else {
+          parts.push("직업 월드컵 활동을 통해 관심 직업을 탐색하고 최종 선택을 정리하였다");
+        }
+
+        const reasonBits = [];
+        if (good(q1)) {
+          const s = snip(q1, 48);
+          reasonBits.push(`1등 선택 이유로 ${s}${objectParticleKo(s)} 제시함`);
+        }
+        if (good(q2)) {
+          const s = snip(q2, 36);
+          reasonBits.push(`최종 후보와의 차이로 ${s}${objectParticleKo(s)} 정리함`);
+        }
+        if (good(q3)) {
+          const s = snip(q3, 36);
+          reasonBits.push(`필요 핵심 능력으로 ${s}${objectParticleKo(s)} 인식함`);
+        }
+        if (good(q4)) {
+          const s = snip(q4, 40);
+          reasonBits.push(`90일 실천 계획으로 ${s}${objectParticleKo(s)} 구체화함`);
+        }
+
+        if (reasonBits.length) {
+          parts.push(
+            `선택 이유 정리에서는 ${reasonBits.join(", ")}으로써 자신의 가치·관심과 진로 방향을 일목요연하게 연결하여 설명하였다`
+          );
+        } else if (winner) {
+          parts.push(
+            "선택 과정에서의 비교·판단을 바탕으로 관심 직업에 대한 인식을 정리하는 모습이 관찰되었다"
+          );
+        }
+
+        const reflectText = reflect || map.fReflect || "";
+        if (isSubstantiveReflect(reflectText)) {
+          parts.push(
+            `느낀점에서는 ${snip(reflectText, 48)}${objectParticleKo(snip(reflectText, 48))} 기록하며 배움을 성찰하였다`
+          );
+        } else if (reasonBits.length >= 2) {
+          parts.push(
+            "직업 선택의 근거를 다각도로 정리하며 자기주도적 진로 탐색 태도가 돋보였다"
+          );
+        } else {
+          parts.push("활동에 성실히 참여하며 진로 탐색의 기초를 다지는 모습이 확인되었다");
+        }
+
+        return sanitizeSeteukText(parts.join(". ").replace(/\.\.+/g, ".") + ".")
+          .replace(/\s+/g, " ")
+          .trim();
+      }
+
       function buildYukhaSummary(sub, opts = {}) {
         if (!sub) {
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v7|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v8|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
         const whoName = sanitizeSeteukText(sub.student_name || "학생");
         const whoNo = sanitizeSeteukText(sub.student_no || "-");
+        const sessionNo = Number(sub.session_no);
+        const wcMap = sessionNo === 3 ? extractWorldcupFieldMap(sub.content) : null;
         const filled = extractActivityAnswersFast(sub.content)
           .filter((a) => a.value)
           .filter((a) => !/느낀\s*점|세특\s*참조|학번|이름/.test(a.label || ""))
@@ -7317,26 +7546,45 @@
         const lessonTitle = sanitizeSeteukText(
           meta?.title || (sub.session_no ? `${sub.session_no}차시 활동` : "활동")
         );
+        const winnerJob = sanitizeSeteukText(wcMap?.wcWinner || "").trim();
         const whatCore =
-          compactStudentSnippet(answers[0] || "자신의 특성, 관심사", 36) || "자신의 특성, 관심사";
+          (sessionNo === 3 && winnerJob
+            ? winnerJob
+            : compactStudentSnippet(answers[0] || "자신의 특성, 관심사", 36)) ||
+          "자신의 특성, 관심사";
         const howBits = answers
           .slice(1, 3)
           .map((a) => compactStudentSnippet(a, 28))
           .filter(Boolean);
         const howCore =
-          howBits.join(", ") ||
-          (filled.length > 1
-            ? filled
-                .slice(1, 3)
-                .map((a) => sanitizeSeteukText(a.label))
-                .filter(Boolean)
-                .join(", ") + " 항목을 구체적으로 작성함"
-            : "활동지 문항에 자신의 생각을 구체적으로 기록함");
+          sessionNo === 3 && winnerJob
+            ? `직업 월드컵 최종 선택 「${winnerJob}」` +
+              ([wcMap.wcQ1, wcMap.wcQ2, wcMap.wcQ3, wcMap.wcQ4]
+                .filter((v) => !isLowQualityAnswer(v, whoName, whoNo))
+                .length
+                ? ", 선택 이유 정리"
+                : "")
+            : howBits.join(", ") ||
+              (filled.length > 1
+                ? filled
+                    .slice(1, 3)
+                    .map((a) => sanitizeSeteukText(a.label))
+                    .filter(Boolean)
+                    .join(", ") + " 항목을 구체적으로 작성함"
+                : "활동지 문항에 자신의 생각을 구체적으로 기록함");
 
         let observation;
         let paragraph;
-        if (Number(sub.session_no) === 1) {
+        if (sessionNo === 1) {
           paragraph = buildSession1SeteukParagraph({
+            html: sub.content,
+            whoName,
+            whoNo,
+            reflect: reflectRaw
+          });
+          observation = paragraph;
+        } else if (sessionNo === 3) {
+          paragraph = buildSession3WorldcupParagraph({
             html: sub.content,
             whoName,
             whoNo,
@@ -7364,7 +7612,9 @@
         const whyCore = isSubstantiveReflect(reflectRaw)
           ? `느낀점을 정리하며 배움을 성찰함, ${compactStudentSnippet(reflectRaw, 36)}`
           : sanitizeSeteukText(
-              `진로, 자아 탐색을 위해 ${whatCore}를 중심으로 활동에 성실히 참여함`
+              sessionNo === 3 && winnerJob
+                ? `「${winnerJob}」 선택을 중심으로 진로 탐색에 성실히 참여함`
+                : `진로, 자아 탐색을 위해 ${whatCore}를 중심으로 활동에 성실히 참여함`
             );
 
         const lines = [
@@ -7378,9 +7628,11 @@
         if (editedEarly) paragraph = editedEarly;
         const oneLine = previewText(
           sanitizeSeteukText(
-            Number(sub.session_no) === 1
+            sessionNo === 1
               ? `${whoName}, ${lessonTitle}, 자기이해 탐구`
-              : `${whoName}, ${lessonTitle}, ${whatCore}`
+              : sessionNo === 3 && winnerJob
+                ? `${whoName}, ${lessonTitle}, ${winnerJob}`
+                : `${whoName}, ${lessonTitle}, ${whatCore}`
           ),
           72
         );
@@ -8404,16 +8656,47 @@ ${built.html}
         const entry = undoStack.pop();
         syncUndoButton();
         if (!entry) {
-          toast("되돌릴 작업이 없습니다.");
+          toast("되돌릴 작업이 없습니다. 제출 삭제·이동·초기화 후에 사용할 수 있습니다.");
           return;
         }
         const btn = $("btnUndoAction");
-        if (btn) btn.disabled = true;
+        if (btn) {
+          btn.dataset.busy = "1";
+          btn.disabled = true;
+        }
         try {
           if (entry.type === "dashboard-reset") {
             toast("초기화 이전 데이터 복구 중…");
             await restoreTeacherDashboardSnapshot(entry.snapshot);
             toast("초기화를 취소했습니다. 이전 학급·제출 데이터를 복구했습니다.");
+            return;
+          }
+          if (entry.type === "submission-move" && entry.data?.id) {
+            const d = entry.data;
+            const revert = {
+              student_no: d.from_student_no,
+              student_name: d.from_student_name
+            };
+            if (d.from_lesson_id) revert.lesson_id = d.from_lesson_id;
+            const { data: row, error } = await sb
+              .from("submissions")
+              .update(revert)
+              .eq("id", d.id)
+              .select("id")
+              .maybeSingle();
+            if (error) throw error;
+            if (!row?.id) throw new Error("이동을 되돌릴 제출을 찾지 못했습니다.");
+            if (d.from_lesson_id) subCountCache.delete(d.from_lesson_id);
+            if (d.to_lesson_id && d.to_lesson_id !== d.from_lesson_id) {
+              subCountCache.delete(d.to_lesson_id);
+            }
+            toast("제출 이동을 되돌렸습니다.");
+            if (rosterClassId) await loadRoster(rosterClassId);
+            renderLessonList();
+            const current = lessons.find((l) => l.id === selectedLessonId);
+            if (current && $("detailCard") && !$("detailCard").hidden) {
+              await renderDetail(current);
+            }
             return;
           }
           if (entry.type !== "submission" || !entry.data?.lesson_id) {
@@ -8442,6 +8725,9 @@ ${built.html}
           pushUndo(entry);
           toast("되돌리기 실패: " + (e.message || e));
         } finally {
+          if (btn) {
+            delete btn.dataset.busy;
+          }
           syncUndoButton();
         }
       }
@@ -11992,7 +12278,11 @@ ${built.html}
       });
       $("topClassSelect")?.addEventListener("change", () => queueSwitchFromTopbar());
       $("btnResetDashboard")?.addEventListener("click", () => resetTeacherDashboard());
-      $("btnUndoAction")?.addEventListener("click", () => undoLastAction());
+      $("btnUndoAction")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void undoLastAction();
+      });
       document.addEventListener("keydown", (e) => {
         if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
         if (String(e.key || "").toLowerCase() !== "z") return;

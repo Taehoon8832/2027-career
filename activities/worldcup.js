@@ -110,6 +110,29 @@
   document.getElementById("wc-option-a")?.addEventListener("click", () => selectOption(0));
   document.getElementById("wc-option-b")?.addEventListener("click", () => selectOption(1));
 
+  document.addEventListener("keydown", (e) => {
+    const play = document.getElementById("wc-play");
+    if (!play || play.hidden) return;
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    const t = e.target;
+    if (
+      t &&
+      (t.closest?.("input, textarea, select, [contenteditable='true']") || t.isContentEditable)
+    ) {
+      return;
+    }
+    const key = String(e.key || "");
+    if (key === "1" || key === "Numpad1") {
+      e.preventDefault();
+      selectOption(0);
+      return;
+    }
+    if (key === "2" || key === "Numpad2") {
+      e.preventDefault();
+      selectOption(1);
+    }
+  });
+
   document.querySelectorAll(".wc-q textarea").forEach((el) => {
     el.addEventListener("input", () => autoGrow(el));
     autoGrow(el);
