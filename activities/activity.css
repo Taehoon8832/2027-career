@@ -739,14 +739,26 @@ body.qr-lightbox-open { overflow: hidden; }
 .activity-sheet-bar {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
+  column-gap: 10px;
   min-height: 58px;
   margin: 0 0 12px;
   /* 위·아래 패딩 동일 → 테두리~구분선 사이 시각 중앙 */
   padding: 14px 0;
   border-bottom: 1.5px solid rgba(31, 30, 29, 0.1);
   overflow: visible;
+}
+.activity-sheet-bar-left {
+  position: relative;
+  z-index: 1;
+  justify-self: start;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(42vw, 220px);
 }
 .print-lesson-title {
   display: none;
@@ -774,6 +786,10 @@ body.qr-lightbox-open { overflow: hidden; }
   font: 700 calc(22px + 2pt)/1.3 var(--serif);
   letter-spacing: -0.02em;
   overflow: visible;
+}
+.activity-sheet-bar-left > .sheet-dept {
+  margin-left: 0;
+  max-width: min(38vw, 180px);
 }
 .sheet-identity {
   position: relative;
@@ -842,7 +858,7 @@ body.qr-lightbox-open { overflow: hidden; }
   color: #7f8c8d;
 }
 .sheet-dept {
-  margin-left: auto;
+  margin-left: 0;
   flex-shrink: 0;
   max-width: min(46vw, 220px);
   padding: 4px 10px;
@@ -2425,7 +2441,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .activity-sheet-bar {
     position: relative !important;
     display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: auto 1fr auto !important;
     align-items: center !important;
     justify-items: stretch !important;
     column-gap: 8px !important;
@@ -2434,21 +2450,34 @@ body.qr-lightbox-open { overflow: hidden; }
     margin-bottom: 8px !important;
     padding: 2px 0 6px !important;
   }
+  .activity-sheet-bar-left {
+    grid-column: 1 !important;
+    justify-self: start !important;
+    max-width: none !important;
+    gap: 6px !important;
+  }
+  .activity-sheet-bar-left > .sheet-dept {
+    display: inline-flex !important;
+    max-width: 120px !important;
+    padding: 2px 8px !important;
+    font-size: 10px !important;
+  }
   .print-lesson-title {
     display: block !important;
-    grid-column: 1 !important;
+    grid-column: unset !important;
     justify-self: start !important;
     align-self: center !important;
     z-index: 1 !important;
     width: max-content !important;
-    max-width: none !important;
+    max-width: min(42vw, 220px) !important;
     margin: 0 !important;
     padding: 0 !important;
     font: 700 10.5px/1.25 var(--serif) !important;
     letter-spacing: -0.02em !important;
     white-space: nowrap !important;
     word-break: keep-all !important;
-    overflow: visible !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
     writing-mode: horizontal-tb !important;
   }
   .activity-sheet-bar-title {
@@ -2470,7 +2499,7 @@ body.qr-lightbox-open { overflow: hidden; }
     text-align: center !important;
   }
   .sheet-identity {
-    grid-column: 2 !important;
+    grid-column: 3 !important;
     justify-self: end !important;
     z-index: 1 !important;
     width: auto !important;
@@ -2610,7 +2639,7 @@ body.qr-lightbox-open { overflow: hidden; }
 .swot-hero {
   text-align: center;
   border-bottom: 3px solid var(--swot-ink);
-  padding: 14px 0 12px;
+  padding: 28px 0 18px;
   position: relative;
 }
 .swot-hero::before {
@@ -2625,7 +2654,7 @@ body.qr-lightbox-open { overflow: hidden; }
 }
 .swot-hero h2 {
   margin: 0;
-  font: 700 clamp(18px, 2.4vw, 22px)/1.3 var(--sans);
+  font: 700 clamp(calc(18px + 3pt), 2.6vw, calc(22px + 3pt))/1.3 var(--sans);
   letter-spacing: -0.02em;
   color: var(--swot-ink);
 }
@@ -2878,25 +2907,195 @@ body.qr-lightbox-open { overflow: hidden; }
 .activity-card--swot .reflect-field {
   margin-top: 4px;
 }
+.activity-card--swot .reflect-field textarea {
+  min-height: 88px;
+  font-size: 16px;
+  line-height: 1.5;
+}
 
+/* 태블릿: SWOT 2열 유지 + 터치 입력 */
+@media (max-width: 1024px) and (min-width: 721px) {
+  .activity-card--swot {
+    padding: 14px !important;
+  }
+  .swot-report { gap: 16px; }
+  .swot-hero h2 { font-size: clamp(calc(17px + 3pt), 2.2vw, calc(20px + 3pt)); }
+  .swot-hero-sub { font-size: 13.5px; }
+  .swot-head h3 { font-size: 15px; }
+  .swot-cell input,
+  .swot-cell textarea,
+  .swot-step input,
+  .swot-card textarea,
+  .swot-plan textarea,
+  .activity-card--swot .reflect-field textarea {
+    font-size: 16px !important;
+  }
+  .swot-cell input,
+  .swot-step input {
+    min-height: 44px;
+  }
+  .swot-card textarea { min-height: 100px; }
+  .swot-plan {
+    grid-template-columns: minmax(120px, 180px) 1fr;
+    gap: 10px;
+    padding: 10px;
+  }
+  .swot-plan textarea { min-height: 72px; }
+  .swot-grid { gap: 12px; }
+}
+
+/* 핸드폰·좁은 태블릿: 1열 스택 */
 @media (max-width: 720px) {
+  .activity-card--swot {
+    padding: 12px 10px 14px !important;
+    overflow-x: clip;
+  }
+  .swot-report {
+    gap: 14px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .swot-hero {
+    padding: 20px 4px 14px;
+  }
+  .swot-hero h2 {
+    font-size: clamp(calc(16px + 3pt), 4.6vw, calc(19px + 3pt));
+    line-height: 1.35;
+    word-break: keep-all;
+  }
+  .swot-hero-sub {
+    font-size: 12.5px;
+    line-height: 1.55;
+    margin-top: 6px;
+    padding: 0 2px;
+  }
+  .swot-head {
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .swot-num { font-size: 15px; margin-top: 1px; }
+  .swot-head h3 {
+    font-size: 14.5px;
+    line-height: 1.4;
+    word-break: keep-all;
+  }
+  .swot-panel { border-radius: 10px; }
   .swot-row2,
   .swot-grid {
     grid-template-columns: 1fr;
   }
-  .swot-cell { border-right: none; border-bottom: 1.5px solid #d1d5db; }
+  .swot-cell {
+    border-right: none;
+    border-bottom: 1.5px solid #d1d5db;
+    padding: 12px;
+  }
   .swot-row2 .swot-cell:last-child { border-bottom: none; }
+  .swot-cell--full { border-top: 1.5px solid #d1d5db; }
+  .swot-lbl { font-size: 12.5px; margin-bottom: 8px; }
+  .swot-cell input,
+  .swot-cell textarea,
+  .swot-step input,
+  .swot-card textarea,
+  .swot-plan textarea,
+  .activity-card--swot .reflect-field textarea {
+    font-size: 16px !important; /* iOS 확대 방지 */
+    line-height: 1.45 !important;
+  }
+  .swot-cell input,
+  .swot-step input {
+    min-height: 44px;
+    padding: 8px 2px !important;
+  }
+  .swot-cell textarea { min-height: 72px; }
   .swot-salary {
     grid-template-columns: 1fr;
-    gap: 8px;
+    gap: 10px;
+    padding: 12px;
   }
+  .swot-salary-title {
+    white-space: normal;
+    font-size: 12.5px;
+  }
+  /* 연봉 트랙은 가로 3칸 유지(좁은 화면에서도 비교 가능) */
   .swot-track {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
   }
-  .swot-track::before { display: none; }
+  .swot-track::before {
+    display: block;
+    top: 7px;
+    height: 2px;
+  }
+  .swot-dot {
+    width: 10px;
+    height: 10px;
+  }
+  .swot-when { font-size: 10.5px; }
+  .swot-step input {
+    font-size: 13px !important;
+    min-height: 40px;
+    padding: 6px 2px !important;
+  }
+  .swot-grid { gap: 10px; }
+  .swot-card {
+    padding: 12px;
+    border-radius: 12px;
+  }
+  .swot-tt { font-size: 13.5px; word-break: keep-all; }
+  .swot-ss { font-size: 12px; }
+  .swot-card textarea { min-height: 110px; padding: 10px !important; }
+  .swot-plans { gap: 10px; }
   .swot-plan {
     grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 12px;
+    border-radius: 10px;
   }
+  .swot-pl {
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .swot-pl br { display: none; }
+  .swot-plan textarea {
+    min-height: 88px;
+    padding: 8px 0 0 !important;
+    border-top: 1px dashed #e5e7eb !important;
+  }
+  .swot-footer {
+    font-size: 11.5px;
+    line-height: 1.45;
+    padding: 10px 4px 0;
+    word-break: keep-all;
+  }
+  .activity-card--swot .reflect-field label {
+    font-size: 13px;
+  }
+  .activity-card--swot .reflect-field textarea {
+    min-height: 100px;
+    padding: 10px 12px;
+  }
+}
+
+/* 아주 좁은 폰 */
+@media (max-width: 420px) {
+  .activity-card--swot { padding: 10px 8px 12px !important; }
+  .swot-hero h2 { font-size: calc(15.5px + 3pt); }
+  .swot-head h3 { font-size: 13.5px; }
+  .swot-track {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .swot-track::before { display: none; }
+  .swot-step {
+    display: grid;
+    grid-template-columns: 14px 72px 1fr;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+  }
+  .swot-dot { margin: 0; }
+  .swot-when { margin: 0; }
+  .swot-step input { text-align: left; padding-left: 8px !important; }
 }
 
 @media print {
@@ -2911,20 +3110,30 @@ body.qr-lightbox-open { overflow: hidden; }
     color-adjust: exact !important;
   }
   .activity-card--swot {
-    padding: 6px !important;
+    padding: 4px !important;
     border-width: 1.5px !important;
     box-shadow: none !important;
   }
   .activity-card--swot .sheet-dept-row {
-    margin: 0 0 8px !important;
+    margin: 0 0 6px !important;
   }
-  .swot-report { gap: 10px !important; }
-  .swot-hero {
-    padding: 10px 0 8px !important;
+  .swot-report { gap: 7px !important; }
+  .swot-hero { padding: 8px 0 6px !important; }
+  .swot-hero h2 { font-size: 14px !important; }
+  .swot-hero-sub { font-size: 9px !important; margin-top: 3px !important; }
+  .swot-head h3 { font-size: 11.5px !important; }
+  .swot-head {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
   }
-  .swot-hero h2 { font-size: 16px !important; }
-  .swot-hero-sub { font-size: 10px !important; margin-top: 4px !important; }
-  .swot-head h3 { font-size: 12.5px !important; }
+  /* 섹션 통째 이동 금지 → 페이지 하단 큰 공백 제거 */
+  .swot-block,
+  .swot-panel,
+  .swot-grid,
+  .swot-plans {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
   .swot-row2,
   .swot-grid {
     grid-template-columns: 1fr 1fr !important;
@@ -2936,14 +3145,12 @@ body.qr-lightbox-open { overflow: hidden; }
     grid-template-columns: 1fr 1fr 1fr !important;
   }
   .swot-track::before { display: block !important; }
-  .swot-plan {
-    grid-template-columns: minmax(110px, 160px) 1fr !important;
+  .swot-card {
     break-inside: avoid;
     page-break-inside: avoid;
   }
-  .swot-card,
-  .swot-panel,
-  .swot-block {
+  .swot-plan {
+    grid-template-columns: minmax(100px, 140px) 1fr !important;
     break-inside: avoid;
     page-break-inside: avoid;
   }
@@ -2952,9 +3159,14 @@ body.qr-lightbox-open { overflow: hidden; }
   .swot-card textarea,
   .swot-plan textarea,
   .swot-step input {
-    font-size: 10px !important;
+    font-size: 9.5px !important;
   }
-  .swot-card textarea { min-height: 48px !important; }
-  .swot-plan textarea { min-height: 36px !important; }
-  .swot-footer { font-size: 9px !important; }
+  .swot-card textarea { min-height: 36px !important; height: auto !important; }
+  .swot-plan textarea { min-height: 28px !important; height: auto !important; }
+  .swot-cell textarea { min-height: 28px !important; height: auto !important; }
+  .swot-footer { font-size: 8.5px !important; padding-top: 4px !important; }
+  .activity-card--swot .reflect-field textarea {
+    min-height: 28px !important;
+    height: auto !important;
+  }
 }

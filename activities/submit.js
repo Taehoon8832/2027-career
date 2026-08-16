@@ -12,11 +12,11 @@
 
   /** 활동지 인쇄 기본 형식 (프린터 대화상자에서 확인) */
   const ACTIVITY_PRINT_DEFAULTS = {
-    nUp: "두 장 모아찍기",
-    duplex: "양면",
     color: "컬러",
+    duplex: "양면",
+    pagesPerSheet: "시트당 페이지 수 2개",
     label() {
-      return `${this.nUp} · ${this.duplex} · ${this.color}`;
+      return `${this.color} · ${this.duplex} · ${this.pagesPerSheet}`;
     }
   };
 
@@ -490,11 +490,15 @@
     bar.className = "activity-sheet-bar";
     bar.id = "sheetIdentity";
 
+    const left = document.createElement("div");
+    left.className = "activity-sheet-bar-left";
+
     const lesson = document.createElement("p");
     lesson.className = "print-lesson-title";
     lesson.setAttribute("aria-hidden", "true");
     lesson.textContent = lessonTitleText();
-    bar.appendChild(lesson);
+    left.appendChild(lesson);
+    bar.appendChild(left);
 
     const titleWrap = document.createElement("div");
     titleWrap.className = "activity-sheet-bar-title";
@@ -539,30 +543,37 @@
       el.id = "sheetDept";
       el.className = "sheet-dept";
       el.setAttribute("aria-label", "학과");
-      const host = document.querySelector(".na-manual-head, .bingo-head, .q100-head, .wc-head");
-      if (host) {
-        host.appendChild(el);
-      } else {
-        const root = document.getElementById("activity-root");
-        const bar = document.getElementById("sheetIdentity");
-        const wrap = document.createElement("div");
-        wrap.className = "sheet-dept-row";
-        wrap.id = "sheetDeptRow";
-        wrap.appendChild(el);
-        if (bar && root && bar.parentElement === root) {
-          bar.insertAdjacentElement("afterend", wrap);
-        } else if (root) {
-          root.insertBefore(wrap, root.firstChild);
-        } else {
-          return;
-        }
+    }
+    // 상단 바 왼쪽(학생 활동지 제목 왼쪽)
+    ensureSheetIdentity();
+    const bar = document.getElementById("sheetIdentity");
+    if (row) row.remove();
+    if (bar) {
+      let left = bar.querySelector(".activity-sheet-bar-left");
+      if (!left) {
+        left = document.createElement("div");
+        left.className = "activity-sheet-bar-left";
+        const lesson = bar.querySelector(".print-lesson-title");
+        bar.insertBefore(left, bar.firstChild);
+        if (lesson) left.appendChild(lesson);
       }
+      if (el.parentElement !== left) {
+        left.insertBefore(el, left.firstChild);
+      } else if (left.firstChild !== el) {
+        left.insertBefore(el, left.firstChild);
+      }
+    } else {
+      const root = document.getElementById("activity-root");
+      if (!root) return;
+      const wrap = document.createElement("div");
+      wrap.className = "sheet-dept-row";
+      wrap.id = "sheetDeptRow";
+      wrap.appendChild(el);
+      root.insertBefore(wrap, root.firstChild);
     }
     el.textContent = dept;
     el.hidden = false;
     el.title = `학과: ${dept}`;
-    const wrap = document.getElementById("sheetDeptRow");
-    if (wrap) wrap.hidden = false;
   }
 
   async function resolveSheetDepartment() {
@@ -922,13 +933,13 @@ body{padding:16px!important;background:#fff!important}
     print-color-adjust: exact;
     color-adjust: exact;
   }
-  /* 기본 인쇄: 두 장 모아찍기 · 양면 · 컬러 (프린터 설정에서 선택) */
+  /* 기본 인쇄: 컬러 · 양면 · 시트당 페이지 수 2개 (프린터 설정에서 선택) */
   .print-sheet { margin: 0; padding: 0; width: 100%; }
   .activity-card { width: 100%; }
   .activity-sheet-bar {
     position: relative;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
     column-gap: 8px;
     min-height: 34px;
@@ -936,21 +947,28 @@ body{padding:16px!important;background:#fff!important}
     padding: 2px 0 6px;
     border-bottom: 1.5px solid #d6d3d1;
   }
+  .activity-sheet-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    justify-self: start;
+  }
   .print-lesson-title {
     display: block;
-    grid-column: 1;
     justify-self: start;
     align-self: center;
     z-index: 1;
     width: max-content;
-    max-width: none;
+    max-width: min(42vw, 200px);
     margin: 0;
     padding: 0;
     font: 700 10.5px/1.25 "Noto Serif KR", Pretendard, serif;
     letter-spacing: -0.02em;
     white-space: nowrap;
     word-break: keep-all;
-    overflow: visible;
+    overflow: hidden;
+    text-overflow: ellipsis;
     writing-mode: horizontal-tb;
   }
   .activity-sheet-bar-title {
@@ -970,7 +988,7 @@ body{padding:16px!important;background:#fff!important}
     text-align: center;
   }
   .sheet-identity {
-    grid-column: 2;
+    grid-column: 3;
     justify-self: end;
     align-self: center;
     z-index: 1;
@@ -1194,113 +1212,125 @@ body{padding:16px!important;background:#fff!important}
     --swot-soft: #374151;
     --swot-teal: #0d7377;
     --swot-amber: #c2410c;
-    display: flex; flex-direction: column; gap: 10px; color: #1f2937;
+    display: flex; flex-direction: column; gap: 7px; color: #1f2937;
   }
   .swot-hero {
-    text-align: center; border-bottom: 2.5px solid var(--swot-ink);
-    padding: 10px 0 8px; position: relative;
+    text-align: center; border-bottom: 2px solid var(--swot-ink);
+    padding: 8px 0 6px; position: relative;
   }
   .swot-hero::before {
-    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 4px;
+    content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
     border-radius: 3px 3px 0 0;
     background: linear-gradient(90deg, var(--swot-teal) 0 60%, var(--swot-amber) 60% 100%);
   }
   .swot-hero h2 {
-    margin: 0; font: 700 16px/1.3 Pretendard, sans-serif;
+    margin: 0; font: 700 14px/1.25 Pretendard, sans-serif;
     letter-spacing: -0.02em; color: var(--swot-ink);
   }
   .swot-hero-sub {
-    margin: 5px 0 0; font: 500 10px/1.45 Pretendard, sans-serif;
+    margin: 3px 0 0; font: 500 9px/1.35 Pretendard, sans-serif;
     color: var(--swot-soft); word-break: keep-all;
   }
-  .swot-block { display: flex; flex-direction: column; gap: 6px; break-inside: avoid; page-break-inside: avoid; }
-  .swot-head { display: flex; align-items: center; gap: 7px; }
-  .swot-num { font: 800 13px/1.2 Pretendard, sans-serif; color: var(--swot-amber); }
-  .swot-head h3 { margin: 0; font: 700 12.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink); }
+  /* 큰 섹션 통째로 다음 장으로 밀지 않음 → 하단 공백 방지 */
+  .swot-block {
+    display: flex; flex-direction: column; gap: 5px;
+    break-inside: auto; page-break-inside: auto;
+  }
+  .swot-head {
+    display: flex; align-items: center; gap: 6px;
+    break-after: avoid; page-break-after: avoid;
+  }
+  .swot-num { font: 800 12px/1.2 Pretendard, sans-serif; color: var(--swot-amber); }
+  .swot-head h3 { margin: 0; font: 700 11.5px/1.25 Pretendard, sans-serif; color: var(--swot-ink); }
   .swot-panel {
-    border: 1.5px solid var(--swot-ink); border-radius: 8px; overflow: hidden; background: #fff;
+    border: 1.5px solid var(--swot-ink); border-radius: 7px; overflow: visible; background: #fff;
+    break-inside: auto; page-break-inside: auto;
   }
   .swot-row2 { display: grid; grid-template-columns: 1fr 1fr !important; }
-  .swot-cell { padding: 6px 8px; border-right: 1px solid #d1d5db; min-width: 0; }
+  .swot-cell { padding: 5px 7px; border-right: 1px solid #d1d5db; min-width: 0; }
   .swot-cell:last-child { border-right: none; }
   .swot-cell--full { border-right: none; border-top: 1px solid #d1d5db; }
   .swot-lbl {
-    display: block; margin: 0 0 3px; font: 700 9.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink);
+    display: block; margin: 0 0 2px; font: 700 9px/1.25 Pretendard, sans-serif; color: var(--swot-ink);
   }
   .swot-cell input, .swot-cell textarea, .swot-step input, .swot-card textarea, .swot-plan textarea {
     width: 100%; border: none; outline: none; background: transparent; resize: none;
-    font: 500 10px/1.4 Pretendard, sans-serif; color: var(--swot-ink); padding: 0; margin: 0;
+    font: 500 9.5px/1.35 Pretendard, sans-serif; color: var(--swot-ink); padding: 0; margin: 0;
   }
-  .swot-cell textarea { min-height: 36px; }
+  .swot-cell textarea { min-height: 28px; height: auto; }
   .swot-salary {
-    display: grid; grid-template-columns: auto 1fr !important; gap: 8px; align-items: center;
-    padding: 6px 8px; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;
+    display: grid; grid-template-columns: auto 1fr !important; gap: 6px; align-items: center;
+    padding: 5px 7px; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db;
     background: linear-gradient(90deg, #ecfeff, #fff7ed);
   }
-  .swot-salary-title { font: 700 9.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink); white-space: nowrap; }
-  .swot-track { display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 6px; position: relative; }
+  .swot-salary-title { font: 700 9px/1.25 Pretendard, sans-serif; color: var(--swot-ink); white-space: nowrap; }
+  .swot-track { display: grid; grid-template-columns: 1fr 1fr 1fr !important; gap: 5px; position: relative; }
   .swot-track::before {
-    content: ""; position: absolute; left: 10%; right: 10%; top: 6px; height: 2px;
+    content: ""; position: absolute; left: 10%; right: 10%; top: 5px; height: 2px;
     background: linear-gradient(90deg, var(--swot-teal), var(--swot-amber)); z-index: 0;
   }
   .swot-step { position: relative; z-index: 1; text-align: center; }
   .swot-dot {
-    width: 9px; height: 9px; border-radius: 50%; background: var(--swot-teal);
-    border: 1.5px solid #fff; margin: 0 auto 3px; box-shadow: 0 0 0 1.5px var(--swot-teal);
+    width: 8px; height: 8px; border-radius: 50%; background: var(--swot-teal);
+    border: 1.5px solid #fff; margin: 0 auto 2px; box-shadow: 0 0 0 1.5px var(--swot-teal);
   }
   .swot-step:nth-child(2) .swot-dot { background: #ea580c; box-shadow: 0 0 0 1.5px #ea580c; }
   .swot-step:nth-child(3) .swot-dot { background: var(--swot-amber); box-shadow: 0 0 0 1.5px var(--swot-amber); }
-  .swot-when { font: 600 9px/1.2 Pretendard, sans-serif; color: var(--swot-soft); margin-bottom: 2px; }
+  .swot-when { font: 600 8.5px/1.2 Pretendard, sans-serif; color: var(--swot-soft); margin-bottom: 2px; }
   .swot-step input {
     text-align: center; background: #fff !important; border: 1px solid #9ca3af !important;
-    border-radius: 4px; padding: 3px 2px !important; min-height: 22px; font-size: 9.5px !important;
+    border-radius: 4px; padding: 2px !important; min-height: 20px; font-size: 9px !important;
   }
-  .swot-grid { display: grid; grid-template-columns: 1fr 1fr !important; gap: 6px; }
+  .swot-grid {
+    display: grid; grid-template-columns: 1fr 1fr !important; gap: 5px;
+    break-inside: auto; page-break-inside: auto;
+  }
   .swot-card {
-    border-radius: 7px; padding: 6px 8px; border: 1.5px solid transparent;
-    display: flex; flex-direction: column; gap: 4px; min-width: 0;
+    border-radius: 6px; padding: 5px 7px; border: 1.5px solid transparent;
+    display: flex; flex-direction: column; gap: 3px; min-width: 0;
     break-inside: avoid; page-break-inside: avoid;
   }
   .swot-card.is-s { background: #ecfeff; border-color: #67e8f9; }
   .swot-card.is-w { background: #fef2f2; border-color: #fca5a5; }
   .swot-card.is-o { background: #f0fdf4; border-color: #86efac; }
   .swot-card.is-t { background: #fff7ed; border-color: #fdba74; }
-  .swot-card-top { display: flex; align-items: flex-start; gap: 6px; }
+  .swot-card-top { display: flex; align-items: flex-start; gap: 5px; }
   .swot-badge {
-    width: 20px; height: 20px; border-radius: 5px; display: grid; place-items: center;
-    font: 800 11px/1 Pretendard, sans-serif; color: #fff; flex-shrink: 0;
+    width: 18px; height: 18px; border-radius: 4px; display: grid; place-items: center;
+    font: 800 10px/1 Pretendard, sans-serif; color: #fff; flex-shrink: 0;
   }
   .swot-card.is-s .swot-badge { background: var(--swot-teal); }
   .swot-card.is-w .swot-badge { background: #dc2626; }
   .swot-card.is-o .swot-badge { background: #16a34a; }
   .swot-card.is-t .swot-badge { background: #ea580c; }
-  .swot-tt { font: 700 10px/1.3 Pretendard, sans-serif; color: var(--swot-ink); }
-  .swot-ss { margin-top: 1px; font: 500 8.5px/1.35 Pretendard, sans-serif; color: var(--swot-soft); word-break: keep-all; }
+  .swot-tt { font: 700 9.5px/1.25 Pretendard, sans-serif; color: var(--swot-ink); }
+  .swot-ss { margin-top: 1px; font: 500 8px/1.3 Pretendard, sans-serif; color: var(--swot-soft); word-break: keep-all; }
   .swot-card textarea {
-    min-height: 52px; background: #fff !important; border: 1px solid #d1d5db !important;
-    border-radius: 5px; padding: 5px 6px !important; font-size: 9.5px !important;
+    min-height: 36px; height: auto; background: #fff !important; border: 1px solid #d1d5db !important;
+    border-radius: 4px; padding: 4px 5px !important; font-size: 9px !important;
   }
-  .swot-plans { display: flex; flex-direction: column; gap: 5px; }
+  .swot-plans { display: flex; flex-direction: column; gap: 4px; break-inside: auto; page-break-inside: auto; }
   .swot-plan {
-    display: grid; grid-template-columns: minmax(110px, 160px) 1fr !important; gap: 6px;
-    align-items: stretch; border: 1.5px solid #d1d5db; border-radius: 6px; background: #fff;
-    padding: 5px 7px; min-width: 0; break-inside: avoid; page-break-inside: avoid;
+    display: grid; grid-template-columns: minmax(100px, 140px) 1fr !important; gap: 5px;
+    align-items: stretch; border: 1.5px solid #d1d5db; border-radius: 5px; background: #fff;
+    padding: 4px 6px; min-width: 0;
+    break-inside: avoid; page-break-inside: avoid;
   }
   .swot-pl {
-    display: flex; align-items: flex-start; gap: 5px;
-    font: 700 9px/1.35 Pretendard, sans-serif; color: var(--swot-ink);
+    display: flex; align-items: flex-start; gap: 4px;
+    font: 700 8.5px/1.3 Pretendard, sans-serif; color: var(--swot-ink);
   }
   .swot-sn {
-    font: 800 9px/1 Pretendard, sans-serif; color: #fff; background: var(--swot-teal);
-    width: 16px; height: 16px; border-radius: 4px; display: grid; place-items: center; flex-shrink: 0;
+    font: 800 8px/1 Pretendard, sans-serif; color: #fff; background: var(--swot-teal);
+    width: 14px; height: 14px; border-radius: 3px; display: grid; place-items: center; flex-shrink: 0;
   }
-  .swot-plan textarea { min-height: 40px; padding: 1px 0 !important; font-size: 9.5px !important; }
+  .swot-plan textarea { min-height: 28px; height: auto; padding: 0 !important; font-size: 9px !important; }
   .swot-footer {
-    margin: 2px 0 0; padding-top: 6px; border-top: 1.5px solid var(--swot-ink);
-    text-align: center; font: 500 9px/1.35 Pretendard, sans-serif; color: var(--swot-soft);
+    margin: 2px 0 0; padding-top: 4px; border-top: 1.5px solid var(--swot-ink);
+    text-align: center; font: 500 8.5px/1.3 Pretendard, sans-serif; color: var(--swot-soft);
   }
-  .activity-card--swot .reflect-field { margin-top: 4px; }
-  .activity-card--swot .reflect-field textarea { min-height: 40px; }
+  .activity-card--swot .reflect-field { margin-top: 2px; break-inside: avoid; }
+  .activity-card--swot .reflect-field textarea { min-height: 28px; height: auto; }
   .swot-card, .swot-salary, .swot-badge, .swot-sn, .swot-hero::before, .sheet-dept {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -1382,7 +1412,7 @@ body{padding:16px!important;background:#fff!important}
     tools.setAttribute("role", "group");
     tools.setAttribute("aria-label", "출력 및 저장");
     tools.innerHTML = `
-      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기 · 기본 두 장 모아찍기 양면 컬러" title="출력하기 (기본: 두 장 모아찍기 · 양면 · 컬러)">
+      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기 · 기본 컬러 양면 시트당 페이지 수 2개" title="출력하기 (기본: 컬러 · 양면 · 시트당 페이지 수 2개)">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 8V4h10v4"/>
           <path d="M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>
