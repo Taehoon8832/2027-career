@@ -751,6 +751,10 @@
     .roster-cell .sub-meta {
       font: 600 10px/1.2 var(--font-sans); color: var(--text-tertiary);
     }
+    .roster-cell .sub-meta .sub-count {
+      color: #1f1e1d;
+      font-weight: 800;
+    }
     .roster-cell .del {
       align-self: flex-end; border: 0; background: transparent;
       color: var(--text-tertiary); font: 600 10px/1 var(--font-sans); cursor: pointer;
@@ -774,7 +778,7 @@
       min-height: 0;
       padding: 0;
       border: 0;
-      border-radius: 2px;
+      border-radius: 50%;
       background: #ddd6c8;
       color: transparent;
       font-size: 0;
@@ -783,19 +787,19 @@
       display: block;
     }
     .session-dot.is-done {
-      background: linear-gradient(145deg, #d88861, var(--color-primary-500) 55%, var(--color-primary-700));
-      box-shadow: 0 0 0 1px rgba(140, 64, 34, 0.12);
+      background: #1a4f9c;
+      box-shadow: 0 0 0 1px rgba(16, 52, 110, 0.28);
       cursor: pointer;
     }
     .session-dot.is-done:hover {
-      filter: brightness(1.08);
+      filter: brightness(1.12);
       transform: scale(1.15);
     }
     @media (prefers-reduced-motion: reduce) {
       .session-dot.is-done:hover { transform: none; }
     }
     .session-dot.is-done:focus-visible {
-      outline: 2px solid var(--color-primary-500);
+      outline: 2px solid #1a4f9c;
       outline-offset: 1px;
     }
     .session-track-legend {
@@ -811,9 +815,238 @@
       user-select: none;
     }
     .roster-cell.has-sub .session-track {
-      background: #fff8f2;
-      border-color: #edd9c8;
+      background: #eef3fa;
+      border-color: #c5d2de;
     }
+    .session-gauge {
+      display: grid;
+      gap: 3px;
+      margin-top: 2px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      width: 100%;
+      border-radius: 10px;
+      transition: background 0.12s ease, box-shadow 0.12s ease;
+    }
+    .session-gauge:hover {
+      background: rgba(26, 79, 156, 0.06);
+      box-shadow: 0 0 0 1px rgba(26, 79, 156, 0.14);
+    }
+    .session-gauge:focus-visible {
+      outline: 2px solid #1a4f9c;
+      outline-offset: 2px;
+    }
+    .session-gauge .session-track { margin-top: 0; pointer-events: none; }
+    .session-gauge .session-track-legend { pointer-events: none; }
+
+    .student-folio {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 85;
+      align-items: stretch;
+      justify-content: center;
+      padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+      background: rgba(31, 30, 29, 0.52);
+    }
+    .student-folio.is-open { display: flex; }
+    .student-folio-panel {
+      width: min(1080px, 100%);
+      max-height: min(94dvh, 960px);
+      display: flex;
+      flex-direction: column;
+      border: 2px solid #1f1e1d;
+      border-radius: 18px;
+      background: #f7f4ee;
+      overflow: hidden;
+      box-shadow: 0 24px 56px rgba(0,0,0,0.28);
+    }
+    .student-folio-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 14px;
+      border-bottom: 1.5px solid rgba(61, 52, 44, 0.14);
+      background: linear-gradient(180deg, #fffefb 0%, #f3eee6 100%);
+    }
+    .student-folio-head h3 {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+      font: 700 16px/1.3 var(--font-serif);
+      letter-spacing: -0.02em;
+    }
+    .student-folio-head .folio-stat {
+      font: 700 12px/1 var(--font-sans);
+      color: #1a4f9c;
+      background: #e8f0fa;
+      border: 1px solid #b7c9de;
+      border-radius: 999px;
+      padding: 6px 10px;
+    }
+    .student-folio-body {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+    .folio-gauge-board {
+      padding: 12px;
+      border: 1.5px solid #c5d2de;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .folio-gauge-board strong {
+      display: block;
+      margin-bottom: 8px;
+      font: 700 13px/1.3 var(--font-sans);
+      color: var(--text-primary);
+    }
+    .folio-track {
+      display: grid;
+      grid-template-columns: repeat(30, minmax(0, 1fr));
+      gap: 4px;
+    }
+    .folio-dot {
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: #ddd6c8;
+      border: 0;
+      padding: 0;
+      cursor: default;
+    }
+    .folio-dot.is-done {
+      background: #1a4f9c;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(16, 52, 110, 0.25);
+    }
+    .folio-dot.is-done:hover { filter: brightness(1.12); transform: scale(1.12); }
+    .folio-dot.is-focus {
+      outline: 2px solid #c96442;
+      outline-offset: 2px;
+    }
+    .folio-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font: 600 10px/1 var(--font-sans);
+      color: var(--text-tertiary);
+    }
+    .folio-session-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+    .folio-session-card {
+      display: grid;
+      gap: 6px;
+      padding: 10px;
+      border: 1px solid #ddd5c8;
+      border-radius: 12px;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+    }
+    .folio-session-card.is-empty {
+      opacity: 0.55;
+      cursor: default;
+      background: #faf8f4;
+    }
+    .folio-session-card.is-done {
+      border-color: #9bb3d1;
+      box-shadow: inset 3px 0 0 #1a4f9c;
+    }
+    .folio-session-card .sn {
+      font: 800 12px/1 var(--font-sans);
+      color: #1a4f9c;
+    }
+    .folio-session-card.is-empty .sn { color: var(--text-tertiary); }
+    .folio-session-card .ttl {
+      font: 700 12px/1.35 var(--font-sans);
+      color: var(--text-primary);
+      word-break: keep-all;
+    }
+    .folio-session-card .prev {
+      font: 500 11px/1.4 var(--font-sans);
+      color: var(--text-secondary);
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .folio-eval {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px;
+      border: 1.5px solid #1f1e1d;
+      border-radius: 14px;
+      background: #fff;
+    }
+    .folio-eval-col {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+    .folio-eval-col header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .folio-eval-col header strong {
+      font: 700 13px/1.3 var(--font-sans);
+      color: var(--text-primary);
+    }
+    .folio-eval-col header span {
+      font: 600 11px/1 var(--font-sans);
+      color: var(--text-tertiary);
+    }
+    .folio-eval-col header span.is-over { color: #b23a2c; }
+    .folio-eval-col textarea,
+    .folio-eval-col .folio-seteuk {
+      width: 100%;
+      min-height: 160px;
+      padding: 12px;
+      border: 1.5px solid #ddd5c8;
+      border-radius: 12px;
+      background: #faf9f5;
+      font: 500 13px/1.65 var(--font-serif);
+      color: var(--text-primary);
+      resize: vertical;
+      outline: none;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+    .folio-eval-col textarea:focus {
+      border-color: #1a4f9c;
+      box-shadow: 0 0 0 3px rgba(26, 79, 156, 0.12);
+    }
+    .folio-seteuk {
+      background: linear-gradient(180deg, #f7fbff 0%, #eef4fa 100%);
+      border-color: #b7c9de;
+      overflow: auto;
+    }
+    .folio-seteuk-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    @media (max-width: 820px) {
+      .folio-eval { grid-template-columns: 1fr; }
+      .folio-session-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 520px) {
+      .folio-session-grid { grid-template-columns: 1fr; }
+      .folio-track { gap: 3px; }
+    }
+
     .roster-actions {
       display: flex; gap: 8px; flex-wrap: wrap;
     }
@@ -977,6 +1210,11 @@
       margin: 0 0 8px;
     }
     .detail-toolbar .grow { flex: 1; min-width: 8px; }
+    .detail-toolbar .detail-missing-list {
+      color: var(--text-secondary);
+      font-weight: 600;
+      word-break: keep-all;
+    }
     .detail-section-title {
       margin: 0;
       font: 700 14px/1.3 var(--font-sans); color: var(--text-primary);
@@ -2652,6 +2890,16 @@
             <div class="sub-viewer-body" id="subViewerBody"></div>
           </div>
         </div>
+        <div class="student-folio" id="studentFolio" aria-hidden="true">
+          <div class="student-folio-panel" role="dialog" aria-modal="true" aria-labelledby="studentFolioTitle">
+            <div class="student-folio-head">
+              <h3 id="studentFolioTitle">학생 보고서</h3>
+              <span class="folio-stat" id="studentFolioStat">0/30</span>
+              <button type="button" class="btn-tiny" id="btnStudentFolioClose">닫기</button>
+            </div>
+            <div class="student-folio-body" id="studentFolioBody"></div>
+          </div>
+        </div>
         <div class="detail-card" id="detailCard">
           <p class="sub-empty">왼쪽에서 차시를 선택하면 콘텐츠·QR·제출코드가 표시됩니다.</p>
         </div>
@@ -2704,6 +2952,8 @@
       const CLASS_SETTINGS_KEY = "career-class-settings-v1";
       const CLASS_OFFICERS_KEY = "career-class-officers-v1";
       const SUMMARY_EDITS_KEY = "career-summary-edits-v1";
+      const TEACHER_OBS_KEY = "career-teacher-obs-v1";
+      const NEIS_SETEUK_MAX_BYTES = 1500;
 
       const MONTH_THEMES = [
         { month: 3, label: "3월", theme: "진로 탐색과 AI 기초 역량 빌드업", sessions: [1, 2, 3, 4, 5] },
@@ -4599,11 +4849,22 @@
             toast("학생을 삭제했습니다.");
             return;
           }
-          const viewBtn = e.target.closest("button[data-tab-sub], .session-dot.is-done[data-tab-sub]");
+          const viewBtn = e.target.closest("button[data-tab-sub]");
           if (viewBtn && root.contains(viewBtn)) {
             e.stopPropagation();
             const id = viewBtn.getAttribute("data-tab-sub");
             if (id) void openSubmissionInNewTab(id);
+            return;
+          }
+          const gauge = e.target.closest(".session-gauge");
+          if (gauge && root.contains(gauge)) {
+            e.preventDefault();
+            e.stopPropagation();
+            void openStudentFolio({
+              studentNo: gauge.getAttribute("data-folio-no") || "",
+              studentId: gauge.getAttribute("data-folio-id") || "",
+              studentName: gauge.getAttribute("data-folio-name") || ""
+            });
             return;
           }
           const delSub = e.target.closest("button[data-del-sub]");
@@ -5003,17 +5264,19 @@
             const titleBit = meta?.title ? ` · ${meta.title}` : "";
             if (sub) {
               trackCells.push(
-                `<button type="button" class="session-dot is-done" data-tab-sub="${sub.id}" title="${escapeHtml(`${sn}차시 제출됨${titleBit}`)}" aria-label="${sn}차시 제출됨"></button>`
+                `<span class="session-dot is-done" title="${escapeHtml(`${sn}차시 제출됨${titleBit}`)}" aria-hidden="true"></span>`
               );
             } else {
               trackCells.push(
-                `<span class="session-dot" title="${escapeHtml(`${sn}차시 미제출${titleBit}`)}" aria-label="${sn}차시 미제출"></span>`
+                `<span class="session-dot" title="${escapeHtml(`${sn}차시 미제출${titleBit}`)}" aria-hidden="true"></span>`
               );
             }
           }
           const subListHtml = `
-            <div class="session-track" role="list" aria-label="1~30차시 제출 현황">${trackCells.join("")}</div>
-            <div class="session-track-legend" aria-hidden="true"><span>1</span><span>15</span><span>30</span></div>`;
+            <button type="button" class="session-gauge" data-folio-no="${escapeHtml(key || labelNo)}" data-folio-id="${escapeHtml(s.id || "")}" data-folio-name="${escapeHtml(s.student_name || "")}" title="클릭하면 30차시 보고서를 한눈에 봅니다" aria-label="${escapeHtml(labelNo)} 학생 30차시 보고서 보기">
+              <div class="session-track" aria-hidden="true">${trackCells.join("")}</div>
+              <div class="session-track-legend" aria-hidden="true"><span>1</span><span>15</span><span>30</span></div>
+            </button>`;
           const isP = s.id === officers.president;
           const isV = s.id === officers.vice;
           const bandHtml = isP
@@ -5030,7 +5293,7 @@
               ${deptHtml}
             </div>
             <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" autocomplete="off" />
-            <div class="sub-meta">${bySession.size ? `제출 ${bySession.size}건` : "미제출"}</div>
+            <div class="sub-meta">${bySession.size ? `제출 <span class="sub-count">${bySession.size}건</span>` : "미제출"}</div>
             ${subListHtml}
             <button type="button" class="del" data-del="${s.id}">학생 삭제</button>
           </div>`;
@@ -5607,6 +5870,238 @@
         }
       }
 
+      function neisByteLength(text) {
+        // 나이스(EUC-KR) 기준: ASCII 1바이트, 한글·기타 2바이트
+        let n = 0;
+        const s = String(text || "");
+        for (let i = 0; i < s.length; i++) {
+          const code = s.charCodeAt(i);
+          n += code <= 0x7f ? 1 : 2;
+        }
+        return n;
+      }
+
+      function truncateToNeisBytes(text, maxBytes) {
+        const s = String(text || "").replace(/\s+/g, " ").trim();
+        if (neisByteLength(s) <= maxBytes) return s;
+        let out = "";
+        let n = 0;
+        for (const ch of s) {
+          const add = ch.codePointAt(0) <= 0x7f ? 1 : 2;
+          if (n + add > maxBytes - 3) break;
+          out += ch;
+          n += add;
+        }
+        return (out.replace(/[,\s]+$/g, "") + "…").trim();
+      }
+
+      function teacherObsStorageKey(classId, studentNo) {
+        return `${TEACHER_OBS_KEY}:${classId || "x"}:${normalizeStudentNo(studentNo) || studentNo || ""}`;
+      }
+
+      function readTeacherObservation(classId, studentNo) {
+        try {
+          const raw = localStorage.getItem(teacherObsStorageKey(classId, studentNo));
+          return typeof raw === "string" ? raw : "";
+        } catch {
+          return "";
+        }
+      }
+
+      function writeTeacherObservation(classId, studentNo, text) {
+        try {
+          localStorage.setItem(teacherObsStorageKey(classId, studentNo), String(text || ""));
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      async function buildCumulativeSeteukText(subsBySession) {
+        const chunks = [];
+        for (let sn = 1; sn <= 30; sn++) {
+          const sub = subsBySession.get(sn);
+          if (!sub) continue;
+          await ensureSubmissionContent(sub);
+          delete sub._yukha;
+          delete sub._yukhaWhere;
+          const y = buildYukhaSummary(sub);
+          let para = sanitizeSeteukText(y?.paragraph || "");
+          if (!para) continue;
+          // 누적 세특: 반복되는 도입부를 차시 연결형으로 다듬음
+          if (chunks.length) {
+            para = sanitizeSeteukText(
+              para.replace(/^진로 시간에\s*/, `${sn}차시에서는 `)
+            );
+          }
+          chunks.push(para);
+        }
+        if (!chunks.length) {
+          return "제출된 활동 기록이 없어 세특 초안을 작성하지 못함.";
+        }
+        // 음슴체·세특 문장들을 자연스럽게 이어 붙이고 나이스 1,500바이트로 제한
+        const joined = sanitizeSeteukText(chunks.join(" "));
+        return truncateToNeisBytes(joined, NEIS_SETEUK_MAX_BYTES);
+      }
+
+      function closeStudentFolio() {
+        const folio = $("studentFolio");
+        if (!folio) return;
+        folio.classList.remove("is-open");
+        folio.setAttribute("aria-hidden", "true");
+      }
+
+      async function openStudentFolio({ studentNo, studentId, studentName }) {
+        const folio = $("studentFolio");
+        const body = $("studentFolioBody");
+        const title = $("studentFolioTitle");
+        const stat = $("studentFolioStat");
+        if (!folio || !body) return;
+
+        const classId = rosterClassId || activeClassId || teacherClass?.id || "";
+        const key = normalizeStudentNo(studentNo) || studentNo;
+        const name =
+          studentName ||
+          rosterStudents.find((s) => s.id === studentId)?.student_name ||
+          "";
+        const rawSubs = rosterSubMap.get(key) || rosterSubMap.get(normalizeStudentNo(studentNo)) || [];
+        const sorted = rawSubs.slice().sort((a, b) => {
+          const sa = Number(a.session_no) || 0;
+          const sb = Number(b.session_no) || 0;
+          if (sa !== sb) return sa - sb;
+          return new Date(b.created_at) - new Date(a.created_at);
+        });
+        const bySession = new Map();
+        for (const sub of sorted) {
+          const sn = Number(sub.session_no) || 0;
+          if (sn >= 1 && sn <= 30 && !bySession.has(sn)) bySession.set(sn, sub);
+        }
+
+        if (title) {
+          title.textContent = `${key || "학번"} · ${name || "이름 없음"}`;
+        }
+        if (stat) stat.textContent = `${bySession.size}/30차시 제출`;
+
+        body.innerHTML = `<p class="settings-sub">보고서를 불러오는 중…</p>`;
+        folio.classList.add("is-open");
+        folio.setAttribute("aria-hidden", "false");
+
+        const trackHtml = Array.from({ length: 30 }, (_, i) => {
+          const sn = i + 1;
+          const sub = bySession.get(sn);
+          const meta = getLessonMeta(sn);
+          const tip = `${sn}차시 · ${meta?.title || ""}${sub ? " · 제출됨" : " · 미제출"}`;
+          if (sub) {
+            return `<button type="button" class="folio-dot is-done" data-folio-sub="${sub.id}" data-folio-sn="${sn}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"></button>`;
+          }
+          return `<span class="folio-dot" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"></span>`;
+        }).join("");
+
+        // 세특 초안은 콘텐츠 로드 후 채움
+        const obsSaved = readTeacherObservation(classId, key);
+        body.innerHTML = `
+          <section class="folio-gauge-board">
+            <strong>1~30차시 제출 현황</strong>
+            <div class="folio-track" id="folioTrack">${trackHtml}</div>
+            <div class="folio-legend"><span>1</span><span>15</span><span>30</span></div>
+          </section>
+          <section>
+            <div class="folio-session-grid" id="folioSessionGrid"></div>
+          </section>
+          <section class="folio-eval">
+            <div class="folio-eval-col">
+              <header>
+                <strong>교사 관찰 평가</strong>
+                <span id="folioObsBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
+              </header>
+              <textarea id="folioTeacherObs" placeholder="수업 중 관찰한 태도, 협력, 성장 포인트 등을 음슴체로 기록해 주세요.">${escapeHtml(obsSaved)}</textarea>
+            </div>
+            <div class="folio-eval-col">
+              <header>
+                <strong>세특 초안 (음슴체)</strong>
+                <span id="folioSeteukBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
+              </header>
+              <div class="folio-seteuk" id="folioSeteukText" aria-live="polite">활동 내용을 분석하는 중…</div>
+              <div class="folio-seteuk-actions">
+                <button type="button" class="btn-tiny" id="btnCopyFolioSeteuk">세특 복사</button>
+              </div>
+            </div>
+          </section>`;
+
+        const grid = $("folioSessionGrid");
+        if (grid) {
+          const cards = [];
+          for (let sn = 1; sn <= 30; sn++) {
+            const meta = getLessonMeta(sn);
+            const sub = bySession.get(sn);
+            if (!sub) {
+              cards.push(`
+                <div class="folio-session-card is-empty">
+                  <span class="sn">${sn}차시</span>
+                  <div class="ttl">${escapeHtml(meta?.title || "")}</div>
+                  <div class="prev">미제출</div>
+                </div>`);
+              continue;
+            }
+            cards.push(`
+              <button type="button" class="folio-session-card is-done" data-folio-sub="${sub.id}" data-folio-sn="${sn}">
+                <span class="sn">${sn}차시 · 제출</span>
+                <div class="ttl">${escapeHtml(meta?.title || "")}</div>
+                <div class="prev" data-folio-prev="${sub.id}">요약 불러오는 중…</div>
+              </button>`);
+          }
+          grid.innerHTML = cards.join("");
+        }
+
+        const syncObsBytes = () => {
+          const ta = $("folioTeacherObs");
+          const label = $("folioObsBytes");
+          if (!ta || !label) return;
+          const n = neisByteLength(ta.value);
+          label.textContent = `${n} / ${NEIS_SETEUK_MAX_BYTES}바이트`;
+          label.classList.toggle("is-over", n > NEIS_SETEUK_MAX_BYTES);
+        };
+        const obsTa = $("folioTeacherObs");
+        obsTa?.addEventListener("input", () => {
+          syncObsBytes();
+          writeTeacherObservation(classId, key, obsTa.value);
+        });
+        syncObsBytes();
+
+        // 미리보기·세특 생성 (비동기)
+        const previewJobs = [];
+        for (const [, sub] of bySession) {
+          previewJobs.push(
+            (async () => {
+              await ensureSubmissionContent(sub);
+              const y = buildYukhaSummary(sub);
+              const el = body.querySelector(`[data-folio-prev="${sub.id}"]`);
+              if (el) el.textContent = y?.oneLine || y?.paragraph || "제출됨";
+            })()
+          );
+        }
+        await Promise.all(previewJobs);
+
+        const seteuk = await buildCumulativeSeteukText(bySession);
+        const seteukEl = $("folioSeteukText");
+        const seteukBytes = $("folioSeteukBytes");
+        if (seteukEl) seteukEl.textContent = seteuk;
+        if (seteukBytes) {
+          const n = neisByteLength(seteuk);
+          seteukBytes.textContent = `${n} / ${NEIS_SETEUK_MAX_BYTES}바이트`;
+          seteukBytes.classList.toggle("is-over", n > NEIS_SETEUK_MAX_BYTES);
+        }
+
+        $("btnCopyFolioSeteuk")?.addEventListener("click", async () => {
+          const text = $("folioSeteukText")?.textContent || "";
+          try {
+            await navigator.clipboard.writeText(text);
+            toast("세특 초안을 복사했습니다.");
+          } catch {
+            toast(text);
+          }
+        });
+      }
+
       async function openSubmissionInNewTab(submissionId) {
         const sub = findSubmissionById(submissionId);
         if (!sub) return;
@@ -6143,18 +6638,39 @@ ${built.html}
       function activityUrl(sessionNo, submitCode) {
         const file = String(sessionNo).padStart(2, "0") + ".html";
         // URL API로 상대 경로 해석 (file:// · 한글 경로 · GitHub Pages 모두 안전)
+        // 주의: /repo 처럼 끝 슬래시 없는 경로를 / 로 바꾸면 activities 가 루트로 빠져 404 남
         const base = new URL(location.href);
         base.hash = "";
         base.search = "";
-        if (/\/index\.html$/i.test(base.pathname)) {
-          base.pathname = base.pathname.replace(/\/index\.html$/i, "/");
-        } else if (!base.pathname.endsWith("/")) {
-          base.pathname = base.pathname.replace(/\/[^/]*$/, "/");
+        let path = base.pathname || "/";
+        if (/\/index\.html$/i.test(path)) {
+          path = path.replace(/\/index\.html$/i, "/");
+        } else if (/\.html?$/i.test(path)) {
+          path = path.replace(/\/[^/]+$/i, "/");
+        } else if (!path.endsWith("/")) {
+          path += "/";
         }
+        base.pathname = path;
         const u = new URL(`activities/${file}`, base);
         const code = String(submitCode || "").trim().toUpperCase();
         if (code) u.searchParams.set("code", code);
         return u.href;
+      }
+
+      /** 활동지 열기: file:// 의 target=_blank 차단·팝업 차단 대비 */
+      function openActivitySheet(url) {
+        const href = String(url || "").trim();
+        if (!href) {
+          toast("활동지 주소를 만들 수 없습니다.");
+          return;
+        }
+        if (location.protocol === "file:") {
+          // Chrome 등은 file:// → file:// 새 탭을 막는 경우가 많음
+          location.assign(href);
+          return;
+        }
+        const win = window.open(href, "_blank", "noopener,noreferrer");
+        if (!win) location.assign(href);
       }
 
       function ensureQrcodeLib() {
@@ -7378,7 +7894,15 @@ ${built.html}
               .map((sub, idx) => {
                 const yukha = buildYukhaSummary(sub);
                 const summary = yukha?.oneLine || "내용 없음";
-                const verLabel = idx === 0 ? (list.length > 1 ? "최신" : "제출") : `이전 ${idx}`;
+                // list는 최신순. 라벨은 제출 순서 기준: 처음 → N번 제출 → 최근 제출
+                const n = list.length;
+                const chronoIdx = n - 1 - idx; // 0 = 최초 제출
+                let verLabel = "제출";
+                if (n > 1) {
+                  if (chronoIdx === 0) verLabel = "처음";
+                  else if (chronoIdx === n - 1) verLabel = "최근 제출";
+                  else verLabel = `${chronoIdx}번 제출`;
+                }
                 return `
                 <div class="detail-sub-block${idx === 0 ? " is-latest" : ""}">
                   <div class="sub-meta-row">
@@ -7497,6 +8021,7 @@ ${built.html}
           <div class="detail-toolbar">
             <h3 class="detail-section-title">제출 현황</h3>
             <span class="settings-sub" style="margin:0" id="detailSubmitCount">…</span>
+            <span class="settings-sub detail-missing-list" style="margin:0" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
           <div class="detail-roster-grid is-loading" id="detailRosterGrid">
@@ -7545,7 +8070,15 @@ ${built.html}
           qrEl.innerHTML = "";
           const qrSize = window.matchMedia("(max-width: 1024px)").matches ? 128 : 120;
           paintQr(qrEl, url, qrSize);
+          qrEl.addEventListener("click", (e) => {
+            e.preventDefault();
+            openActivitySheet(url);
+          });
         }
+        $("btnOpenActivity")?.addEventListener("click", (e) => {
+          e.preventDefault();
+          openActivitySheet(url);
+        });
         $("btnCopyLink").addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(url);
@@ -7575,6 +8108,29 @@ ${built.html}
             submissionTotal > submittedCount
               ? `${submissionTotal}건 · ${submittedCount}/${students.length}명 제출`
               : `${submittedCount}/${students.length}명 제출`;
+        }
+        const missingEl = $("detailMissingSubmitters");
+        if (missingEl) {
+          const meta = classMetaById(classId);
+          const grade = meta?.grade || 1;
+          const classNo = meta?.class_no || 1;
+          const missingNos = students
+            .map((st) => {
+              const key =
+                resolveRosterStudentKey(st.student_no, grade, classNo) ||
+                normalizeStudentNo(st.student_no);
+              const list =
+                detailSubMap.get(key) ||
+                detailSubMap.get(normalizeStudentNo(st.student_no)) ||
+                [];
+              if (list.length) return null;
+              return key || normalizeStudentNo(st.student_no) || String(st.student_no || "");
+            })
+            .filter(Boolean)
+            .sort((a, b) => String(a).localeCompare(String(b), "ko", { numeric: true }));
+          missingEl.textContent = missingNos.length
+            ? `- [미제출자 총: ${missingNos.length}명(${missingNos.join(", ")})]`
+            : "";
         }
         const grid = $("detailRosterGrid");
         if (grid) grid.classList.remove("is-loading");
@@ -7866,6 +8422,18 @@ ${built.html}
       $("subViewer")?.addEventListener("click", (e) => {
         if (e.target === $("subViewer")) closeSubViewer();
       });
+      $("btnStudentFolioClose")?.addEventListener("click", () => closeStudentFolio());
+      $("studentFolio")?.addEventListener("click", (e) => {
+        if (e.target === $("studentFolio")) {
+          closeStudentFolio();
+          return;
+        }
+        const openBtn = e.target.closest("[data-folio-sub]");
+        if (openBtn && $("studentFolio")?.contains(openBtn)) {
+          const id = openBtn.getAttribute("data-folio-sub");
+          if (id) void openSubmissionInNewTab(id);
+        }
+      });
       $("btnOpenSetup").addEventListener("click", async () => {
         showRightPanel("setup");
         try {
@@ -7958,9 +8526,15 @@ ${built.html}
         if (e.target === $("batchSheet")) closeBatchNameInput();
       });
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && $("batchSheet")?.classList.contains("is-open")) {
+        if (e.key !== "Escape") return;
+        if ($("batchSheet")?.classList.contains("is-open")) {
           e.preventDefault();
           closeBatchNameInput();
+          return;
+        }
+        if ($("studentFolio")?.classList.contains("is-open")) {
+          e.preventDefault();
+          closeStudentFolio();
         }
       });
       $("studentCountInput")?.addEventListener("focus", (e) => {
