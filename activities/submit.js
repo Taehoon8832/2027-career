@@ -277,6 +277,59 @@
     }
   }
 
+  function ensureHeroCode(hero) {
+    if (!hero) return;
+    let side = hero.querySelector(".hero-side");
+    let wrap = hero.querySelector(".hero-qr-wrap");
+    if (!side) {
+      side = document.createElement("div");
+      side.className = "hero-side";
+      if (wrap) {
+        wrap.replaceWith(side);
+        side.appendChild(wrap);
+      } else {
+        hero.appendChild(side);
+      }
+    } else if (wrap && wrap.parentElement !== side) {
+      side.appendChild(wrap);
+    }
+
+    let codeEl = side.querySelector(".hero-code") || document.getElementById("heroCodeNo");
+    if (!codeEl) {
+      codeEl = document.createElement("div");
+      codeEl.className = "hero-code";
+      codeEl.id = "heroCodeNo";
+      codeEl.innerHTML =
+        `<span class="hero-code-text">코드번호: <strong class="hero-code-value" id="heroCodeValue">—</strong></span>`;
+      side.insertBefore(codeEl, side.firstChild);
+    }
+
+    let code = "";
+    try {
+      code = (new URLSearchParams(location.search).get("code") || "").trim().toUpperCase();
+    } catch {
+      code = "";
+    }
+    if (!code) {
+      const input = document.getElementById("submitCodeInput");
+      code = (input?.value || "").trim().toUpperCase();
+    }
+    const valueEl = codeEl.querySelector(".hero-code-value") || document.getElementById("heroCodeValue");
+    if (valueEl) valueEl.textContent = code || "—";
+    codeEl.hidden = false;
+    codeEl.setAttribute("aria-label", code ? `코드번호 ${code}` : "코드번호 없음");
+
+    if (document.documentElement.dataset.heroCodeBound !== "1") {
+      document.documentElement.dataset.heroCodeBound = "1";
+      document.addEventListener("input", (e) => {
+        if (e.target?.id === "submitCodeInput") ensureHeroCode(document.querySelector(".hero-card"));
+      });
+      document.addEventListener("change", (e) => {
+        if (e.target?.id === "submitCodeInput") ensureHeroCode(document.querySelector(".hero-card"));
+      });
+    }
+  }
+
   function ensureHeroQr() {
     const hero = document.querySelector(".hero-card");
     if (!hero) return;
@@ -298,7 +351,10 @@
       hero.appendChild(wrap);
     }
 
-    let el = document.getElementById("activityPageQr") || wrap.querySelector(".hero-qr");
+    ensureHeroCode(hero);
+    wrap = hero.querySelector(".hero-qr-wrap");
+
+    let el = document.getElementById("activityPageQr") || wrap?.querySelector(".hero-qr");
     if (!el) return;
 
     const url = activityPageUrl();

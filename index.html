@@ -11836,7 +11836,7 @@ ${built.html}
             </div>
             <div class="meta">
               <div class="code-row">
-                <span class="label">제출코드</span>
+                <span class="label">코드번호</span>
                 <strong id="lessonSubmitCodeValue">${escapeHtml(submitCode)}</strong>
                 <button type="button" class="btn-tiny" id="btnCopySubmitCode">복사</button>
               </div>
@@ -11932,7 +11932,7 @@ ${built.html}
         $("btnCopySubmitCode")?.addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(submitCode);
-            toast("제출코드를 복사했습니다.");
+            toast("코드번호를 복사했습니다.");
           } catch {
             toast(submitCode);
           }

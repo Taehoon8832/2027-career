@@ -497,9 +497,42 @@ button, .submit-fab, a { touch-action: manipulation; }
   font: 400 13px/1.55 var(--serif);
   word-break: keep-all;
 }
-.hero-card .hero-qr-wrap {
+.hero-card .hero-side {
   grid-column: 2;
   grid-row: 1;
+  align-self: center;
+  justify-self: end;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+.hero-card .hero-code {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 0;
+  padding: 2px 0;
+  text-align: right;
+}
+.hero-card .hero-code-text {
+  font: 700 clamp(13px, 1.8vw, 16px)/1.25 var(--sans);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.hero-card .hero-code-value {
+  font: 800 clamp(15px, 2.2vw, 20px)/1.15 var(--sans);
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  word-break: break-all;
+}
+.hero-card .hero-qr-wrap {
+  grid-column: auto;
+  grid-row: auto;
   align-self: center;
   justify-self: end;
   display: flex;
@@ -2030,6 +2063,17 @@ body.qr-lightbox-open { overflow: hidden; }
   .hero-card .hero-copy {
     grid-column: 1;
     grid-row: 1;
+  }
+  .hero-card .hero-side {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    width: 100%;
+    margin-top: 8px;
+  }
+  .hero-card .hero-code {
+    justify-content: flex-start;
+    text-align: left;
   }
   .hero-card .hero-qr-wrap {
     display: none !important;
