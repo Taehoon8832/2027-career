@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <!-- encoding-fix3 -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>4차시 · 목표 대학 입결 스캔</title>
+  <title>4차시 · 나의 희망 직업 SWOT 분석</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=2042" />
+  <link rel="stylesheet" href="./activity.css?v=2043" />
   <script>window.ACTIVITY_SESSION = 4;</script>
 </head>
 <body>
@@ -15,50 +15,199 @@
     <div class="brand" aria-hidden="true">✳</div>
     <div class="top-meta">
       <span class="chip">4차시 활동</span>
-      <strong>목표 대학 입결 스캔</strong>
+      <strong>나의 희망 직업 SWOT 분석</strong>
     </div>
   </div>
   <div class="shell">
     <section class="hero-card">
       <div class="hero-copy">
         <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
-        <h1>4차시 · 목표 대학 입결 스캔</h1>
-        <p>3대 AI와 대입 포털을 활용해 목표 학과의 전형, 전년도 등급 컷, 경쟁률을 직접 찾아 지도에 박아넣는 시간.</p>
+        <h1>4차시 · 나의 희망 직업 SWOT 분석</h1>
+        <p>희망 직업의 핵심 정보를 탐구하고 SWOT 분석으로 강점·약점·기회·위협을 정리한 뒤, 진로 실행 계획을 세우는 활동.</p>
       </div>
       <div class="hero-qr-wrap">
         <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
         <span class="hero-qr-cap">눌러서 열기</span>
       </div>
     </section>
-    <section class="activity-card" id="activity-root">
-      <h2>학생 활동지</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="f1">목표 대학·학과</label>
-          <input id="f1" name="f1" type="text" placeholder="예: OO대 컴퓨터공학과" />
+
+    <section class="activity-card activity-card--swot" id="activity-root">
+      <div class="swot-report">
+        <header class="swot-hero">
+          <h2>나의 희망 직업 SWOT 분석 보고서</h2>
+          <p class="swot-hero-sub">희망하는 직업의 특성을 깊이 있게 탐구하고, SWOT 분석을 통해 구체적인 진로 실행 계획을 수립해봅시다.</p>
+        </header>
+
+        <!-- 01 -->
+        <section class="swot-block">
+          <div class="swot-head">
+            <span class="swot-num">01</span>
+            <h3>희망 직업 개요 및 핵심 정보 탐구</h3>
+          </div>
+          <div class="swot-panel">
+            <div class="swot-row2">
+              <div class="swot-cell">
+                <label class="swot-lbl" for="f1">희망 직업명</label>
+                <input id="f1" name="f1" type="text" placeholder="예: AI 데이터 엔지니어" />
+              </div>
+              <div class="swot-cell">
+                <label class="swot-lbl" for="f2">관련 학과/전공</label>
+                <input id="f2" name="f2" type="text" placeholder="예: 컴퓨터공학과, 데이터사이언스학과" />
+              </div>
+            </div>
+
+            <div class="swot-cell swot-cell--full">
+              <label class="swot-lbl" for="f3">필요 자격 및 준비 사항</label>
+              <input id="f3" name="f3" type="text" placeholder="예: 정보처리기사 자격증, Python/SQL 프로그래밍 역량, 데이터 분석 프로젝트 경험 등" />
+            </div>
+
+            <div class="swot-salary">
+              <div class="swot-salary-title">연차별<br />예상 연봉</div>
+              <div class="swot-track">
+                <div class="swot-step">
+                  <div class="swot-dot" aria-hidden="true"></div>
+                  <div class="swot-when">초봉</div>
+                  <input id="f4" name="f4" type="text" placeholder="약 3,800만원" aria-label="초봉 예상 연봉" />
+                </div>
+                <div class="swot-step">
+                  <div class="swot-dot" aria-hidden="true"></div>
+                  <div class="swot-when">5년차</div>
+                  <input id="f5" name="f5" type="text" placeholder="약 5,500만원" aria-label="5년차 예상 연봉" />
+                </div>
+                <div class="swot-step">
+                  <div class="swot-dot" aria-hidden="true"></div>
+                  <div class="swot-when">10년차 이상</div>
+                  <input id="f6" name="f6" type="text" placeholder="약 8,000만원 이상" aria-label="10년차 이상 예상 연봉" />
+                </div>
+              </div>
+            </div>
+
+            <div class="swot-row2">
+              <div class="swot-cell">
+                <label class="swot-lbl" for="f7">예상 퇴직 시점 (정년)</label>
+                <input id="f7" name="f7" type="text" placeholder="예: 만 60세 (프리랜서/창업 시 연장 가능)" />
+              </div>
+              <div class="swot-cell">
+                <label class="swot-lbl" for="f8">직업 전망 (향후 10년)</label>
+                <input id="f8" name="f8" type="text" placeholder="예: 매우 밝음 (AI 시장 확대로 수요 지속 증가)" />
+              </div>
+            </div>
+
+            <div class="swot-cell swot-cell--full">
+              <label class="swot-lbl" for="f9">직업의 주요 특징 및 업무 내용</label>
+              <textarea id="f9" name="f9" rows="3" placeholder="이 직업이 하는 핵심 업무와 일하는 환경, 직업적 특성에 대해 간단히 기술하세요."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- 02 -->
+        <section class="swot-block">
+          <div class="swot-head">
+            <span class="swot-num">02</span>
+            <h3>희망 직업 SWOT 분석</h3>
+          </div>
+          <div class="swot-grid">
+            <div class="swot-card is-s">
+              <div class="swot-card-top">
+                <div class="swot-badge" aria-hidden="true">S</div>
+                <div>
+                  <div class="swot-tt">강점 (Strength) - 내부적 요인 [S]</div>
+                  <div class="swot-ss">이 직업의 장점/매력 및 나의 적성/강점과 부합하는 부분</div>
+                </div>
+              </div>
+              <label class="sr-only" for="f10">강점 Strength</label>
+              <textarea id="f10" name="f10" rows="4" placeholder="• 직업의 매력: 높은 전문성, 높은 연봉 가능성&#10;• 나의 강점: 논리적 사고력, 컴퓨터 활용 능력이 뛰어남"></textarea>
+            </div>
+
+            <div class="swot-card is-w">
+              <div class="swot-card-top">
+                <div class="swot-badge" aria-hidden="true">W</div>
+                <div>
+                  <div class="swot-tt">약점 (Weakness) - 내부적 요인 [W]</div>
+                  <div class="swot-ss">이 직업의 단점 및 현재 나에게 부족하여 보완해야 할 점</div>
+                </div>
+              </div>
+              <label class="sr-only" for="f11">약점 Weakness</label>
+              <textarea id="f11" name="f11" rows="4" placeholder="• 직업의 단점: 지속적인 학습 스트레스, 야근 가능성&#10;• 나에게 부족한 점: 수리적 지식 부족, 장시간 집중력 유지가 다소 어려움"></textarea>
+            </div>
+
+            <div class="swot-card is-o">
+              <div class="swot-card-top">
+                <div class="swot-badge" aria-hidden="true">O</div>
+                <div>
+                  <div class="swot-tt">기회 (Opportunity) - 외부적 환경 [O]</div>
+                  <div class="swot-ss">향후 사회·기술 변화 속에서 이 직업이 가질 발전 기회</div>
+                </div>
+              </div>
+              <label class="sr-only" for="f12">기회 Opportunity</label>
+              <textarea id="f12" name="f12" rows="4" placeholder="• 외부적 기회: AI 및 빅데이터 산업 급성장, 정부의 디지털 인재 양성 지원 증가"></textarea>
+            </div>
+
+            <div class="swot-card is-t">
+              <div class="swot-card-top">
+                <div class="swot-badge" aria-hidden="true">T</div>
+                <div>
+                  <div class="swot-tt">위협 (Threat) - 외부적 환경 [T]</div>
+                  <div class="swot-ss">AI 자동화 대체 가능성, 경쟁 심화 등 위협 및 위기 요인</div>
+                </div>
+              </div>
+              <label class="sr-only" for="f13">위협 Threat</label>
+              <textarea id="f13" name="f13" rows="4" placeholder="• 외부적 위협: 단순 코딩 분야의 AI 자동화 대체 위험, 전공자 급증으로 인한 경쟁 심화"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 -->
+        <section class="swot-block">
+          <div class="swot-head">
+            <span class="swot-num">03</span>
+            <h3>종합 분석 결과 및 진로 실행 계획</h3>
+          </div>
+          <div class="swot-plans">
+            <div class="swot-plan">
+              <div class="swot-pl"><span class="swot-sn">1</span><span>강점 활용 방안<br />(S-O / S-T 전략)</span></div>
+              <label class="sr-only" for="f14">강점 활용 방안</label>
+              <textarea id="f14" name="f14" rows="3" placeholder="나의 강점(S)을 활용해 기회(O)를 잡거나 위협(T)을 극복할 방안을 작성하세요."></textarea>
+            </div>
+            <div class="swot-plan">
+              <div class="swot-pl"><span class="swot-sn">2</span><span>약점 보완 방안<br />(W-O / W-T 전략)</span></div>
+              <label class="sr-only" for="f15">약점 보완 방안</label>
+              <textarea id="f15" name="f15" rows="3" placeholder="나의 약점(W)을 보완하여 기회(O)를 활용하거나 위협(T)을 최소화할 방안을 작성하세요."></textarea>
+            </div>
+            <div class="swot-plan">
+              <div class="swot-pl"><span class="swot-sn">3</span><span>단기 실행 계획<br />(고교 재학 중 노력)</span></div>
+              <label class="sr-only" for="f16">단기 실행 계획</label>
+              <textarea id="f16" name="f16" rows="3" placeholder="고등학교 재학 동안 실천할 구체적 단기 목표를 작성하세요."></textarea>
+            </div>
+            <div class="swot-plan">
+              <div class="swot-pl"><span class="swot-sn">4</span><span>중·장기 실행 계획<br />(대학 진학 및 20대)</span></div>
+              <label class="sr-only" for="f17">중장기 실행 계획</label>
+              <textarea id="f17" name="f17" rows="3" placeholder="대학 진학 후 또는 20대에 달성할 단계별 중장기 목표를 작성하세요."></textarea>
+            </div>
+            <div class="swot-plan">
+              <div class="swot-pl"><span class="swot-sn">5</span><span>필요 역량 및<br />조력자 / 활용 자원</span></div>
+              <label class="sr-only" for="f18">필요 역량 및 조력자</label>
+              <textarea id="f18" name="f18" rows="3" placeholder="목표 달성에 필요한 핵심 역량과 도움을 받을 수 있는 자원을 작성하세요."></textarea>
+            </div>
+            <div class="swot-plan">
+              <div class="swot-pl"><span class="swot-sn">6</span><span>진로 포부 및<br />종합 성찰 소감</span></div>
+              <label class="sr-only" for="f19">진로 포부 및 종합 성찰</label>
+              <textarea id="f19" name="f19" rows="3" placeholder="SWOT 분석 보고서를 작성하며 느낀 소감과 향후 임하는 다짐을 작성하세요."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <div class="field reflect-field" data-reflect="1">
+          <label for="fReflect">느낀점(세특 참조)</label>
+          <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
         </div>
-        <div class="field">
-          <label for="f2">전형 유형</label>
-          <input id="f2" name="f2" type="text" placeholder="학생부교과/종합/논술 등" />
-        </div>
-      </div>
-      <div class="field">
-        <label for="f3">전년도 등급컷/경쟁률 메모</label>
-        <textarea id="f3" name="f3" placeholder="조사한 수치"></textarea>
-      </div>
-      <div class="field">
-        <label for="f4">추가로 남기고 싶은 내용</label>
-        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
-      </div>
-    
-      <div class="field reflect-field" data-reflect="1">
-        <label for="fReflect">느낀점(세특 참조)</label>
-        <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
+
+        <p class="swot-footer">고등학교 진로·직업 탐구 활동지 | 나의 희망 직업 SWOT 분석 보고서</p>
       </div>
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./submit.js?v=2042"></script>
+  <script src="./submit.js?v=2043"></script>
 </body>
 </html>

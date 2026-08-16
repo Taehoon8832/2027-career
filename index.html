@@ -4294,7 +4294,7 @@
         1: { title: "디지털 나 사용 설명서", summary: "서로를 이해하고 즐거운 학급 문화를 만들기 위한 상세 안내서" },
         2: { title: "나를 소개하는 100문 100답", summary: "우리 반 친구들에게 나를 당당하게 알려보는 시간!" },
         3: { title: "직업 월드컵", summary: "관심 직업 32개로 토너먼트를 치르며 최종 1등 진로를 고르고, 선택 이유와 실천 계획을 정리하는 활동." },
-        4: { title: "목표 대학 입결 스캔", summary: "3대 AI와 대입 포털을 활용해 목표 학과의 전형, 전년도 등급 컷, 경쟁률을 직접 찾아 지도에 박아넣는 시간." },
+        4: { title: "나의 희망 직업 SWOT 분석", summary: "희망 직업의 핵심 정보를 탐구하고 SWOT 분석으로 강점·약점·기회·위협을 정리한 뒤, 진로 실행 계획을 세우는 활동." },
         5: { title: "내 손으로 짜는 교육과정 맵", summary: "우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습." },
         6: { title: "3월 모평 분석과 수시 상담 신청", summary: "3월 모의고사 성적과 내신을 AI에 넣어 수시/정시 유리도를 진단하고, 담임교사 제출용 상담 신청서 초안 자동 완성." },
         7: { title: "제미나이×캔바 카드뉴스", summary: "AI가 요약해 준 나의 롤모델과 전공 비전을 캔바 디자인 템플릿에 얹어 시각화하는 활동." },
@@ -5809,7 +5809,7 @@
         card.style.left = `${Math.round(left)}px`;
       }
 
-      function placeUsageTourClickCue(hole) {
+      function placeUsageTourClickCue(hole, allHoles) {
         const cue = $("usageTourClickCue");
         const card = $("usageTourCard");
         if (!cue || !hole) return;
@@ -5817,34 +5817,70 @@
         const cueH = cue.offsetHeight || 34;
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+        const pad = 8;
+        const holes = (allHoles && allHoles.length ? allHoles : [hole]).map((r) => ({
+          top: r.top - pad,
+          left: r.left - pad,
+          width: r.width + pad * 2,
+          height: r.height + pad * 2
+        }));
+        const union = unionOfRects(holes);
         const cardR = card?.getBoundingClientRect?.();
+
+        const overlapsRect = (t, l, r) =>
+          !(
+            l + cueW < r.left ||
+            l > r.left + r.width ||
+            t + cueH < r.top ||
+            t > r.top + r.height
+          );
+
+        const overlapsAnyHole = (t, l) => holes.some((r) => overlapsRect(t, l, r));
 
         const overlapsCard = (t, l) => {
           if (!cardR || cardR.width < 8) return false;
-          return !(
-            l + cueW < cardR.left - 6 ||
-            l > cardR.right + 6 ||
-            t + cueH < cardR.top - 6 ||
-            t > cardR.bottom + 6
-          );
+          return overlapsRect(t, l, {
+            top: cardR.top - 6,
+            left: cardR.left - 6,
+            width: cardR.width + 12,
+            height: cardR.height + 12
+          });
         };
 
+        // 하이라이트(코드번호 포함) 밖·설명 카드 밖만 후보 — 가운데 겹침 금지
         const candidates = [
-          { top: hole.top + hole.height + 10, left: hole.left + hole.width / 2 - cueW / 2 },
-          { top: hole.top + hole.height / 2 - cueH / 2, left: hole.left + hole.width + 10 },
-          { top: hole.top + hole.height / 2 - cueH / 2, left: hole.left - cueW - 10 },
-          { top: hole.top - cueH - 10, left: hole.left + hole.width / 2 - cueW / 2 }
+          { top: union.top + union.height + 12, left: union.left + union.width / 2 - cueW / 2 },
+          { top: union.top + union.height + 12, left: union.left },
+          { top: union.top + union.height + 12, left: union.left + union.width - cueW },
+          { top: union.top - cueH - 12, left: union.left + union.width / 2 - cueW / 2 },
+          { top: union.top + union.height / 2 - cueH / 2, left: union.left + union.width + 12 },
+          { top: union.top + 4, left: union.left + union.width + 12 },
+          { top: union.top + union.height / 2 - cueH / 2, left: union.left - cueW - 12 },
+          { top: union.top - cueH - 12, left: union.left + union.width - cueW }
         ];
 
-        let chosen = candidates[0];
+        let chosen = null;
         for (const c of candidates) {
           const t = Math.max(10, Math.min(c.top, vh - cueH - 10));
           const l = Math.max(10, Math.min(c.left, vw - cueW - 10));
-          if (!overlapsCard(t, l)) {
-            chosen = { top: t, left: l };
-            break;
-          }
+          if (overlapsAnyHole(t, l)) continue;
+          if (overlapsCard(t, l)) continue;
           chosen = { top: t, left: l };
+          break;
+        }
+        if (!chosen) {
+          // 최후: 합집합 바로 아래 중앙 (클램프만)
+          chosen = {
+            top: Math.max(10, Math.min(union.top + union.height + 12, vh - cueH - 10)),
+            left: Math.max(10, Math.min(union.left + union.width / 2 - cueW / 2, vw - cueW - 10))
+          };
+          // 그래도 구멍에 겹치면 화면 우측 하단 안전 위치
+          if (overlapsAnyHole(chosen.top, chosen.left)) {
+            chosen = {
+              top: Math.max(10, vh - cueH - 16),
+              left: Math.max(10, vw - cueW - 16)
+            };
+          }
         }
         cue.style.top = `${Math.round(chosen.top)}px`;
         cue.style.left = `${Math.round(chosen.left)}px`;
@@ -5973,8 +6009,12 @@
           const primary = list[0] || unionOfRects(list);
           paintUsageTourHoles(list);
           placeUsageTourCard(unionOfRects(list));
-          placeUsageTourClickCue(primary);
-          requestAnimationFrame(() => updateUsageTourVeilClip(list));
+          placeUsageTourClickCue(primary, list);
+          requestAnimationFrame(() => {
+            updateUsageTourVeilClip(list);
+            // 카드 배치 후 클릭 안내가 하이라이트·설명란과 겹치지 않게 재배치
+            placeUsageTourClickCue(primary, list);
+          });
         };
 
         const firstTarget = resolveTourTargetEl(step.targets?.[0]);
