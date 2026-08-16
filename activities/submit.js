@@ -438,6 +438,76 @@
     root.insertBefore(bar, root.firstChild);
   }
 
+  function getDepartmentFromUrl() {
+    try {
+      return (new URLSearchParams(location.search).get("dept") || "").trim();
+    } catch {
+      return "";
+    }
+  }
+
+  function paintSheetDepartment(name) {
+    const dept = String(name || "").trim();
+    let el = document.getElementById("sheetDept");
+    const row = document.getElementById("sheetDeptRow");
+    if (!dept) {
+      if (el) {
+        el.hidden = true;
+        el.textContent = "";
+      }
+      if (row) row.hidden = true;
+      return;
+    }
+    if (!el) {
+      el = document.createElement("span");
+      el.id = "sheetDept";
+      el.className = "sheet-dept";
+      el.setAttribute("aria-label", "학과");
+      const host = document.querySelector(".na-manual-head, .bingo-head, .q100-head");
+      if (host) {
+        host.appendChild(el);
+      } else {
+        const root = document.getElementById("activity-root");
+        const bar = document.getElementById("sheetIdentity");
+        const wrap = document.createElement("div");
+        wrap.className = "sheet-dept-row";
+        wrap.id = "sheetDeptRow";
+        wrap.appendChild(el);
+        if (bar && root && bar.parentElement === root) {
+          bar.insertAdjacentElement("afterend", wrap);
+        } else if (root) {
+          root.insertBefore(wrap, root.firstChild);
+        } else {
+          return;
+        }
+      }
+    }
+    el.textContent = dept;
+    el.hidden = false;
+    el.title = `학과: ${dept}`;
+    const wrap = document.getElementById("sheetDeptRow");
+    if (wrap) wrap.hidden = false;
+  }
+
+  async function resolveSheetDepartment() {
+    const fromUrl = getDepartmentFromUrl();
+    if (fromUrl) paintSheetDepartment(fromUrl);
+    const code = getSubmitCodeFromPage();
+    if (!sb || !code) return;
+    try {
+      const { data, error } = await sb.rpc("get_lesson_class_meta", {
+        p_submit_code: code,
+        p_session_no: sessionNo
+      });
+      if (error) return;
+      const row = Array.isArray(data) ? data[0] : data;
+      const fromDb = String(row?.department_name || "").trim();
+      if (fromDb) paintSheetDepartment(fromDb);
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
   const ZOOM_STEPS = [0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6];
   const ZOOM_STORAGE_KEY = "activity-page-zoom";
   let pageZoom = 1;
@@ -1895,6 +1965,7 @@ body{padding:16px!important;background:#fff!important}
     stripSheetIdentityFields();
     ensureHeroQr();
     ensureSheetIdentity();
+    void resolveSheetDepartment();
     ensureReflectField();
     ensureAutosizeTextareas();
     if (document.getElementById("submitOverlay")) {

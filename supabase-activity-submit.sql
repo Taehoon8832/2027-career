@@ -199,4 +199,35 @@ create policy "lessons_update_teacher" on public.lessons
 
 grant update on public.lessons to authenticated;
 
+-- 제출코드로 학급 메타(학과명) 조회 — 활동지 표시용 (anon 가능)
+drop function if exists public.get_lesson_class_meta(text, int);
+drop function if exists public.get_lesson_class_meta(text, integer);
+
+create or replace function public.get_lesson_class_meta(
+  p_submit_code text,
+  p_session_no int
+)
+returns table (
+  department_name text,
+  grade int,
+  class_no int
+)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select
+    nullif(btrim(coalesce(c.department_name, '')), '') as department_name,
+    c.grade,
+    c.class_no
+  from public.lessons l
+  join public.classes c on c.id = l.class_id
+  where upper(l.submit_code) = upper(trim(p_submit_code))
+    and l.session_no = p_session_no
+  limit 1;
+$$;
+
+grant execute on function public.get_lesson_class_meta(text, int) to anon, authenticated;
+
 notify pgrst, 'reload schema';

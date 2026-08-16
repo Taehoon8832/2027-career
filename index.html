@@ -401,6 +401,47 @@
       letter-spacing: -0.01em;
     }
     .roster-board-bar .grow { flex: 1; min-width: 4px; }
+    .roster-unit-filter {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex: 0 1 auto;
+      min-width: 0;
+      margin: 0 2px;
+    }
+    .roster-unit-filter select {
+      height: 30px;
+      min-width: 72px;
+      max-width: 168px;
+      padding: 0 26px 0 10px;
+      border: 1.5px solid #9eb8d0;
+      border-radius: 999px;
+      background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 24 24' fill='none' stroke='%3d6f9c' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")
+        no-repeat right 8px center,
+        linear-gradient(145deg, #f6fbfe 0%, #e8f3fa 55%, #dceef7 100%);
+      color: #1f4f6e;
+      font: 600 12px/1 "Noto Sans KR", var(--font-sans);
+      appearance: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+    .roster-unit-filter select#rosterBoardClassSelect {
+      min-width: 96px;
+      max-width: 200px;
+    }
+    .roster-unit-filter select:focus {
+      outline: none;
+      border-color: #5a87a8;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 0 0 3px rgba(90, 135, 168, 0.16);
+    }
+    .roster-unit-filter select:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
     .roster-session-filter {
       display: flex;
       align-items: center;
@@ -724,6 +765,41 @@
       flex-shrink: 0;
       margin-left: 2px;
     }
+    .officer-sem {
+      display: inline-flex;
+      align-items: stretch;
+      border: 1.5px solid #c4b5a5;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fffdfb;
+      flex-shrink: 0;
+    }
+    .btn-officer-sem {
+      appearance: none;
+      border: 0;
+      margin: 0;
+      height: 30px;
+      padding: 0 8px;
+      background: transparent;
+      color: #6b5c4e;
+      font: 700 11px/1 "Noto Sans KR", var(--font-sans);
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      touch-action: manipulation;
+      white-space: nowrap;
+    }
+    .btn-officer-sem + .btn-officer-sem {
+      border-left: 1px solid #ddd2c4;
+    }
+    .btn-officer-sem:hover {
+      background: #f7f1ea;
+      color: #4a3d32;
+    }
+    .btn-officer-sem.is-on {
+      background: linear-gradient(180deg, #efe4d6 0%, #e4d5c3 100%);
+      color: #3d2f24;
+      box-shadow: inset 0 -2px 0 #a67c52;
+    }
     .btn-officer {
       display: inline-flex;
       align-items: center;
@@ -824,12 +900,13 @@
       min-height: 18px;
       padding: 3px 6px;
       border-radius: 7px 7px 0 0;
-      font: 800 10px/1 var(--font-sans);
-      letter-spacing: 0.14em;
+      font: 800 10px/1.15 var(--font-sans);
+      letter-spacing: 0.02em;
       color: #fff;
       text-shadow: 0 1px 0 rgba(0,0,0,0.18);
       pointer-events: none;
       user-select: none;
+      text-align: center;
     }
     .officer-band--president {
       background: linear-gradient(90deg, #8C4022 0%, #C96442 50%, #8C4022 100%);
@@ -840,10 +917,11 @@
     .officer-band::before,
     .officer-band::after {
       content: "";
-      width: 10px;
+      width: 8px;
       height: 2px;
       border-radius: 1px;
       background: rgba(255,255,255,0.55);
+      flex-shrink: 0;
     }
     .roster-cell input {
       width: 100%; height: 28px; border: 1px solid var(--border-default);
@@ -1475,16 +1553,133 @@
       border-radius: 8px 8px 0 0;
     }
     .detail-roster-cell .head {
-      display: flex; align-items: center; justify-content: space-between; gap: 4px;
+      display: flex; align-items: center; gap: 4px;
+      min-width: 0;
     }
     .detail-roster-cell .no {
       font: 800 11px/1 var(--font-sans); color: var(--color-primary-700);
+      flex-shrink: 0;
     }
     .detail-roster-cell .dot {
       width: 8px; height: 8px; border-radius: 50%;
       background: var(--border-strong); flex-shrink: 0;
+      margin-left: auto;
     }
     .detail-roster-cell.has-sub .dot { background: #2f7d32; }
+    .obs-eval-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      height: 22px;
+      padding: 0 7px 0 4px;
+      margin-left: auto;
+      border: 1px solid #c5d0dc;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fff 0%, #f4f6f8 100%);
+      color: #3d5a70;
+      font: 700 10px/1 "Noto Sans KR", var(--font-sans);
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      flex-shrink: 0;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .detail-roster-cell .dot { margin-left: 0; }
+    .obs-eval-btn .obs-eval-mark {
+      width: 14px;
+      height: 14px;
+      border-radius: 5px;
+      display: grid;
+      place-items: center;
+      background: #d8e4ef;
+      color: #2f5f7a;
+      font: 800 8px/1 "Noto Sans KR", var(--font-sans);
+    }
+    .obs-eval-btn:hover:not(:disabled) {
+      border-color: #8eb0cc;
+      background: linear-gradient(180deg, #f5f9fc 0%, #e8f1f8 100%);
+    }
+    .obs-eval-btn.is-edited {
+      border-color: #6fa3c8;
+      color: #1f4f6e;
+      background: linear-gradient(145deg, #e8f5fc 0%, #cfe8f6 48%, #b7dcf0 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.75),
+        0 1px 4px rgba(70, 130, 170, 0.18);
+    }
+    .obs-eval-btn.is-edited .obs-eval-mark {
+      background: linear-gradient(145deg, #7eb8d9, #4f97c4);
+      color: #f5fbff;
+    }
+    .obs-eval-btn:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+    .obs-eval-sheet {
+      position: fixed; inset: 0; z-index: 90;
+      display: none; align-items: center; justify-content: center;
+      padding: 20px;
+      background: rgba(31, 30, 29, 0.48);
+    }
+    .obs-eval-sheet.is-open { display: flex; }
+    .obs-eval-panel {
+      width: min(520px, 100%);
+      max-height: min(84vh, 640px);
+      display: flex; flex-direction: column;
+      border: 2px solid #1f1e1d;
+      border-radius: 16px;
+      background: #fffefb;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.22);
+      overflow: hidden;
+    }
+    .obs-eval-head {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(61, 52, 44, 0.12);
+      background: linear-gradient(180deg, #eef6fb 0%, #e4f0f8 100%);
+    }
+    .obs-eval-head h3 {
+      margin: 0; flex: 1; min-width: 0;
+      font: 700 15px/1.3 "Noto Sans KR", var(--font-sans);
+      color: var(--text-primary);
+    }
+    .obs-eval-head .sub {
+      width: 100%; margin: 0;
+      font: 500 12px/1.4 "Noto Sans KR", var(--font-sans);
+      color: var(--text-secondary);
+    }
+    .obs-eval-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .obs-eval-body {
+      flex: 1; min-height: 0; padding: 14px 16px 16px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .obs-eval-body label {
+      font: 700 12px/1.3 "Noto Sans KR", var(--font-sans);
+      color: #2f5f7a;
+    }
+    .obs-eval-body textarea {
+      width: 100%;
+      min-height: 220px;
+      flex: 1;
+      padding: 12px;
+      border: 1.5px solid #b7c9de;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #f7fbff 0%, #eef4fa 100%);
+      font: 500 14px/1.65 "Noto Sans KR", var(--font-sans);
+      color: var(--text-primary);
+      resize: vertical;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .obs-eval-body textarea:focus {
+      border-color: #3d7eab;
+      box-shadow: 0 0 0 3px rgba(61, 126, 171, 0.14);
+    }
+    .obs-eval-meta {
+      margin: 0;
+      font: 500 11px/1.4 "Noto Sans KR", var(--font-sans);
+      color: var(--text-tertiary);
+    }
     .detail-roster-cell .name {
       font: 700 13px/1.25 var(--font-sans); color: var(--text-primary);
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -2621,6 +2816,18 @@
         z-index: 2;
       }
       .roster-board-bar strong { font-size: 13px; }
+      .roster-unit-filter {
+        flex: 1 1 100%;
+        order: 2;
+        margin: 0;
+      }
+      .roster-unit-filter select {
+        height: 40px;
+        flex: 1;
+        min-width: 0;
+        max-width: none;
+        font-size: 14px;
+      }
       .roster-session-filter {
         flex: 1 1 100%;
         max-width: none;
@@ -2632,6 +2839,12 @@
         font-size: 14px;
       }
       .officer-tools { gap: 6px; }
+      .btn-officer-sem {
+        min-height: 40px;
+        height: 40px;
+        padding: 0 10px;
+        font-size: 13px;
+      }
       .btn-officer {
         min-height: 40px;
         height: 40px;
@@ -2648,7 +2861,7 @@
         margin: 0;
         min-height: 22px;
         font-size: 11px;
-        letter-spacing: 0.16em;
+        letter-spacing: 0.02em;
       }
       .roster-cell { padding: 30px 10px 10px; gap: 6px; }
       @media (max-width: 400px) {
@@ -2947,7 +3160,7 @@
         <button type="button" class="btn-tiny btn-icon" id="btnUndoAction" title="되돌리기 (최근 삭제 복구)" aria-label="되돌리기" disabled>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg>
         </button>
-        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="학번·이름·내용 요약 엑셀">XLSX</button>
+        <button type="button" class="btn-tiny is-accent" id="btnExportAllXlsx" title="교사 관찰 평가·학생 활동 엑셀">XLSX</button>
         <button type="button" class="btn-tiny" id="btnBackLanding">홈</button>
         <button type="button" class="btn-tiny" id="btnTeacherLogout">로그아웃</button>
       </div>
@@ -3075,14 +3288,26 @@
               <strong>학생 카드</strong>
               <span class="roster-board-dept" id="rosterBoardDept" hidden></span>
               <div class="officer-tools" role="group" aria-label="반장·부반장 지정">
-                <button type="button" class="btn-officer" id="btnPickPresident" title="반장 지정" aria-label="반장 지정" aria-pressed="false">
+                <div class="officer-sem" role="group" aria-label="학기 선택">
+                  <button type="button" class="btn-officer-sem is-on" id="btnOfficerSem1" data-officer-sem="1" aria-pressed="true" title="1학기 반장·부반장">1학기</button>
+                  <button type="button" class="btn-officer-sem" id="btnOfficerSem2" data-officer-sem="2" aria-pressed="false" title="2학기 반장·부반장">2학기</button>
+                </div>
+                <button type="button" class="btn-officer" id="btnPickPresident" title="1학기 반장 지정" aria-label="반장 지정" aria-pressed="false">
                   <span class="btn-officer-mark" aria-hidden="true">반</span>
                   <span class="btn-officer-label">반장</span>
                 </button>
-                <button type="button" class="btn-officer btn-officer--vice" id="btnPickVice" title="부반장 지정" aria-label="부반장 지정" aria-pressed="false">
+                <button type="button" class="btn-officer btn-officer--vice" id="btnPickVice" title="1학기 부반장 지정" aria-label="부반장 지정" aria-pressed="false">
                   <span class="btn-officer-mark" aria-hidden="true">부</span>
                   <span class="btn-officer-label">부반장</span>
                 </button>
+              </div>
+              <div class="roster-unit-filter" role="group" aria-label="학년·반 선택">
+                <select id="rosterBoardGradeSelect" aria-label="학년 선택" title="학년">
+                  <option value="">학년</option>
+                </select>
+                <select id="rosterBoardClassSelect" aria-label="반 선택" title="반">
+                  <option value="">반</option>
+                </select>
               </div>
               <label class="roster-session-filter">
                 <select id="rosterSessionSelect" aria-label="차시 미리보기 선택" title="종합 또는 차시를 고르면 학생 카드에 미리보기가 표시됩니다">
@@ -3126,6 +3351,23 @@
               <button type="button" class="btn-tiny" id="btnSubViewerClose">닫기</button>
             </div>
             <div class="sub-viewer-body" id="subViewerBody"></div>
+          </div>
+        </div>
+        <div class="obs-eval-sheet" id="obsEvalSheet" aria-hidden="true">
+          <div class="obs-eval-panel" role="dialog" aria-modal="true" aria-labelledby="obsEvalTitle">
+            <div class="obs-eval-head">
+              <h3 id="obsEvalTitle">관찰 평가</h3>
+              <div class="obs-eval-actions">
+                <button type="button" class="btn-tiny" id="btnObsEvalClose">닫기</button>
+                <button type="button" class="btn-tiny is-apply" id="btnObsEvalSave">저장</button>
+              </div>
+              <p class="sub" id="obsEvalSub">해당 차시 요약만 표시됩니다. 내용을 수정·보완할 수 있습니다.</p>
+            </div>
+            <div class="obs-eval-body">
+              <label for="obsEvalText">요약</label>
+              <textarea id="obsEvalText" spellcheck="false" placeholder="요약 내용을 불러오는 중…"></textarea>
+              <p class="obs-eval-meta" id="obsEvalMeta"></p>
+            </div>
           </div>
         </div>
         <div class="student-folio" id="studentFolio" aria-hidden="true">
@@ -3188,7 +3430,8 @@
       /** 예전 합성 이메일 계정 호환용 */
       const AUTH_EMAIL_DOMAIN = "id.2027career.local";
       const CLASS_SETTINGS_KEY = "career-class-settings-v1";
-      const CLASS_OFFICERS_KEY = "career-class-officers-v1";
+      const CLASS_OFFICERS_KEY = "career-class-officers-v2";
+      const OFFICER_SEMESTER_KEY = "career-officer-semester-v1";
       const SUMMARY_EDITS_KEY = "career-summary-edits-v1";
       const TEACHER_OBS_KEY = "career-teacher-obs-v1";
       const STUDENT_ACTIVITY_EDIT_KEY = "career-student-activity-edit-v1";
@@ -3276,6 +3519,15 @@
       let rosterSubMap = new Map();
       let classOfficers = loadClassOfficers();
       let officerPickMode = null; // null | "president" | "vice"
+      let officerSemester = (() => {
+        try {
+          const n = Number(localStorage.getItem(OFFICER_SEMESTER_KEY) || "1");
+          return n === 2 ? 2 : 1;
+        } catch {
+          return 1;
+        }
+      })();
+      let officersDbS2Ready = null; // null=미확인, true/false
       let rosterPreviewSession = 0; // 0=종합, 1~30=해당 차시 미리보기
       let rosterSessionPreviewSeq = 0;
       let officersDbReady = null; // null=미확인, true/false
@@ -3327,7 +3579,8 @@
         if (xlsxLoadPromise) return xlsxLoadPromise;
         xlsxLoadPromise = new Promise((resolve, reject) => {
           const s = document.createElement("script");
-          s.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+          // wrapText 등 셀 스타일 지원 포크
+          s.src = "https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js";
           s.async = true;
           s.onload = () => (window.XLSX ? resolve(window.XLSX) : reject(new Error("XLSX 로드 실패")));
           s.onerror = () => reject(new Error("XLSX 스크립트 로드 실패"));
@@ -3614,22 +3867,59 @@
         }
       }
 
-      function emptyOfficers() {
+      function emptySemesterOfficers() {
         return { president: null, vice: null };
+      }
+
+      function emptyOfficers() {
+        return { 1: emptySemesterOfficers(), 2: emptySemesterOfficers() };
+      }
+
+      function normalizeOfficerSemester(sem) {
+        return Number(sem) === 2 ? 2 : 1;
+      }
+
+      function normalizeOfficersBag(bag) {
+        if (!bag || typeof bag !== "object") return emptyOfficers();
+        if (bag[1] || bag[2] || bag["1"] || bag["2"]) {
+          const s1 = bag[1] || bag["1"] || {};
+          const s2 = bag[2] || bag["2"] || {};
+          return {
+            1: {
+              president: s1.president || null,
+              vice: s1.vice || null
+            },
+            2: {
+              president: s2.president || null,
+              vice: s2.vice || null
+            }
+          };
+        }
+        // 구버전: { president, vice } → 1학기로 이전
+        return {
+          1: {
+            president: bag.president || null,
+            vice: bag.vice || null
+          },
+          2: emptySemesterOfficers()
+        };
       }
 
       function loadClassOfficers() {
         try {
-          const raw = JSON.parse(localStorage.getItem(CLASS_OFFICERS_KEY) || "null");
+          let raw = JSON.parse(localStorage.getItem(CLASS_OFFICERS_KEY) || "null");
+          if (!raw || typeof raw !== "object") {
+            // v1 키에서 마이그레이션
+            try {
+              raw = JSON.parse(localStorage.getItem("career-class-officers-v1") || "null");
+            } catch {
+              raw = null;
+            }
+          }
           if (!raw || typeof raw !== "object") return {};
           const out = {};
           Object.keys(raw).forEach((classId) => {
-            const bag = raw[classId];
-            if (!bag || typeof bag !== "object") return;
-            out[classId] = {
-              president: bag.president || null,
-              vice: bag.vice || null
-            };
+            out[classId] = normalizeOfficersBag(raw[classId]);
           });
           return out;
         } catch {
@@ -3645,38 +3935,114 @@
         }
       }
 
+      function persistOfficerSemester() {
+        try {
+          localStorage.setItem(OFFICER_SEMESTER_KEY, String(officerSemester));
+        } catch {
+          /* ignore */
+        }
+      }
+
       function getClassOfficers(classId) {
         if (!classId) return emptyOfficers();
-        const cur = classOfficers[classId];
-        return cur ? { president: cur.president || null, vice: cur.vice || null } : emptyOfficers();
+        return normalizeOfficersBag(classOfficers[classId]);
+      }
+
+      function getOfficersForSemester(classId, sem = officerSemester) {
+        const o = getClassOfficers(classId);
+        return o[normalizeOfficerSemester(sem)] || emptySemesterOfficers();
       }
 
       function setClassOfficersLocal(classId, next) {
         if (!classId) return;
-        classOfficers[classId] = {
-          president: next?.president || null,
-          vice: next?.vice || null
-        };
+        classOfficers[classId] = normalizeOfficersBag(next);
         persistClassOfficers();
+      }
+
+      function describeStudentOfficer(officers, studentId) {
+        if (!studentId) return null;
+        const o = normalizeOfficersBag(officers);
+        const bits = [];
+        let isP = false;
+        let isV = false;
+        for (const sem of [1, 2]) {
+          const bag = o[sem] || emptySemesterOfficers();
+          if (bag.president === studentId) {
+            isP = true;
+            bits.push(`${sem}학기 반장`);
+          }
+          if (bag.vice === studentId) {
+            isV = true;
+            bits.push(`${sem}학기 부반장`);
+          }
+        }
+        if (!bits.length) return null;
+        return {
+          isP,
+          isV,
+          label: bits.join(" · "),
+          bandCls: isP ? "officer-band officer-band--president" : "officer-band officer-band--vice"
+        };
+      }
+
+      function pruneOfficersToStudentIds(officers, ids) {
+        const o = normalizeOfficersBag(officers);
+        let changed = false;
+        for (const sem of [1, 2]) {
+          const bag = o[sem];
+          if (bag.president && !ids.has(bag.president)) {
+            bag.president = null;
+            changed = true;
+          }
+          if (bag.vice && !ids.has(bag.vice)) {
+            bag.vice = null;
+            changed = true;
+          }
+        }
+        return { officers: o, changed };
       }
 
       function hydrateOfficersFromClassRow(row) {
         if (!row?.id) return;
-        if (row.president_student_id == null && row.vice_president_student_id == null) return;
-        setClassOfficersLocal(row.id, {
-          president: row.president_student_id || null,
-          vice: row.vice_president_student_id || null
-        });
+        const hasS1 = row.president_student_id != null || row.vice_president_student_id != null;
+        const hasS2 = row.president_student_id_s2 != null || row.vice_president_student_id_s2 != null;
+        if (!hasS1 && !hasS2) return;
+        const next = getClassOfficers(row.id);
+        if (hasS1) {
+          next[1] = {
+            president: row.president_student_id || null,
+            vice: row.vice_president_student_id || null
+          };
+        }
+        if (hasS2) {
+          next[2] = {
+            president: row.president_student_id_s2 || null,
+            vice: row.vice_president_student_id_s2 || null
+          };
+        }
+        setClassOfficersLocal(row.id, next);
       }
 
       async function syncOfficersToDb(classId) {
         if (!sb || !classId || officersDbReady === false) return;
         const o = getClassOfficers(classId);
-        const payload = {
-          president_student_id: o.president,
-          vice_president_student_id: o.vice
+        const base = {
+          president_student_id: o[1].president,
+          vice_president_student_id: o[1].vice
         };
-        const { error } = await sb.from("classes").update(payload).eq("id", classId);
+        const withS2 =
+          officersDbS2Ready === false
+            ? base
+            : {
+                ...base,
+                president_student_id_s2: o[2].president,
+                vice_president_student_id_s2: o[2].vice
+              };
+        let { error } = await sb.from("classes").update(withS2).eq("id", classId);
+        if (error && officersDbS2Ready !== false && /_s2|president_student_id_s2|vice_president_student_id_s2/i.test(error.message || "")) {
+          officersDbS2Ready = false;
+          ({ error } = await sb.from("classes").update(base).eq("id", classId));
+        }
         if (error) {
           if (/president_student_id|vice_president_student_id/i.test(error.message || "")) {
             officersDbReady = false;
@@ -3684,43 +4050,71 @@
           return;
         }
         officersDbReady = true;
+        if (officersDbS2Ready !== false && withS2 !== base) officersDbS2Ready = true;
         const row = teacherClasses.find((c) => c.id === classId);
         if (row) {
-          row.president_student_id = o.president;
-          row.vice_president_student_id = o.vice;
+          row.president_student_id = o[1].president;
+          row.vice_president_student_id = o[1].vice;
+          if (officersDbS2Ready !== false) {
+            row.president_student_id_s2 = o[2].president;
+            row.vice_president_student_id_s2 = o[2].vice;
+          }
         }
       }
 
       function clearOfficerIfStudent(classId, studentId) {
         if (!classId || !studentId) return;
         const o = getClassOfficers(classId);
-        let changed = false;
-        if (o.president === studentId) {
-          o.president = null;
-          changed = true;
+        let did = false;
+        for (const sem of [1, 2]) {
+          if (o[sem].president === studentId) {
+            o[sem].president = null;
+            did = true;
+          }
+          if (o[sem].vice === studentId) {
+            o[sem].vice = null;
+            did = true;
+          }
         }
-        if (o.vice === studentId) {
-          o.vice = null;
-          changed = true;
-        }
-        if (!changed) return;
+        if (!did) return;
         setClassOfficersLocal(classId, o);
         void syncOfficersToDb(classId);
       }
 
+      function setOfficerSemester(sem) {
+        officerSemester = normalizeOfficerSemester(sem);
+        persistOfficerSemester();
+        syncOfficerPickButtons();
+      }
+
       function syncOfficerPickButtons() {
-        const o = getClassOfficers(rosterClassId);
+        const bag = getOfficersForSemester(rosterClassId, officerSemester);
+        const semLabel = `${officerSemester}학기`;
         const btnP = $("btnPickPresident");
         const btnV = $("btnPickVice");
+        const btnS1 = $("btnOfficerSem1");
+        const btnS2 = $("btnOfficerSem2");
+        if (btnS1) {
+          btnS1.classList.toggle("is-on", officerSemester === 1);
+          btnS1.setAttribute("aria-pressed", officerSemester === 1 ? "true" : "false");
+        }
+        if (btnS2) {
+          btnS2.classList.toggle("is-on", officerSemester === 2);
+          btnS2.setAttribute("aria-pressed", officerSemester === 2 ? "true" : "false");
+        }
         if (btnP) {
           btnP.classList.toggle("is-on", officerPickMode === "president");
-          btnP.classList.toggle("is-assigned", !!o.president);
+          btnP.classList.toggle("is-assigned", !!bag.president);
           btnP.setAttribute("aria-pressed", officerPickMode === "president" ? "true" : "false");
+          btnP.title = `${semLabel} 반장 지정`;
+          btnP.setAttribute("aria-label", `${semLabel} 반장 지정`);
         }
         if (btnV) {
           btnV.classList.toggle("is-on", officerPickMode === "vice");
-          btnV.classList.toggle("is-assigned", !!o.vice);
+          btnV.classList.toggle("is-assigned", !!bag.vice);
           btnV.setAttribute("aria-pressed", officerPickMode === "vice" ? "true" : "false");
+          btnV.title = `${semLabel} 부반장 지정`;
+          btnV.setAttribute("aria-label", `${semLabel} 부반장 지정`);
         }
         const root = $("rosterList");
         if (root) root.classList.toggle("is-picking", !!officerPickMode);
@@ -3729,22 +4123,21 @@
       function paintOfficerBandOnCell(cell, officers) {
         if (!cell) return;
         const id = cell.getAttribute("data-id");
-        const isP = !!(id && id === officers.president);
-        const isV = !!(id && id === officers.vice);
+        const info = describeStudentOfficer(officers, id);
+        const isP = !!info?.isP;
+        const isV = !!info?.isV;
         cell.classList.toggle("is-president", isP);
-        cell.classList.toggle("is-vice", isV);
+        cell.classList.toggle("is-vice", !isP && isV);
         let band = cell.firstElementChild;
         const hasBand = band && band.classList.contains("officer-band");
-        if (isP || isV) {
-          const label = isP ? "반장" : "부반장";
-          const cls = isP ? "officer-band officer-band--president" : "officer-band officer-band--vice";
+        if (info) {
           if (!hasBand) {
             band = document.createElement("div");
             band.setAttribute("aria-hidden", "true");
             cell.insertBefore(band, cell.firstChild);
           }
-          if (band.className !== cls) band.className = cls;
-          if (band.textContent !== label) band.textContent = label;
+          if (band.className !== info.bandCls) band.className = info.bandCls;
+          if (band.textContent !== info.label) band.textContent = info.label;
         } else if (hasBand) {
           band.remove();
         }
@@ -3777,25 +4170,30 @@
       function setOfficerPickMode(mode) {
         officerPickMode = officerPickMode === mode ? null : mode;
         syncOfficerPickButtons();
-        if (officerPickMode === "president") toast("반장으로 지정할 학생 카드를 눌러 주세요.");
-        else if (officerPickMode === "vice") toast("부반장으로 지정할 학생 카드를 눌러 주세요.");
+        const semLabel = `${officerSemester}학기`;
+        if (officerPickMode === "president") toast(`${semLabel} 반장으로 지정할 학생 카드를 눌러 주세요.`);
+        else if (officerPickMode === "vice") toast(`${semLabel} 부반장으로 지정할 학생 카드를 눌러 주세요.`);
       }
 
       function assignOfficerFromCard(studentId) {
         if (!rosterClassId || !studentId || !officerPickMode) return;
         const role = officerPickMode;
+        const sem = normalizeOfficerSemester(officerSemester);
         const o = getClassOfficers(rosterClassId);
-        if (o[role] === studentId) {
-          o[role] = null;
-          toast(role === "president" ? "반장 지정을 해제했습니다." : "부반장 지정을 해제했습니다.");
+        const bag = { ...o[sem] };
+        const semLabel = `${sem}학기`;
+        if (bag[role] === studentId) {
+          bag[role] = null;
+          toast(role === "president" ? `${semLabel} 반장 지정을 해제했습니다.` : `${semLabel} 부반장 지정을 해제했습니다.`);
         } else {
-          o[role] = studentId;
-          if (role === "president" && o.vice === studentId) o.vice = null;
-          if (role === "vice" && o.president === studentId) o.president = null;
+          bag[role] = studentId;
+          if (role === "president" && bag.vice === studentId) bag.vice = null;
+          if (role === "vice" && bag.president === studentId) bag.president = null;
           const stu = rosterStudents.find((s) => s.id === studentId);
           const who = (stu?.student_name || stu?.student_no || "학생").trim();
-          toast(role === "president" ? `${who} · 반장` : `${who} · 부반장`);
+          toast(role === "president" ? `${who} · ${semLabel} 반장` : `${who} · ${semLabel} 부반장`);
         }
+        o[sem] = bag;
         setClassOfficersLocal(rosterClassId, o);
         officerPickMode = null;
         applyOfficerBands();
@@ -4005,6 +4403,7 @@
           const prefer = classes.find((c) => c.id === activeClassId) || classes[0];
           classSel.value = prefer.id;
         }
+        syncRosterBoardUnitSelects();
       }
 
       function queueSwitchFromTopbar() {
@@ -4568,6 +4967,7 @@
         closeSubViewer();
         renderClassSettingsUI();
         renderTeacherBarSwitcher();
+        syncRosterBoardUnitSelects();
         if (first) {
           loadRoster(first.id).catch(() => {});
           fetchLessonsForClass(first.id, { seed: !lessonsCache.has(first.id) })
@@ -4601,6 +5001,70 @@
         updateSetupLaunchHint();
       }
 
+      function syncRosterBoardUnitSelects() {
+        const gradeSel = $("rosterBoardGradeSelect");
+        const classSel = $("rosterBoardClassSelect");
+        if (!gradeSel || !classSel) return;
+
+        const gradesWithData = [1, 2, 3].filter(
+          (g) =>
+            activeClassesForGrade(g).length > 0 ||
+            getGradeClassCount(g) >= 1 ||
+            (classSettings.byGrade && classSettings.byGrade[String(g)])
+        );
+        const grades = gradesWithData.length ? gradesWithData : [1, 2, 3];
+        const curGrade = Number(
+          teacherClass?.grade ||
+            classMetaById(rosterClassId)?.grade ||
+            classSettings.classGrade ||
+            grades[0] ||
+            1
+        );
+
+        gradeSel.innerHTML = grades
+          .map((g) => `<option value="${g}">${g}학년</option>`)
+          .join("");
+        gradeSel.disabled = !grades.length;
+        if (grades.length) {
+          gradeSel.value = String(grades.includes(curGrade) ? curGrade : grades[0]);
+        }
+
+        const g = Number(gradeSel.value) || curGrade;
+        const list = orderClassesByUnits(g, activeClassesForGrade(g));
+        if (!list.length) {
+          const slots = rosterSlotsForGrade(g).filter((s) => s.id);
+          classSel.innerHTML = slots.length
+            ? slots
+                .map(
+                  (s) =>
+                    `<option value="${escapeHtml(s.id)}">${escapeHtml(s.label)}</option>`
+                )
+                .join("")
+            : `<option value="">반 없음</option>`;
+          classSel.disabled = !slots.length;
+          if (slots.length) {
+            const prefer =
+              (rosterClassId && slots.some((s) => s.id === rosterClassId) && rosterClassId) ||
+              slots[0].id;
+            classSel.value = prefer;
+          }
+          return;
+        }
+
+        classSel.innerHTML = list
+          .map((c) => {
+            const label = classChipLabel(c);
+            return `<option value="${escapeHtml(c.id)}">${escapeHtml(label)}</option>`;
+          })
+          .join("");
+        classSel.disabled = false;
+        const preferId =
+          (rosterClassId && list.some((c) => c.id === rosterClassId) && rosterClassId) ||
+          (activeClassId && list.some((c) => c.id === activeClassId) && activeClassId) ||
+          list[0].id;
+        classSel.value = preferId;
+      }
+
       function selectRosterClass(id) {
         const c = teacherClasses.find((x) => x.id === id);
         if (!c) return;
@@ -4609,6 +5073,7 @@
         teacherClass = c;
         selectedLessonId = null;
         renderRosterClassChips();
+        syncRosterBoardUnitSelects();
         updateSetupLaunchHint();
         loadRoster(c.id).catch(() => {});
         fetchLessonsForClass(c.id, { seed: !lessonsCache.has(c.id) })
@@ -4905,6 +5370,7 @@
           if (list) list.innerHTML = "";
           rosterStudents = [];
           syncStudentCountInput(0);
+          syncRosterBoardUnitSelects();
           return;
         }
         const savedIds = slots.filter((s) => s.id).map((s) => s.id);
@@ -4955,9 +5421,8 @@
           frag.appendChild(btn);
         });
         root.replaceChildren(frag);
+        syncRosterBoardUnitSelects();
       }
-
-      async function seedDefaultStudents(classId, { migrate = false } = {}) {
         if (!sb || !classId) return;
         if (studentsSeeded.has(classId) && !migrate) return;
 
@@ -5094,12 +5559,9 @@
           }
           // 삭제된 학생의 반장·부반장 지정 정리
           const ids = new Set(rosterStudents.map((s) => s.id));
-          const o = getClassOfficers(classId);
-          if ((o.president && !ids.has(o.president)) || (o.vice && !ids.has(o.vice))) {
-            setClassOfficersLocal(classId, {
-              president: o.president && ids.has(o.president) ? o.president : null,
-              vice: o.vice && ids.has(o.vice) ? o.vice : null
-            });
+          const { officers: cleaned, changed } = pruneOfficersToStudentIds(getClassOfficers(classId), ids);
+          if (changed) {
+            setClassOfficersLocal(classId, cleaned);
             void syncOfficersToDb(classId);
           }
           renderRosterList();
@@ -5686,13 +6148,12 @@
             }
           }
 
-          const isP = s.id === officers.president;
-          const isV = s.id === officers.vice;
-          const bandHtml = isP
-            ? `<div class="officer-band officer-band--president" aria-hidden="true">반장</div>`
-            : isV
-              ? `<div class="officer-band officer-band--vice" aria-hidden="true">부반장</div>`
-              : "";
+          const info = describeStudentOfficer(officers, s.id);
+          const isP = !!info?.isP;
+          const isV = !!info?.isV;
+          const bandHtml = info
+            ? `<div class="${info.bandCls}" aria-hidden="true">${escapeHtml(info.label)}</div>`
+            : "";
           const officerCls = isP ? " is-president" : isV ? " is-vice" : "";
           parts[i] = `
           <div class="roster-cell${cardHasSub ? " has-sub" : ""}${officerCls}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
@@ -5848,6 +6309,78 @@
         const edited = getSummaryEdit(sub.id);
         if (edited) return edited;
         return buildYukhaSummary(sub).paragraph || "";
+      }
+
+      let obsEvalSubmissionId = null;
+      let obsEvalOpenSeq = 0;
+
+      function closeObsEvalSheet() {
+        const sheet = $("obsEvalSheet");
+        if (!sheet) return;
+        sheet.classList.remove("is-open");
+        sheet.setAttribute("aria-hidden", "true");
+        obsEvalSubmissionId = null;
+      }
+
+      function refreshDetailObsEvalUi(sub) {
+        const grid = $("detailRosterGrid");
+        if (!grid || !sub?.id) return;
+        const btn = grid.querySelector(`[data-obs-eval="${sub.id}"]`);
+        if (btn) btn.classList.toggle("is-edited", !!getSummaryEdit(sub.id));
+        delete sub._yukha;
+        const yukha = buildYukhaSummary(sub);
+        const preview = grid.querySelector(`.detail-sub-preview[data-tab-detail="${sub.id}"] .plain-mini`);
+        if (preview) preview.textContent = yukha.oneLine || yukha.paragraph || "내용 없음";
+      }
+
+      async function openObsEvalSheet(submissionId) {
+        const sub = findSubmissionById(submissionId);
+        const sheet = $("obsEvalSheet");
+        const title = $("obsEvalTitle");
+        const subEl = $("obsEvalSub");
+        const meta = $("obsEvalMeta");
+        const ta = $("obsEvalText");
+        if (!sub || !sheet || !ta) return;
+        const seq = ++obsEvalOpenSeq;
+        obsEvalSubmissionId = sub.id;
+        const lesson = getLessonMeta(sub.session_no);
+        const who = `${sub.student_no || ""} ${sub.student_name || ""}`.trim() || "학생";
+        if (title) title.textContent = "관찰 평가";
+        if (subEl) {
+          subEl.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"}${lesson?.title ? ` · ${lesson.title}` : ""} · ${who}`;
+        }
+        if (meta) meta.textContent = getSummaryEdit(sub.id) ? "교사 수정본이 저장되어 있습니다." : "자동 요약입니다. 수정 후 저장하면 아이콘이 하늘색으로 바뀝니다.";
+        ta.value = "";
+        ta.placeholder = "요약 내용을 불러오는 중…";
+        ta.disabled = true;
+        sheet.classList.add("is-open");
+        sheet.setAttribute("aria-hidden", "false");
+        try {
+          await ensureSubmissionContent(sub);
+          if (seq !== obsEvalOpenSeq || obsEvalSubmissionId !== sub.id) return;
+          delete sub._yukha;
+          ta.value = resolveSummaryParagraph(sub);
+        } catch (e) {
+          console.warn(e);
+          if (seq !== obsEvalOpenSeq || obsEvalSubmissionId !== sub.id) return;
+          ta.value = getSummaryEdit(sub.id) || "";
+        } finally {
+          if (seq === obsEvalOpenSeq && obsEvalSubmissionId === sub.id) {
+            ta.disabled = false;
+            ta.placeholder = "요약을 수정하거나 보완해 주세요.";
+            try { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } catch (_) {}
+          }
+        }
+      }
+
+      function saveObsEvalSheet() {
+        const id = obsEvalSubmissionId;
+        const ta = $("obsEvalText");
+        if (!id || !ta) return;
+        setSummaryEdit(id, ta.value);
+        const sub = findSubmissionById(id);
+        if (sub) refreshDetailObsEvalUi(sub);
+        closeObsEvalSheet();
       }
 
       function paintRosterSummary(sub) {
@@ -6969,12 +7502,19 @@ ${built.html}
         {
           const o = getClassOfficers(rosterClassId);
           const gone = new Set(ids);
-          const next = {
-            president: o.president && gone.has(o.president) ? null : o.president,
-            vice: o.vice && gone.has(o.vice) ? null : o.vice
-          };
-          if (next.president !== o.president || next.vice !== o.vice) {
-            setClassOfficersLocal(rosterClassId, next);
+          let did = false;
+          for (const sem of [1, 2]) {
+            if (o[sem].president && gone.has(o[sem].president)) {
+              o[sem].president = null;
+              did = true;
+            }
+            if (o[sem].vice && gone.has(o[sem].vice)) {
+              o[sem].vice = null;
+              did = true;
+            }
+          }
+          if (did) {
+            setClassOfficersLocal(rosterClassId, o);
             void syncOfficersToDb(rosterClassId);
           }
         }
@@ -7225,6 +7765,12 @@ ${built.html}
         const u = new URL(`activities/${file}`, base);
         const code = String(submitCode || "").trim().toUpperCase();
         if (code) u.searchParams.set("code", code);
+        if (isVocational()) {
+          const classId = activeClassId || teacherClass?.id || null;
+          const meta = (classId && classMetaById(classId)) || teacherClass || null;
+          const dept = departmentNameFor(meta?.grade, meta?.class_no, meta);
+          if (dept) u.searchParams.set("dept", dept);
+        }
         // QR·공유용: 캐시버스트 파라미터 넣지 않음 (학생이 스캔해 바로 활동지로 이동)
         return u.href;
       }
@@ -7520,13 +8066,24 @@ ${built.html}
         let error = null;
         ({ data, error } = await sb
           .from("classes")
-          .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name, president_student_id, vice_president_student_id")
+          .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name, president_student_id, vice_president_student_id, president_student_id_s2, vice_president_student_id_s2")
           .eq("teacher_id", session.userId)
           .eq("mode", "class")
           .order("grade", { ascending: true })
           .order("class_no", { ascending: true }));
+        if (error && /president_student_id_s2|vice_president_student_id_s2/i.test(error.message || "")) {
+          officersDbS2Ready = false;
+          ({ data, error } = await sb
+            .from("classes")
+            .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name, president_student_id, vice_president_student_id")
+            .eq("teacher_id", session.userId)
+            .eq("mode", "class")
+            .order("grade", { ascending: true })
+            .order("class_no", { ascending: true }));
+        }
         if (error && /president_student_id|vice_president_student_id/i.test(error.message || "")) {
           officersDbReady = false;
+          officersDbS2Ready = false;
           ({ data, error } = await sb
             .from("classes")
             .select("id, class_code, title, mode, grade, class_no, is_active, created_at, department_name")
@@ -7549,12 +8106,15 @@ ${built.html}
         if (officersDbReady !== false) {
           let sawOfficerCol = false;
           for (const row of teacherClasses) {
-            if ("president_student_id" in row || "vice_president_student_id" in row) {
+            if ("president_student_id" in row || "vice_president_student_id" in row || "president_student_id_s2" in row) {
               sawOfficerCol = true;
               hydrateOfficersFromClassRow(row);
             }
           }
           if (sawOfficerCol) officersDbReady = true;
+          if (teacherClasses.some((r) => "president_student_id_s2" in r || "vice_president_student_id_s2" in r)) {
+            officersDbS2Ready = true;
+          }
         }
 
         const active = teacherClasses.filter((c) => c.is_active && c.class_no);
@@ -8270,69 +8830,187 @@ ${built.html}
         return text.replace(/\s*·\s*/g, " · ").replace(/\s{2,}/g, " ").trim();
       }
 
+      function sanitizeExcelSheetName(raw) {
+        let name = String(raw || "학급")
+          .replace(/[\\/?*[\]:]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (!name) name = "학급";
+        return name.slice(0, 31);
+      }
+
+      function folioExportCellText(observation, activity) {
+        const obs = String(observation || "").trim() || "—";
+        const act = String(activity || "").trim() || "—";
+        return `교사 관찰 평가\n${obs}\n\n학생 활동\n${act}`;
+      }
+
+      function uniqueExcelSheetName(book, base) {
+        let name = sanitizeExcelSheetName(base);
+        if (!book.SheetNames.includes(name)) return name;
+        for (let n = 2; n < 100; n++) {
+          const suffix = `_${n}`;
+          const cut = sanitizeExcelSheetName(base).slice(0, Math.max(1, 31 - suffix.length)) + suffix;
+          if (!book.SheetNames.includes(cut)) return cut;
+        }
+        return sanitizeExcelSheetName(`${base}_${Date.now().toString(36)}`);
+      }
+
+      async function fetchStudentsForFolioExport(classId) {
+        if (!sb || !classId) return [];
+        const baseCols = "id, student_no, student_name, sort_order";
+        let data = null;
+        let error = null;
+        if (folioNotesDbReady !== false) {
+          ({ data, error } = await sb
+            .from("students")
+            .select(`${baseCols}, teacher_observation, student_activity_text`)
+            .eq("class_id", classId)
+            .order("sort_order", { ascending: true }));
+          if (error && isFolioColumnMissing(error)) {
+            folioNotesDbReady = false;
+            ({ data, error } = await sb
+              .from("students")
+              .select(baseCols)
+              .eq("class_id", classId)
+              .order("sort_order", { ascending: true }));
+          } else if (!error) {
+            folioNotesDbReady = true;
+          }
+        } else {
+          ({ data, error } = await sb
+            .from("students")
+            .select(baseCols)
+            .eq("class_id", classId)
+            .order("sort_order", { ascending: true }));
+        }
+        if (error) throw error;
+        return data || [];
+      }
+
+      function applyFolioSheetStyle(sheet, rowCount, colCount, contentColIndex) {
+        const range = XLSX.utils.decode_range(sheet["!ref"] || "A1");
+        const headerStyle = {
+          font: { bold: true, sz: 11, name: "맑은 고딕" },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+          fill: { patternType: "solid", fgColor: { rgb: "F3E6D4" } }
+        };
+        const bodyStyle = {
+          font: { sz: 10, name: "맑은 고딕" },
+          alignment: { horizontal: "left", vertical: "top", wrapText: true }
+        };
+        const contentStyle = {
+          font: { sz: 10, name: "맑은 고딕" },
+          alignment: { horizontal: "left", vertical: "top", wrapText: true }
+        };
+        for (let R = range.s.r; R <= range.e.r; R++) {
+          for (let C = range.s.c; C <= range.e.c; C++) {
+            const addr = XLSX.utils.encode_cell({ r: R, c: C });
+            const cell = sheet[addr];
+            if (!cell) continue;
+            cell.s = R === 0 ? headerStyle : C === contentColIndex ? contentStyle : bodyStyle;
+          }
+        }
+        const rowsMeta = [{ hpt: 22 }];
+        for (let i = 1; i < rowCount; i++) {
+          const addr = XLSX.utils.encode_cell({ r: i, c: contentColIndex });
+          const text = String(sheet[addr]?.v || "");
+          const lines = text.split(/\n/).length;
+          const est = Math.min(220, Math.max(48, 18 + lines * 13));
+          rowsMeta.push({ hpt: est });
+        }
+        sheet["!rows"] = rowsMeta;
+        sheet["!cols"] = Array.from({ length: colCount }, (_, i) => {
+          if (i === contentColIndex) return { wch: 72 };
+          if (colCount === 4 && i === 0) return { wch: 12 };
+          if ((colCount === 4 && i === 1) || (colCount === 3 && i === 0)) return { wch: 10 };
+          return { wch: 12 };
+        });
+      }
+
       async function exportAllSubmissionsXlsx() {
         const btn = $("btnExportAllXlsx");
         if (btn) btn.disabled = true;
         toast("엑셀 준비 중…");
         try {
           await loadXlsxLib();
-          const active = teacherClasses.filter((c) => c.is_active && c.class_no);
+          const active = teacherClasses
+            .filter((c) => c.is_active && c.class_no)
+            .slice()
+            .sort((a, b) => {
+              const g = Number(a.grade) - Number(b.grade);
+              if (g) return g;
+              const dn = String(a.department_name || "").localeCompare(String(b.department_name || ""), "ko");
+              if (dn) return dn;
+              return Number(a.class_no) - Number(b.class_no);
+            });
           if (!active.length) {
-            toast("저장된 학급이 없습니다.");
+            toast("저장된 학급이 없습니다. 관리자 페이지에서 학급을 저장해 주세요.");
             return;
           }
-          const rows = [];
-          // 학급별 병렬 수집 (속도: 5개씩, 텍스트만)
-          for (let i = 0; i < active.length; i += 5) {
-            const chunk = active.slice(i, i + 5);
-            await Promise.all(chunk.map(async (cls) => {
-              const classLessons = await fetchLessonsForClass(cls.id, { seed: false });
-              const lessonIds = classLessons.map((l) => l.id);
-              if (!lessonIds.length) return;
-              const sessionByLesson = new Map(classLessons.map((l) => [l.id, l.session_no]));
-              const grade = cls.grade || 1;
-              const classNo = cls.class_no || 1;
-              const { data: subs } = await sb
-                .from("submissions")
-                .select("lesson_id, student_no, student_name, content, created_at")
-                .in("lesson_id", lessonIds)
-                .order("created_at", { ascending: false });
-              (subs || []).forEach((s) => {
-                const no = resolveRosterStudentKey(s.student_no, grade, classNo);
-                const sessionNo = sessionByLesson.get(s.lesson_id) || "";
-                const hint = {
-                  ...s,
-                  student_no: no,
-                  session_no: sessionNo
-                };
-                const yukha = buildYukhaSummary(hint, { where: `${unitLabel(cls)} 수업` });
-                rows.push({
-                  학번: no,
-                  이름: (s.student_name || "").trim(),
-                  차시: sessionNo,
-                  요약: yukha.paragraph || summarizeSubmissionText(s.content, hint)
-                });
-              });
-            }));
-          }
-          if (!rows.length) {
-            toast("제출된 보고서가 없습니다.");
-            return;
-          }
-          rows.sort((a, b) =>
-            Number(a.차시) - Number(b.차시) ||
-            Number(a.학번) - Number(b.학번) ||
-            String(a.이름).localeCompare(String(b.이름), "ko")
-          );
+
+          const withDept = isVocational();
           const book = XLSX.utils.book_new();
-          const sheet = XLSX.utils.json_to_sheet(rows, {
-            header: ["학번", "이름", "차시", "요약"]
-          });
-          sheet["!cols"] = [{ wch: 10 }, { wch: 10 }, { wch: 6 }, { wch: 80 }];
-          XLSX.utils.book_append_sheet(book, sheet, "제출요약");
+          let totalStudents = 0;
+
+          for (const cls of active) {
+            const grade = cls.grade || 1;
+            const classNo = cls.class_no || 1;
+            const dept = withDept ? departmentNameFor(grade, classNo, cls) : "";
+            const students = await fetchStudentsForFolioExport(cls.id);
+            const aoa = [];
+            const headers = withDept
+              ? ["학과", "학번", "이름", "교사 관찰 평가 · 학생 활동"]
+              : ["학번", "이름", "교사 관찰 평가 · 학생 활동"];
+            aoa.push(headers);
+
+            const ordered = students.slice().sort((a, b) => {
+              const ka = resolveRosterStudentKey(a.student_no, grade, classNo) || normalizeStudentNo(a.student_no);
+              const kb = resolveRosterStudentKey(b.student_no, grade, classNo) || normalizeStudentNo(b.student_no);
+              const na = Number(ka) || 0;
+              const nb = Number(kb) || 0;
+              if (na !== nb) return na - nb;
+              return String(ka).localeCompare(String(kb), "ko");
+            });
+
+            for (const st of ordered) {
+              const key =
+                resolveRosterStudentKey(st.student_no, grade, classNo) ||
+                normalizeStudentNo(st.student_no) ||
+                String(st.student_no || "");
+              let observation = String(st.teacher_observation || "").trim();
+              let activity = String(st.student_activity_text || "").trim();
+              if (!observation) observation = String(readLocalTeacherObservation(cls.id, key) || "").trim();
+              if (!activity) {
+                const localAct = readLocalStudentActivityEdit(cls.id, key);
+                if (localAct != null) activity = String(localAct).trim();
+              }
+
+              const content = folioExportCellText(observation, activity);
+              if (withDept) aoa.push([dept || "", key, (st.student_name || "").trim() || "이름", content]);
+              else aoa.push([key, (st.student_name || "").trim() || "이름", content]);
+            }
+
+            totalStudents += Math.max(0, aoa.length - 1);
+            const sheet = XLSX.utils.aoa_to_sheet(aoa);
+            const contentCol = withDept ? 3 : 2;
+            applyFolioSheetStyle(sheet, aoa.length, headers.length, contentCol);
+
+            const sheetBase = withDept && dept
+              ? `${grade}학년_${dept}_${classNo}반`
+              : `${grade}학년_${classNo}반`;
+            XLSX.utils.book_append_sheet(book, sheet, uniqueExcelSheetName(book, sheetBase));
+          }
+
+          if (!totalStudents) {
+            toast("내보낼 학생 명단이 없습니다.");
+            return;
+          }
+
           const stamp = new Date().toISOString().slice(0, 10);
-          XLSX.writeFile(book, `제출요약_${stamp}.xlsx`);
-          toast(`xlsx 저장 완료 · ${rows.length}건`);
+          const fileDept = withDept ? "_학과포함" : "";
+          XLSX.writeFile(book, `관찰평가_학생활동${fileDept}_${stamp}.xlsx`);
+          toast(`xlsx 저장 완료 · ${active.length}개 학급 · ${totalStudents}명`);
         } catch (e) {
           console.error(e);
           toast("xlsx 다운로드 실패: " + (e.message || e));
@@ -8498,19 +9176,29 @@ ${built.html}
               })
               .join("")}</div>`;
           }
-          const isP = !!(st.id && st.id === officers.president);
-          const isV = !!(st.id && st.id === officers.vice);
-          const bandHtml = isP
-            ? `<div class="officer-band officer-band--president" aria-hidden="true">반장</div>`
-            : isV
-              ? `<div class="officer-band officer-band--vice" aria-hidden="true">부반장</div>`
-              : "";
+          const info = describeStudentOfficer(officers, st.id);
+          const isP = !!info?.isP;
+          const isV = !!(info?.isV && !isP);
+          const bandHtml = info
+            ? `<div class="${info.bandCls}" aria-hidden="true">${escapeHtml(info.label)}</div>`
+            : "";
           const officerCls = isP ? " is-president" : isV ? " is-vice" : "";
+          const edited = !!(latest && getSummaryEdit(latest.id));
+          const obsBtn = latest
+            ? `<button type="button" class="obs-eval-btn${edited ? " is-edited" : ""}" data-obs-eval="${latest.id}" title="관찰 평가 · 요약 수정">
+                <span class="obs-eval-mark" aria-hidden="true">관</span>
+                <span>관찰 평가</span>
+              </button>`
+            : `<button type="button" class="obs-eval-btn" disabled title="제출 후 관찰 평가를 작성할 수 있습니다">
+                <span class="obs-eval-mark" aria-hidden="true">관</span>
+                <span>관찰 평가</span>
+              </button>`;
           parts[i] = `
             <div class="detail-roster-cell${latest ? " has-sub" : ""}${officerCls}" data-id="${st.id || ""}">
               ${bandHtml}
               <div class="head">
                 <span class="no">${escapeHtml(key || st.student_no)}</span>
+                ${obsBtn}
                 <span class="dot" aria-hidden="true" title="${latest ? `제출 ${list.length}건` : "미제출"}"></span>
               </div>
               <div class="name" title="${escapeHtml(st.student_name || latest?.student_name || "")}">${escapeHtml(st.student_name || latest?.student_name || "이름 없음")}</div>
@@ -8522,6 +9210,13 @@ ${built.html}
         if (!grid.dataset.bound) {
           grid.dataset.bound = "1";
           grid.addEventListener("click", async (e) => {
+            const obs = e.target.closest("[data-obs-eval]");
+            if (obs) {
+              e.stopPropagation();
+              const id = obs.getAttribute("data-obs-eval");
+              if (id) void openObsEvalSheet(id);
+              return;
+            }
             const del = e.target.closest("[data-del-detail]");
             if (del) {
               e.stopPropagation();
@@ -9369,6 +10064,11 @@ ${built.html}
       $("subViewer")?.addEventListener("click", (e) => {
         if (e.target === $("subViewer")) closeSubViewer();
       });
+      $("btnObsEvalClose")?.addEventListener("click", () => closeObsEvalSheet());
+      $("btnObsEvalSave")?.addEventListener("click", () => saveObsEvalSheet());
+      $("obsEvalSheet")?.addEventListener("click", (e) => {
+        if (e.target === $("obsEvalSheet")) closeObsEvalSheet();
+      });
       $("btnStudentFolioClose")?.addEventListener("click", () => closeStudentFolio());
       $("studentFolio")?.addEventListener("click", (e) => {
         if (e.target === $("studentFolio")) {
@@ -9460,9 +10160,28 @@ ${built.html}
       $("rosterSessionSelect")?.addEventListener("change", (e) => {
         setRosterPreviewSession(e.target.value);
       });
+      $("rosterBoardGradeSelect")?.addEventListener("change", () => {
+        const g = Number($("rosterBoardGradeSelect").value);
+        if (![1, 2, 3].includes(g)) return;
+        if (Number(classSettings.classGrade) === g) {
+          syncRosterBoardUnitSelects();
+          return;
+        }
+        changeClassGrade(g);
+      });
+      $("rosterBoardClassSelect")?.addEventListener("change", () => {
+        const id = $("rosterBoardClassSelect")?.value;
+        if (!id) return;
+        if (id === rosterClassId) return;
+        selectRosterClass(id);
+      });
       ensureRosterSessionSelectOptions();
+      syncRosterBoardUnitSelects();
       $("btnPickPresident")?.addEventListener("click", () => setOfficerPickMode("president"));
       $("btnPickVice")?.addEventListener("click", () => setOfficerPickMode("vice"));
+      $("btnOfficerSem1")?.addEventListener("click", () => setOfficerSemester(1));
+      $("btnOfficerSem2")?.addEventListener("click", () => setOfficerSemester(2));
+      syncOfficerPickButtons();
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape" || !officerPickMode) return;
         officerPickMode = null;
@@ -9478,6 +10197,11 @@ ${built.html}
       });
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
+        if ($("obsEvalSheet")?.classList.contains("is-open")) {
+          e.preventDefault();
+          closeObsEvalSheet();
+          return;
+        }
         if ($("batchSheet")?.classList.contains("is-open")) {
           e.preventDefault();
           closeBatchNameInput();
