@@ -363,12 +363,14 @@
     }
     .roster-class-head .settings-sub { margin: 0; }
     .roster-board {
-      border: 0;
-      border-top: 1.5px solid rgba(61, 52, 44, 0.16);
-      border-radius: 0;
+      border: 1.5px solid var(--border-frame);
+      border-radius: 18px;
       background: #f3efe7;
       padding: 0;
       overflow: hidden;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        0 8px 24px rgba(61, 52, 44, 0.05);
     }
     .roster-board-bar {
       display: flex;
@@ -753,72 +755,64 @@
       align-self: flex-end; border: 0; background: transparent;
       color: var(--text-tertiary); font: 600 10px/1 var(--font-sans); cursor: pointer;
     }
-    .roster-sub-list {
-      display: grid; gap: 6px; max-height: 280px; overflow-y: auto;
+    .session-track {
+      display: grid;
+      grid-template-columns: repeat(30, minmax(0, 1fr));
+      gap: 2px;
       margin-top: 2px;
+      padding: 5px 4px 4px;
+      border-radius: 8px;
+      background: #f7f4ee;
+      border: 1px solid #e5e0d5;
     }
-    .roster-sub-item {
-      display: grid; gap: 4px;
-      padding: 7px 8px; border-radius: 8px;
-      background: #fff; border: 1px solid var(--border-default);
-      text-align: left; cursor: pointer;
-      font: 500 10px/1.3 var(--font-sans); color: var(--text-secondary);
+    .session-dot {
+      appearance: none;
+      box-sizing: border-box;
+      width: 100%;
+      aspect-ratio: 1;
+      min-width: 0;
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      border-radius: 2px;
+      background: #ddd6c8;
+      color: transparent;
+      font-size: 0;
+      line-height: 0;
+      cursor: default;
+      display: block;
     }
-    .roster-sub-item:hover { border-color: var(--color-primary-300); }
-    .roster-sub-item strong {
-      display: block; font: 700 10px/1.3 var(--font-sans); color: var(--text-primary);
+    .session-dot.is-done {
+      background: linear-gradient(145deg, #d88861, var(--color-primary-500) 55%, var(--color-primary-700));
+      box-shadow: 0 0 0 1px rgba(140, 64, 34, 0.12);
+      cursor: pointer;
     }
-    .roster-summary {
-      display: grid; gap: 2px;
-      padding: 6px 7px;
-      border-radius: 7px;
-      background: #fffaf5;
-      border: 1px solid #edd9c8;
+    .session-dot.is-done:hover {
+      filter: brightness(1.08);
+      transform: scale(1.15);
     }
-    .roster-summary-label {
-      font: 700 9px/1.2 var(--font-sans);
-      color: var(--color-primary-700);
-      letter-spacing: -0.01em;
+    @media (prefers-reduced-motion: reduce) {
+      .session-dot.is-done:hover { transform: none; }
     }
-    .roster-summary p {
-      margin: 0;
-      font: 500 10px/1.4 var(--font-sans);
-      color: var(--text-primary);
-      white-space: pre-wrap;
-      word-break: keep-all;
-      overflow-wrap: anywhere;
-      max-height: 6.2em;
-      overflow: hidden;
+    .session-dot.is-done:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 1px;
     }
-    .roster-summary p.is-empty {
+    .session-track-legend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 3px;
+      padding: 0 1px;
+      font: 600 9px/1 var(--font-sans);
       color: var(--text-tertiary);
-      font-style: italic;
+      letter-spacing: -0.02em;
+      pointer-events: none;
+      user-select: none;
     }
-    .roster-summary p.is-loading {
-      color: var(--text-tertiary);
-    }
-    .roster-sub-item .sub-actions {
-      display: flex; justify-content: space-between; align-items: center;
-      gap: 10px; margin-top: 6px;
-    }
-    .roster-sub-item .sub-actions button {
-      flex: 1; min-height: 30px; padding: 0 10px;
-      border: 1.5px solid var(--border-default); border-radius: 999px;
-      background: #fff; cursor: pointer;
-      font: 700 11px/1 var(--font-sans);
-      color: var(--color-primary-700);
-    }
-    .roster-sub-item .sub-actions button:hover { background: var(--color-primary-50); }
-    .roster-sub-item .sub-actions button.is-danger {
-      color: #B23A2C;
-      border-color: rgba(178, 58, 44, 0.4);
-      margin-left: auto;
-      max-width: 42%;
-    }
-    .roster-sub-item .sub-actions button.is-danger:hover { background: #fdf1ef; }
-    .roster-sub-item .sub-actions button.is-view {
-      max-width: 54%;
-      border-color: var(--color-primary-300);
+    .roster-cell.has-sub .session-track {
+      background: #fff8f2;
+      border-color: #edd9c8;
     }
     .roster-actions {
       display: flex; gap: 8px; flex-wrap: wrap;
@@ -1054,9 +1048,50 @@
       background: #faf9f5; overflow: hidden;
       min-height: 28px;
     }
-    .detail-roster-cell.has-sub .detail-sub-preview {
-      border-color: var(--color-primary-200);
+    .detail-sub-stack {
+      display: grid;
+      gap: 6px;
+      max-height: 240px;
+      overflow-y: auto;
+      padding-right: 1px;
+    }
+    .detail-sub-block {
+      display: grid;
+      gap: 5px;
+      padding: 6px;
+      border: 1px solid var(--border-default);
+      border-radius: 8px;
+      background: #fffaf5;
+    }
+    .detail-sub-block.is-latest {
+      border-color: var(--color-primary-300);
       background: var(--color-primary-50);
+    }
+    .detail-sub-block .sub-meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .detail-sub-block .sub-ver {
+      font: 700 9px/1 var(--font-sans);
+      color: var(--color-primary-700);
+      letter-spacing: -0.01em;
+    }
+    .detail-sub-block .sub-time {
+      font: 600 9px/1.2 var(--font-sans);
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+    .detail-roster-cell.has-sub .detail-sub-preview {
+      border-color: transparent;
+      background: transparent;
+      cursor: pointer;
+      min-height: 0;
+    }
+    .detail-sub-block .detail-sub-preview {
+      border: 1px solid #edd9c8;
+      background: #fff;
       cursor: pointer;
     }
     .detail-sub-preview .plain-mini {
@@ -1399,9 +1434,19 @@
     }
     .class-settings {
       display: grid;
-      gap: 0;
+      gap: 14px;
       margin-bottom: 12px;
       padding: 0;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+      overflow: visible;
+      contain: layout style;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 800px;
+    }
+    .admin-panel {
       border: 1.5px solid var(--border-frame);
       border-radius: 18px;
       background:
@@ -1410,9 +1455,6 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.7),
         0 8px 24px rgba(61, 52, 44, 0.06);
       overflow: hidden;
-      contain: layout style;
-      content-visibility: auto;
-      contain-intrinsic-size: auto 800px;
     }
     .setup-panel {
       border: 1px solid #ddd5c8;
@@ -1490,14 +1532,13 @@
     .class-settings.is-setup-collapsed .setup-frame {
       display: none;
     }
-    .class-settings.is-setup-collapsed .roster-board {
-      border-top: 0;
-    }
+    .admin-panel.is-saved .setup-fold-btn,
     .class-settings.is-saved .setup-fold-btn {
       border-color: #c5d2de;
       background: #f7fafc;
       color: #4a6070;
     }
+    .admin-panel.is-saved .setup-fold-btn:hover,
     .class-settings.is-saved .setup-fold-btn:hover {
       background: #eef4f8;
       border-color: #a8b9c8;
@@ -1659,8 +1700,9 @@
       background: #faf8f4;
     }
 
-    /* 학급 저장 완료: 차분한 회색·하늘색으로 ‘설정됨’ 상태 표시 */
-    .class-settings.is-saved {
+    /* 학급 저장 완료: 관리자 패널만 쿨톤으로 ‘설정됨’ 표시 (학생 카드는 독립 유지) */
+    .admin-panel.is-saved,
+    .class-settings.is-saved .admin-panel {
       border-color: #4a6070;
       background:
         linear-gradient(180deg, #f3f7fa 0%, #e8eef4 100%);
@@ -1668,20 +1710,10 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.7),
         0 8px 24px rgba(70, 100, 120, 0.08);
     }
+    .admin-panel.is-saved .setup-page-head,
     .class-settings.is-saved .setup-page-head {
       background: linear-gradient(180deg, #eef4f8 0%, #e4ecf3 100%);
       border-bottom-color: rgba(74, 96, 112, 0.18);
-    }
-    .class-settings.is-saved .roster-board {
-      border-top-color: rgba(74, 96, 112, 0.2);
-      background: #e8eef4;
-    }
-    .class-settings.is-saved .roster-board-bar {
-      background: linear-gradient(180deg, #dde6ee 0%, #d4dee8 100%);
-      border-bottom-color: rgba(74, 96, 112, 0.14);
-    }
-    .class-settings.is-saved .roster-list {
-      background: #f0f5f9;
     }
     .setup-frame.is-saved {
       background: transparent;
@@ -2017,7 +2049,7 @@
         padding-top: 2px;
       }
       .topbar .btn-tiny { min-height: 40px; font-size: 13px; padding: 0 12px; }
-      .class-settings { gap: 0; padding-bottom: 0; }
+      .class-settings { gap: 12px; padding-bottom: 0; }
       .setup-page-head h2 { font-size: 18px; }
       .setup-frame { gap: 10px; padding: 12px; border-radius: 0; }
       .setup-panel { border-radius: 14px; }
@@ -2476,6 +2508,7 @@
       </aside>
       <section class="dash-detail">
         <div class="class-settings" id="classSettings" hidden>
+          <section class="admin-panel" id="adminPanel" aria-label="관리자 페이지">
           <header class="setup-page-head">
             <h2>관리자 페이지</h2>
             <button type="button" class="setup-fold-btn" id="btnToggleSetupFrame" aria-expanded="true" aria-controls="setupFrame" title="학급 설정 접기/펼치기">
@@ -2564,6 +2597,7 @@
               </div>
             </section>
           </div>
+          </section>
 
           <div class="roster-board" aria-label="학생 카드">
             <div class="roster-board-bar">
@@ -3571,10 +3605,12 @@
       function syncSetupSavedAppearance() {
         const frame = document.querySelector(".setup-frame");
         const settings = document.querySelector(".class-settings");
+        const admin = document.querySelector(".admin-panel");
         // 저장 완료(학급 있음 + 미수정)일 때만 쿨톤 배경
         const saved = isClassSettingsReady() && !classSettings.needsResave;
         if (frame) frame.classList.toggle("is-saved", saved);
         if (settings) settings.classList.toggle("is-saved", saved);
+        if (admin) admin.classList.toggle("is-saved", saved);
       }
 
       function setSetupFrameCollapsed(collapsed) {
@@ -4507,7 +4543,6 @@
             void syncOfficersToDb(classId);
           }
           renderRosterList();
-          void hydrateRosterSummaries();
         } catch (e) {
           if (seq !== rosterLoadSeq) return;
           console.warn(e);
@@ -4564,7 +4599,7 @@
             toast("학생을 삭제했습니다.");
             return;
           }
-          const viewBtn = e.target.closest("button[data-tab-sub]");
+          const viewBtn = e.target.closest("button[data-tab-sub], .session-dot.is-done[data-tab-sub]");
           if (viewBtn && root.contains(viewBtn)) {
             e.stopPropagation();
             const id = viewBtn.getAttribute("data-tab-sub");
@@ -4956,35 +4991,29 @@
               })
             : subs;
           const labelNo = key || s.student_no;
-          const subListHtml = sorted.length
-            ? `<div class="roster-sub-list">${sorted.map((sub) => {
-                const meta = getLessonMeta(sub.session_no);
-                const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
-                const title = meta?.title
-                  ? sanitizeSeteukText(`${sessionLabel}, ${meta.title}`)
-                  : sessionLabel;
-                let summaryBody;
-                if (typeof sub.summaryText === "string") {
-                  summaryBody = sub.summaryText
-                    ? `<p>${escapeHtml(sub.summaryText)}</p>`
-                    : `<p class="is-empty">요약 없음</p>`;
-                } else {
-                  summaryBody = `<p class="is-loading">불러오는 중…</p>`;
-                }
-                return `
-                <div class="roster-sub-item">
-                  <strong>${escapeHtml(title)}</strong>
-                  <div class="roster-summary">
-                    <span class="roster-summary-label">요약</span>
-                    ${summaryBody}
-                  </div>
-                  <div class="sub-actions">
-                    <button type="button" class="is-view" data-tab-sub="${sub.id}">크게 보기</button>
-                    <button type="button" class="is-danger" data-del-sub="${sub.id}">삭제</button>
-                  </div>
-                </div>`;
-              }).join("")}</div>`
-            : `<div class="roster-sub-list"><div class="roster-sub-item" style="cursor:default;opacity:.75">제출된 보고서 없음</div></div>`;
+          const bySession = new Map();
+          for (const sub of sorted) {
+            const sn = Number(sub.session_no) || 0;
+            if (sn >= 1 && sn <= 30 && !bySession.has(sn)) bySession.set(sn, sub);
+          }
+          const trackCells = [];
+          for (let sn = 1; sn <= 30; sn++) {
+            const sub = bySession.get(sn);
+            const meta = getLessonMeta(sn);
+            const titleBit = meta?.title ? ` · ${meta.title}` : "";
+            if (sub) {
+              trackCells.push(
+                `<button type="button" class="session-dot is-done" data-tab-sub="${sub.id}" title="${escapeHtml(`${sn}차시 제출됨${titleBit}`)}" aria-label="${sn}차시 제출됨"></button>`
+              );
+            } else {
+              trackCells.push(
+                `<span class="session-dot" title="${escapeHtml(`${sn}차시 미제출${titleBit}`)}" aria-label="${sn}차시 미제출"></span>`
+              );
+            }
+          }
+          const subListHtml = `
+            <div class="session-track" role="list" aria-label="1~30차시 제출 현황">${trackCells.join("")}</div>
+            <div class="session-track-legend" aria-hidden="true"><span>1</span><span>15</span><span>30</span></div>`;
           const isP = s.id === officers.president;
           const isV = s.id === officers.vice;
           const bandHtml = isP
@@ -4994,14 +5023,14 @@
               : "";
           const officerCls = isP ? " is-president" : isV ? " is-vice" : "";
           parts[i] = `
-          <div class="roster-cell${sorted.length ? " has-sub" : ""}${officerCls}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
+          <div class="roster-cell${bySession.size ? " has-sub" : ""}${officerCls}" data-id="${s.id}" data-no="${escapeHtml(key)}"${dept ? ` data-dept="${escapeHtml(dept)}"` : ""}>
             ${bandHtml}
             <div class="roster-cell-head">
               <div class="no">${escapeHtml(labelNo)}</div>
               ${deptHtml}
             </div>
             <input type="text" data-name="${s.id}" value="${escapeHtml(s.student_name || "")}" placeholder="이름" autocomplete="off" />
-            <div class="sub-meta">${sorted.length ? `제출 ${sorted.length}건` : "미제출"}</div>
+            <div class="sub-meta">${bySession.size ? `제출 ${bySession.size}건` : "미제출"}</div>
             ${subListHtml}
             <button type="button" class="del" data-del="${s.id}">학생 삭제</button>
           </div>`;
@@ -7052,12 +7081,19 @@ ${built.html}
         ]);
 
         for (const s of subsRes.data || []) {
-          const key = resolveRosterStudentKey(s.student_no, grade, classNo);
+          const key =
+            resolveRosterStudentKey(s.student_no, grade, classNo) ||
+            normalizeStudentNo(s.student_no) ||
+            String(s.student_no || "").trim();
           if (!key) continue;
           const row = { ...s, session_no: sessionNo, student_no: key };
           if (!detailSubMap.has(key)) detailSubMap.set(key, []);
           detailSubMap.get(key).push(row);
           submissionById.set(row.id, row);
+        }
+        // 학생별 제출은 최신순 유지
+        for (const [, list] of detailSubMap) {
+          list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         }
         subCountCache.set(lessonId, (subsRes.data || []).length);
 
@@ -7316,23 +7352,50 @@ ${built.html}
         const grade = meta?.grade || 1;
         const classNo = meta?.class_no || 1;
         const officers = getClassOfficers(classId);
-        const parts = new Array(students.length);
-        for (let i = 0; i < students.length; i++) {
-          const st = students[i];
-          const key = resolveRosterStudentKey(st.student_no, grade, classNo);
+
+        const ordered = students.slice().sort((a, b) => {
+          const keyA = resolveRosterStudentKey(a.student_no, grade, classNo) || normalizeStudentNo(a.student_no);
+          const keyB = resolveRosterStudentKey(b.student_no, grade, classNo) || normalizeStudentNo(b.student_no);
+          const listA = detailSubMap.get(keyA) || [];
+          const listB = detailSubMap.get(keyB) || [];
+          const tA = listA[0]?.created_at ? new Date(listA[0].created_at).getTime() : 0;
+          const tB = listB[0]?.created_at ? new Date(listB[0].created_at).getTime() : 0;
+          if (tA !== tB) return tB - tA;
+          return (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0);
+        });
+
+        const parts = new Array(ordered.length);
+        for (let i = 0; i < ordered.length; i++) {
+          const st = ordered[i];
+          const key = resolveRosterStudentKey(st.student_no, grade, classNo) || normalizeStudentNo(st.student_no);
           const list = detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
           const latest = list[0] || null;
-          const yukha = latest ? buildYukhaSummary(latest) : null;
-          const summary = yukha?.oneLine || "미제출";
-          const preview = latest
-            ? `<div class="detail-sub-preview" data-tab-detail="${latest.id}" title="육하원칙 요약 · 새 탭으로 보기"><div class="plain-mini">${escapeHtml(summary)}</div></div>`
-            : `<div class="detail-sub-preview"><div class="plain-mini is-empty">미제출</div></div>`;
-          const actions = latest
-            ? `<div class="detail-sub-actions">
-                 <button type="button" data-tab-detail="${latest.id}">새 탭</button>
-                 <button type="button" class="is-danger" data-del-detail="${latest.id}">삭제</button>
-               </div>`
-            : "";
+          let bodyHtml;
+          if (!list.length) {
+            bodyHtml = `<div class="detail-sub-preview"><div class="plain-mini is-empty">미제출</div></div>`;
+          } else {
+            bodyHtml = `<div class="detail-sub-stack">${list
+              .map((sub, idx) => {
+                const yukha = buildYukhaSummary(sub);
+                const summary = yukha?.oneLine || "내용 없음";
+                const verLabel = idx === 0 ? (list.length > 1 ? "최신" : "제출") : `이전 ${idx}`;
+                return `
+                <div class="detail-sub-block${idx === 0 ? " is-latest" : ""}">
+                  <div class="sub-meta-row">
+                    <span class="sub-ver">${escapeHtml(verLabel)}</span>
+                    <span class="sub-time">${escapeHtml(formatTime(sub.created_at) || "")}</span>
+                  </div>
+                  <div class="detail-sub-preview" data-tab-detail="${sub.id}" title="새 탭으로 보기">
+                    <div class="plain-mini">${escapeHtml(summary)}</div>
+                  </div>
+                  <div class="detail-sub-actions">
+                    <button type="button" data-tab-detail="${sub.id}">새 탭</button>
+                    <button type="button" class="is-danger" data-del-detail="${sub.id}">삭제</button>
+                  </div>
+                </div>`;
+              })
+              .join("")}</div>`;
+          }
           const isP = !!(st.id && st.id === officers.president);
           const isV = !!(st.id && st.id === officers.vice);
           const bandHtml = isP
@@ -7346,11 +7409,10 @@ ${built.html}
               ${bandHtml}
               <div class="head">
                 <span class="no">${escapeHtml(key || st.student_no)}</span>
-                <span class="dot" aria-hidden="true" title="${latest ? "제출됨" : "미제출"}"></span>
+                <span class="dot" aria-hidden="true" title="${latest ? `제출 ${list.length}건` : "미제출"}"></span>
               </div>
               <div class="name" title="${escapeHtml(st.student_name || latest?.student_name || "")}">${escapeHtml(st.student_name || latest?.student_name || "이름 없음")}</div>
-              ${preview}
-              ${actions}
+              ${bodyHtml}
             </div>`;
         }
         grid.innerHTML = parts.join("");
@@ -7506,8 +7568,14 @@ ${built.html}
         if (opts.switchSeq != null && opts.switchSeq !== switchSeq) return;
 
         const submittedCount = [...detailSubMap.values()].filter((arr) => arr.length).length;
+        const submissionTotal = [...detailSubMap.values()].reduce((n, arr) => n + arr.length, 0);
         const countEl = $("detailSubmitCount");
-        if (countEl) countEl.textContent = `${submittedCount}/${students.length}명 제출`;
+        if (countEl) {
+          countEl.textContent =
+            submissionTotal > submittedCount
+              ? `${submissionTotal}건 · ${submittedCount}/${students.length}명 제출`
+              : `${submittedCount}/${students.length}명 제출`;
+        }
         const grid = $("detailRosterGrid");
         if (grid) grid.classList.remove("is-loading");
         paintDetailRosterGrid(students);
@@ -7558,6 +7626,17 @@ ${built.html}
             async () => {
               if (lessonId) subCountCache.delete(lessonId);
               renderLessonList();
+              const current = lessons.find((l) => l.id === selectedLessonId);
+              if (current && $("detailCard") && !$("detailCard").hidden) {
+                await renderDetail(current);
+              }
+            }
+          )
+          .on(
+            "postgres_changes",
+            { event: "UPDATE", schema: "public", table: "submissions", filter: `lesson_id=eq.${lessonId}` },
+            async () => {
+              if (lessonId) subCountCache.delete(lessonId);
               const current = lessons.find((l) => l.id === selectedLessonId);
               if (current && $("detailCard") && !$("detailCard").hidden) {
                 await renderDetail(current);

@@ -1163,6 +1163,29 @@ body{padding:16px!important;background:#fff!important}
     }
   }
 
+  function getSubmitCodeFromPage() {
+    try {
+      const fromUrl = (new URLSearchParams(location.search).get("code") || "").trim().toUpperCase();
+      if (fromUrl) return fromUrl;
+    } catch {
+      /* ignore */
+    }
+    const input = document.getElementById("submitCodeInput");
+    return (input?.value || "").trim().toUpperCase();
+  }
+
+  function createAuthClient() {
+    if (!window.supabase) return null;
+    return window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false,
+        storage: localStorage
+      }
+    });
+  }
+
   function ensureTimeWatch() {
     const existing = document.getElementById("timeWatch");
     if (existing) {
@@ -1176,12 +1199,13 @@ body{padding:16px!important;background:#fff!important}
     if (!topbar) return;
 
     const wrap = document.createElement("div");
-    wrap.className = "time-watch";
+    wrap.className = "time-watch is-booting";
     wrap.id = "timeWatch";
     wrap.setAttribute("role", "group");
     wrap.setAttribute("aria-label", "수업 타임워치");
     wrap.innerHTML = `
       <div class="tw-shell">
+        <span class="tw-role" id="twRole" hidden></span>
         <label class="tw-set">
           <input id="twMinutes" type="number" min="1" max="300" step="1" inputmode="numeric" placeholder="50" aria-label="분 입력" />
           <span class="tw-unit">분</span>
@@ -1206,6 +1230,7 @@ body{padding:16px!important;background:#fff!important}
     const display = wrap.querySelector("#twDisplay");
     const toggleBtn = wrap.querySelector("#twToggle");
     const resetBtn = wrap.querySelector("#twReset");
+    const roleBadge = wrap.querySelector("#twRole");
 
     const ICON_PLAY =
       '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg>';
@@ -1215,7 +1240,13 @@ body{padding:16px!important;background:#fff!important}
     let mode = "idle"; // idle | running | paused | done
     let remainMs = 0;
     let endsAt = 0;
+    let clockSkewMs = 0;
     let tickId = 0;
+    let pollId = 0;
+    let isTeacher = false;
+    let pushing = false;
+    let channel = null;
+    const authSb = createAuthClient();
 
     const pad2 = (n) => (n < 10 ? "0" + n : String(n));
 
@@ -1232,8 +1263,12 @@ body{padding:16px!important;background:#fff!important}
       return Math.min(300, n);
     }
 
+    function nowMs() {
+      return Date.now() - clockSkewMs;
+    }
+
     function currentMs() {
-      if (mode === "running") return Math.max(0, endsAt - Date.now());
+      if (mode === "running") return Math.max(0, endsAt - nowMs());
       return Math.max(0, remainMs);
     }
 
@@ -1243,14 +1278,16 @@ body{padding:16px!important;background:#fff!important}
       display.textContent = formatMs(ms);
       display.classList.toggle("is-warn", totalSec > 0 && totalSec <= 600 && totalSec > 300);
       display.classList.toggle("is-alert", totalSec > 0 && totalSec <= 300);
-      display.classList.toggle("is-done", mode === "done" || totalSec === 0 && mode !== "idle");
-      if (input) input.disabled = mode === "running";
+      display.classList.toggle("is-done", mode === "done" || (totalSec === 0 && mode !== "idle"));
+      if (input) input.disabled = !isTeacher || mode === "running";
       if (toggleBtn) {
+        toggleBtn.disabled = !isTeacher;
         const running = mode === "running";
         toggleBtn.innerHTML = running ? ICON_PAUSE : ICON_PLAY;
         toggleBtn.title = running ? "일시정지" : mode === "paused" ? "계속" : "시작";
         toggleBtn.setAttribute("aria-label", toggleBtn.title);
       }
+      if (resetBtn) resetBtn.disabled = !isTeacher;
     }
 
     function stopTick() {
@@ -1260,7 +1297,7 @@ body{padding:16px!important;background:#fff!important}
       }
     }
 
-    function finish() {
+    function finishLocal() {
       stopTick();
       mode = "done";
       remainMs = 0;
@@ -1272,15 +1309,112 @@ body{padding:16px!important;background:#fff!important}
       stopTick();
       tickId = setInterval(() => {
         if (mode !== "running") return;
-        if (Date.now() >= endsAt) {
-          finish();
+        if (nowMs() >= endsAt) {
+          finishLocal();
+          if (isTeacher) void pushTimer("done", { remainSec: 0 });
           return;
         }
         paint();
       }, 250);
     }
 
+    function applyRemoteRow(row) {
+      if (!row || pushing) return;
+      const status = String(row.status || "idle");
+      const durationSec = Number(row.duration_sec) || 0;
+      const remainSec = Number(row.remain_sec);
+      if (row.server_now) {
+        const serverMs = new Date(row.server_now).getTime();
+        if (Number.isFinite(serverMs)) clockSkewMs = Date.now() - serverMs;
+      }
+      if (durationSec > 0 && input && document.activeElement !== input) {
+        input.value = String(Math.max(1, Math.round(durationSec / 60)));
+      }
+      if (status === "running" && row.ends_at) {
+        endsAt = new Date(row.ends_at).getTime();
+        remainMs = Math.max(0, endsAt - nowMs());
+        mode = remainMs > 0 ? "running" : "done";
+        if (mode === "running") startTick();
+        else {
+          stopTick();
+          remainMs = 0;
+          endsAt = 0;
+        }
+        paint();
+        return;
+      }
+      stopTick();
+      endsAt = 0;
+      mode = status === "paused" || status === "done" || status === "idle" ? status : "idle";
+      if (mode === "done") remainMs = 0;
+      else if (Number.isFinite(remainSec)) remainMs = Math.max(0, remainSec) * 1000;
+      else remainMs = durationSec > 0 ? durationSec * 1000 : 0;
+      paint();
+    }
+
+    async function fetchRemoteTimer() {
+      const code = getSubmitCodeFromPage();
+      if (!code || !sb) return null;
+      const { data, error } = await sb.rpc("get_lesson_timer", {
+        p_submit_code: code,
+        p_session_no: sessionNo
+      });
+      if (error) throw error;
+      const row = Array.isArray(data) ? data[0] : data;
+      return row || null;
+    }
+
+    async function pushTimer(status, opts = {}) {
+      const code = getSubmitCodeFromPage();
+      if (!isTeacher || !code || !authSb) return;
+      const mins = readMinutes();
+      const durationSec =
+        opts.durationSec != null
+          ? opts.durationSec
+          : mins
+            ? mins * 60
+            : Math.max(60, Math.round(remainMs / 1000) || 50 * 60);
+      const remainSec =
+        opts.remainSec != null
+          ? opts.remainSec
+          : status === "running" || status === "paused"
+            ? Math.max(0, Math.ceil(currentMs() / 1000))
+            : durationSec;
+      pushing = true;
+      try {
+        const { data, error } = await authSb.rpc("set_lesson_timer", {
+          p_submit_code: code,
+          p_session_no: sessionNo,
+          p_status: status,
+          p_duration_sec: durationSec,
+          p_remain_sec: remainSec
+        });
+        if (error) throw error;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (row) {
+          pushing = false;
+          applyRemoteRow(row);
+        }
+        if (channel) {
+          channel.send({
+            type: "broadcast",
+            event: "timer",
+            payload: row || { status, duration_sec: durationSec, remain_sec: remainSec }
+          }).catch(() => {});
+        }
+      } catch (err) {
+        console.warn(err);
+        const msg = err?.message || "";
+        if (/schema cache|Could not find the function|권한이 없습니다|로그인/i.test(msg)) {
+          wrap.title = "타이머 동기화 실패: Supabase에서 supabase-lesson-timer.sql 실행·교사 로그인을 확인해 주세요.";
+        }
+      } finally {
+        pushing = false;
+      }
+    }
+
     function syncFromInput() {
+      if (!isTeacher) return;
       if (mode === "running" || mode === "paused") return;
       const mins = readMinutes();
       remainMs = mins ? mins * 60 * 1000 : 0;
@@ -1288,12 +1422,14 @@ body{padding:16px!important;background:#fff!important}
       paint();
     }
 
-    function startOrResume() {
+    async function startOrResume() {
+      if (!isTeacher) return;
       if (mode === "running") {
         remainMs = currentMs();
         mode = "paused";
         stopTick();
         paint();
+        await pushTimer("paused", { remainSec: Math.ceil(remainMs / 1000) });
         return;
       }
       if (mode === "idle" || mode === "done") {
@@ -1306,42 +1442,155 @@ body{padding:16px!important;background:#fff!important}
         remainMs = mins * 60 * 1000;
       }
       if (remainMs <= 0) {
-        finish();
+        finishLocal();
+        await pushTimer("done", { remainSec: 0 });
         return;
       }
-      endsAt = Date.now() + remainMs;
       mode = "running";
+      endsAt = nowMs() + remainMs;
       paint();
       startTick();
+      await pushTimer("running", {
+        durationSec: readMinutes() ? readMinutes() * 60 : Math.round(remainMs / 1000),
+        remainSec: Math.ceil(remainMs / 1000)
+      });
     }
 
-    function reset() {
+    async function reset() {
+      if (!isTeacher) return;
       stopTick();
       mode = "idle";
       endsAt = 0;
-      const mins = readMinutes();
-      remainMs = mins ? mins * 60 * 1000 : 0;
+      const mins = readMinutes() || 50;
+      if (input && !readMinutes()) input.value = String(mins);
+      remainMs = mins * 60 * 1000;
+      paint();
+      await pushTimer("idle", { durationSec: mins * 60, remainSec: mins * 60 });
+    }
+
+    function setTeacherMode(on) {
+      isTeacher = !!on;
+      wrap.classList.toggle("is-teacher", isTeacher);
+      wrap.classList.toggle("is-viewer", !isTeacher);
+      wrap.classList.remove("is-booting");
+      if (roleBadge) {
+        roleBadge.hidden = false;
+        roleBadge.textContent = isTeacher ? "교사" : "동기화";
+      }
+      wrap.setAttribute(
+        "aria-label",
+        isTeacher ? "수업 타임워치 (교사 제어)" : "수업 타임워치 (교사 설정값 동기화)"
+      );
       paint();
     }
 
+    async function bindRealtime(code) {
+      if (!sb || !code) return;
+      try {
+        if (channel) {
+          await sb.removeChannel(channel);
+          channel = null;
+        }
+        channel = sb.channel(`lesson-timer:${code}`);
+        channel.on("broadcast", { event: "timer" }, ({ payload }) => {
+          applyRemoteRow(payload);
+        });
+        await channel.subscribe();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    function startPolling() {
+      if (pollId) clearInterval(pollId);
+      pollId = setInterval(() => {
+        if (document.visibilityState === "hidden" || pushing) return;
+        fetchRemoteTimer()
+          .then((row) => {
+            if (row) applyRemoteRow(row);
+          })
+          .catch(() => {});
+      }, isTeacher ? 4000 : 1500);
+    }
+
     input?.addEventListener("input", syncFromInput);
-    input?.addEventListener("change", syncFromInput);
+    input?.addEventListener("change", () => {
+      syncFromInput();
+      if (isTeacher && (mode === "idle" || mode === "done")) {
+        const mins = readMinutes();
+        if (mins) void pushTimer("idle", { durationSec: mins * 60, remainSec: mins * 60 });
+      }
+    });
     input?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        startOrResume();
+        void startOrResume();
       }
     });
-    toggleBtn?.addEventListener("click", startOrResume);
-    resetBtn?.addEventListener("click", reset);
+    toggleBtn?.addEventListener("click", () => void startOrResume());
+    resetBtn?.addEventListener("click", () => void reset());
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible" && mode === "running") {
-        if (Date.now() >= endsAt) finish();
+        if (nowMs() >= endsAt) finishLocal();
         else paint();
+        fetchRemoteTimer()
+          .then((row) => {
+            if (row) applyRemoteRow(row);
+          })
+          .catch(() => {});
       }
     });
 
-    syncFromInput();
+    paint();
+
+    (async () => {
+      const code = getSubmitCodeFromPage();
+      if (!code) {
+        setTeacherMode(false);
+        wrap.title = "QR(제출코드)가 있는 활동지에서 교사가 설정한 타이머가 동기화됩니다.";
+        if (input) input.value = "";
+        paint();
+        return;
+      }
+
+      let canControl = false;
+      try {
+        if (authSb) {
+          const { data: sessionData } = await authSb.auth.getSession();
+          if (sessionData?.session) {
+            const { data, error } = await authSb.rpc("can_control_lesson_timer", {
+              p_submit_code: code,
+              p_session_no: sessionNo
+            });
+            if (!error) canControl = !!data;
+          }
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+
+      setTeacherMode(canControl);
+
+      try {
+        const row = await fetchRemoteTimer();
+        if (row) applyRemoteRow(row);
+        else if (canControl && input && !input.value) {
+          input.value = "50";
+          syncFromInput();
+        }
+      } catch (e) {
+        console.warn(e);
+        wrap.title =
+          "타이머 동기화 RPC가 없습니다. Supabase에서 supabase-lesson-timer.sql 을 실행해 주세요.";
+        if (canControl && input && !input.value) {
+          input.value = "50";
+          syncFromInput();
+        }
+      }
+
+      await bindRealtime(code);
+      startPolling();
+    })();
   }
 
   function ensureReflectField() {
@@ -1376,6 +1625,183 @@ body{padding:16px!important;background:#fff!important}
     root.appendChild(box);
   }
 
+  function getDraftCodeKey() {
+    try {
+      const fromUrl = (new URLSearchParams(location.search).get("code") || "").trim().toUpperCase();
+      if (fromUrl) return fromUrl;
+    } catch {
+      /* ignore */
+    }
+    return "nocode";
+  }
+
+  function draftStorageKey() {
+    return `career-activity-draft:v1:${sessionNo}:${getDraftCodeKey()}`;
+  }
+
+  function collectDraftFields() {
+    const fields = {};
+    const root = document.getElementById("activity-root");
+    const scope = root || document;
+    scope.querySelectorAll("input, textarea, select").forEach((el) => {
+      if (el.disabled || el.type === "hidden") return;
+      const key = el.id || el.name;
+      if (!key) return;
+      if (el.type === "checkbox" || el.type === "radio") {
+        fields[key] = !!el.checked;
+      } else {
+        fields[key] = el.value;
+      }
+    });
+    const id = readSheetIdentity();
+    return {
+      v: 1,
+      sessionNo,
+      code: getDraftCodeKey(),
+      savedAt: Date.now(),
+      studentNo: id.studentNo,
+      studentName: id.studentName,
+      fields
+    };
+  }
+
+  function applyDraftFields(payload) {
+    if (!payload || !payload.fields || typeof payload.fields !== "object") return false;
+    const root = document.getElementById("activity-root");
+    const scope = root || document;
+    Object.keys(payload.fields).forEach((key) => {
+      let el = null;
+      try {
+        el =
+          (key && scope.querySelector(`#${CSS.escape(key)}`)) ||
+          (key && scope.querySelector(`[name="${CSS.escape(key)}"]`));
+      } catch {
+        el = document.getElementById(key) || scope.querySelector(`[name="${key}"]`);
+      }
+      if (!el) return;
+      const val = payload.fields[key];
+      if (el.type === "checkbox" || el.type === "radio") {
+        el.checked = !!val;
+      } else if (val != null) {
+        el.value = String(val);
+      }
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    const noEl = document.getElementById("sheetHakbun");
+    const nameEl = document.getElementById("sheetDisplayName");
+    if (noEl && payload.studentNo && !noEl.value.trim()) noEl.value = payload.studentNo;
+    if (nameEl && payload.studentName && !nameEl.value.trim()) nameEl.value = payload.studentName;
+    return true;
+  }
+
+  function saveActivityDraft(opts = {}) {
+    try {
+      const payload = collectDraftFields();
+      localStorage.setItem(draftStorageKey(), JSON.stringify(payload));
+      if (opts.toast !== false) showDraftToast("임시 저장되었습니다");
+      const btn = document.getElementById("btnDraftSave");
+      if (btn) {
+        btn.classList.add("is-saved");
+        clearTimeout(saveActivityDraft._flash);
+        saveActivityDraft._flash = setTimeout(() => btn.classList.remove("is-saved"), 1200);
+      }
+      return true;
+    } catch (e) {
+      console.warn(e);
+      if (opts.toast !== false) showDraftToast("저장 실패 · 브라우저 저장공간을 확인해 주세요");
+      return false;
+    }
+  }
+
+  function restoreActivityDraft() {
+    try {
+      const raw = localStorage.getItem(draftStorageKey());
+      if (!raw) return false;
+      const payload = JSON.parse(raw);
+      if (!payload || Number(payload.sessionNo) !== sessionNo) return false;
+      const ok = applyDraftFields(payload);
+      if (ok) {
+        ensureAutosizeTextareas();
+        showDraftToast("저장된 내용을 불러왔습니다");
+      }
+      return ok;
+    } catch (e) {
+      console.warn(e);
+      return false;
+    }
+  }
+
+  function showDraftToast(msg) {
+    let t = document.getElementById("draftToast");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "draftToast";
+      t.className = "draft-toast";
+      t.setAttribute("role", "status");
+      t.setAttribute("aria-live", "polite");
+      document.body.appendChild(t);
+    }
+    t.textContent = msg || "";
+    t.classList.add("is-on");
+    clearTimeout(showDraftToast._timer);
+    showDraftToast._timer = setTimeout(() => t.classList.remove("is-on"), 2000);
+  }
+
+  function bindDraftAutosave() {
+    if (document.documentElement.dataset.draftBound === "1") return;
+    document.documentElement.dataset.draftBound = "1";
+    let timer = 0;
+    const schedule = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => saveActivityDraft({ toast: false }), 600);
+    };
+    document.addEventListener(
+      "input",
+      (e) => {
+        if (!e.target || !e.target.closest) return;
+        if (!e.target.closest("#activity-root, #sheetIdentity, #submitOverlay")) return;
+        if (!/^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) return;
+        schedule();
+      },
+      true
+    );
+    document.addEventListener(
+      "change",
+      (e) => {
+        if (!e.target || !e.target.closest) return;
+        if (!e.target.closest("#activity-root, #sheetIdentity, #submitOverlay")) return;
+        schedule();
+      },
+      true
+    );
+    window.addEventListener("pagehide", () => saveActivityDraft({ toast: false }));
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") saveActivityDraft({ toast: false });
+    });
+  }
+
+  function ensureDraftControls(actionsHost) {
+    if (!actionsHost || document.getElementById("btnDraftSave")) return;
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "draft-fab";
+    btn.id = "btnDraftSave";
+    btn.setAttribute("aria-label", "임시 저장");
+    btn.title = "작성 중인 내용을 이 기기에 임시 저장합니다";
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+        <path d="M17 21v-8H7v8"/>
+        <path d="M7 3v5h8"/>
+      </svg>
+      <span class="label">임시 저장</span>`;
+    btn.addEventListener("click", () => saveActivityDraft({ toast: true }));
+    // 제출하기 앞에 배치
+    const submit = document.getElementById("btnSubmitActivity");
+    if (submit && submit.parentNode === actionsHost) actionsHost.insertBefore(btn, submit);
+    else actionsHost.appendChild(btn);
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
@@ -1389,7 +1815,10 @@ body{padding:16px!important;background:#fff!important}
         document.body;
       ensureSheetTools(host);
       ensureZoomControls(host);
+      ensureDraftControls(host);
       ensureTimeWatch();
+      bindDraftAutosave();
+      restoreActivityDraft();
       return;
     }
 
@@ -1419,11 +1848,14 @@ body{padding:16px!important;background:#fff!important}
       document.body.appendChild(actions);
     }
 
-    // 출력·저장 → 확대·축소 → 제출하기
+    // 출력·저장 → 확대·축소 → 임시 저장 → 제출하기
     ensureSheetTools(actions);
     ensureZoomControls(actions);
+    ensureDraftControls(actions);
     actions.appendChild(fab);
     ensureTimeWatch();
+    bindDraftAutosave();
+    restoreActivityDraft();
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";
@@ -1453,6 +1885,7 @@ body{padding:16px!important;background:#fff!important}
     document.body.appendChild(overlay);
 
     fab.addEventListener("click", () => {
+      saveActivityDraft({ toast: false });
       overlay.classList.add("is-open");
       prefillCodeFromUrl();
       const id = readSheetIdentity();
@@ -1566,6 +1999,7 @@ body{padding:16px!important;background:#fff!important}
       }
 
       setMsg("제출되었습니다. 교사 화면에 전송되었습니다.", "ok");
+      saveActivityDraft({ toast: false });
       setTimeout(() => {
         document.getElementById("submitOverlay")?.classList.remove("is-open");
         setMsg("");
