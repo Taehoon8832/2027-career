@@ -329,6 +329,28 @@ create policy "submissions_insert_public" on public.submissions
     exists (select 1 from public.lessons l where l.id = lesson_id)
   );
 
+drop policy if exists "submissions_update_teacher" on public.submissions;
+create policy "submissions_update_teacher" on public.submissions
+  for update to authenticated
+  using (
+    exists (
+      select 1
+      from public.lessons l
+      join public.classes c on c.id = l.class_id
+      where l.id = submissions.lesson_id and c.teacher_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.lessons l
+      join public.classes c on c.id = l.class_id
+      where l.id = submissions.lesson_id and c.teacher_id = auth.uid()
+    )
+  );
+
+grant update on public.submissions to authenticated;
+
 -- Realtime
 do $$
 begin

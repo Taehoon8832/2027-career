@@ -180,6 +180,29 @@ create policy "submissions_delete_teacher" on public.submissions
 
 grant delete on public.submissions to authenticated;
 
+-- 교사: 본인 학급 제출 수정(학번·이름 이동 등)
+drop policy if exists "submissions_update_teacher" on public.submissions;
+create policy "submissions_update_teacher" on public.submissions
+  for update to authenticated
+  using (
+    exists (
+      select 1
+      from public.lessons l
+      join public.classes c on c.id = l.class_id
+      where l.id = submissions.lesson_id and c.teacher_id = auth.uid()
+    )
+  )
+  with check (
+    exists (
+      select 1
+      from public.lessons l
+      join public.classes c on c.id = l.class_id
+      where l.id = submissions.lesson_id and c.teacher_id = auth.uid()
+    )
+  );
+
+grant update on public.submissions to authenticated;
+
 -- 교사가 제출코드 보정/갱신 가능
 drop policy if exists "lessons_update_teacher" on public.lessons;
 create policy "lessons_update_teacher" on public.lessons

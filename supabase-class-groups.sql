@@ -27,7 +27,7 @@ begin
   end;
   begin
     alter table public.classes
-      add constraint classes_class_no_check check (class_no is null or class_no between 1 and 10);
+      add constraint classes_class_no_check check (class_no is null or class_no between 1 and 15);
   exception when others then null;
   end;
 end $$;

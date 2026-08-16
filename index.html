@@ -1117,7 +1117,7 @@
       background: #ddd6c8;
       border: 0;
       padding: 0;
-      cursor: default;
+      cursor: pointer;
     }
     .folio-dot.is-done {
       background: #1a4f9c;
@@ -1152,8 +1152,8 @@
       cursor: pointer;
     }
     .folio-session-card.is-empty {
-      opacity: 0.55;
-      cursor: default;
+      opacity: 0.72;
+      cursor: pointer;
       background: #faf8f4;
     }
     .folio-session-card.is-done {
@@ -1163,6 +1163,62 @@
     .folio-session-card.is-focus {
       border-color: #c96442;
       box-shadow: inset 3px 0 0 #c96442, 0 0 0 2px rgba(201, 100, 66, 0.22);
+    }
+    .folio-session-card.is-selected {
+      border-color: #1a4f9c;
+      background: #f3f7fc;
+      box-shadow: inset 3px 0 0 #1a4f9c, 0 0 0 2px rgba(26, 79, 156, 0.18);
+    }
+    .folio-session-card .folio-card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .folio-session-card .folio-card-actions button {
+      flex: 1;
+      height: 24px;
+      border: 1px solid #c5d0dc;
+      border-radius: 999px;
+      background: #fff;
+      font: 700 10px/1 "Noto Sans KR", var(--font-sans);
+      color: #3d5a70;
+      cursor: pointer;
+    }
+    .folio-session-card .folio-card-actions button:hover {
+      background: #eef4fa;
+    }
+    .folio-mode-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 10px;
+      margin: 0 0 10px;
+    }
+    .folio-mode-bar .folio-mode-btn {
+      height: 30px;
+      padding: 0 12px;
+      border: 1.5px solid #c5d0dc;
+      border-radius: 999px;
+      background: #fff;
+      font: 700 12px/1 "Noto Sans KR", var(--font-sans);
+      color: #3d5a70;
+      cursor: pointer;
+    }
+    .folio-mode-bar .folio-mode-btn.is-on {
+      border-color: #1a4f9c;
+      background: #e8f0fa;
+      color: #143a74;
+    }
+    .folio-mode-bar .folio-mode-hint {
+      margin: 0;
+      font: 500 12px/1.4 "Noto Sans KR", var(--font-sans);
+      color: var(--text-secondary);
+      word-break: keep-all;
+    }
+    .folio-eval-col textarea.is-readonly {
+      background: #f3f1eb;
+      color: var(--text-primary);
+      cursor: default;
     }
     .folio-session-card .sn {
       font: 800 12px/1 var(--font-sans);
@@ -3456,7 +3512,7 @@
                 <button type="button" class="btn-tiny" id="btnMoveSubClose">닫기</button>
                 <button type="button" class="btn-tiny is-apply" id="btnMoveSubSave">이동</button>
               </div>
-              <p class="sub" id="moveSubSub">학번·이름을 고치면 해당 학생 카드로 제출이 옮겨집니다.</p>
+              <p class="sub" id="moveSubSub">보고서를 아래 입력된 곳으로 이동합니다.</p>
             </div>
             <div class="obs-eval-body">
               <div class="move-sub-body">
@@ -3468,7 +3524,7 @@
                   <label for="moveSubName">이름</label>
                   <input id="moveSubName" type="text" autocomplete="off" maxlength="20" placeholder="이름" />
                 </div>
-                <p class="move-sub-hint" id="moveSubHint">학번을 바꾸면 학년·반·번호에 맞는 학급 카드로 이동합니다.</p>
+                <p class="move-sub-hint" id="moveSubHint">해당 학번을 수정하면 학번에 맞는 학급으로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다.</p>
               </div>
             </div>
           </div>
@@ -3851,7 +3907,7 @@
         const m = String(raw ?? "").match(/\d{1,2}/);
         const n = parseInt(m?.[0] || "", 10);
         if (!Number.isFinite(n) || n < 1) return fallback;
-        return Math.min(10, n);
+        return Math.min(MAX_CLASS_COUNT, n);
       }
 
       /** 특성화고: 학급 수만큼 { classNo, department } 슬롯 */
@@ -4443,7 +4499,7 @@
         for (let i = 0; i < units.length; i++) {
           const no = normalizeUnitClassNo(units[i].classNo, 0);
           const dept = String(units[i].department || "").trim();
-          if (!no) return `${i + 1}번째 줄: 반 번호를 1~10으로 입력해 주세요.`;
+          if (!no) return `${i + 1}번째 줄: 반 번호를 1~${MAX_CLASS_COUNT}으로 입력해 주세요.`;
           const key = `${no}::${dept.toLowerCase()}`;
           if (seen.has(key)) {
             return dept
@@ -5254,9 +5310,9 @@
         if (!row) return false;
 
         const classNoMatch = String(classNoRaw || "").match(/\d{1,2}/);
-        const classNo = Math.max(1, Math.min(10, parseInt(classNoMatch?.[0] || "", 10) || 0));
+        const classNo = Math.max(1, Math.min(MAX_CLASS_COUNT, parseInt(classNoMatch?.[0] || "", 10) || 0));
         if (!classNo) {
-          toast("반 번호는 1~10 숫자로 입력해 주세요.");
+          toast(`반 번호는 1~${MAX_CLASS_COUNT} 숫자로 입력해 주세요.`);
           return false;
         }
         const grade = Number(row.grade) || classSettings.classGrade || 1;
@@ -6497,7 +6553,7 @@
         if (btn) {
           const edited =
             !!getSummaryEdit(sub.id) ||
-            !!String(readLocalTeacherObservation(classId, key) || "").trim();
+            !!folioBlobHasContent(readLocalTeacherObsBlob(classId, key));
           btn.classList.toggle("is-edited", edited);
         }
         delete sub._yukha;
@@ -6625,10 +6681,10 @@
         moveSubSubmissionId = sub.id;
         const who = `${sub.student_no || ""} ${sub.student_name || ""}`.trim() || "학생";
         if (subEl) {
-          subEl.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${who} 제출을 다른 학번·이름으로 옮깁니다.`;
+          subEl.textContent = `${sub.session_no ? `${sub.session_no}차시` : "차시"} · ${who} 보고서를 아래 입력된 곳으로 이동합니다.`;
         }
         if (hint) {
-          hint.textContent = "학번을 바꾸면 학년·반·번호에 맞는 학급 카드로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다.";
+          hint.textContent = "해당 학번을 수정하면 학번에 맞는 학급으로 이동합니다. 번호만(예: 3) 입력하면 현재 반 안에서 이동합니다.";
         }
         hakbunEl.value = String(sub.student_no || "");
         nameEl.value = String(sub.student_name || "");
@@ -6707,8 +6763,17 @@
             student_name: nextName
           };
           if (nextLessonId !== sub.lesson_id) patch.lesson_id = nextLessonId;
-          const { error } = await sb.from("submissions").update(patch).eq("id", sub.id);
+          const { data: updatedRows, error } = await sb
+            .from("submissions")
+            .update(patch)
+            .eq("id", sub.id)
+            .select("id, lesson_id, student_no, student_name");
           if (error) throw error;
+          if (!updatedRows?.length) {
+            throw new Error(
+              "제출을 수정할 권한이 없습니다. Supabase에서 supabase-submissions-update.sql 을 실행해 주세요."
+            );
+          }
 
           // 대상 좌석 명단 이름도 함께 맞춤
           try {
@@ -6737,7 +6802,7 @@
           toast(
             movedClass
               ? `제출을 ${parts.grade}학년 ${parts.class_no}반 ${parts.seat}번으로 옮겼습니다.`
-              : `학번·이름을 ${nextNo}${nextName ? ` · ${nextName}` : ""}(으)로 수정했습니다.`
+              : `보고서를 ${nextNo}${nextName ? ` · ${nextName}` : ""}(으)로 이동했습니다.`
           );
 
           if (movedClass && sessionNo) {
@@ -7435,6 +7500,140 @@
         return `${STUDENT_ACTIVITY_EDIT_KEY}:${classId || "x"}:${normalizeStudentNo(studentNo) || studentNo || ""}`;
       }
 
+      function emptyFolioFieldBlob() {
+        return { v: 2, s: {}, legacy: "" };
+      }
+
+      function normalizeSessionTextMap(raw) {
+        const out = {};
+        if (!raw || typeof raw !== "object") return out;
+        for (const [k, v] of Object.entries(raw)) {
+          const sn = Number(k);
+          if (!(sn >= 1 && sn <= 30)) continue;
+          const t = String(v ?? "").trim();
+          if (t) out[String(sn)] = String(v);
+        }
+        return out;
+      }
+
+      /** 예전 누적 본문 `(N차시)\\n...` 형태를 차시 맵으로 분리 */
+      function splitMarkedSessionChunks(text) {
+        const src = String(text || "").trim();
+        if (!src) return {};
+        const re = /\((\d{1,2})차시\)\s*\n?/g;
+        const hits = [];
+        let m;
+        while ((m = re.exec(src))) {
+          hits.push({ sn: Number(m[1]), index: m.index, end: m.index + m[0].length });
+        }
+        if (!hits.length) return {};
+        const out = {};
+        for (let i = 0; i < hits.length; i++) {
+          const sn = hits[i].sn;
+          if (!(sn >= 1 && sn <= 30)) continue;
+          const start = hits[i].end;
+          const stop = i + 1 < hits.length ? hits[i + 1].index : src.length;
+          const body = src.slice(start, stop).trim();
+          if (body) out[String(sn)] = body;
+        }
+        return out;
+      }
+
+      function parseFolioFieldBlob(raw) {
+        const t = String(raw ?? "").trim();
+        if (!t) return emptyFolioFieldBlob();
+        if (t.startsWith("{")) {
+          try {
+            const j = JSON.parse(t);
+            if (j && Number(j.v) === 2) {
+              const s = normalizeSessionTextMap(j.s);
+              let legacy = String(j.legacy || "").trim();
+              if (!Object.keys(s).length && legacy) {
+                const split = splitMarkedSessionChunks(legacy);
+                if (Object.keys(split).length) {
+                  Object.assign(s, split);
+                  legacy = "";
+                }
+              }
+              return { v: 2, s, legacy };
+            }
+          } catch (_) {
+            /* fall through */
+          }
+        }
+        const split = splitMarkedSessionChunks(t);
+        if (Object.keys(split).length) {
+          return { v: 2, s: split, legacy: "" };
+        }
+        return { v: 2, s: {}, legacy: t };
+      }
+
+      function serializeFolioFieldBlob(blob) {
+        const b = blob && typeof blob === "object" ? blob : emptyFolioFieldBlob();
+        return JSON.stringify({
+          v: 2,
+          s: normalizeSessionTextMap(b.s),
+          legacy: String(b.legacy || "").trim()
+        });
+      }
+
+      function folioBlobHasContent(blob) {
+        if (!blob) return false;
+        if (String(blob.legacy || "").trim()) return true;
+        return Object.values(blob.s || {}).some((v) => String(v || "").trim());
+      }
+
+      function getSessionNote(blob, sessionNo) {
+        const sn = String(Number(sessionNo) || 0);
+        if (!sn || sn === "0") return "";
+        return String(blob?.s?.[sn] || "");
+      }
+
+      function setSessionNote(blob, sessionNo, text) {
+        const next = {
+          v: 2,
+          s: { ...(blob?.s || {}) },
+          legacy: String(blob?.legacy || "")
+        };
+        const sn = String(Number(sessionNo) || 0);
+        if (!sn || sn === "0") return next;
+        const t = String(text ?? "");
+        if (String(t).trim()) next.s[sn] = t;
+        else delete next.s[sn];
+        return next;
+      }
+
+      function buildCumulativeFromBlob(blob, opts = {}) {
+        const maxBytes = opts.maxBytes;
+        const parts = [];
+        const legacy = String(blob?.legacy || "").trim();
+        if (legacy) parts.push(legacy);
+        for (let sn = 1; sn <= 30; sn++) {
+          const t = String(blob?.s?.[String(sn)] || "").trim();
+          if (!t) continue;
+          parts.push(`(${sn}차시)\n${t}`);
+        }
+        const joined = parts.join("\n\n").trim();
+        if (!joined) return "";
+        if (maxBytes != null) return truncateToNeisBytes(joined, maxBytes);
+        return joined;
+      }
+
+      function preferFolioBlobs(cloudRaw, localRaw) {
+        const cloud = parseFolioFieldBlob(cloudRaw);
+        const local = parseFolioFieldBlob(localRaw);
+        const out = emptyFolioFieldBlob();
+        out.legacy = String(local.legacy || "").trim() || String(cloud.legacy || "").trim();
+        for (let sn = 1; sn <= 30; sn++) {
+          const k = String(sn);
+          const lv = String(local.s[k] || "").trim();
+          const cv = String(cloud.s[k] || "").trim();
+          if (lv) out.s[k] = local.s[k];
+          else if (cv) out.s[k] = cloud.s[k];
+        }
+        return out;
+      }
+
       function readLocalTeacherObservation(classId, studentNo) {
         try {
           const raw = localStorage.getItem(teacherObsStorageKey(classId, studentNo));
@@ -7451,6 +7650,15 @@
         } catch {
           return null;
         }
+      }
+
+      function readLocalTeacherObsBlob(classId, studentNo) {
+        return parseFolioFieldBlob(readLocalTeacherObservation(classId, studentNo));
+      }
+
+      function readLocalActivityBlob(classId, studentNo) {
+        const raw = readLocalStudentActivityEdit(classId, studentNo);
+        return raw == null ? emptyFolioFieldBlob() : parseFolioFieldBlob(raw);
       }
 
       function isFolioColumnMissing(err) {
@@ -7500,7 +7708,9 @@
           return {
             id: data?.id || studentRowId,
             observation: String(data?.teacher_observation || ""),
-            activity: String(data?.student_activity_text || "")
+            activity: String(data?.student_activity_text || ""),
+            obsBlob: parseFolioFieldBlob(data?.teacher_observation),
+            actBlob: parseFolioFieldBlob(data?.student_activity_text)
           };
         } catch (e) {
           console.warn(e);
@@ -7535,9 +7745,10 @@
       function writeLocalFolioNotes(classId, studentKey, observation, activity) {
         if (!classId || !studentKey) return;
         try {
-          localStorage.setItem(teacherObsStorageKey(classId, studentKey), String(observation || ""));
+          const obs = String(observation || "");
           const act = String(activity || "");
-          if (isEmptyOrPlaceholderActivity(act)) {
+          localStorage.setItem(teacherObsStorageKey(classId, studentKey), obs);
+          if (!folioBlobHasContent(parseFolioFieldBlob(act))) {
             localStorage.removeItem(studentActivityEditKey(classId, studentKey));
           } else {
             localStorage.setItem(studentActivityEditKey(classId, studentKey), act);
@@ -7545,24 +7756,29 @@
         } catch (_) {}
       }
 
+      function writeLocalFolioBlobs(classId, studentKey, obsBlob, actBlob) {
+        writeLocalFolioNotes(
+          classId,
+          studentKey,
+          serializeFolioFieldBlob(obsBlob),
+          serializeFolioFieldBlob(actBlob)
+        );
+      }
+
       function resolveFolioObservationText(cloudNotes, localObs) {
-        const cloud = String(cloudNotes?.observation || "").trim();
-        const local = String(localObs || "").trim();
-        // 교사 임시수정(로컬)을 우선 — 클라우드 자동값에 덮이지 않게
-        if (local) return local;
-        if (cloud) return cloud;
-        return "";
+        const blob = preferFolioBlobs(cloudNotes?.observation, localObs);
+        return buildCumulativeFromBlob(blob);
       }
 
       function resolveFolioActivityText(cloudNotes, localAct, generated) {
-        const cloud = String(cloudNotes?.activity || "").trim();
-        const local = localAct == null ? "" : String(localAct).trim();
+        const blob = preferFolioBlobs(cloudNotes?.activity, localAct == null ? "" : localAct);
+        if (folioBlobHasContent(blob)) return buildCumulativeFromBlob(blob);
         const gen = String(generated || "").trim();
-        if (local && !isEmptyOrPlaceholderActivity(local)) return local;
-        if (cloud && !isEmptyOrPlaceholderActivity(cloud)) return cloud;
         if (gen && !isEmptyOrPlaceholderActivity(gen)) return gen;
         return "";
       }
+
+      let folioRuntime = null;
 
       function flushFolioNotesNow() {
         const folio = $("studentFolio");
@@ -7570,18 +7786,14 @@
         clearTimeout(folioSaveTimer);
         folioSaveTimer = 0;
         folioSaveSeq += 1;
-        const obsTa = $("folioTeacherObs");
-        const actTa = $("folioSeteukText");
-        if (!obsTa && !actTa) return;
-        const rowId = folio.dataset.folioStudentId || "";
-        const classId = folio.dataset.folioClassId || "";
-        const key = folio.dataset.folioStudentKey || "";
-        const observation = obsTa?.value || "";
-        let activity = actTa?.value || "";
-        if (isEmptyOrPlaceholderActivity(activity)) activity = "";
-        writeLocalFolioNotes(classId, key, observation, activity);
-        if (rowId && folioNotesDbReady !== false) {
-          void saveFolioNotesToCloud(rowId, observation, activity);
+        commitFolioEditorToRuntime();
+        if (!folioRuntime) return;
+        const { classId, studentKey, studentRowId, obsBlob, actBlob } = folioRuntime;
+        const observation = serializeFolioFieldBlob(obsBlob);
+        const activity = serializeFolioFieldBlob(actBlob);
+        writeLocalFolioNotes(classId, studentKey, observation, activity);
+        if (studentRowId && folioNotesDbReady !== false) {
+          void saveFolioNotesToCloud(studentRowId, observation, activity);
         }
       }
 
@@ -7590,19 +7802,49 @@
         const seq = ++folioSaveSeq;
         folioSaveTimer = setTimeout(async () => {
           folioSaveTimer = 0;
+          commitFolioEditorToRuntime();
           const payload = getPayload();
-          let activity = payload.activity || "";
-          if (isEmptyOrPlaceholderActivity(activity)) activity = "";
           writeLocalFolioNotes(
             payload.classId,
             payload.studentKey,
             payload.observation || "",
-            activity
+            payload.activity || ""
           );
           if (!studentRowId || folioNotesDbReady === false) return;
           if (seq !== folioSaveSeq) return;
-          await saveFolioNotesToCloud(studentRowId, payload.observation, activity);
+          await saveFolioNotesToCloud(studentRowId, payload.observation, payload.activity);
         }, 400);
+      }
+
+      function commitFolioEditorToRuntime() {
+        if (!folioRuntime || folioRuntime.mode === "cumul") return;
+        const sn = Number(folioRuntime.mode);
+        if (!(sn >= 1 && sn <= 30)) return;
+        const obsTa = $("folioTeacherObs");
+        const actTa = $("folioSeteukText");
+        if (obsTa) {
+          folioRuntime.obsBlob = setSessionNote(folioRuntime.obsBlob, sn, obsTa.value);
+        }
+        if (actTa && !actTa.readOnly) {
+          const raw = actTa.value;
+          // 자동 초안과 같으면 저장하지 않음(차시 맵을 비워 두어 자동 갱신 유지)
+          const auto = folioRuntime.autoAct?.[String(sn)] || "";
+          if (String(raw || "").trim() === String(auto || "").trim()) {
+            folioRuntime.actBlob = setSessionNote(folioRuntime.actBlob, sn, "");
+          } else {
+            folioRuntime.actBlob = setSessionNote(folioRuntime.actBlob, sn, raw);
+          }
+        }
+      }
+
+      function getFolioRuntimePayload() {
+        commitFolioEditorToRuntime();
+        return {
+          classId: folioRuntime?.classId || "",
+          studentKey: folioRuntime?.studentKey || "",
+          observation: serializeFolioFieldBlob(folioRuntime?.obsBlob || emptyFolioFieldBlob()),
+          activity: serializeFolioFieldBlob(folioRuntime?.actBlob || emptyFolioFieldBlob())
+        };
       }
 
       async function buildCumulativeSeteukText(subsBySession) {
@@ -7633,10 +7875,10 @@
         const key = folio.dataset.folioStudentKey || "";
         folio.classList.remove("is-open");
         folio.setAttribute("aria-hidden", "true");
-        // 상세 그리드 관찰 평가 버튼 상태 갱신
+        folioRuntime = null;
         const grid = $("detailRosterGrid");
         if (!grid || !classId || !key) return;
-        const hasObs = !!String(readLocalTeacherObservation(classId, key) || "").trim();
+        const hasObs = folioBlobHasContent(readLocalTeacherObsBlob(classId, key));
         grid.querySelectorAll(".detail-roster-cell").forEach((cell) => {
           const no = cell.querySelector(".no")?.textContent?.trim() || "";
           if (normalizeStudentNo(no) !== normalizeStudentNo(key) && no !== key) return;
@@ -7654,7 +7896,6 @@
         const stat = $("studentFolioStat");
         if (!folio || !body) return;
 
-        // 다른 학생 카드를 열기 전, 현재 편집 중인 임시저장을 먼저 반영
         if (folio.classList.contains("is-open")) flushFolioNotesNow();
 
         const classId = rosterClassId || activeClassId || teacherClass?.id || "";
@@ -7676,7 +7917,6 @@
           const sn = Number(sub.session_no) || 0;
           if (sn >= 1 && sn <= 30 && !bySession.has(sn)) bySession.set(sn, sub);
         }
-        // 상세 화면에서 연 경우: 현재 차시 제출이 맵에 없으면 보강
         if (focusSn >= 1 && focusSn <= 30 && !bySession.has(focusSn)) {
           for (const list of detailSubMap.values()) {
             const hit = (list || []).find(
@@ -7696,9 +7936,7 @@
           }
         }
 
-        if (title) {
-          title.textContent = `${key || "학번"} · ${name || "이름 없음"}`;
-        }
+        if (title) title.textContent = `${key || "학번"} · ${name || "이름 없음"}`;
         if (stat) stat.textContent = `${bySession.size}/30차시 제출`;
 
         body.innerHTML = `<p class="settings-sub">보고서를 불러오는 중…</p>`;
@@ -7711,175 +7949,275 @@
         folio.dataset.folioStudentKey = key || "";
 
         const cloudNotes = await loadFolioNotesFromCloud(studentRowId);
-        const localObs = readLocalTeacherObservation(classId, key);
-        const localAct = readLocalStudentActivityEdit(classId, key);
-        const obsSaved = resolveFolioObservationText(cloudNotes, localObs);
+        const localObsRaw = readLocalTeacherObservation(classId, key);
+        const localActRaw = readLocalStudentActivityEdit(classId, key);
+        const obsBlob = preferFolioBlobs(cloudNotes?.observation, localObsRaw);
+        const actBlob = preferFolioBlobs(
+          cloudNotes?.activity,
+          localActRaw == null ? "" : localActRaw
+        );
 
-        const trackHtml = Array.from({ length: 30 }, (_, i) => {
-          const sn = i + 1;
-          const sub = bySession.get(sn);
-          const meta = getLessonMeta(sn);
-          const tip = `${sn}차시 · ${meta?.title || ""}${sub ? " · 제출됨" : " · 미제출"}`;
-          const focusCls = focusSn === sn ? " is-focus" : "";
-          if (sub) {
-            return `<button type="button" class="folio-dot is-done${focusCls}" data-folio-sub="${sub.id}" data-folio-sn="${sn}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"></button>`;
-          }
-          return `<span class="folio-dot${focusCls}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"></span>`;
-        }).join("");
+        const initialMode = focusSn >= 1 && focusSn <= 30 ? focusSn : "cumul";
+        folioRuntime = {
+          classId,
+          studentKey: key,
+          studentRowId,
+          obsBlob,
+          actBlob,
+          bySession,
+          autoAct: {},
+          mode: initialMode
+        };
 
-        body.innerHTML = `
-          <section class="folio-gauge-board">
-            <strong>1~30차시 제출 현황</strong>
-            <div class="folio-track" id="folioTrack">${trackHtml}</div>
-            <div class="folio-legend"><span>1</span><span>15</span><span>30</span></div>
-          </section>
-          <section>
-            <div class="folio-session-grid" id="folioSessionGrid"></div>
-          </section>
-          <section class="folio-eval">
-            <div class="folio-eval-col">
-              <header>
-                <strong>교사 관찰 평가</strong>
-                <span id="folioObsBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
-              </header>
-              <textarea id="folioTeacherObs" placeholder="수업 중 관찰한 태도, 협력, 성장 포인트 등을 기록해 주세요.">${escapeHtml(obsSaved)}</textarea>
-            </div>
-            <div class="folio-eval-col">
-              <header>
-                <strong>학생 활동</strong>
-                <span id="folioSeteukBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
-              </header>
-              <textarea
-                id="folioSeteukText"
-                class="folio-seteuk"
-                spellcheck="true"
-                placeholder="제출된 학생 활동을 바탕으로 세특 초안이 채워집니다. 교사가 직접 수정·복사·붙여넣기할 수 있습니다."
-              >활동 내용을 분석하는 중…</textarea>
-            </div>
-          </section>`;
+        const renderTrackAndCards = () => {
+          const mode = folioRuntime.mode;
+          const trackHtml = Array.from({ length: 30 }, (_, i) => {
+            const sn = i + 1;
+            const sub = bySession.get(sn);
+            const meta = getLessonMeta(sn);
+            const hasNote =
+              !!String(getSessionNote(folioRuntime.obsBlob, sn) || "").trim() ||
+              !!String(getSessionNote(folioRuntime.actBlob, sn) || "").trim();
+            const tip = `${sn}차시 · ${meta?.title || ""}${sub ? " · 제출됨" : " · 미제출"}${hasNote ? " · 기록있음" : ""}`;
+            const sel = mode === sn ? " is-selected" : "";
+            const focusCls = focusSn === sn && mode !== sn ? " is-focus" : "";
+            const done = sub || hasNote ? " is-done" : "";
+            return `<button type="button" class="folio-dot${done}${sel}${focusCls}" data-folio-select-sn="${sn}" title="${escapeHtml(tip)}" aria-label="${escapeHtml(tip)}"></button>`;
+          }).join("");
 
-        const grid = $("folioSessionGrid");
-        if (grid) {
           const cards = [];
           for (let sn = 1; sn <= 30; sn++) {
             const meta = getLessonMeta(sn);
             const sub = bySession.get(sn);
-            const focusCls = focusSn === sn ? " is-focus" : "";
-            if (!sub) {
-              cards.push(`
-                <div class="folio-session-card is-empty${focusCls}">
-                  <span class="sn">${sn}차시</span>
-                  <div class="ttl">${escapeHtml(meta?.title || "")}</div>
-                  <div class="prev">미제출</div>
-                </div>`);
-              continue;
-            }
+            const hasNote =
+              !!String(getSessionNote(folioRuntime.obsBlob, sn) || "").trim() ||
+              !!String(getSessionNote(folioRuntime.actBlob, sn) || "").trim();
+            const sel = mode === sn ? " is-selected" : "";
+            const focusCls = focusSn === sn && mode !== sn ? " is-focus" : "";
+            const emptyCls = !sub && !hasNote ? " is-empty" : " is-done";
+            const status = sub ? "제출" : hasNote ? "기록" : "미제출";
+            const prevId = sub ? ` data-folio-prev="${sub.id}"` : "";
+            const prevText = sub ? "요약 불러오는 중…" : hasNote ? "교사 기록 있음" : "미제출";
+            const viewBtn = sub
+              ? `<button type="button" data-folio-sub="${sub.id}">보고서</button>`
+              : "";
             cards.push(`
-              <button type="button" class="folio-session-card is-done${focusCls}" data-folio-sub="${sub.id}" data-folio-sn="${sn}">
-                <span class="sn">${sn}차시 · 제출</span>
+              <div class="folio-session-card${emptyCls}${sel}${focusCls}" data-folio-select-sn="${sn}">
+                <span class="sn">${sn}차시${sub ? " · 제출" : hasNote ? " · 기록" : ""}</span>
                 <div class="ttl">${escapeHtml(meta?.title || "")}</div>
-                <div class="prev" data-folio-prev="${sub.id}">요약 불러오는 중…</div>
-              </button>`);
+                <div class="prev"${prevId}>${escapeHtml(prevText)}</div>
+                <div class="folio-card-actions">
+                  <button type="button" data-folio-select-sn="${sn}">${mode === sn ? "편집 중" : "편집"}</button>
+                  ${viewBtn}
+                </div>
+              </div>`);
           }
-          grid.innerHTML = cards.join("");
-        }
 
-        const getFolioPayload = () => ({
-          classId,
-          studentKey: key,
-          observation: $("folioTeacherObs")?.value || "",
-          activity: $("folioSeteukText")?.value || ""
-        });
-
-        const syncObsBytes = () => {
-          const ta = $("folioTeacherObs");
-          const label = $("folioObsBytes");
-          if (!ta || !label) return;
-          const n = neisByteLength(ta.value);
-          label.textContent = `${n} / ${NEIS_SETEUK_MAX_BYTES}바이트`;
-          label.classList.toggle("is-over", n > NEIS_SETEUK_MAX_BYTES);
+          return { trackHtml, cardsHtml: cards.join("") };
         };
-        const obsTa = $("folioTeacherObs");
-        obsTa?.addEventListener("input", () => {
-          syncObsBytes();
-          scheduleFolioNotesSave(studentRowId, getFolioPayload);
-        });
-        syncObsBytes();
 
-        // 미리보기·세특 생성 (비동기)
-        const previewJobs = [];
-        for (const [, sub] of bySession) {
-          previewJobs.push(
-            (async () => {
+        const paintShell = () => {
+          const { trackHtml, cardsHtml } = renderTrackAndCards();
+          const mode = folioRuntime.mode;
+          const modeLabel =
+            mode === "cumul" ? "누적 보기" : `${mode}차시 편집`;
+          body.innerHTML = `
+            <section class="folio-gauge-board">
+              <strong>1~30차시 제출 현황</strong>
+              <div class="folio-track" id="folioTrack">${trackHtml}</div>
+              <div class="folio-legend"><span>1</span><span>15</span><span>30</span></div>
+            </section>
+            <section>
+              <div class="folio-session-grid" id="folioSessionGrid">${cardsHtml}</div>
+            </section>
+            <div class="folio-mode-bar">
+              <button type="button" class="folio-mode-btn${mode === "cumul" ? " is-on" : ""}" data-folio-mode="cumul">누적 보기</button>
+              <p class="folio-mode-hint" id="folioModeHint">${
+                mode === "cumul"
+                  ? "관리자용 누적 화면입니다. 차시 카드의 편집을 누르면 해당 차시만 입력할 수 있습니다."
+                  : `${modeLabel} · 이 차시의 교사 관찰 평가와 학생 활동을 저장합니다.`
+              }</p>
+            </div>
+            <section class="folio-eval">
+              <div class="folio-eval-col">
+                <header>
+                  <strong id="folioObsTitle">교사 관찰 평가${mode === "cumul" ? " (누적)" : ` · ${mode}차시`}</strong>
+                  <span id="folioObsBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
+                </header>
+                <textarea id="folioTeacherObs" placeholder="수업 중 관찰한 태도, 협력, 성장 포인트 등을 기록해 주세요."></textarea>
+              </div>
+              <div class="folio-eval-col">
+                <header>
+                  <strong id="folioActTitle">학생 활동${mode === "cumul" ? " (누적)" : ` · ${mode}차시`}</strong>
+                  <span id="folioSeteukBytes">0 / ${NEIS_SETEUK_MAX_BYTES}바이트</span>
+                </header>
+                <textarea
+                  id="folioSeteukText"
+                  class="folio-seteuk"
+                  spellcheck="true"
+                  placeholder="제출된 학생 활동을 바탕으로 세특 초안이 채워집니다. 교사가 직접 수정할 수 있습니다."
+                ></textarea>
+              </div>
+            </section>`;
+        };
+
+        const syncBytes = () => {
+          const obsTa = $("folioTeacherObs");
+          const actTa = $("folioSeteukText");
+          const obsLabel = $("folioObsBytes");
+          const actLabel = $("folioSeteukBytes");
+          if (obsTa && obsLabel) {
+            const n = neisByteLength(obsTa.value);
+            obsLabel.textContent = `${n} / ${NEIS_SETEUK_MAX_BYTES}바이트`;
+            obsLabel.classList.toggle("is-over", n > NEIS_SETEUK_MAX_BYTES);
+          }
+          if (actTa && actLabel) {
+            const n = neisByteLength(actTa.value);
+            actLabel.textContent = `${n} / ${NEIS_SETEUK_MAX_BYTES}바이트`;
+            actLabel.classList.toggle("is-over", n > NEIS_SETEUK_MAX_BYTES);
+          }
+        };
+
+        const fillEditorForMode = async () => {
+          const mode = folioRuntime.mode;
+          const obsTa = $("folioTeacherObs");
+          const actTa = $("folioSeteukText");
+          if (!obsTa || !actTa) return;
+
+          if (mode === "cumul") {
+            for (const [sn, sub] of bySession) {
+              await ensureSubmissionContent(sub);
+              delete sub._yukha;
+              const y = buildYukhaSummary(sub);
+              const para = sanitizeSeteukText(y?.paragraph || "");
+              if (para) folioRuntime.autoAct[String(sn)] = para;
+            }
+            const obsCum =
+              buildCumulativeFromBlob(folioRuntime.obsBlob, {
+                maxBytes: NEIS_SETEUK_MAX_BYTES
+              }) || "";
+            const actParts = [];
+            const legacyAct = String(folioRuntime.actBlob.legacy || "").trim();
+            if (legacyAct) actParts.push(legacyAct);
+            for (let sn = 1; sn <= 30; sn++) {
+              const saved = getSessionNote(folioRuntime.actBlob, sn).trim();
+              const auto = String(folioRuntime.autoAct[String(sn)] || "").trim();
+              const t = saved || auto;
+              if (t) actParts.push(`(${sn}차시)\n${t}`);
+            }
+            const actCum = actParts.length
+              ? truncateToNeisBytes(actParts.join("\n\n"), NEIS_SETEUK_MAX_BYTES)
+              : "제출된 학생 활동이 없습니다.";
+            obsTa.value = obsCum;
+            actTa.value = actCum;
+            obsTa.readOnly = true;
+            actTa.readOnly = true;
+            obsTa.classList.add("is-readonly");
+            actTa.classList.add("is-readonly");
+            obsTa.placeholder = "차시별 교사 관찰 평가가 여기에 누적됩니다.";
+            actTa.placeholder = "차시별 학생 활동이 여기에 누적됩니다.";
+          } else {
+            const sn = Number(mode);
+            const sub = bySession.get(sn);
+            let auto = "";
+            if (sub) {
+              await ensureSubmissionContent(sub);
+              delete sub._yukha;
+              const y = buildYukhaSummary(sub);
+              auto = sanitizeSeteukText(y?.paragraph || "");
+              folioRuntime.autoAct[String(sn)] = auto;
+            }
+            const savedAct = getSessionNote(folioRuntime.actBlob, sn);
+            obsTa.value = getSessionNote(folioRuntime.obsBlob, sn);
+            actTa.value = savedAct.trim() ? savedAct : auto;
+            obsTa.readOnly = false;
+            actTa.readOnly = false;
+            obsTa.classList.remove("is-readonly");
+            actTa.classList.remove("is-readonly");
+            obsTa.placeholder = `${sn}차시 수업에서 관찰한 태도·협력·성장을 기록해 주세요.`;
+            actTa.placeholder = sub
+              ? "이 차시 제출을 바탕으로 초안이 채워집니다. 수정할 수 있습니다."
+              : "제출이 없어도 학생 활동을 직접 기록할 수 있습니다.";
+          }
+          syncBytes();
+        };
+
+        const bindEditorEvents = () => {
+          const obsTa = $("folioTeacherObs");
+          const actTa = $("folioSeteukText");
+          const onInput = () => {
+            if (folioRuntime.mode === "cumul") return;
+            syncBytes();
+            scheduleFolioNotesSave(studentRowId, getFolioRuntimePayload);
+          };
+          obsTa?.addEventListener("input", onInput);
+          actTa?.addEventListener("input", onInput);
+        };
+
+        const applyMode = async (nextMode) => {
+          commitFolioEditorToRuntime();
+          folioRuntime.mode = nextMode === "cumul" ? "cumul" : Number(nextMode);
+          paintShell();
+          bindEditorEvents();
+          await fillEditorForMode();
+          // 카드 미리보기 채우기
+          for (const [, sub] of bySession) {
+            void (async () => {
               await ensureSubmissionContent(sub);
               const y = buildYukhaSummary(sub);
               const el = body.querySelector(`[data-folio-prev="${sub.id}"]`);
               if (el) el.textContent = y?.oneLine || y?.paragraph || "제출됨";
-            })()
-          );
-        }
-        await Promise.all(previewJobs);
-
-        const seteuk = await buildCumulativeSeteukText(bySession);
-        const seteukEl = $("folioSeteukText");
-        const seteukBytes = $("folioSeteukBytes");
-        const activityText = resolveFolioActivityText(cloudNotes, localAct, seteuk);
-        if (seteukEl) seteukEl.value = activityText || "제출된 학생 활동이 없습니다.";
-        const syncActivityBytes = () => {
-          if (!seteukEl || !seteukBytes) return;
-          const n = neisByteLength(seteukEl.value);
-          seteukBytes.textContent = `${n} / ${NEIS_SETEUK_MAX_BYTES}바이트`;
-          seteukBytes.classList.toggle("is-over", n > NEIS_SETEUK_MAX_BYTES);
-        };
-        seteukEl?.addEventListener("input", () => {
-          syncActivityBytes();
-          scheduleFolioNotesSave(studentRowId, getFolioPayload);
-        });
-        syncActivityBytes();
-
-        // 관찰은 로컬 백업. 학생 활동은 교사가 수정한 경우에만 로컬 유지
-        // (자동 초안을 로컬에 고정하면 이후 수정분이 복원되지 않거나 초안이 낡음)
-        const displayObs = String(obsSaved || "").trim();
-        const displayActRaw = String(seteukEl?.value || activityText || "").trim();
-        const displayAct = isEmptyOrPlaceholderActivity(displayActRaw) ? "" : displayActRaw;
-        const hadLocalAct =
-          localAct != null &&
-          String(localAct).trim() !== "" &&
-          !isEmptyOrPlaceholderActivity(localAct);
-        try {
-          localStorage.setItem(teacherObsStorageKey(classId, key), displayObs);
-          if (hadLocalAct) {
-            if (displayAct) localStorage.setItem(studentActivityEditKey(classId, key), displayAct);
-            else localStorage.removeItem(studentActivityEditKey(classId, key));
+            })();
           }
-        } catch (_) {}
+          requestAnimationFrame(() => {
+            const target =
+              body.querySelector(".folio-session-card.is-selected") ||
+              body.querySelector(".folio-eval");
+            try {
+              target?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+            } catch (_) {}
+            if (folioRuntime.mode !== "cumul") {
+              try {
+                $("folioTeacherObs")?.focus();
+              } catch (_) {}
+            }
+          });
+        };
 
-        const cloudObs = String(cloudNotes?.observation || "").trim();
-        const cloudAct = String(cloudNotes?.activity || "").trim();
-        if (
-          studentRowId &&
-          folioNotesDbReady !== false &&
-          (displayObs !== cloudObs || (hadLocalAct && displayAct !== cloudAct))
-        ) {
+        body.onclick = (e) => {
+          const modeBtn = e.target.closest("[data-folio-mode]");
+          if (modeBtn && body.contains(modeBtn)) {
+            e.preventDefault();
+            void applyMode("cumul");
+            return;
+          }
+          const subBtn = e.target.closest("[data-folio-sub]");
+          if (subBtn && body.contains(subBtn)) {
+            e.preventDefault();
+            e.stopPropagation();
+            const id = subBtn.getAttribute("data-folio-sub");
+            if (id) void openSubmissionInNewTab(id);
+            return;
+          }
+          const sel = e.target.closest("[data-folio-select-sn]");
+          if (sel && body.contains(sel)) {
+            e.preventDefault();
+            const sn = Number(sel.getAttribute("data-folio-select-sn"));
+            if (sn >= 1 && sn <= 30) void applyMode(sn);
+          }
+        };
+
+        await applyMode(initialMode);
+
+        // 초기 동기화(클라우드·로컬)
+        writeLocalFolioBlobs(classId, key, folioRuntime.obsBlob, folioRuntime.actBlob);
+        if (studentRowId && folioNotesDbReady !== false) {
           void saveFolioNotesToCloud(
             studentRowId,
-            displayObs,
-            hadLocalAct ? displayAct : cloudAct
+            serializeFolioFieldBlob(folioRuntime.obsBlob),
+            serializeFolioFieldBlob(folioRuntime.actBlob)
           );
         }
-
-        // 해당 차시 카드·평가란으로 스크롤
-        requestAnimationFrame(() => {
-          const focusCard =
-            (focusSn && body.querySelector(`.folio-session-card.is-focus`)) ||
-            body.querySelector(".folio-eval");
-          try {
-            focusCard?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-          } catch (_) {}
-          try {
-            obsTa?.focus();
-          } catch (_) {}
-        });
       }
 
       async function openSubmissionInNewTab(submissionId) {
@@ -9919,14 +10257,16 @@ ${built.html}
         return false;
       }
 
-      /** 학생 카드(폴리오)와 동일 출처 · 전부 보존 */
+      /** 학생 카드(폴리오)와 동일 출처 · 차시별 저장분을 누적으로 합침 */
       function resolveFolioExportTexts(st, localMaps, keyVariants) {
-        const localObs = pickFromLocalMap(localMaps.obs, keyVariants);
-        const localAct = pickFromLocalMap(localMaps.act, keyVariants);
-        let observation = pickFullerFolioText(st?.teacher_observation, localObs);
-        let activity = pickFullerFolioText(st?.student_activity_text, localAct);
+        const localObsRaw = pickFromLocalMap(localMaps.obs, keyVariants);
+        const localActRaw = pickFromLocalMap(localMaps.act, keyVariants);
+        const obsBlob = preferFolioBlobs(st?.teacher_observation, localObsRaw || "");
+        const actBlob = preferFolioBlobs(st?.student_activity_text, localActRaw || "");
+        let observation = buildCumulativeFromBlob(obsBlob);
+        let activity = buildCumulativeFromBlob(actBlob);
         if (isEmptyOrPlaceholderActivity(activity)) activity = "";
-        return { observation, activity };
+        return { observation, activity, obsBlob, actBlob };
       }
 
       /** 학급 제출을 학번·차시 Map으로 묶어 폴리오와 같은 학생 활동 초안 생성에 사용 */
@@ -10320,25 +10660,42 @@ ${built.html}
                 const keyVariants = studentNoKeyVariants(st.student_no, grade, classNo);
                 if (key && !keyVariants.includes(key)) keyVariants.unshift(key);
 
-                let { observation, activity } = resolveFolioExportTexts(st, localMaps, keyVariants);
+                let { observation, activity, actBlob } = resolveFolioExportTexts(st, localMaps, keyVariants);
 
-                // 화면(폴리오)과 동일: 저장된 학생 활동이 없으면 제출 내용으로 초안 생성
-                if (isEmptyOrPlaceholderActivity(activity)) {
-                  const bySession = findStudentSessionMap(subsByStudent, keyVariants);
-                  if (bySession && bySession.size) {
-                    try {
-                      const generated = await buildCumulativeSeteukText(bySession);
-                      if (!isEmptyOrPlaceholderActivity(generated)) {
-                        activity = generated;
-                        try {
-                          localStorage.setItem(studentActivityEditKey(cls.id, key), activity);
-                        } catch (_) {}
-                      }
-                    } catch (e) {
-                      console.warn(e);
+                // 저장된 차시 + 미저장 차시 자동초안을 합쳐 누적본 구성
+                const bySession = findStudentSessionMap(subsByStudent, keyVariants);
+                if (bySession && bySession.size) {
+                  try {
+                    const merged = {
+                      v: 2,
+                      s: { ...(actBlob?.s || {}) },
+                      legacy: String(actBlob?.legacy || "")
+                    };
+                    for (const [sn, sub] of bySession) {
+                      if (String(merged.s[String(sn)] || "").trim()) continue;
+                      await ensureSubmissionContent(sub);
+                      delete sub._yukha;
+                      const y = buildYukhaSummary(sub);
+                      const para = sanitizeSeteukText(y?.paragraph || "");
+                      if (para) merged.s[String(sn)] = para;
                     }
+                    const mergedText = (() => {
+                      const parts = [];
+                      const legacy = String(merged.legacy || "").trim();
+                      if (legacy) parts.push(legacy);
+                      for (let sn = 1; sn <= 30; sn++) {
+                        const t = String(merged.s[String(sn)] || "").trim();
+                        if (t) parts.push(`(${sn}차시)\n${t}`);
+                      }
+                      return parts.join("\n\n").trim();
+                    })();
+                    if (!isEmptyOrPlaceholderActivity(mergedText)) activity = mergedText;
+                  } catch (e) {
+                    console.warn(e);
                   }
                 }
+
+                if (isEmptyOrPlaceholderActivity(activity)) activity = "";
 
                 // 관찰·활동 데이터가 있는 행만 포함
                 const hasObs = !!String(observation || "").trim();
@@ -10459,7 +10816,7 @@ ${built.html}
           const classIdForObs = classId;
           const edited =
             !!(latest && getSummaryEdit(latest.id)) ||
-            !!String(readLocalTeacherObservation(classIdForObs, key) || "").trim();
+            !!folioBlobHasContent(readLocalTeacherObsBlob(classIdForObs, key));
           const obsBtn = latest
             ? `<button type="button" class="obs-eval-btn${edited ? " is-edited" : ""}" data-obs-eval="${latest.id}" title="관찰 평가 · 교사 관찰 평가와 학생 활동">
                 <span class="obs-eval-mark" aria-hidden="true">관</span>
