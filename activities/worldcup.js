@@ -607,8 +607,8 @@
 
   window.__careerWorldcupAfterDraft = applyDraftToWorldcupUi;
 
-  /** 교사 초기화: 직업 선택·토너먼트·결과까지 전부 처음으로 */
-  window.__careerWorldcupHardReset = function () {
+  /** 체크·입력 없는 기본(직업 입력) 화면으로 맞춤 — 임시저장 복원 생략 시 */
+  window.__careerWorldcupEnsurePristine = function () {
     for (let i = 1; i <= 32; i++) {
       const input = document.getElementById(`job-${i}`);
       const cell = input?.closest(".wc-job-cell");
@@ -632,20 +632,25 @@
     currentMatch = 0;
     selecting = false;
     historyData = { r16: [], r8: [], r4: [], r2: [], winner: "", runnerUp: "", semi: [] };
+    const winnerInput = document.getElementById("wc-winner");
+    const runnerInput = document.getElementById("wc-runner-up");
+    if (winnerInput) winnerInput.value = "";
+    if (runnerInput) runnerInput.value = "";
+    showScreen("input");
+    setStep(1);
+    updateFillMeter();
+  };
+
+  /** 교사 초기화: 직업 선택·토너먼트·결과까지 전부 처음으로 */
+  window.__careerWorldcupHardReset = function () {
+    window.__careerWorldcupEnsurePristine();
     ["wc-q1", "wc-q2", "wc-q3", "wc-q4", "fReflect"].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       el.value = "";
       autoGrow(el);
     });
-    const winnerInput = document.getElementById("wc-winner");
-    const runnerInput = document.getElementById("wc-runner-up");
-    if (winnerInput) winnerInput.value = "";
-    if (runnerInput) runnerInput.value = "";
     const timeline = document.getElementById("wc-timeline");
     if (timeline) timeline.innerHTML = "";
-    showScreen("input");
-    setStep(1);
-    updateFillMeter();
   };
 })();

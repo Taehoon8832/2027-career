@@ -299,10 +299,10 @@
       codeEl = document.createElement("div");
       codeEl.className = "hero-code";
       codeEl.id = "heroCodeNo";
-      codeEl.innerHTML =
-        `<span class="hero-code-text">코드번호: <strong class="hero-code-value" id="heroCodeValue">—</strong></span>`;
       side.insertBefore(codeEl, side.firstChild);
     }
+    codeEl.innerHTML =
+      `<span class="hero-code-text">(코드번호: <strong class="hero-code-value" id="heroCodeValue">—</strong>)</span>`;
 
     let code = "";
     try {
@@ -1957,31 +1957,42 @@ body{padding:16px!important;background:#fff!important}
   }
 
   function readStoredDraftPayload() {
-    let best = null;
-    const tryKey = (key) => {
-      try {
-        best = preferDraftPayload(best, parseDraftRaw(localStorage.getItem(key)));
-      } catch {
-        /* ignore */
-      }
-    };
-    tryKey(draftStorageKey());
-    tryKey(draftSessionFallbackKey());
+    // 같은 제출코드·같은 차시 보조키만 사용 (다른 코드의 '예시 32개' 초안이 덮어쓰지 않게)
+    let exact = null;
+    let fallback = null;
     try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (!key) continue;
-        if (
-          key.startsWith(DRAFT_PREFIX) ||
-          key.startsWith(`career-activity-draft:v1:${sessionNo}:`)
-        ) {
-          tryKey(key);
-        }
-      }
+      exact = parseDraftRaw(localStorage.getItem(draftStorageKey()));
     } catch {
       /* ignore */
     }
-    return best;
+    try {
+      fallback = parseDraftRaw(localStorage.getItem(draftSessionFallbackKey()));
+    } catch {
+      /* ignore */
+    }
+    if (exact && draftHasActivityContent(exact)) return exact;
+    if (fallback && draftHasActivityContent(fallback)) return preferDraftPayload(exact, fallback);
+    return preferDraftPayload(exact, fallback);
+  }
+
+  /** 학번·성찰·우승 없이 직업 32칸만 가득 찬 데모(예시 채우기) 초안 */
+  function isWorldcupDemoSampleDraft(payload) {
+    if (!document.getElementById("wc-job-inputs")) return false;
+    if (!payload || typeof payload !== "object") return false;
+    if (String(payload.studentNo || "").trim() || String(payload.studentName || "").trim()) {
+      return false;
+    }
+    const f = payload.fields && typeof payload.fields === "object" ? payload.fields : {};
+    if (String(f["wc-winner"] || f.wcWinner || "").trim()) return false;
+    if (String(f["wc-runner-up"] || f.wcRunnerUp || "").trim()) return false;
+    if (["wc-q1", "wc-q2", "wc-q3", "wc-q4", "fReflect"].some((id) => String(f[id] || "").trim())) {
+      return false;
+    }
+    let filled = 0;
+    for (let i = 1; i <= 32; i++) {
+      if (String(f[`job-${i}`] || f[`job${i}`] || "").trim()) filled += 1;
+    }
+    return filled >= 32;
   }
 
   function applyDraftFields(payload) {
@@ -2056,6 +2067,17 @@ body{padding:16px!important;background:#fff!important}
     try {
       const payload = readStoredDraftPayload();
       if (!payload) return false;
+      // 예시 32개만 채워 둔 초안은 기본(체크 해제) 화면을 유지
+      if (isWorldcupDemoSampleDraft(payload)) {
+        try {
+          if (typeof window.__careerWorldcupEnsurePristine === "function") {
+            window.__careerWorldcupEnsurePristine();
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+        return false;
+      }
       const ok = applyDraftFields(payload);
       if (ok) {
         ensureAutosizeTextareas();
@@ -2279,13 +2301,49 @@ body{padding:16px!important;background:#fff!important}
     fab.setAttribute("aria-label", "제출하기");
   }
 
-  function scheduleDraftRestore() {
-    restoreActivityDraft({ toast: true });
-    // 월드컵처럼 동적 생성 필드가 있는 활동지는 조금 더 늦게 한 번 더 적용
-    const delays = document.getElementById("wc-job-inputs") ? [50, 200, 500] : [80];
-    delays.forEach((ms) => {
-      setTimeout(() => restoreActivityDraft({ toast: false }), ms);
+  function waitActivityTeacherResolved(timeoutMs = 1600) {
+    return new Promise((resolve) => {
+      const read = () => document.documentElement.dataset.activityTeacher;
+      if (read() === "1" || read() === "0") {
+        resolve(read() === "1");
+        return;
+      }
+      const t0 = Date.now();
+      const id = setInterval(() => {
+        const v = read();
+        if (v === "1" || v === "0" || Date.now() - t0 >= timeoutMs) {
+          clearInterval(id);
+          resolve(v === "1");
+        }
+      }, 40);
     });
+  }
+
+  function scheduleDraftRestore() {
+    void (async () => {
+      try {
+        const isTeacher = await waitActivityTeacherResolved();
+        // 교사가 제시하는 활동지: 임시저장 복원 없음 → 체크 풀린 기본 화면
+        if (isTeacher) {
+          try {
+            if (typeof window.__careerWorldcupEnsurePristine === "function") {
+              window.__careerWorldcupEnsurePristine();
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+          return;
+        }
+        restoreActivityDraft({ toast: true });
+        const delays = document.getElementById("wc-job-inputs") ? [50, 200, 500] : [80];
+        for (const ms of delays) {
+          await new Promise((r) => setTimeout(r, ms));
+          restoreActivityDraft({ toast: false });
+        }
+      } finally {
+        draftRestored = true;
+      }
+    })();
   }
 
   function ensureUi() {
@@ -2307,7 +2365,6 @@ body{padding:16px!important;background:#fff!important}
       ensureTimeWatch();
       // 복원 먼저 → 이후 pagehide/visibility가 빈 폼으로 덮어쓰지 않음
       scheduleDraftRestore();
-      draftRestored = true;
       bindDraftAutosave();
       return;
     }
@@ -2345,7 +2402,6 @@ body{padding:16px!important;background:#fff!important}
     actions.appendChild(fab);
     ensureTimeWatch();
     scheduleDraftRestore();
-    draftRestored = true;
     bindDraftAutosave();
 
     const overlay = document.createElement("div");

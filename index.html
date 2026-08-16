@@ -257,11 +257,119 @@
       box-shadow: 0 0 0 4px rgba(201, 100, 66, 0.14);
     }
     .hero-copy h1 {
-      margin: 0 0 14px;
+      margin: 0;
       font: 500 clamp(28px, 4.6vw, 48px)/1.18 var(--font-serif);
       letter-spacing: -0.03em;
     }
     .hero-copy h1 .accent { color: var(--color-primary-500); }
+    .hero-lead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      gap: 16px 20px;
+      margin-bottom: 14px;
+    }
+    .landing-enter {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+      min-width: 0;
+    }
+    .landing-qr-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      color: inherit;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .landing-qr {
+      width: 104px;
+      height: 104px;
+      box-sizing: border-box;
+      border: 2px solid #111110;
+      border-radius: 12px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 8px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .landing-qr-btn:hover .landing-qr {
+      box-shadow: 0 4px 12px rgba(31, 30, 29, 0.14);
+    }
+    .landing-qr-btn:active .landing-qr { transform: scale(0.96); }
+    .landing-qr canvas,
+    .landing-qr img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      object-fit: contain;
+    }
+    .landing-qr-cap {
+      font: 700 11px/1.2 var(--font-sans);
+      color: var(--text-secondary);
+      letter-spacing: -0.01em;
+    }
+    .landing-code-box {
+      width: min(100%, 260px);
+      padding: 12px;
+      border: 1.5px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow-sm);
+    }
+    .landing-code-box[hidden] { display: none !important; }
+    .landing-code-box label {
+      display: block;
+      margin-bottom: 6px;
+      font: 700 12px/1.3 var(--font-sans);
+      color: var(--text-secondary);
+    }
+    .landing-code-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: stretch;
+    }
+    .landing-code-row input {
+      width: 100%;
+      height: 42px;
+      padding: 0 12px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      background: var(--bg-subtle);
+      color: var(--text-primary);
+      font: 700 14px/1.3 var(--font-sans);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      outline: none;
+    }
+    .landing-code-row input:focus {
+      border-color: var(--color-primary-500);
+      box-shadow: 0 0 0 3px rgba(201, 100, 66, 0.16);
+    }
+    .landing-code-row .btn {
+      height: 42px;
+      padding: 0 14px;
+      white-space: nowrap;
+    }
+    .landing-code-msg {
+      margin: 8px 0 0;
+      min-height: 1.2em;
+      font: 500 12px/1.4 var(--font-sans);
+      color: var(--text-tertiary);
+    }
+    .landing-code-msg.is-error { color: #b42318; }
+    .landing-code-msg.is-ok { color: #027a48; }
     .hero-copy .lede {
       margin: 0; max-width: 34em; color: var(--text-secondary);
       font: 400 16px/1.7 var(--font-serif);
@@ -2849,6 +2957,13 @@
       }
       .hero { grid-template-columns: 1fr; gap: 20px; padding: 22px 18px 20px; border-radius: var(--radius-lg); }
       .hero-copy h1 { font-size: clamp(26px, 7vw, 34px); }
+      .hero-lead {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 14px;
+      }
+      .landing-enter { align-items: flex-start; }
+      .landing-code-box { width: min(100%, 320px); }
       .dash-mobile-tabs {
         display: flex;
         position: sticky;
@@ -3270,7 +3385,32 @@
       <section class="hero" aria-label="진로설계 시작">
         <div class="hero-copy">
           <span class="kicker">진로·학업설계 워크북</span>
-          <h1>AI와 함께 하는 고교학점제 <span class="accent">진로설계</span></h1>
+          <div class="hero-lead">
+            <h1>AI와 함께 하는 고교학점제 <span class="accent">진로설계</span></h1>
+            <div class="landing-enter">
+              <button type="button" class="landing-qr-btn" id="btnLandingQr" aria-expanded="false" aria-controls="landingCodeBox" title="눌러서 코드 입력">
+                <span class="landing-qr" id="landingQrHost" aria-hidden="true"></span>
+                <span class="landing-qr-cap">코드로 입장</span>
+              </button>
+              <div class="landing-code-box" id="landingCodeBox" hidden>
+                <label for="landingCodeInput">코드 입력</label>
+                <div class="landing-code-row">
+                  <input
+                    id="landingCodeInput"
+                    type="text"
+                    inputmode="text"
+                    autocomplete="off"
+                    spellcheck="false"
+                    maxlength="16"
+                    placeholder="예: 0F4E6BE3"
+                    aria-describedby="landingCodeMsg"
+                  />
+                  <button type="button" class="btn btn-primary" id="btnLandingCodeGo">열기</button>
+                </div>
+                <p class="landing-code-msg" id="landingCodeMsg" role="status" aria-live="polite"></p>
+              </div>
+            </div>
+          </div>
           <p class="lede">30차시 프로젝트로 완성하는 진로·학업설계 워크북</p>
         </div>
         <div class="auth-panel">
@@ -9634,6 +9774,178 @@ ${built.html}
         a.remove();
       }
 
+      function landingEnterUrl() {
+        const u = new URL(location.href);
+        u.hash = "";
+        u.search = "";
+        if (/\/index\.html$/i.test(u.pathname || "")) {
+          /* keep index.html */
+        } else if (/\.html?$/i.test(u.pathname || "")) {
+          u.pathname = (u.pathname || "/").replace(/\/[^/]+$/i, "/index.html");
+        }
+        u.searchParams.set("enter", "1");
+        return u.toString();
+      }
+
+      function setLandingCodeMsg(text, type) {
+        const el = $("landingCodeMsg");
+        if (!el) return;
+        el.textContent = text || "";
+        el.classList.toggle("is-error", type === "error");
+        el.classList.toggle("is-ok", type === "ok");
+      }
+
+      function isLandingCodePanelOpen() {
+        const box = $("landingCodeBox");
+        return !!(box && !box.hidden);
+      }
+
+      function openLandingCodePanel(opts = {}) {
+        const box = $("landingCodeBox");
+        const btn = $("btnLandingQr");
+        if (!box) return;
+        box.hidden = false;
+        btn?.setAttribute("aria-expanded", "true");
+        if (opts.focus !== false) {
+          requestAnimationFrame(() => $("landingCodeInput")?.focus());
+        }
+      }
+
+      function closeLandingCodePanel() {
+        const box = $("landingCodeBox");
+        const btn = $("btnLandingQr");
+        if (!box) return;
+        box.hidden = true;
+        btn?.setAttribute("aria-expanded", "false");
+        setLandingCodeMsg("");
+      }
+
+      function toggleLandingCodePanel() {
+        if (isLandingCodePanelOpen()) closeLandingCodePanel();
+        else openLandingCodePanel();
+      }
+
+      function paintLandingEnterQr() {
+        const host = $("landingQrHost");
+        if (!host) return;
+        const url = landingEnterUrl();
+        paintQr(host, url, 104);
+        host.removeAttribute("title");
+        host.setAttribute("aria-hidden", "true");
+        const btn = $("btnLandingQr");
+        if (btn) {
+          btn.title = "눌러서 코드 입력";
+          btn.setAttribute("aria-label", "학생 코드 입력 — QR을 누르거나 스캔하세요");
+        }
+      }
+
+      async function lookupLessonBySubmitCode(code) {
+        const cleaned = String(code || "").trim().toUpperCase();
+        if (!cleaned || !sb) return null;
+
+        try {
+          const { data, error } = await sb.rpc("get_lesson_by_submit_code_only", {
+            p_submit_code: cleaned
+          });
+          if (!error) {
+            const row = Array.isArray(data) ? data[0] : data;
+            if (row && row.session_no != null) return row;
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+
+        // RPC 미배포 시: 기존 차시별 조회로 폴백
+        const jobs = [];
+        for (let s = 1; s <= 30; s++) {
+          jobs.push(
+            sb
+              .rpc("get_lesson_by_submit_code", {
+                p_submit_code: cleaned,
+                p_session_no: s
+              })
+              .then(({ data, error }) => {
+                if (error) return null;
+                return Array.isArray(data) ? data[0] : data;
+              })
+              .catch(() => null)
+          );
+        }
+        const rows = await Promise.all(jobs);
+        return rows.find((r) => r && r.session_no != null) || null;
+      }
+
+      async function openActivityBySubmitCode(rawCode) {
+        const code = String(rawCode || "").trim().toUpperCase();
+        if (!code) {
+          setLandingCodeMsg("코드번호를 입력해 주세요.", "error");
+          $("landingCodeInput")?.focus();
+          return false;
+        }
+        if (!sb) {
+          setLandingCodeMsg("서버 연결에 실패했습니다. 잠시 후 다시 시도해 주세요.", "error");
+          return false;
+        }
+        setLandingCodeMsg("활동지를 찾는 중…");
+        const go = $("btnLandingCodeGo");
+        if (go) go.disabled = true;
+        try {
+          const lesson = await lookupLessonBySubmitCode(code);
+          if (!lesson) {
+            setLandingCodeMsg("코드를 찾을 수 없습니다. 교사에게 코드번호를 다시 확인해 주세요.", "error");
+            return false;
+          }
+          const sessionNo = Number(lesson.session_no);
+          const submitCode = String(lesson.submit_code || code).trim().toUpperCase();
+          const url = activityUrl(sessionNo, submitCode);
+          setLandingCodeMsg(`${sessionNo}차시 활동지를 엽니다.`, "ok");
+          openActivitySheet(url);
+          return true;
+        } catch (e) {
+          console.warn(e);
+          setLandingCodeMsg("조회에 실패했습니다. 네트워크 상태를 확인해 주세요.", "error");
+          return false;
+        } finally {
+          if (go) go.disabled = false;
+        }
+      }
+
+      function initLandingStudentEntry() {
+        if (document.documentElement.dataset.landingEnterBound === "1") {
+          paintLandingEnterQr();
+          return;
+        }
+        document.documentElement.dataset.landingEnterBound = "1";
+
+        $("btnLandingQr")?.addEventListener("click", () => {
+          toggleLandingCodePanel();
+        });
+        $("btnLandingCodeGo")?.addEventListener("click", () => {
+          void openActivityBySubmitCode($("landingCodeInput")?.value);
+        });
+        $("landingCodeInput")?.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            void openActivityBySubmitCode(e.currentTarget.value);
+          }
+        });
+        $("landingCodeInput")?.addEventListener("input", (e) => {
+          const el = e.currentTarget;
+          el.value = String(el.value || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+          setLandingCodeMsg("");
+        });
+
+        paintLandingEnterQr();
+
+        try {
+          if (new URLSearchParams(location.search).get("enter") === "1") {
+            openLandingCodePanel({ focus: true });
+          }
+        } catch {
+          /* ignore */
+        }
+      }
+
       function ensureQrcodeLib() {
         if (typeof window.QRCode === "function") return Promise.resolve();
         if (qrcodeLoadPromise) return qrcodeLoadPromise;
@@ -12592,6 +12904,7 @@ ${built.html}
         initSupabase();
         if (!sb) {
           showView("landing");
+          initLandingStudentEntry();
           setMsg($("authMsg"), "Supabase 연결에 실패했습니다.", "error");
           return;
         }
@@ -12608,6 +12921,7 @@ ${built.html}
 
         await restoreSession();
         showView("landing");
+        initLandingStudentEntry();
         if (session) showWelcome(session);
         else showLogin();
       }
