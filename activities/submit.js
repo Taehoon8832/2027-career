@@ -1576,6 +1576,7 @@ body{padding:16px!important;background:#fff!important}
       wrap.classList.toggle("is-teacher", isTeacher);
       wrap.classList.toggle("is-viewer", !isTeacher);
       wrap.classList.remove("is-booting");
+      document.documentElement.dataset.activityTeacher = isTeacher ? "1" : "0";
       if (roleBadge) {
         roleBadge.hidden = false;
         roleBadge.textContent = isTeacher ? "교사" : "동기화";
@@ -1591,6 +1592,13 @@ body{padding:16px!important;background:#fff!important}
         ? "교사 전용: 분을 입력한 뒤 시작하세요. QR로 들어온 학생 화면에 같은 시간이 동기화됩니다."
         : "학생용: 교사가 설정한 타이머가 자동 동기화됩니다. (조작 불가)";
       paint();
+      try {
+        if (typeof window.__careerSyncTeacherSheetTools === "function") {
+          window.__careerSyncTeacherSheetTools();
+        }
+      } catch {
+        /* ignore */
+      }
     }
 
     async function bindRealtime(code) {
@@ -2064,8 +2072,98 @@ body{padding:16px!important;background:#fff!important}
     });
   }
 
+  function clearActivityDraftsFromStorage() {
+    const prefixes = [
+      `career-activity-draft:v2:${sessionNo}:`,
+      `career-activity-draft:v1:${sessionNo}:`
+    ];
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (!k) continue;
+        if (prefixes.some((p) => k.startsWith(p))) keys.push(k);
+      }
+      keys.forEach((k) => localStorage.removeItem(k));
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  function resetActivitySheetToInitial() {
+    if (
+      !confirm(
+        "작성한 내용을 모두 지우고 초기 화면으로 되돌릴까요?\n(이 기기의 임시저장도 삭제됩니다)"
+      )
+    ) {
+      return false;
+    }
+
+    clearActivityDraftsFromStorage();
+
+    const root = document.getElementById("activity-root");
+    const scope = root || document;
+    scope.querySelectorAll("input, textarea, select").forEach((el) => {
+      if (el.disabled) return;
+      const key = el.id || el.name || "";
+      if (el.type === "checkbox" || el.type === "radio") {
+        el.checked = false;
+      } else if (el.type === "hidden") {
+        if (/^wc/i.test(key) || /^job/i.test(key)) el.value = "";
+        else return;
+      } else {
+        el.value = "";
+      }
+      el.dispatchEvent(new Event("input", { bubbles: true }));
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    const noEl = document.getElementById("sheetHakbun");
+    const nameEl = document.getElementById("sheetDisplayName");
+    if (noEl) noEl.value = "";
+    if (nameEl) nameEl.value = "";
+
+    try {
+      if (typeof window.__careerWorldcupHardReset === "function") {
+        window.__careerWorldcupHardReset();
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+
+    ensureAutosizeTextareas();
+    draftRestored = true;
+    saveActivityDraft({ toast: false, force: true });
+    showDraftToast("초기화되었습니다");
+    try {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      /* ignore */
+    }
+    return true;
+  }
+
+  function isActivityTeacherUi() {
+    return document.documentElement.dataset.activityTeacher === "1";
+  }
+
+  function syncTeacherSheetTools() {
+    const btn = document.getElementById("btnSheetReset");
+    if (!btn) return;
+    const show = isActivityTeacherUi();
+    btn.hidden = !show;
+    btn.setAttribute("aria-hidden", show ? "false" : "true");
+  }
+
+  window.__careerSyncTeacherSheetTools = syncTeacherSheetTools;
+
   function ensureDraftControls(actionsHost) {
-    if (!actionsHost || document.getElementById("btnDraftSave")) return;
+    if (!actionsHost) return;
+    ensureResetControls(actionsHost);
+    if (document.getElementById("btnDraftSave")) {
+      syncTeacherSheetTools();
+      return;
+    }
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "draft-fab";
@@ -2080,10 +2178,39 @@ body{padding:16px!important;background:#fff!important}
       </svg>
       <span class="label">임시</span>`;
     btn.addEventListener("click", () => saveActivityDraft({ toast: true, force: true }));
-    // 제출하기 앞에 배치
     const submit = document.getElementById("btnSubmitActivity");
     if (submit && submit.parentNode === actionsHost) actionsHost.insertBefore(btn, submit);
     else actionsHost.appendChild(btn);
+    syncTeacherSheetTools();
+  }
+
+  function ensureResetControls(actionsHost) {
+    if (!actionsHost || document.getElementById("btnSheetReset")) {
+      syncTeacherSheetTools();
+      return;
+    }
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "draft-fab reset-fab";
+    btn.id = "btnSheetReset";
+    btn.hidden = true;
+    btn.setAttribute("aria-hidden", "true");
+    btn.setAttribute("aria-label", "초기화");
+    btn.title = "작성 내용을 모두 지우고 초기 화면으로 되돌립니다 (교사)";
+    btn.innerHTML = `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 3-6.7"/>
+        <path d="M3 4v5h5"/>
+      </svg>
+      <span class="label">초기화</span>`;
+    btn.addEventListener("click", () => resetActivitySheetToInitial());
+    // 임시 저장 왼쪽 · 제출하기 앞
+    const draft = document.getElementById("btnDraftSave");
+    const submit = document.getElementById("btnSubmitActivity");
+    if (draft && draft.parentNode === actionsHost) actionsHost.insertBefore(btn, draft);
+    else if (submit && submit.parentNode === actionsHost) actionsHost.insertBefore(btn, submit);
+    else actionsHost.appendChild(btn);
+    syncTeacherSheetTools();
   }
 
   function syncSubmitFabLabel() {
@@ -2155,7 +2282,7 @@ body{padding:16px!important;background:#fff!important}
       document.body.appendChild(actions);
     }
 
-    // 출력·저장 → 확대·축소 → 임시 저장 → 제출하기
+    // 출력·저장 → 확대·축소 → 초기화(교사) → 임시 저장 → 제출하기
     ensureSheetTools(actions);
     ensureZoomControls(actions);
     ensureDraftControls(actions);

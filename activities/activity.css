@@ -299,6 +299,16 @@ button, .submit-fab, a { touch-action: manipulation; }
   color: #3f6a2c;
   background: #eef6e8;
 }
+.reset-fab {
+  border-color: #b23a2c;
+  color: #8f2e22;
+}
+.reset-fab:hover {
+  background: #fdf1ef;
+}
+.reset-fab[hidden] {
+  display: none !important;
+}
 .draft-toast {
   position: fixed;
   left: 50%;
@@ -1965,8 +1975,12 @@ body.qr-lightbox-open { overflow: hidden; }
     scrollbar-width: none;
   }
   .topbar-actions::-webkit-scrollbar { display: none; }
+  .topbar-actions .reset-fab:not([hidden]),
   .topbar-actions .draft-fab {
     margin-left: auto;
+  }
+  .topbar-actions .reset-fab:not([hidden]) ~ .draft-fab {
+    margin-left: 0;
   }
 }
 /* 폰·좁은 화면: 제목 아래 QR을 가운데 배치 */
@@ -2142,8 +2156,12 @@ body.qr-lightbox-open { overflow: hidden; }
     padding-bottom: 1px;
   }
   .topbar-actions::-webkit-scrollbar { display: none; }
+  .topbar-actions .reset-fab:not([hidden]),
   .topbar-actions .draft-fab {
     margin-left: auto;
+  }
+  .topbar-actions .reset-fab:not([hidden]) ~ .draft-fab {
+    margin-left: 0;
   }
   .sheet-tools { height: 40px; flex-shrink: 0; }
   .tool-btn { width: 36px; min-width: 36px; }
@@ -2217,8 +2235,12 @@ body.qr-lightbox-open { overflow: hidden; }
     justify-content: flex-start;
     flex-wrap: nowrap;
   }
+  .topbar-actions .reset-fab:not([hidden]),
   .topbar-actions .draft-fab {
     margin-left: auto;
+  }
+  .topbar-actions .reset-fab:not([hidden]) ~ .draft-fab {
+    margin-left: 0;
   }
   .sheet-tools { height: 38px; }
   .tool-btn { width: 34px; min-width: 34px; }
@@ -2318,6 +2340,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .zoom-controls,
   .submit-fab,
   .draft-fab,
+  .reset-fab,
   .draft-toast,
   .overlay,
   .hero-qr-cap,

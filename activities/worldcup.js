@@ -606,4 +606,46 @@
   }
 
   window.__careerWorldcupAfterDraft = applyDraftToWorldcupUi;
+
+  /** 교사 초기화: 직업 선택·토너먼트·결과까지 전부 처음으로 */
+  window.__careerWorldcupHardReset = function () {
+    for (let i = 1; i <= 32; i++) {
+      const input = document.getElementById(`job-${i}`);
+      const cell = input?.closest(".wc-job-cell");
+      if (input) input.value = "";
+      cell?.classList.remove("is-checked");
+      const meta = JOB_DB[i - 1];
+      if (meta && cell) {
+        const emoji = cell.querySelector(".wc-job-emoji");
+        const cat = cell.querySelector(".wc-job-cat");
+        if (emoji) {
+          emoji.textContent = meta.emoji;
+          emoji.style.setProperty("--icon-bg", meta.color);
+        }
+        if (cat) cat.textContent = meta.cat;
+        cell.dataset.cat = meta.cat;
+      }
+    }
+    currentJobs = [];
+    nextRoundJobs = [];
+    currentRound = 32;
+    currentMatch = 0;
+    selecting = false;
+    historyData = { r16: [], r8: [], r4: [], r2: [], winner: "", runnerUp: "", semi: [] };
+    ["wc-q1", "wc-q2", "wc-q3", "wc-q4", "fReflect"].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.value = "";
+      autoGrow(el);
+    });
+    const winnerInput = document.getElementById("wc-winner");
+    const runnerInput = document.getElementById("wc-runner-up");
+    if (winnerInput) winnerInput.value = "";
+    if (runnerInput) runnerInput.value = "";
+    const timeline = document.getElementById("wc-timeline");
+    if (timeline) timeline.innerHTML = "";
+    showScreen("input");
+    setStep(1);
+    updateFillMeter();
+  };
 })();
