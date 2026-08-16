@@ -10,13 +10,17 @@
     return;
   }
 
-  /** 활동지 인쇄 기본 형식 (프린터 대화상자에서 확인) */
+  /** 활동지 인쇄 기본 형식 (브라우저가 자동 지정 불가 → 대화상자에서 선택) */
   const ACTIVITY_PRINT_DEFAULTS = {
     color: "컬러",
     duplex: "양면",
-    pagesPerSheet: "시트당 페이지 수 2개",
+    pagesPerSheet: 2,
     label() {
-      return `${this.color} · ${this.duplex} · ${this.pagesPerSheet}`;
+      return `${this.color} · ${this.duplex} · 시트당 페이지 수 ${this.pagesPerSheet}개`;
+    },
+    /** 인쇄 직전 안내 (시트당 페이지 수는 OS/브라우저 대화상자에서만 변경 가능) */
+    guide() {
+      return `인쇄 기본: ${this.label()} — 「설정 더보기」에서 시트당 페이지 수를 ${this.pagesPerSheet}로 바꿔 주세요`;
     }
   };
 
@@ -786,6 +790,45 @@
       el.setAttribute("readonly", "readonly");
       if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
     });
+    return preparePrintClone(clone);
+  }
+
+  /** 인쇄 iframe용: UI 전용 요소 제거 · details 펼침 · 월드컵 결과만 남김 */
+  function preparePrintClone(clone) {
+    if (!clone) return clone;
+
+    clone.querySelectorAll(".no-print").forEach((el) => el.remove());
+    clone.querySelectorAll("details").forEach((d) => {
+      d.setAttribute("open", "");
+      d.open = true;
+    });
+    clone.querySelectorAll(".wc-help").forEach((el) => {
+      const t = String(el.textContent || "");
+      if (/펼쳐|눌러/.test(t)) el.remove();
+    });
+
+    if (clone.classList.contains("activity-card--worldcup")) {
+      const winnerVal = String(clone.querySelector("#wc-winner")?.value || "").trim();
+      const winnerText = String(clone.querySelector("#wc-winner-display")?.textContent || "").trim();
+      const resultEl = clone.querySelector("#wc-result");
+      const resultVisible =
+        clone.classList.contains("is-wc-done") ||
+        (resultEl && !resultEl.hasAttribute("hidden")) ||
+        !!winnerVal ||
+        (winnerText && winnerText !== "-");
+
+      if (resultVisible) {
+        clone.querySelector("#wc-input")?.remove();
+        clone.querySelector("#wc-play")?.remove();
+        clone.querySelector("#wc-steps")?.remove();
+        if (resultEl) {
+          resultEl.hidden = false;
+          resultEl.removeAttribute("hidden");
+          resultEl.style.display = "block";
+        }
+      }
+    }
+
     return clone;
   }
 
@@ -1336,6 +1379,117 @@ body{padding:16px!important;background:#fff!important}
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
+
+  /* —— 공통: 화면 전용 UI —— */
+  .no-print { display: none !important; }
+
+  /* —— 3차시 직업 월드컵 인쇄 —— */
+  .activity-card--worldcup {
+    padding: 4px !important; border: 0 !important; box-shadow: none !important;
+  }
+  .wc-steps, .wc-howto, .wc-cats, .wc-progress, .wc-btn, .wc-btn-row,
+  .wc-confetti, .wc-toast, #wc-play { display: none !important; }
+  .activity-card--worldcup.is-wc-done #wc-input { display: none !important; }
+  .wc-head { margin: 0 0 8px; padding: 0 0 6px; border-bottom: 1px solid #e5e7eb; }
+  .wc-head strong {
+    display: block; font: 700 13px/1.25 Pretendard, sans-serif; color: #1e293b;
+  }
+  .wc-head > span {
+    display: block; margin-top: 2px; font: 500 10px/1.35 Pretendard, sans-serif; color: #64748b;
+  }
+  .activity-card--worldcup.is-wc-done #wc-result,
+  #wc-result:not([hidden]) { display: block !important; }
+  .wc-champ {
+    text-align: center; padding: 10px 10px 8px; margin: 0 0 8px;
+    border-radius: 12px; color: #fff;
+    background: linear-gradient(160deg, #1e3a8a 0%, #2563eb 55%, #3b82f6 100%);
+  }
+  .wc-champ-label {
+    display: inline-flex; margin-bottom: 6px; padding: 3px 8px; border-radius: 999px;
+    background: rgba(255,255,255,0.16); font: 700 9px/1.2 Pretendard, sans-serif;
+  }
+  .wc-champ-emoji {
+    width: 40px; height: 40px; margin: 0 auto 6px; border-radius: 12px;
+    display: grid; place-items: center; font-size: 22px;
+    background: rgba(255,255,255,0.16); border: 1.5px solid rgba(255,255,255,0.25);
+  }
+  .wc-champ-name {
+    margin: 0; font: 800 22px/1.2 Pretendard, sans-serif; letter-spacing: -0.03em; color: #fff;
+  }
+  .wc-champ-sub {
+    margin: 3px 0 0; opacity: 0.92; font: 500 10px/1.35 Pretendard, sans-serif;
+  }
+  .wc-rank-row {
+    display: grid; grid-template-columns: 1fr 1.15fr 1fr; gap: 5px; margin-top: 8px;
+  }
+  .wc-rank-box {
+    border-radius: 8px; padding: 5px 4px; background: rgba(255,255,255,0.14);
+    text-align: center;
+  }
+  .wc-rank-box.is-top { background: rgba(255,255,255,0.26); }
+  .wc-rank-r { font: 700 8px/1.2 Pretendard, sans-serif; opacity: 0.85; }
+  .wc-rank-n { margin-top: 2px; font: 700 10px/1.25 Pretendard, sans-serif; word-break: keep-all; }
+  .wc-panel { margin: 0 0 8px; }
+  .wc-panel-title {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    margin: 0 0 5px;
+  }
+  .wc-panel-title h3 {
+    margin: 0; font: 700 12px/1.3 Pretendard, sans-serif; color: #111827;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .wc-badge {
+    display: inline-grid; place-items: center; min-width: 16px; height: 16px; padding: 0 4px;
+    border-radius: 5px; background: #2563eb; color: #fff; font: 800 9px/1 Pretendard, sans-serif;
+  }
+  .wc-help { display: none !important; }
+  .wc-board { display: flex; flex-direction: column; gap: 4px; }
+  .wc-round-panel {
+    border: 1px solid #e5e7eb; border-radius: 8px; padding: 5px 7px; background: #fff;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .wc-round-panel summary {
+    list-style: none; display: flex; align-items: center; gap: 6px;
+    font: 700 10.5px/1.3 Pretendard, sans-serif; color: #1f2937; cursor: default;
+  }
+  .wc-round-panel summary::-webkit-details-marker,
+  .wc-round-panel summary::marker { display: none; content: ""; }
+  .wc-cnt {
+    margin-left: auto; font: 700 9px/1 Pretendard, sans-serif; color: #64748b;
+    background: #f1f5f9; border-radius: 999px; padding: 2px 6px;
+  }
+  .wc-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+  .wc-chip {
+    display: inline-flex; align-items: center; gap: 3px; padding: 3px 7px;
+    border: 1px solid #e5e7eb; border-radius: 999px; background: #f8fafc;
+    font: 600 9.5px/1.25 Pretendard, sans-serif; color: #1f2937;
+  }
+  .wc-chip.is-champ { background: #eff6ff; border-color: #93c5fd; color: #1d4ed8; }
+  .wc-q-list { display: flex; flex-direction: column; gap: 5px; }
+  .wc-q {
+    border: 1px solid #e5e7eb; border-radius: 8px; padding: 6px 8px; background: #fff;
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  .wc-qlabel {
+    display: inline-flex; margin-bottom: 2px; font: 800 9px/1.2 Pretendard, sans-serif; color: #2563eb;
+  }
+  .wc-q label {
+    display: block; margin-bottom: 4px; font: 700 10.5px/1.35 Pretendard, sans-serif;
+    color: #111827; word-break: keep-all;
+  }
+  .wc-q textarea, .activity-card .wc-q textarea {
+    width: 100%; min-height: 36px; height: auto; border: 1px solid #e5e7eb; border-radius: 6px;
+    padding: 5px 7px; font: 500 10px/1.4 Pretendard, sans-serif; background: #f9fafb;
+    resize: none; color: #111827;
+  }
+  .wc-hint { color: #ea580c; font-weight: 700; font-size: 9.5px; }
+  .activity-card--worldcup .reflect-field { margin-top: 6px; break-inside: avoid; }
+  .activity-card--worldcup .reflect-field textarea { min-height: 40px; height: auto; }
+  .wc-champ, .wc-badge, .wc-chip.is-champ, .sheet-dept {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 </style>
 </head>
 <body>
@@ -1352,7 +1506,7 @@ body{padding:16px!important;background:#fff!important}
     if (!filled) return;
     const html = buildPrintDocument(filled);
 
-    showDraftToast(`인쇄 기본 형식: ${ACTIVITY_PRINT_DEFAULTS.label()}`, 3200);
+    showDraftToast(ACTIVITY_PRINT_DEFAULTS.guide(), 4800);
 
     const prev = document.getElementById("activityPrintFrame");
     if (prev) prev.remove();
@@ -1412,7 +1566,7 @@ body{padding:16px!important;background:#fff!important}
     tools.setAttribute("role", "group");
     tools.setAttribute("aria-label", "출력 및 저장");
     tools.innerHTML = `
-      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기 · 기본 컬러 양면 시트당 페이지 수 2개" title="출력하기 (기본: 컬러 · 양면 · 시트당 페이지 수 2개)">
+      <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기 · 기본 컬러 양면 시트당 페이지 수 2개" title="출력하기 (기본: 컬러 · 양면 · 시트당 페이지 수 2 — 인쇄창에서 선택)">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 8V4h10v4"/>
           <path d="M7 17H5a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/>

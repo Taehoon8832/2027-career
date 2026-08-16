@@ -2518,6 +2518,10 @@ body.qr-lightbox-open { overflow: hidden; }
     padding: 0 0 5px !important;
   }
 
+  .no-print {
+    display: none !important;
+  }
+
   .wc-steps,
   .wc-howto,
   .wc-cats,
@@ -2526,6 +2530,7 @@ body.qr-lightbox-open { overflow: hidden; }
   .wc-btn-row,
   .wc-confetti,
   .wc-toast,
+  .wc-help,
   #wc-play {
     display: none !important;
   }
@@ -2537,6 +2542,19 @@ body.qr-lightbox-open { overflow: hidden; }
   .activity-card--worldcup.is-wc-done #wc-result,
   #wc-result:not([hidden]) {
     display: block !important;
+  }
+
+  .wc-round-panel[open] > .wc-chips,
+  .wc-round-panel > .wc-chips {
+    display: flex !important;
+  }
+  .wc-round-panel summary {
+    list-style: none !important;
+  }
+  .wc-round-panel summary::-webkit-details-marker,
+  .wc-round-panel summary::marker {
+    display: none !important;
+    content: "" !important;
   }
 
   .wc-job-grid {
