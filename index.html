@@ -7036,19 +7036,23 @@
         const seq = ++folioSaveSeq;
         folioSaveTimer = setTimeout(async () => {
           const payload = getPayload();
+          let activity = payload.activity || "";
+          if (isEmptyOrPlaceholderActivity(activity)) activity = "";
           // 로컬에도 백업 (SQL 미적용·오프라인 대비)
           try {
             const classId = payload.classId;
             const key = payload.studentKey;
             localStorage.setItem(teacherObsStorageKey(classId, key), payload.observation || "");
-            localStorage.setItem(studentActivityEditKey(classId, key), payload.activity || "");
+            if (activity) {
+              localStorage.setItem(studentActivityEditKey(classId, key), activity);
+            }
           } catch (_) {}
           if (!studentRowId || folioNotesDbReady === false) return;
           if (seq !== folioSaveSeq) return;
           await saveFolioNotesToCloud(
             studentRowId,
             payload.observation,
-            payload.activity
+            activity
           );
         }, 550);
       }
@@ -7278,17 +7282,26 @@
         });
         syncActivityBytes();
 
-        // 클라우드가 비어 있고 로컬에만 있으면 웹으로 이관
-        const needMigrate =
+        // 화면에 보이는 학생 활동(자동 초안 포함)을 저장해 XLSX·재열기와 일치
+        const displayObs = String(obsSaved || "").trim();
+        const displayAct = String(activityText || "").trim();
+        const cloudObs = String(cloudNotes?.observation || "").trim();
+        const cloudAct = String(cloudNotes?.activity || "").trim();
+        try {
+          localStorage.setItem(teacherObsStorageKey(classId, key), displayObs);
+          if (displayAct && displayAct !== "제출된 학생 활동이 없습니다.") {
+            localStorage.setItem(studentActivityEditKey(classId, key), displayAct);
+          }
+        } catch (_) {}
+        if (
           studentRowId &&
           folioNotesDbReady !== false &&
-          cloudNotes &&
-          !String(cloudNotes.observation || "").trim() &&
-          !String(cloudNotes.activity || "").trim() &&
-          (String(obsSaved || "").trim() ||
-            (localAct != null && String(localAct).trim() !== ""));
-        if (needMigrate) {
-          await saveFolioNotesToCloud(studentRowId, obsSaved || "", activityText || "");
+          ((displayObs && displayObs !== cloudObs) ||
+            (displayAct &&
+              displayAct !== "제출된 학생 활동이 없습니다." &&
+              displayAct !== cloudAct))
+        ) {
+          void saveFolioNotesToCloud(studentRowId, displayObs, displayAct === "제출된 학생 활동이 없습니다." ? "" : displayAct);
         }
       }
 
@@ -9021,14 +9034,85 @@ ${built.html}
         return l.length > c.length ? l : c;
       }
 
+      function isEmptyOrPlaceholderActivity(text) {
+        const t = String(text || "").trim();
+        if (!t || t === "—" || t === "-") return true;
+        if (t === "활동 내용을 분석하는 중…" || t === "활동 내용을 분석하는 중...") return true;
+        if (t === "제출된 학생 활동이 없습니다.") return true;
+        return false;
+      }
+
       /** 학생 카드(폴리오)와 동일 출처 · 전부 보존 */
       function resolveFolioExportTexts(st, localMaps, keyVariants) {
         const localObs = pickFromLocalMap(localMaps.obs, keyVariants);
         const localAct = pickFromLocalMap(localMaps.act, keyVariants);
-        return {
-          observation: pickFullerFolioText(st?.teacher_observation, localObs),
-          activity: pickFullerFolioText(st?.student_activity_text, localAct)
-        };
+        let observation = pickFullerFolioText(st?.teacher_observation, localObs);
+        let activity = pickFullerFolioText(st?.student_activity_text, localAct);
+        if (isEmptyOrPlaceholderActivity(activity)) activity = "";
+        return { observation, activity };
+      }
+
+      /** 학급 제출을 학번·차시 Map으로 묶어 폴리오와 같은 학생 활동 초안 생성에 사용 */
+      async function loadClassSubmissionsByStudent(classId, grade, classNo) {
+        const byStudent = new Map();
+        if (!sb || !classId) return byStudent;
+        let lessons = [];
+        try {
+          lessons = await fetchLessonsForClass(classId, { seed: false });
+        } catch (e) {
+          console.warn(e);
+          return byStudent;
+        }
+        const lessonIds = (lessons || []).map((l) => l.id).filter(Boolean);
+        if (!lessonIds.length) return byStudent;
+        const sessionByLesson = new Map((lessons || []).map((l) => [l.id, Number(l.session_no) || 0]));
+
+        let rows = [];
+        try {
+          const { data, error } = await sb
+            .from("submissions")
+            .select("id, lesson_id, student_no, student_name, content, created_at")
+            .in("lesson_id", lessonIds);
+          if (error) throw error;
+          rows = data || [];
+        } catch (e) {
+          console.warn(e);
+          return byStudent;
+        }
+
+        for (const s of rows) {
+          const key =
+            resolveRosterStudentKey(s.student_no, grade, classNo) ||
+            normalizeStudentNo(s.student_no) ||
+            String(s.student_no || "").trim();
+          const sn = sessionByLesson.get(s.lesson_id) || 0;
+          if (!key || sn < 1 || sn > 30) continue;
+          if (!byStudent.has(key)) byStudent.set(key, new Map());
+          const bag = byStudent.get(key);
+          const row = {
+            ...s,
+            session_no: sn,
+            student_no: key
+          };
+          const prev = bag.get(sn);
+          if (!prev || new Date(s.created_at) > new Date(prev.created_at)) {
+            bag.set(sn, row);
+          }
+        }
+        return byStudent;
+      }
+
+      function findStudentSessionMap(subsByStudent, keyVariants) {
+        if (!subsByStudent?.size) return null;
+        for (const key of keyVariants) {
+          if (subsByStudent.has(key)) return subsByStudent.get(key);
+        }
+        for (const [k, bag] of subsByStudent) {
+          for (const key of keyVariants) {
+            if (String(k).replace(/^0+/, "") === String(key).replace(/^0+/, "")) return bag;
+          }
+        }
+        return null;
       }
 
       async function fetchStudentsForFolioExport(classId) {
@@ -9177,6 +9261,7 @@ ${built.html}
 
             const students = await fetchStudentsForFolioExport(cls.id);
             const localMaps = readLocalFolioMapsForClass(cls.id);
+            const subsByStudent = await loadClassSubmissionsByStudent(cls.id, grade, classNo);
             const aoa = [];
             const headers = withDept
               ? ["학과", "학번", "이름", "교사 관찰 평가 · 학생 활동"]
@@ -9200,7 +9285,27 @@ ${built.html}
               const keyVariants = studentNoKeyVariants(st.student_no, grade, classNo);
               if (key && !keyVariants.includes(key)) keyVariants.unshift(key);
 
-              const { observation, activity } = resolveFolioExportTexts(st, localMaps, keyVariants);
+              let { observation, activity } = resolveFolioExportTexts(st, localMaps, keyVariants);
+
+              // 화면(폴리오)과 동일: 저장된 학생 활동이 없으면 제출 내용으로 초안 생성
+              if (isEmptyOrPlaceholderActivity(activity)) {
+                const bySession = findStudentSessionMap(subsByStudent, keyVariants);
+                if (bySession && bySession.size) {
+                  try {
+                    const generated = await buildCumulativeSeteukText(bySession);
+                    if (!isEmptyOrPlaceholderActivity(generated)) {
+                      activity = generated;
+                      // 다음 내보내기·재열기를 위해 로컬에도 보관
+                      try {
+                        localStorage.setItem(studentActivityEditKey(cls.id, key), activity);
+                      } catch (_) {}
+                    }
+                  } catch (e) {
+                    console.warn(e);
+                  }
+                }
+              }
+
               if (observation || activity) filledNotes += 1;
 
               const content = folioExportCellText(observation, activity);
