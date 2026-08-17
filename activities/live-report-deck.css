@@ -577,8 +577,10 @@
 }
 .deck-card-job.is-runner b { color: #9a3412; }
 .deck-card-job.is-empty b { color: #94a3b8; font-weight: 600; }
-.deck-card.is-s3 { min-height: 236px; }
-.deck-card.is-s3 .deck-card-art { width: 56px; height: 56px; }
+.deck-card.is-s3,
+.deck-card.is-s4 { min-height: 236px; }
+.deck-card.is-s3 .deck-card-art,
+.deck-card.is-s4 .deck-card-art { width: 56px; height: 56px; }
 .deck-card-hint {
   margin-top: auto;
   text-align: center;

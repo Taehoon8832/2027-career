@@ -827,6 +827,19 @@
 
     clone.querySelectorAll(".no-print").forEach((el) => el.remove());
 
+    // 공란 입력칸: 보고서·인쇄·저장본에 placeholder(예시문)가 보이지 않게 제거
+    clone.querySelectorAll("input, textarea").forEach((el) => {
+      const empty =
+        el.tagName === "TEXTAREA"
+          ? !String(el.value || el.textContent || "").trim()
+          : el.type === "checkbox" || el.type === "radio"
+            ? false
+            : !String(el.value || el.getAttribute("value") || "").trim();
+      if (empty || el.hasAttribute("readonly")) {
+        el.removeAttribute("placeholder");
+      }
+    });
+
     // 1차시: HTML 소스·버튼·대기실 제거, 캐릭터 카드만 남김
     if (clone.querySelector("#part2-html, #part1-manual, .na-manual")) {
       clone
@@ -939,6 +952,7 @@
   .bingo-board{grid-template-columns:repeat(5,minmax(0,1fr))!important}
   .na-manual-grid{grid-template-columns:1fr 1fr!important}
   .q-item,.na-card,.bingo-cell,.field{break-inside:avoid}
+  input::placeholder,textarea::placeholder{color:transparent!important;opacity:0!important}
 }
 `.trim();
 
@@ -1726,6 +1740,11 @@ ${linkedCss}
     box-shadow: inset 0 0 0 1px #e2e8f0 !important;
     border-radius: 4px !important;
   }
+  input::placeholder,
+  textarea::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+  }
   .lesson-part + .reflect-field, .na-manual + .reflect-field {
     margin-top: 6px !important; padding-top: 4px !important;
   }
@@ -2020,32 +2039,77 @@ ${linkedCss}
         push("필요한 핵심 능력 3가지", map.wcQ3, { wide: true });
         push("앞으로 90일 안 실천 계획", map.wcQ4, { wide: true });
       } else if (sessionNo === 4) {
-        const order = [
-          ["f1", "희망 직업명", true],
-          ["f2", "관련 학과/전공", true],
-          ["f3", "필요 자격 및 준비 사항", false],
-          ["f4", "초봉 예상 연봉", false],
-          ["f5", "5년차 예상 연봉", false],
-          ["f6", "10년차 이상 예상 연봉", false],
-          ["f7", "예상 퇴직 시점", false],
-          ["f8", "직업 전망 (향후 10년)", false],
-          ["f9", "직업의 주요 특징 및 업무", false],
-          ["f10", "강점 Strength", false],
-          ["f11", "약점 Weakness", false],
-          ["f12", "기회 Opportunity", false],
-          ["f13", "위협 Threat", false],
-          ["f14", "강점 활용 방안", false],
-          ["f15", "약점 보완 방안", false],
-          ["f16", "단기 실행 계획", false],
-          ["f17", "중장기 실행 계획", false],
-          ["f18", "필요 역량 및 조력자", false],
-          ["f19", "진로 포부 및 종합 성찰", false]
-        ];
-        for (const [id, lab, accent] of order) {
-          const raw = map[id] || "";
-          if (!raw) continue;
-          push(lab, raw, { accent, wide: raw.length > 36 });
+        const looksDump = (t) =>
+          /관련\s*학과/.test(t) && /필요\s*자격/.test(t) && /직업\s*전망|예상\s*연봉/.test(t);
+        const clip = (t, n) => {
+          const s = String(t || "").replace(/\s+/g, " ").trim();
+          if (!s) return "";
+          return s.length > n ? `${s.slice(0, n).trim()}…` : s;
+        };
+        const clean = (v, n = 48) => {
+          const t = String(v || "").trim();
+          if (!t || isLiveChromeNoise(t) || looksDump(t)) return "";
+          return clip(t, n);
+        };
+        const job = clean(map.f1, 36);
+        const major = clean(map.f2, 36);
+        if (job) push("희망 직업", job, { accent: true, wide: false });
+        if (major) push("관련 학과", major, { accent: true, wide: false });
+        const bits = [];
+        if (job && major) {
+          bits.push(`희망 직업은 「${job}」이며, 관련 학과·전공으로는 「${major}」를 살펴보았습니다.`);
+        } else if (job) {
+          bits.push(`희망 직업은 「${job}」로 정하고 직업 정보를 정리했습니다.`);
+        } else if (major) {
+          bits.push(`관심 학과·전공으로 「${major}」를 중심으로 진로를 탐색했습니다.`);
+        } else {
+          bits.push("희망 직업 SWOT 분석 활동에서 직업 정보와 자기 요인을 정리했습니다.");
         }
+        const prep = clean(map.f3, 40);
+        if (prep) bits.push(`필요 자격과 준비 사항으로는 ${prep}을(를) 파악했습니다.`);
+        const payBits = [];
+        const pay0 = clean(map.f4, 24);
+        const pay5 = clean(map.f5, 24);
+        const pay10 = clean(map.f6, 24);
+        if (pay0) payBits.push(`초봉 ${pay0}`);
+        if (pay5) payBits.push(`5년차 ${pay5}`);
+        if (pay10) payBits.push(`10년차 이상 ${pay10}`);
+        if (payBits.length) bits.push(`연차별 예상 연봉은 ${payBits.join(", ")} 정도로 조사했습니다.`);
+        const retire = clean(map.f7, 24);
+        if (retire) bits.push(`예상 퇴직 시점은 ${retire}으로 보았습니다.`);
+        const outlook = clean(map.f8, 40);
+        if (outlook) bits.push(`향후 10년 직업 전망은 ${outlook}이라고 정리했습니다.`);
+        const duties = clean(map.f9, 42);
+        if (duties) bits.push(`주요 업무·특징으로는 ${duties}을(를) 적었습니다.`);
+        const s = clean(map.f10, 40);
+        const w = clean(map.f11, 36);
+        const o = clean(map.f12, 36);
+        const t = clean(map.f13, 36);
+        const swot = [];
+        if (s) swot.push(`강점(S)은 ${s}`);
+        if (w) swot.push(`약점(W)은 ${w}`);
+        if (o) swot.push(`기회(O)는 ${o}`);
+        if (t) swot.push(`위협(T)은 ${t}`);
+        if (swot.length) bits.push(`SWOT 분석에서 ${swot.join(", ")}이라고 진단했습니다.`);
+        const plans = [];
+        const useS = clean(map.f14, 36);
+        const fixW = clean(map.f15, 36);
+        const planShort = clean(map.f16, 36);
+        const planLong = clean(map.f17, 36);
+        if (useS) plans.push(`강점 활용으로 ${useS}`);
+        if (fixW) plans.push(`약점 보완으로 ${fixW}`);
+        if (planShort) plans.push(`단기 계획으로 ${planShort}`);
+        if (planLong) plans.push(`중장기 계획으로 ${planLong}`);
+        if (plans.length) bits.push(`실행 전략으로는 ${plans.join(", ")}을(를) 세웠습니다.`);
+        const helpers = clean(map.f18, 36);
+        if (helpers) bits.push(`필요 역량과 조력자로는 ${helpers}을(를) 떠올렸습니다.`);
+        const reflect = clean(map.f19, 44) || clean(map.fReflect, 44);
+        if (reflect) bits.push(`성찰에서는 ${reflect}이라고 정리했습니다.`);
+        const narrative =
+          bits.length <= 1 && !job && !major
+            ? "작성된 SWOT 내용이 아직 충분하지 않아 종합 문장을 만들기 어렵습니다."
+            : bits.join(" ").replace(/\s+/g, " ").trim();
+        push("SWOT 종합", narrative, { wide: true });
       } else {
         const keys = Object.keys(map)
           .filter((k) => /^(?:f|q)\d+$/i.test(k))
@@ -2282,6 +2346,7 @@ ${linkedCss}
       const empty = !!card.empty;
       const active = !empty && card.id && card.id === focusId;
       const s3 = sessionNo === 3;
+      const s4 = sessionNo === 4;
       const name = card.name || "이름 없음";
       const art = card.faceHtml
         ? `<div class="deck-card-art" aria-hidden="true">${uniquifyLiveFaceHtml(card.faceHtml)}</div>`
@@ -2293,14 +2358,16 @@ ${linkedCss}
           ? `<span class="deck-card-badge">${escapeHtml(card.incompleteLabel)}</span>`
           : "";
       let mid = "";
-      if (s3) {
+      if (s3 || s4) {
         const winner = String(card.winner || "").trim();
         const runner = String(card.runner || "").trim();
+        const lab1 = s4 ? "희망직업" : "직업";
+        const lab2 = s4 ? "학과" : "차순위";
         mid = `<div class="deck-card-jobs"${empty ? ' aria-hidden="true"' : ""}>
-          <div class="deck-card-job${winner || empty ? (winner ? "" : " is-empty") : " is-empty"}"><span>직업</span><b>${escapeHtml(
+          <div class="deck-card-job${winner || empty ? (winner ? "" : " is-empty") : " is-empty"}"><span>${lab1}</span><b>${escapeHtml(
             empty ? "—" : winner || "미입력"
           )}</b></div>
-          <div class="deck-card-job is-runner${runner || empty ? (runner ? "" : " is-empty") : " is-empty"}"><span>차순위</span><b>${escapeHtml(
+          <div class="deck-card-job is-runner${runner || empty ? (runner ? "" : " is-empty") : " is-empty"}"><span>${lab2}</span><b>${escapeHtml(
             empty ? "—" : runner || "미입력"
           )}</b></div>
         </div>`;
@@ -2318,7 +2385,7 @@ ${linkedCss}
         ? `disabled data-empty="1"`
         : `data-sub-id="${escapeHtml(card.id || "")}"`;
       return `<button type="button" class="deck-card${empty ? " is-empty" : ""}${active ? " is-active" : ""}${
-        s3 ? " is-s3" : ""
+        s3 ? " is-s3" : s4 ? " is-s4" : ""
       }" ${attrs} style="--deal:${dealIdx}" ${isTeacher && !empty ? "" : 'tabindex="-1"'} title="${
         empty ? "미제출" : "펼쳐서 내용 보기"
       }">
@@ -2343,7 +2410,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2119";
+        css.href = "./live-report-deck.css?v=2120";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2503,6 +2570,17 @@ ${linkedCss}
           if (runner) parts.push(`차순위 ${runner}`);
           return parts.join(" · ").slice(0, 60);
         }
+      }
+      if (sessionNo === 4) {
+        const map = extractLiveFieldMap(content);
+        const looksDump = (t) =>
+          /관련\s*학과/.test(t) && /필요\s*자격/.test(t) && /직업\s*전망|예상\s*연봉/.test(t);
+        const job = String(map.f1 || "").trim();
+        const major = String(map.f2 || "").trim();
+        const parts = [];
+        if (job && !looksDump(job)) parts.push(`희망직업 ${job}`);
+        if (major && !looksDump(major)) parts.push(`학과 ${major}`);
+        if (parts.length) return parts.join(" · ").slice(0, 60);
       }
       const fields = buildLiveFields(content);
       if (!fields.length) return "제출됨";
@@ -2677,7 +2755,23 @@ ${linkedCss}
             createdAt: ""
           };
         }
-        const previewFields = sessionNo === 3 ? extractLiveFieldMap(latest.content || "") : null;
+        const previewFields =
+          sessionNo === 3 || sessionNo === 4
+            ? extractLiveFieldMap(latest.content || "")
+            : null;
+        const looksDump = (t) =>
+          /관련\s*학과/.test(t) && /필요\s*자격/.test(t) && /직업\s*전망|예상\s*연봉/.test(t);
+        let winner = "";
+        let runner = "";
+        if (sessionNo === 3 && previewFields) {
+          winner = String(previewFields.wcWinner || "").trim();
+          runner = String(previewFields.wcRunnerUp || "").trim();
+        } else if (sessionNo === 4 && previewFields) {
+          const job = String(previewFields.f1 || "").trim();
+          const major = String(previewFields.f2 || "").trim();
+          winner = job && !looksDump(job) ? job : "";
+          runner = major && !looksDump(major) ? major : "";
+        }
         const incomplete = assessLiveCompleteness(latest.content || "");
         const displayName =
           (char?.name && char.name !== "이름 미정" ? char.name : "") ||
@@ -2689,8 +2783,8 @@ ${linkedCss}
           name: displayName,
           meta: char?.mbti ? `MBTI ${char.mbti}` : "제출됨",
           empty: false,
-          winner: previewFields ? String(previewFields.wcWinner || "").trim() : "",
-          runner: previewFields ? String(previewFields.wcRunnerUp || "").trim() : "",
+          winner,
+          runner,
           faceHtml: char?.faceHtml || "",
           mbti: char?.mbti || "",
           arch: char?.arch || "",

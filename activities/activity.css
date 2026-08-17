@@ -2887,6 +2887,14 @@ body.qr-lightbox-open { overflow: hidden; }
     display: none !important;
   }
 
+  /* 공란 입력칸의 예시문(placeholder)은 인쇄·보고에 노출하지 않음 */
+  input::placeholder,
+  textarea::placeholder {
+    color: transparent !important;
+    opacity: 0 !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+
   .shell {
     width: 100% !important;
     max-width: none !important;

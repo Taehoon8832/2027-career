@@ -3110,10 +3110,12 @@
       color: #94a3b8;
       font-weight: 600;
     }
-    .deck-card.is-s3 {
+    .deck-card.is-s3,
+    .deck-card.is-s4 {
       min-height: 236px;
     }
-    .deck-card.is-s3 .deck-card-art {
+    .deck-card.is-s3 .deck-card-art,
+    .deck-card.is-s4 .deck-card-art {
       width: 56px;
       height: 56px;
     }
@@ -8966,7 +8968,9 @@
         await ensureSubmissionContent(sub);
         if (viewingSubmissionId !== sub.id) return;
         if (looksLikeHtml(sub.content)) {
-          body.innerHTML = `<iframe sandbox="" srcdoc="${escapeSrcdoc(sub.content)}" title="제출 보고서"></iframe>`;
+          body.innerHTML = `<iframe sandbox="" srcdoc="${escapeSrcdoc(
+            stripReportPlaceholders(sub.content)
+          )}" title="제출 보고서"></iframe>`;
         } else {
           body.innerHTML = `<div class="plain">${escapeHtml(sub.content || "(내용 없음)")}</div>`;
         }
@@ -10486,6 +10490,91 @@
       }
 
       /**
+       * 4차시 카드덱 펼침용 · 학생 입력을 자연스러운 문장으로 종합
+       */
+      function buildSession4SwotReaderNarrative({ html, whoName, whoNo }) {
+        const map = extractSwotFieldMap(html);
+        const good = (v) => {
+          const t = sanitizeSeteukText(String(v || "")).trim();
+          if (!t || isLowQualityAnswer(t, whoName, whoNo)) return false;
+          // 라벨이 한 칸에 뭉쳐 들어간 오류 값 제외
+          if (/관련\s*학과/.test(t) && /필요\s*자격/.test(t) && /직업\s*전망|예상\s*연봉/.test(t)) {
+            return false;
+          }
+          return true;
+        };
+        const val = (k) => (good(map[k]) ? sanitizeSeteukText(map[k]).trim() : "");
+        const short = (k, n = 48) => {
+          const t = val(k);
+          return t ? compactStudentSnippet(t, n) : "";
+        };
+        const job = short("f1", 36);
+        const major = short("f2", 36);
+        const prep = short("f3", 40);
+        const pay0 = short("f4", 24);
+        const pay5 = short("f5", 24);
+        const pay10 = short("f6", 24);
+        const retire = short("f7", 24);
+        const outlook = short("f8", 40);
+        const duties = short("f9", 42);
+        const s = short("f10", 40);
+        const w = short("f11", 36);
+        const o = short("f12", 36);
+        const t = short("f13", 36);
+        const useS = short("f14", 36);
+        const fixW = short("f15", 36);
+        const planShort = short("f16", 36);
+        const planLong = short("f17", 36);
+        const helpers = short("f18", 36);
+        const reflect = short("f19", 44) || short("fReflect", 44);
+
+        const parts = [];
+        if (job && major) {
+          parts.push(`희망 직업은 「${job}」이며, 관련 학과·전공으로는 「${major}」를 살펴보았습니다.`);
+        } else if (job) {
+          parts.push(`희망 직업은 「${job}」로 정하고 직업 정보를 정리했습니다.`);
+        } else if (major) {
+          parts.push(`관심 학과·전공으로 「${major}」를 중심으로 진로를 탐색했습니다.`);
+        } else {
+          parts.push("희망 직업 SWOT 분석 활동에서 직업 정보와 자기 요인을 정리했습니다.");
+        }
+
+        if (prep) parts.push(`필요 자격과 준비 사항으로는 ${prep}을(를) 파악했습니다.`);
+
+        const payBits = [];
+        if (pay0) payBits.push(`초봉 ${pay0}`);
+        if (pay5) payBits.push(`5년차 ${pay5}`);
+        if (pay10) payBits.push(`10년차 이상 ${pay10}`);
+        if (payBits.length) parts.push(`연차별 예상 연봉은 ${payBits.join(", ")} 정도로 조사했습니다.`);
+        if (retire) parts.push(`예상 퇴직 시점은 ${retire}으로 보았습니다.`);
+        if (outlook) parts.push(`향후 10년 직업 전망은 ${outlook}이라고 정리했습니다.`);
+        if (duties) parts.push(`주요 업무·특징으로는 ${duties}을(를) 적었습니다.`);
+
+        const swot = [];
+        if (s) swot.push(`강점(S)은 ${s}`);
+        if (w) swot.push(`약점(W)은 ${w}`);
+        if (o) swot.push(`기회(O)는 ${o}`);
+        if (t) swot.push(`위협(T)은 ${t}`);
+        if (swot.length) {
+          parts.push(`SWOT 분석에서 ${swot.join(", ")}이라고 진단했습니다.`);
+        }
+
+        const plans = [];
+        if (useS) plans.push(`강점 활용으로 ${useS}`);
+        if (fixW) plans.push(`약점 보완으로 ${fixW}`);
+        if (planShort) plans.push(`단기 계획으로 ${planShort}`);
+        if (planLong) plans.push(`중장기 계획으로 ${planLong}`);
+        if (plans.length) parts.push(`실행 전략으로는 ${plans.join(", ")}을(를) 세웠습니다.`);
+        if (helpers) parts.push(`필요 역량과 조력자로는 ${helpers}을(를) 떠올렸습니다.`);
+        if (reflect) parts.push(`성찰에서는 ${reflect}이라고 정리했습니다.`);
+
+        if (parts.length <= 1 && !job && !major) {
+          return "작성된 SWOT 내용이 아직 충분하지 않아 종합 문장을 만들기 어렵습니다.";
+        }
+        return parts.join(" ").replace(/\s+/g, " ").trim();
+      }
+
+      /**
        * 4차시(희망 직업 SWOT 분석) 세특 문단.
        * 학생 응답(희망 직업·SWOT·실행 계획)을 반영하고,
        * 창의력·탐구력·사고력이 뛰어남을 음슴체로 개별 평가.
@@ -10616,10 +10705,20 @@
         const runnerUpJob = sanitizeSeteukText(wcMap?.wcRunnerUp || "").trim();
         const swotJobRaw = sanitizeSeteukText(swotMap?.f1 || "").trim();
         const swotMajorRaw = sanitizeSeteukText(swotMap?.f2 || "").trim();
+        const looksLikeSwotLabelDump = (t) =>
+          /관련\s*학과/.test(t) && /필요\s*자격/.test(t) && /직업\s*전망|예상\s*연봉/.test(t);
         const swotJob =
-          swotJobRaw && !isLowQualityAnswer(swotJobRaw, whoName, whoNo) ? swotJobRaw : "";
+          swotJobRaw &&
+          !isLowQualityAnswer(swotJobRaw, whoName, whoNo) &&
+          !looksLikeSwotLabelDump(swotJobRaw)
+            ? swotJobRaw
+            : "";
         const swotMajor =
-          swotMajorRaw && !isLowQualityAnswer(swotMajorRaw, whoName, whoNo) ? swotMajorRaw : "";
+          swotMajorRaw &&
+          !isLowQualityAnswer(swotMajorRaw, whoName, whoNo) &&
+          !looksLikeSwotLabelDump(swotMajorRaw)
+            ? swotMajorRaw
+            : "";
         const whatCore =
           (sessionNo === 3 && winnerJob
             ? winnerJob
@@ -10816,8 +10915,15 @@
         return html;
       }
 
+      function stripReportPlaceholders(html) {
+        return String(html || "").replace(
+          /\splaceholder\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
+          ""
+        );
+      }
+
       function buildSubmissionReportBody(sub) {
-        const raw = String(sub.content || "");
+        const raw = stripReportPlaceholders(String(sub.content || ""));
         const sessionLabel = sub.session_no ? `${sub.session_no}차시` : "차시";
         const studentLine = sanitizeSeteukText(`${sub.student_no || ""}, ${sub.student_name || ""}`).trim();
         const yukha = buildYukhaSummary(sub);
@@ -11738,6 +11844,7 @@ body{
 .na-manual-info,.na-info-box,.student-info,.info-box,
 #sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
+input::placeholder,textarea::placeholder{color:transparent!important;opacity:0!important;-webkit-text-fill-color:transparent!important}
 .student-activity-export .topbar{
   position:relative!important;
   top:auto!important;
@@ -15245,8 +15352,14 @@ ${built.html}
               rosterName,
             meta: char?.mbti ? `MBTI ${char.mbti}` : deckExportSnippet(latest, yukha, incomplete) || "제출됨",
             empty: false,
-            winner: String(yukha?.winnerJob || "").trim(),
-            runner: String(yukha?.runnerUpJob || "").trim(),
+            winner:
+              sessionNo === 4
+                ? String(yukha?.swotJob || "").trim()
+                : String(yukha?.winnerJob || "").trim(),
+            runner:
+              sessionNo === 4
+                ? String(yukha?.swotMajor || "").trim()
+                : String(yukha?.runnerUpJob || "").trim(),
             faceHtml: char?.faceHtml || "",
             mbti: char?.mbti || "",
             arch: char?.arch || "",
@@ -15860,46 +15973,25 @@ ${pageCss}</style>
             push(lab, raw);
           }
         } else if (sessionNo === 4) {
-          const map = {};
-          const inputRe =
-            /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|fReflect)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
-          let m;
-          while ((m = inputRe.exec(html))) {
-            const attrs = m[1] || "";
-            const key = m[2];
-            const ta = m[3];
-            const v =
-              ta != null
-                ? ta
-                : (/value=["']([^"']*)["']/i.exec(attrs) || /value=([^\s>]+)/i.exec(attrs) || [])[1] || "";
-            map[key] = htmlToPlainTextFast(v).trim();
-          }
-          const order = [
-            ["f1", "희망 직업명", true],
-            ["f2", "관련 학과/전공", true],
-            ["f3", "필요 자격 및 준비 사항", false],
-            ["f4", "초봉 예상 연봉", false],
-            ["f5", "5년차 예상 연봉", false],
-            ["f6", "10년차 이상 예상 연봉", false],
-            ["f7", "예상 퇴직 시점", false],
-            ["f8", "직업 전망 (향후 10년)", false],
-            ["f9", "직업의 주요 특징 및 업무", false],
-            ["f10", "강점 Strength", false],
-            ["f11", "약점 Weakness", false],
-            ["f12", "기회 Opportunity", false],
-            ["f13", "위협 Threat", false],
-            ["f14", "강점 활용 방안", false],
-            ["f15", "약점 보완 방안", false],
-            ["f16", "단기 실행 계획", false],
-            ["f17", "중장기 실행 계획", false],
-            ["f18", "필요 역량 및 조력자", false],
-            ["f19", "진로 포부 및 종합 성찰", false]
-          ];
-          for (const [id, lab, accent] of order) {
-            const raw = map[id] || "";
-            if (!raw || isLowQualityAnswer(raw, whoName, whoNo)) continue;
-            push(lab, raw, { accent, wide: raw.length > 36 });
-          }
+          const map = extractSwotFieldMap(html);
+          const clean = (raw) => {
+            const v = sanitizeSeteukText(String(raw || "")).trim();
+            if (!v || isLowQualityAnswer(v, whoName, whoNo)) return "";
+            if (/관련\s*학과/.test(v) && /필요\s*자격/.test(v) && /직업\s*전망|예상\s*연봉/.test(v)) {
+              return "";
+            }
+            return v;
+          };
+          const job = clean(map.f1);
+          const major = clean(map.f2);
+          if (job) push("희망 직업", job, { accent: true, wide: false });
+          if (major) push("관련 학과", major, { accent: true, wide: false });
+          const narrative = buildSession4SwotReaderNarrative({
+            html,
+            whoName,
+            whoNo
+          });
+          if (narrative) push("SWOT 종합", narrative, { wide: true });
         } else {
           const answers = extractActivityAnswersFast(html);
           for (const a of answers) {
@@ -16055,8 +16147,15 @@ ${pageCss}</style>
                   <div class="deck-card-job is-empty"><span>직업</span><b>—</b></div>
                   <div class="deck-card-job is-runner is-empty"><span>차순위</span><b>—</b></div>
                 </div>`
-              : "";
-          return `<button type="button" class="deck-card is-empty${lessonSession === 3 ? " is-s3" : ""}" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
+              : lessonSession === 4
+                ? `<div class="deck-card-jobs" aria-hidden="true">
+                  <div class="deck-card-job is-empty"><span>희망직업</span><b>—</b></div>
+                  <div class="deck-card-job is-runner is-empty"><span>학과</span><b>—</b></div>
+                </div>`
+                : "";
+          return `<button type="button" class="deck-card is-empty${
+            lessonSession === 3 || lessonSession === 4 ? (lessonSession === 3 ? " is-s3" : " is-s4") : ""
+          }" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
             <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(no)}</span></div>
             ${art}
             <div class="deck-card-name">${escapeHtml(displayName)}</div>
@@ -16095,9 +16194,20 @@ ${pageCss}</style>
             <div class="deck-card-job${winner ? "" : " is-empty"}"><span>직업</span><b>${escapeHtml(winner || "미입력")}</b></div>
             <div class="deck-card-job is-runner${runner ? "" : " is-empty"}"><span>차순위</span><b>${escapeHtml(runner || "미입력")}</b></div>
           </div>`;
+        } else if (sessionNo === 4) {
+          const job = String(yukha?.swotJob || "").trim();
+          const major = String(yukha?.swotMajor || "").trim();
+          metaLine = "";
+          archLine = "";
+          jobsHtml = `<div class="deck-card-jobs">
+            <div class="deck-card-job${job ? "" : " is-empty"}"><span>희망직업</span><b>${escapeHtml(job || "미입력")}</b></div>
+            <div class="deck-card-job is-runner${major ? "" : " is-empty"}"><span>학과</span><b>${escapeHtml(major || "미입력")}</b></div>
+          </div>`;
         }
 
-        return `<button type="button" class="deck-card${sessionNo === 3 ? " is-s3" : ""}" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
+        return `<button type="button" class="deck-card${
+          sessionNo === 3 ? " is-s3" : sessionNo === 4 ? " is-s4" : ""
+        }" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
           <div class="deck-card-rank">
             <span class="deck-card-no">${escapeHtml(no)}</span>
             ${badge}
