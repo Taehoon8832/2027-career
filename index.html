@@ -2365,6 +2365,27 @@
       margin: 0 0 8px;
     }
     .detail-toolbar .grow { flex: 1; min-width: 8px; }
+    .detail-submit-count {
+      margin: 0;
+      font: 600 13px/1.35 var(--font-sans);
+      color: #64748b;
+      letter-spacing: -0.01em;
+    }
+    .detail-submit-count .sub-done {
+      color: #2563eb;
+      font-weight: 800;
+      font-size: calc(1em + 2pt);
+    }
+    .detail-submit-count .sub-total {
+      color: #dc2626;
+      font-weight: 800;
+    }
+    .detail-submit-count.is-complete .sub-done,
+    .detail-submit-count.is-complete .sub-total,
+    .detail-submit-count.is-complete .sub-unit {
+      color: #dc2626;
+      font-weight: 800;
+    }
     .detail-toolbar .detail-missing-list {
       flex: 1 1 100%;
       order: 20;
@@ -5522,8 +5543,8 @@
       const NEIS_SETEUK_MAX_BYTES = 1500;
 
       const MONTH_THEMES = [
-        { month: 3, label: "3월", theme: "진로 탐색과 AI 기초 역량 빌드업", sessions: [1, 2, 3, 4, 5] },
-        { month: 4, label: "4월", theme: "데이터 기반 진학 진단과 AI 노코딩 시각화", sessions: [6, 7, 8, 9] },
+        { month: 3, label: "3월", theme: "진로 탐색과 AI 기초 역량 빌드업", sessions: [1, 2, 3, 4, 5, 6] },
+        { month: 4, label: "4월", theme: "데이터 기반 진학 진단과 AI 노코딩 시각화", sessions: [7, 8, 9] },
         { month: 5, label: "5월", theme: "AI 대입 전략 진단과 데이터 분석 역량", sessions: [10, 11, 12] },
         { month: 6, label: "6월", theme: "AI 융합 심화 탐구와 강력한 세특 빌드업", sessions: [13, 14, 15, 16] },
         { month: 7, label: "7월", theme: "AI 모의 학종 진단과 방학 진로 플래닝", sessions: [17, 18, 19] },
@@ -5538,8 +5559,8 @@
         2: { title: "나를 소개하는 100문 100답", summary: "우리 반 친구들에게 나를 당당하게 알려보는 시간!" },
         3: { title: "직업 월드컵", summary: "관심 직업 32개로 토너먼트를 치르며 최종 1등 진로를 고르고, 선택 이유와 실천 계획을 정리하는 활동." },
         4: { title: "나의 희망 직업 SWOT 분석", summary: "희망 직업의 핵심 정보를 탐구하고 SWOT 분석으로 강점·약점·기회·위협을 정리한 뒤, 진로 실행 계획을 세우는 활동." },
-        5: { title: "내 손으로 짜는 교육과정 맵", summary: "우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습." },
-        6: { title: "3월 모평 분석과 수시 상담 신청", summary: "3월 모의고사 성적과 내신을 AI에 넣어 수시/정시 유리도를 진단하고, 담임교사 제출용 상담 신청서 초안 자동 완성." },
+        5: { title: "진로심리 검사로 보는 나", summary: "커리어넷 진로심리 검사(적성·흥미·가치관·교과) 결과를 정리하고, 교차 분석으로 희망 전공·직업과 실행 계획을 구체화하는 활동." },
+        6: { title: "찬반 토론", summary: "오늘의 논제로 찬반 입장을 세워 논거·교차질의·절충안을 기록하고, 진로와 연계한 성찰까지 이어가는 토론 활동." },
         7: { title: "제미나이×캔바 카드뉴스", summary: "AI가 요약해 준 나의 롤모델과 전공 비전을 캔바 디자인 템플릿에 얹어 시각화하는 활동." },
         8: { title: "K-MOOC 전공 스펙 쌓기", summary: "목표 학과 연계 온라인 고등 교육 강좌를 AI로 3줄 요약하며 생기부에 넣을 전공 배경지식 축적." },
         9: { title: "AI 파트너십 HTML 디지털 명함", summary: "3대 AI 엔진이 실시간으로 짜주는 HTML 코드를 조립해 나만의 첫 웹 프로필 페이지 오픈." },
@@ -17082,7 +17103,7 @@ ${pageCss}</style>
 
           <div class="detail-toolbar">
             <h3 class="detail-section-title">제출 현황</h3>
-            <span class="settings-sub" style="margin:0" id="detailSubmitCount">…</span>
+            <span class="detail-submit-count" style="margin:0" id="detailSubmitCount">…</span>
             <button type="button" class="report-deck-btn" id="btnReportDeck" title="보고서 종합 — 번호순 카드덱">
               <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="4" y="5" width="11" height="15" rx="2"/>
@@ -17091,7 +17112,7 @@ ${pageCss}</style>
               </svg>
               <span>&lt;보고서 종합&gt;</span>
             </button>
-            <p class="report-deck-live-hint">▶ 클릭 시 학생 활동지가 <b>보고서 종합(실시간)</b>으로 동기화됩니다.</p>
+            <p class="report-deck-live-hint">▶ “보고서 종합”을 누르면 &lt;학생 활동지&gt;를 작성 중인 학생들의 화면이 자동으로 강제 동기화되어, 교사 화면의 ‘보고서 종합’ 화면으로 전환됩니다.</p>
             <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
@@ -17186,10 +17207,14 @@ ${pageCss}</style>
         const submissionTotal = [...detailSubMap.values()].reduce((n, arr) => n + arr.length, 0);
         const countEl = $("detailSubmitCount");
         if (countEl) {
-          countEl.textContent =
+          const total = students.length;
+          const allIn = total > 0 && submittedCount >= total;
+          const ratioHtml = `<span class="sub-done">${submittedCount}</span>/<span class="sub-total">${total}</span><span class="sub-unit">명 제출</span>`;
+          countEl.classList.toggle("is-complete", allIn);
+          countEl.innerHTML =
             submissionTotal > submittedCount
-              ? `${submissionTotal}건 · ${submittedCount}/${students.length}명 제출`
-              : `${submittedCount}/${students.length}명 제출`;
+              ? `${submissionTotal}건 · ${ratioHtml}`
+              : ratioHtml;
         }
         const missingEl = $("detailMissingSubmitters");
         if (missingEl) {

@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <!-- encoding-fix3 -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>6차시 · 3월 모평 분석과 수시 상담 신청</title>
+  <title>6차시 · 찬반 토론</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=2117" />
+  <link rel="stylesheet" href="./activity.css?v=2122" />
   <script>window.ACTIVITY_SESSION = 6;</script>
 </head>
 <body>
@@ -15,50 +15,148 @@
     <div class="brand" aria-hidden="true">✳</div>
     <div class="top-meta">
       <span class="chip">6차시 활동</span>
-      <strong>3월 모평 분석과 수시 상담 신청</strong>
+      <strong>찬반 토론</strong>
     </div>
   </div>
   <div class="shell">
     <section class="hero-card">
       <div class="hero-copy">
-        <div class="theme">4월 · 데이터 기반 진학 진단과 AI 노코딩 시각화</div>
-        <h1>6차시 · 3월 모평 분석과 수시 상담 신청</h1>
-        <p>3월 모의고사 성적과 내신을 AI에 넣어 수시/정시 유리도를 진단하고 상담 신청서 초안 자동 완성.</p>
+        <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
+        <h1>6차시 · 찬반 토론</h1>
+        <p>오늘의 논제로 찬반 입장을 세워 논거·교차질의·절충안을 기록하고, 진로와 연계한 성찰까지 이어가는 토론 활동.</p>
       </div>
       <div class="hero-qr-wrap">
         <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
         <span class="hero-qr-cap">눌러서 열기</span>
       </div>
     </section>
-    <section class="activity-card" id="activity-root">
-      <h2>학생 활동지</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="f1">3월 모평 등급 요약</label>
-          <input id="f1" name="f1" type="text" placeholder="국수탐 등급" />
+
+    <section class="activity-card activity-card--debate" id="activity-root">
+      <div class="debate-report">
+        <header class="debate-hero">
+          <h2>찬반 토론 활동지</h2>
+          <p class="debate-hero-sub">주장–이유–근거를 세우고, 경청·교차질의·절충안까지 한 장에 정리합니다.</p>
+        </header>
+
+        <div class="debate-meta">
+          <div class="debate-cell">
+            <label class="debate-lbl" for="f2">토론 모둠</label>
+            <input id="f2" name="f2" type="text" placeholder="예: 3모둠" />
+          </div>
+          <div class="debate-cell debate-cell--role">
+            <label class="debate-lbl" for="f3">역할·입장</label>
+            <select id="f3" name="f3">
+              <option value="">선택</option>
+              <option value="찬성">찬성</option>
+              <option value="반대">반대</option>
+              <option value="기록/사회">기록/사회</option>
+            </select>
+          </div>
         </div>
-        <div class="field">
-          <label for="f2">내신 평균</label>
-          <input id="f2" name="f2" type="text" placeholder="예: 2.3" />
+
+        <div class="debate-topic">
+          <div class="debate-topic-top">
+            <span class="debate-badge">오늘의 토론 논제</span>
+            <button type="button" class="debate-rand no-print" id="btnDebateTopic">🎲 주제 뽑기</button>
+          </div>
+          <label class="sr-only" for="f1">토론 논제</label>
+          <input id="f1" name="f1" type="text" class="debate-topic-input" placeholder="논제를 입력하거나 ‘주제 뽑기’를 누르세요." />
         </div>
-      </div>
-      <div class="field">
-        <label for="f3">상담 신청 내용</label>
-        <textarea id="f3" name="f3" placeholder="상담하고 싶은 내용"></textarea>
-      </div>
-      <div class="field">
-        <label for="f4">추가로 남기고 싶은 내용</label>
-        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
-      </div>
-    
-      <div class="field reflect-field" data-reflect="1">
-        <label for="fReflect">느낀점(세특 참조)</label>
-        <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
+
+        <section class="debate-block">
+          <div class="debate-head">
+            <span class="debate-num">01</span>
+            <div>
+              <h3>논거 구축 · 입론 준비</h3>
+              <p>주장(Claim) — 이유(Reason) — 근거(Evidence)</p>
+            </div>
+          </div>
+          <label class="debate-lbl" for="f4">나의 한 줄 핵심 주장</label>
+          <input id="f4" name="f4" type="text" placeholder="논제에 대한 입장을 한 문장으로 명확히 쓰세요." />
+          <div class="debate-row2">
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f5">핵심 논거 1 (이유·근거·통계)</label>
+              <textarea id="f5" name="f5" rows="3" placeholder="타당한 근거와 출처를 적어 보세요."></textarea>
+            </div>
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f6">핵심 논거 2 (예상 반론·재반박)</label>
+              <textarea id="f6" name="f6" rows="3" placeholder="상대 반론과 재반박 논리를 적어 보세요."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="debate-block">
+          <div class="debate-head">
+            <span class="debate-num">02</span>
+            <div>
+              <h3>경청 · 교차 질의 기록</h3>
+              <p>경청 태도 · 비판적 분석</p>
+            </div>
+          </div>
+          <div class="debate-row2">
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f7">상대측 핵심 논거 요약</label>
+              <textarea id="f7" name="f7" rows="3" placeholder="상대의 주장과 근거를 객관적으로 정리하세요."></textarea>
+            </div>
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f8">내가 제기한 교차 질의·답변</label>
+              <textarea id="f8" name="f8" rows="3" placeholder="질문과 상대 답변을 기록하세요."></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="debate-block">
+          <div class="debate-head">
+            <span class="debate-num">03</span>
+            <div>
+              <h3>쟁점 재구성 · 절충안</h3>
+              <p>갈등 조정 · 합리적 대안</p>
+            </div>
+          </div>
+          <div class="debate-row2">
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f9">가장 치열했던 핵심 충돌 쟁점</label>
+              <textarea id="f9" name="f9" rows="2" placeholder="양측 가치관이 가장 크게 대립한 지점"></textarea>
+            </div>
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f10">양측을 종합한 제3의 절충안</label>
+              <textarea id="f10" name="f10" rows="2" placeholder="부작용을 줄인 실현 가능한 대안"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="debate-block">
+          <div class="debate-head">
+            <span class="debate-num">04</span>
+            <div>
+              <h3>메타인지 성찰 · 진로 연계</h3>
+              <p>사고 확장 · 후속 탐구</p>
+            </div>
+          </div>
+          <div class="debate-row2">
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f11">토론 후 확장된 관점 / 성찰</label>
+              <textarea id="f11" name="f11" rows="2" placeholder="토론 전엔 몰랐던 시각·배운 점"></textarea>
+            </div>
+            <div class="debate-cell">
+              <label class="debate-lbl" for="f12">진로·관심사와 연계한 후속 탐구 주제</label>
+              <textarea id="f12" name="f12" rows="2" placeholder="희망 전공·진로와 연결해 더 연구하고 싶은 주제"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <div class="field reflect-field" data-reflect="1">
+          <label for="fReflect">느낀점(세특 참조)</label>
+          <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
+        </div>
+        <p class="debate-footer">고등학교 진로·직업 탐구 활동지 | 찬반 토론</p>
       </div>
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./submit.js?v=2117"></script>
+  <script src="./debate-topics.js?v=1" defer></script>
+  <script src="./debate.js?v=1" defer></script>
+  <script src="./submit.js?v=2122"></script>
 </body>
 </html>

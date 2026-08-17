@@ -1940,16 +1940,28 @@ ${linkedCss}
     function extractLiveFieldMap(html) {
       const map = {};
       const re =
-        /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|q\d+|fReflect|bReflect|wcQ\d+|wcWinner|wcRunnerUp)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
+        /<(?:input|textarea|select)\b([^>]*?(?:id|name)=["'](f\d+|q\d+|fReflect|bReflect|wcQ\d+|wcWinner|wcRunnerUp)["'][^>]*)>(?:([\s\S]*?)<\/(?:textarea|select)>)?/gi;
       let m;
       while ((m = re.exec(String(html || "")))) {
         const attrs = m[1] || "";
         const key = m[2];
-        const ta = m[3];
-        const v =
-          ta != null
-            ? ta
-            : (/value=["']([^"']*)["']/i.exec(attrs) || /value=([^\s>]+)/i.exec(attrs) || [])[1] || "";
+        const inner = m[3];
+        let v = "";
+        if (inner != null) {
+          const selected = /<option[^>]*\bselected\b[^>]*>([\s\S]*?)<\/option>/i.exec(inner);
+          if (selected) v = selected[1];
+          else if (/<option/i.test(inner) === false) v = inner;
+          else {
+            const first = /value=["']([^"']*)["']/i.exec(inner);
+            // prefer selected value attr
+            const selVal = /<option[^>]*\bselected\b[^>]*value=["']([^"']*)["']/i.exec(inner);
+            v = selVal ? selVal[1] : "";
+          }
+        } else {
+          v =
+            (/value=["']([^"']*)["']/i.exec(attrs) || /value=([^\s>]+)/i.exec(attrs) || [])[1] ||
+            "";
+        }
         map[key] = liveHtmlPlain(v);
       }
       return map;

@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <!-- encoding-fix3 -->
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>5차시 · 내 손으로 짜는 교육과정 맵</title>
+  <title>5차시 · 진로심리 검사로 보는 나</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=2117" />
+  <link rel="stylesheet" href="./activity.css?v=2122" />
   <script>window.ACTIVITY_SESSION = 5;</script>
 </head>
 <body>
@@ -15,50 +15,279 @@
     <div class="brand" aria-hidden="true">✳</div>
     <div class="top-meta">
       <span class="chip">5차시 활동</span>
-      <strong>내 손으로 짜는 교육과정 맵</strong>
+      <strong>진로심리 검사로 보는 나</strong>
     </div>
   </div>
   <div class="shell">
     <section class="hero-card">
       <div class="hero-copy">
         <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
-        <h1>5차시 · 내 손으로 짜는 교육과정 맵</h1>
-        <p>우리 학교 교육과정 표를 보며 내 진로에 맞는 3개년 선택 과목을 직관적으로 마킹하는 실습.</p>
+        <h1>5차시 · 진로심리 검사로 보는 나</h1>
+        <p>커리어넷 진로심리 검사 결과를 정리하고, 교차 분석으로 희망 전공·직업과 실행 계획을 구체화하는 활동.</p>
       </div>
       <div class="hero-qr-wrap">
         <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
         <span class="hero-qr-cap">눌러서 열기</span>
       </div>
     </section>
-    <section class="activity-card" id="activity-root">
-      <h2>학생 활동지</h2>
-      <div class="grid-2">
-        <div class="field">
-          <label for="f1">1학년 선택 과목</label>
-          <input id="f1" name="f1" type="text" placeholder="과목명" />
+
+    <section class="activity-card activity-card--psy" id="activity-root">
+      <div class="psy-report">
+        <header class="psy-hero">
+          <h2>진로심리 검사로 나를 발견하기</h2>
+          <p class="psy-hero-sub">커리어넷 검사를 활용해 적성·흥미·가치관·교과 강점을 객관적으로 정리하고, 진로 설계에 연결해 봅시다.</p>
+        </header>
+
+        <div class="psy-banner no-print-link">
+          <p>💡 커리어넷 <strong>아로플러스</strong> 진로심리 검사로 나를 먼저 알아본 뒤, 아래에 결과를 기록하세요.</p>
+          <a class="psy-banner-btn" href="https://www.career.go.kr/cloud/w/inspect/student" target="_blank" rel="noopener noreferrer">커리어넷 검사하기</a>
         </div>
-        <div class="field">
-          <label for="f2">2학년 선택 과목</label>
-          <input id="f2" name="f2" type="text" placeholder="과목명" />
+
+        <!-- 01 영역별 결과 -->
+        <section class="psy-block">
+          <div class="psy-head">
+            <span class="psy-num">01</span>
+            <h3>영역별 진로심리검사 결과 기록</h3>
+          </div>
+          <div class="psy-test-grid">
+            <article class="psy-card">
+              <div class="psy-card-h"><span>① 직업적성검사</span><em>능력·잠재력</em></div>
+              <label class="psy-lbl" for="f1">상위 적성 요인 (1~3순위) &amp; 백분위</label>
+              <input id="f1" name="f1" type="text" placeholder="예: 1순위 언어(95), 2순위 수리논리(88), 3순위 대인관계" />
+              <label class="psy-lbl" for="f2">적성 기반 추천 직업군</label>
+              <input id="f2" name="f2" type="text" placeholder="검사 결과의 대표 직업·직무" />
+              <label class="psy-lbl" for="f3">자기인식과의 일치도</label>
+              <textarea id="f3" name="f3" rows="2" placeholder="일치하는 점 / 의외였던 점"></textarea>
+              <label class="psy-lbl" for="f4">강점 적성이 빛나는 장면</label>
+              <textarea id="f4" name="f4" rows="2" placeholder="어떤 과제·상황에서 이 적성이 발휘되나요?"></textarea>
+              <label class="psy-lbl" for="f5">보완이 필요한 하위 적성 &amp; 대안</label>
+              <input id="f5" name="f5" type="text" placeholder="낮은 요인과 일상·학습 보완 방안" />
+            </article>
+
+            <article class="psy-card">
+              <div class="psy-card-h"><span>② 직업흥미검사 (K)</span><em>선호·성향</em></div>
+              <label class="psy-lbl" for="f6">최상위 흥미 코드 (RIASEC)</label>
+              <input id="f6" name="f6" type="text" placeholder="예: 탐구형(I)–예술형(A) / 세부: 과학기술, 창작기획" />
+              <label class="psy-lbl" for="f7">흥미 유형별 추천 직업군</label>
+              <input id="f7" name="f7" type="text" placeholder="검사 결과의 주요 관심 직무" />
+              <label class="psy-lbl" for="f8">몰입감을 느끼는 활동·환경</label>
+              <textarea id="f8" name="f8" rows="2" placeholder="예: 심층 분석, 사람과의 소통, 창작 등"></textarea>
+              <label class="psy-lbl" for="f9">흥미가 낮은 영역·기피 환경</label>
+              <textarea id="f9" name="f9" rows="2" placeholder="지루하거나 스트레스를 크게 느끼는 업무 방식"></textarea>
+              <label class="psy-lbl" for="f10">취미·관심사와 흥미 코드의 연관</label>
+              <input id="f10" name="f10" type="text" placeholder="평소 활동·미디어 습관과의 일치점" />
+            </article>
+
+            <article class="psy-card">
+              <div class="psy-card-h"><span>③ 직업가치관검사</span><em>선택의 기준</em></div>
+              <label class="psy-lbl" for="f11">최우선 직업 가치관 (1~3위)</label>
+              <input id="f11" name="f11" type="text" placeholder="예: 1위 능력발휘, 2위 자율성, 3위 경제적 보상" />
+              <label class="psy-lbl" for="f12">최하위 가치관 (덜 중요한 2가지)</label>
+              <input id="f12" name="f12" type="text" placeholder="예: 직업안정, 사회적 인정" />
+              <label class="psy-lbl" for="f13">상위 가치관을 중시하는 이유</label>
+              <textarea id="f13" name="f13" rows="2" placeholder="직업을 통해 얻고 싶은 삶의 가치"></textarea>
+              <label class="psy-lbl" for="f14">타협할 수 없는 절대 기준 1가지</label>
+              <textarea id="f14" name="f14" rows="2" placeholder="이 조건이 없으면 만족도가 떨어질 핵심 기준"></textarea>
+              <label class="psy-lbl" for="f15">가치관에 맞는 근무 환경</label>
+              <input id="f15" name="f15" type="text" placeholder="예: 유연근무, 성과 보상, 아이디어 제안 문화" />
+            </article>
+
+            <article class="psy-card">
+              <div class="psy-card-h"><span>④ 과목별 성취·흥미</span><em>전공 적합도</em></div>
+              <label class="psy-lbl" for="f16">흥미·성취 모두 높은 교과군</label>
+              <input id="f16" name="f16" type="text" placeholder="예: 수학, 정보, 과학탐구" />
+              <label class="psy-lbl" for="f17">흥미는 높으나 성취가 아쉬운 교과 &amp; 원인</label>
+              <input id="f17" name="f17" type="text" placeholder="과목명 / 원인(개념·학습량 등)" />
+              <label class="psy-lbl" for="f18">학업 강점과 연결되는 희망 전공</label>
+              <textarea id="f18" name="f18" rows="2" placeholder="교과 역량을 살릴 수 있는 전공·계열"></textarea>
+              <label class="psy-lbl" for="f19">심화 탐구하고 싶은 교과 주제</label>
+              <textarea id="f19" name="f19" rows="2" placeholder="호기심을 느낀 세부 학술·탐구 주제"></textarea>
+              <label class="psy-lbl" for="f20">학습 동기 보완 전략</label>
+              <input id="f20" name="f20" type="text" placeholder="부족한 교과를 위한 구체적 습관·방법" />
+            </article>
+          </div>
+        </section>
+
+        <!-- 02 종합 점검표 -->
+        <section class="psy-block">
+          <div class="psy-head">
+            <span class="psy-num">02</span>
+            <h3>4대 검사 입체 비교 점검표</h3>
+          </div>
+          <div class="psy-table-wrap">
+            <table class="psy-table">
+              <thead>
+                <tr>
+                  <th>검사</th>
+                  <th>핵심 키워드</th>
+                  <th>일상·학업 관찰 사례</th>
+                  <th>진로 시사점</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>① 적성</th>
+                  <td><input id="f21" name="f21" type="text" placeholder="예: 논리추론" aria-label="적성 키워드" /></td>
+                  <td><input id="f22" name="f22" type="text" placeholder="몰입했던 장면" aria-label="적성 사례" /></td>
+                  <td><input id="f23" name="f23" type="text" placeholder="적합한 직무 방향" aria-label="적성 시사점" /></td>
+                </tr>
+                <tr>
+                  <th>② 흥미</th>
+                  <td><input id="f24" name="f24" type="text" placeholder="예: 탐구형(I)" aria-label="흥미 키워드" /></td>
+                  <td><input id="f25" name="f25" type="text" placeholder="즐기는 활동" aria-label="흥미 사례" /></td>
+                  <td><input id="f26" name="f26" type="text" placeholder="선호 업무 환경" aria-label="흥미 시사점" /></td>
+                </tr>
+                <tr>
+                  <th>③ 가치</th>
+                  <td><input id="f27" name="f27" type="text" placeholder="예: 자율성" aria-label="가치 키워드" /></td>
+                  <td><input id="f28" name="f28" type="text" placeholder="가치가 드러난 장면" aria-label="가치 사례" /></td>
+                  <td><input id="f29" name="f29" type="text" placeholder="선호 조직·보상" aria-label="가치 시사점" /></td>
+                </tr>
+                <tr>
+                  <th>④ 교과</th>
+                  <td><input id="f30" name="f30" type="text" placeholder="예: 정보·수학" aria-label="교과 키워드" /></td>
+                  <td><input id="f31" name="f31" type="text" placeholder="우수했던 수업·과제" aria-label="교과 사례" /></td>
+                  <td><input id="f32" name="f32" type="text" placeholder="연계 전공" aria-label="교과 시사점" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="psy-row2">
+            <div class="psy-cell">
+              <label class="psy-lbl" for="f33">4가지 검사를 관통하는 핵심 키워드 3가지</label>
+              <input id="f33" name="f33" type="text" placeholder="예: #데이터기반, #논리적탐구, #창의적설계" />
+            </div>
+            <div class="psy-cell">
+              <label class="psy-lbl" for="f34">새롭게 확인·놀라웠던 나의 특성</label>
+              <input id="f34" name="f34" type="text" placeholder="예: 안정성보다 자율성을 중시함" />
+            </div>
+          </div>
+        </section>
+
+        <!-- 03 교차 분석 -->
+        <section class="psy-block">
+          <div class="psy-head">
+            <span class="psy-num">03</span>
+            <h3>심층 교차 분석 · 성찰</h3>
+          </div>
+          <div class="psy-cross">
+            <div class="psy-cell">
+              <label class="psy-lbl" for="f35">적성 (잘하는 것)</label>
+              <textarea id="f35" name="f35" rows="3" placeholder="상위 적성 핵심 역량"></textarea>
+            </div>
+            <div class="psy-cell">
+              <label class="psy-lbl" for="f36">흥미 (좋아하는 것)</label>
+              <textarea id="f36" name="f36" rows="3" placeholder="상위 흥미 코드·활동"></textarea>
+            </div>
+            <div class="psy-cell">
+              <label class="psy-lbl" for="f37">가치관 (중요한 기준)</label>
+              <textarea id="f37" name="f37" rows="3" placeholder="최우선 가치관"></textarea>
+            </div>
+            <div class="psy-cell">
+              <label class="psy-lbl" for="f38">교과 강점 (학업 기반)</label>
+              <textarea id="f38" name="f38" rows="3" placeholder="성취·흥미 우수 교과"></textarea>
+            </div>
+          </div>
+
+          <div class="psy-q">
+            <p class="psy-q-t"><span>Q1</span> 적성(능력)과 흥미(선호)의 일치·상호 보완</p>
+            <p class="psy-q-d">좋아하는 분야와 잘하는 역량이 얼마나 맞나요? 차이가 있다면 어떻게 조화시킬까요?</p>
+            <textarea id="f39" name="f39" rows="2" placeholder="일치점·차이점과 융합 경로를 적어 보세요."></textarea>
+          </div>
+          <div class="psy-q">
+            <p class="psy-q-t"><span>Q2</span> 희망 직업과 가치관의 정합성</p>
+            <p class="psy-q-d">목표 직업이 최우선 가치관을 충족하나요? 충돌 가능성과 대처는?</p>
+            <textarea id="f40" name="f40" rows="2" placeholder="가치 충족·갈등 시나리오와 대처를 적어 보세요."></textarea>
+          </div>
+          <div class="psy-q">
+            <p class="psy-q-t"><span>Q3</span> 흥미–성취 불일치 교과의 학습 전략</p>
+            <p class="psy-q-d">진로에 필요하지만 성취·흥미가 부족한 교과가 있다면, 구체적 대안은?</p>
+            <textarea id="f41" name="f41" rows="2" placeholder="보완 과목과 실천 방법을 적어 보세요."></textarea>
+          </div>
+        </section>
+
+        <!-- 04 1·2지망 -->
+        <section class="psy-block">
+          <div class="psy-head">
+            <span class="psy-num">04</span>
+            <h3>1·2지망 전공·직업 비교</h3>
+          </div>
+          <div class="psy-row2">
+            <article class="psy-card">
+              <div class="psy-card-h"><span>🎯 1지망</span><em>희망</em></div>
+              <label class="psy-lbl" for="f42">희망 직업 / 전공</label>
+              <input id="f42" name="f42" type="text" placeholder="예: 데이터 사이언티스트 / 인공지능응용학과" />
+              <label class="psy-lbl" for="f43">검사 결과 기반 선택 이유</label>
+              <textarea id="f43" name="f43" rows="3" placeholder="적성·흥미·가치관과의 부합점"></textarea>
+            </article>
+            <article class="psy-card">
+              <div class="psy-card-h"><span>🎯 2지망</span><em>대안</em></div>
+              <label class="psy-lbl" for="f44">대안 직업 / 전공</label>
+              <input id="f44" name="f44" type="text" placeholder="예: IT 변리사 / 컴퓨터공학·지식재산" />
+              <label class="psy-lbl" for="f45">검사 결과 기반 선택 이유</label>
+              <textarea id="f45" name="f45" rows="3" placeholder="대안 경로의 강점 연결"></textarea>
+            </article>
+          </div>
+        </section>
+
+        <!-- 05 로드맵 -->
+        <section class="psy-block">
+          <div class="psy-head">
+            <span class="psy-num">05</span>
+            <h3>역량 갭 분석 · 실행 로드맵</h3>
+          </div>
+          <div class="psy-table-wrap">
+            <table class="psy-table psy-table--road">
+              <thead>
+                <tr>
+                  <th>영역</th>
+                  <th>현재 준비도 / 부족한 점</th>
+                  <th>실천 계획</th>
+                  <th>목표 시기</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th>학업<br />(교과)</th>
+                  <td><input id="f46" name="f46" type="text" placeholder="부족한 점" aria-label="학업 부족" /></td>
+                  <td><input id="f47" name="f47" type="text" placeholder="실천 계획" aria-label="학업 계획" /></td>
+                  <td><input id="f48" name="f48" type="text" placeholder="시기" aria-label="학업 시기" /></td>
+                </tr>
+                <tr>
+                  <th>탐구<br />(비교과)</th>
+                  <td><input id="f49" name="f49" type="text" placeholder="부족한 점" aria-label="탐구 부족" /></td>
+                  <td><input id="f50" name="f50" type="text" placeholder="실천 계획" aria-label="탐구 계획" /></td>
+                  <td><input id="f51" name="f51" type="text" placeholder="시기" aria-label="탐구 시기" /></td>
+                </tr>
+                <tr>
+                  <th>진로<br />(경험)</th>
+                  <td><input id="f52" name="f52" type="text" placeholder="부족한 점" aria-label="진로 부족" /></td>
+                  <td><input id="f53" name="f53" type="text" placeholder="실천 계획" aria-label="진로 계획" /></td>
+                  <td><input id="f54" name="f54" type="text" placeholder="시기" aria-label="진로 시기" /></td>
+                </tr>
+                <tr>
+                  <th>가치<br />(태도)</th>
+                  <td><input id="f55" name="f55" type="text" placeholder="부족한 점" aria-label="가치 부족" /></td>
+                  <td><input id="f56" name="f56" type="text" placeholder="실천 계획" aria-label="가치 계획" /></td>
+                  <td><input id="f57" name="f57" type="text" placeholder="시기" aria-label="가치 시기" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <label class="psy-lbl" for="f58">진로 다짐 한 줄</label>
+          <input id="f58" name="f58" type="text" class="psy-pledge" placeholder="오늘 검사·성찰을 바탕으로 스스로에게 하는 한 줄 다짐" />
+        </section>
+
+        <div class="field reflect-field" data-reflect="1">
+          <label for="fReflect">느낀점(세특 참조)</label>
+          <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
         </div>
-      </div>
-      <div class="field">
-        <label for="f3">3학년 선택 과목</label>
-        <textarea id="f3" name="f3" placeholder="과목명"></textarea>
-      </div>
-      <div class="field">
-        <label for="f4">추가로 남기고 싶은 내용</label>
-        <textarea id="f4" name="f4" placeholder="오늘 활동에서 인상 깊었던 점, 질문, 아이디어를 적어 주세요."></textarea>
-      </div>
-    
-      <div class="field reflect-field" data-reflect="1">
-        <label for="fReflect">느낀점(세특 참조)</label>
-        <textarea id="fReflect" name="fReflect" rows="4" placeholder="오늘 활동에서 느낀 점, 배운 점, 성장한 점을 적어 주세요. (생기부 세특 작성 시 참고됩니다)"></textarea>
+        <p class="psy-footer">고등학교 진로·직업 탐구 활동지 | 진로심리 검사로 보는 나</p>
       </div>
     </section>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./submit.js?v=2117"></script>
+  <script src="./submit.js?v=2122"></script>
 </body>
 </html>

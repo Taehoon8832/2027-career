@@ -1,0 +1,11 @@
+const fs = require("fs");
+const t = fs.readFileSync("activities/debate-topics.js", "utf8");
+console.log("topics head:", t.slice(0, 60).replace(/\n/g, " "));
+console.log("approx topics:", (t.split("\n").filter((l) => l.includes('"')).length));
+const h = fs.readFileSync("index.html", "utf8");
+console.log("march6:", /sessions: \[1, 2, 3, 4, 5, 6\]/.test(h));
+console.log("title5:", /진로심리 검사로 보는 나/.test(h));
+console.log("title6:", /"찬반 토론"/.test(h));
+console.log("05 has psy:", fs.readFileSync("activities/05.html", "utf8").includes("activity-card--psy"));
+console.log("06 has debate:", fs.readFileSync("activities/06.html", "utf8").includes("activity-card--debate"));
+console.log("css psy:", fs.readFileSync("activities/activity.css", "utf8").includes("activity-card--psy"));

@@ -1336,6 +1336,20 @@ body.qr-lightbox-open { overflow: hidden; }
   box-shadow: inset 0 0 0 1px #e5e7eb !important;
   color: #94a3b8;
 }
+.psy-card input.is-blank,
+.psy-card textarea.is-blank,
+.psy-cell input.is-blank,
+.psy-cell textarea.is-blank,
+.psy-q textarea.is-blank,
+.psy-table input.is-blank,
+.psy-pledge.is-blank,
+.debate-cell input.is-blank,
+.debate-cell textarea.is-blank,
+.debate-topic-input.is-blank,
+.debate-block > input.is-blank {
+  background: #fff !important;
+  box-shadow: inset 0 0 0 1px #e5e7eb !important;
+}
 
 /* 1차시 학번·이름·느낀점 입력칸도 동일 톤 */
 .activity-card:has(.na-manual) .sheet-identity input {
@@ -6516,3 +6530,484 @@ body.qr-lightbox-open { overflow: hidden; }
   margin-top: 18px;
 }
 /* === /1차시 HTML·캐릭터 포지 === */
+
+/* ========== 5차시 · 진로심리 검사 ========== */
+.activity-card--psy {
+  padding: 14px 16px 18px !important;
+}
+.psy-report { display: flex; flex-direction: column; gap: 14px; }
+.psy-hero {
+  position: relative;
+  padding: 4px 2px 10px;
+  border-bottom: 2px solid #1e3a8a;
+}
+.psy-hero h2 {
+  margin: 0;
+  font: 800 clamp(18px, 2.4vw, 22px)/1.25 "Noto Serif KR", serif;
+  color: #1e3a8a;
+  letter-spacing: -0.03em;
+}
+.psy-hero-sub {
+  margin: 6px 0 0;
+  font: 500 12.5px/1.45 var(--sans);
+  color: #64748b;
+  word-break: keep-all;
+}
+.psy-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #eff6ff, #f8fbff);
+}
+.psy-banner p {
+  margin: 0;
+  flex: 1 1 220px;
+  font: 600 12.5px/1.4 var(--sans);
+  color: #1e40af;
+  word-break: keep-all;
+}
+.psy-banner strong { font-weight: 800; color: #1d4ed8; }
+.psy-banner-btn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #2563eb;
+  color: #fff !important;
+  font: 700 12px/1 var(--sans);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.psy-banner-btn:hover { background: #1d4ed8; }
+.psy-block { display: flex; flex-direction: column; gap: 8px; }
+.psy-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.psy-num {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #1e3a8a;
+  color: #fff;
+  font: 800 11px/1 var(--sans);
+}
+.psy-head h3 {
+  margin: 0;
+  font: 800 15px/1.3 "Noto Serif KR", serif;
+  color: #1e3a8a;
+  letter-spacing: -0.02em;
+}
+.psy-test-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.psy-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 11px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.psy-card-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-bottom: 5px;
+  margin-bottom: 2px;
+  border-bottom: 1.5px dashed #cbd5e1;
+  font: 800 13px/1.25 var(--sans);
+  color: #1e3a8a;
+}
+.psy-card-h em {
+  font: 700 10px/1 var(--sans);
+  font-style: normal;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #e0e7ff;
+  color: #3730a3;
+  white-space: nowrap;
+}
+.psy-lbl {
+  display: block;
+  margin-top: 3px;
+  font: 700 11.5px/1.3 var(--sans);
+  color: #334155;
+}
+.psy-card input,
+.psy-card textarea,
+.psy-cell input,
+.psy-cell textarea,
+.psy-q textarea,
+.psy-pledge,
+.psy-table input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  padding: 7px 9px;
+  font: 500 13px/1.4 var(--sans);
+  color: #1e293b;
+  outline: none;
+  resize: vertical;
+  field-sizing: content;
+}
+.psy-card textarea,
+.psy-cell textarea,
+.psy-q textarea { min-height: 52px; }
+.psy-card input:focus,
+.psy-card textarea:focus,
+.psy-cell input:focus,
+.psy-cell textarea:focus,
+.psy-q textarea:focus,
+.psy-table input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+}
+.psy-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.psy-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.psy-cross {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.psy-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.psy-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font: 500 12px/1.35 var(--sans);
+}
+.psy-table th,
+.psy-table td {
+  border: 1px solid #cbd5e1;
+  padding: 6px;
+  vertical-align: middle;
+}
+.psy-table thead th {
+  background: #f1f5f9;
+  color: #1e3a8a;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+}
+.psy-table tbody th {
+  width: 64px;
+  background: #f8fafc;
+  color: #1e3a8a;
+  font-weight: 800;
+  text-align: center;
+}
+.psy-table--road { min-width: 520px; }
+.psy-table--road tbody th { width: 72px; line-height: 1.25; }
+.psy-q {
+  padding: 8px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #fff;
+}
+.psy-q-t {
+  margin: 0 0 2px;
+  font: 800 13px/1.35 var(--sans);
+  color: #1e3a8a;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  word-break: keep-all;
+}
+.psy-q-t span {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: #2563eb;
+  color: #fff;
+  font: 800 10px/1 var(--sans);
+}
+.psy-q-d {
+  margin: 0 0 6px;
+  font: 500 11.5px/1.4 var(--sans);
+  color: #64748b;
+  word-break: keep-all;
+}
+.psy-pledge {
+  margin-top: 2px;
+  border-color: #93c5fd !important;
+  background: #eff6ff !important;
+  font-weight: 700 !important;
+}
+.psy-footer {
+  margin: 4px 0 0;
+  text-align: center;
+  font: 600 11px/1.4 var(--sans);
+  color: #94a3b8;
+}
+
+/* ========== 6차시 · 찬반 토론 ========== */
+.activity-card--debate {
+  padding: 14px 16px 18px !important;
+}
+.debate-report { display: flex; flex-direction: column; gap: 12px; }
+.debate-hero {
+  padding: 2px 2px 10px;
+  border-bottom: 2px solid #1f1e1d;
+}
+.debate-hero h2 {
+  margin: 0;
+  font: 800 clamp(18px, 2.4vw, 22px)/1.25 "Noto Serif KR", serif;
+  color: #111;
+  letter-spacing: -0.03em;
+}
+.debate-hero-sub {
+  margin: 6px 0 0;
+  font: 500 12.5px/1.45 var(--sans);
+  color: #64748b;
+  word-break: keep-all;
+}
+.debate-meta {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 8px;
+}
+.debate-cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.debate-lbl {
+  font: 700 11.5px/1.3 var(--sans);
+  color: #343a40;
+}
+.debate-cell input,
+.debate-cell textarea,
+.debate-cell select,
+.debate-topic-input,
+.debate-block > input {
+  width: 100%;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px 10px;
+  font: 500 13px/1.4 var(--sans);
+  color: #212529;
+  outline: none;
+  resize: vertical;
+  field-sizing: content;
+}
+.debate-cell select {
+  min-height: 40px;
+  cursor: pointer;
+}
+.debate-cell input:focus,
+.debate-cell textarea:focus,
+.debate-cell select:focus,
+.debate-topic-input:focus,
+.debate-block > input:focus {
+  border-color: #339af0;
+  background: #fbfdff;
+}
+.debate-topic {
+  padding: 10px 12px;
+  border: 1.5px solid #339af0;
+  border-radius: 10px;
+  background: #f8f9fa;
+}
+.debate-topic-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.debate-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  background: #339af0;
+  color: #fff;
+  font: 800 11px/1 var(--sans);
+}
+.debate-rand {
+  border: 0;
+  border-radius: 8px;
+  min-height: 32px;
+  padding: 0 10px;
+  background: #228be6;
+  color: #fff;
+  font: 700 12px/1 var(--sans);
+  cursor: pointer;
+}
+.debate-rand:hover { background: #1c7ed6; }
+.debate-topic-input {
+  border: 0 !important;
+  border-bottom: 1.5px dashed #74c0fc !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  color: #1864ab !important;
+  padding: 4px 0 !important;
+}
+.debate-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0 2px;
+}
+.debate-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 8px;
+  border-left: 4px solid #228be6;
+  background: #e9ecef;
+  border-radius: 0 8px 8px 0;
+}
+.debate-num {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: #228be6;
+  color: #fff;
+  font: 800 11px/1 var(--sans);
+  flex: 0 0 auto;
+}
+.debate-head h3 {
+  margin: 0;
+  font: 800 14px/1.3 var(--sans);
+  color: #212529;
+}
+.debate-head p {
+  margin: 2px 0 0;
+  font: 500 11px/1.3 var(--sans);
+  color: #868e96;
+}
+.debate-row2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.debate-footer {
+  margin: 4px 0 0;
+  text-align: center;
+  font: 600 11px/1.4 var(--sans);
+  color: #94a3b8;
+}
+
+@media (max-width: 820px) {
+  .psy-test-grid,
+  .psy-row2,
+  .psy-cross,
+  .debate-meta,
+  .debate-row2 {
+    grid-template-columns: 1fr;
+  }
+  .psy-table,
+  .psy-table--road { min-width: 0; }
+}
+
+@media (max-width: 560px) {
+  .activity-card--psy,
+  .activity-card--debate { padding: 10px 10px 14px !important; }
+  .psy-banner { flex-direction: column; align-items: stretch; }
+  .psy-banner-btn { justify-content: center; width: 100%; }
+  .psy-card-h { flex-wrap: wrap; }
+  .debate-topic-top { flex-wrap: wrap; }
+  .debate-rand { width: 100%; }
+}
+
+@media print {
+  .psy-banner-btn,
+  .debate-rand { display: none !important; }
+  .psy-banner {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+  .psy-test-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+  }
+  .psy-cross {
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 4px !important;
+  }
+  .psy-row2,
+  .debate-row2,
+  .debate-meta {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px !important;
+  }
+  .psy-card,
+  .psy-q,
+  .debate-block,
+  .debate-topic {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .psy-hero h2,
+  .debate-hero h2 { font-size: 13px !important; }
+  .psy-head h3,
+  .debate-head h3 { font-size: 11px !important; }
+  .psy-lbl,
+  .debate-lbl { font-size: 9px !important; }
+  .psy-card input,
+  .psy-card textarea,
+  .psy-cell input,
+  .psy-cell textarea,
+  .psy-q textarea,
+  .psy-table input,
+  .debate-cell input,
+  .debate-cell textarea,
+  .debate-cell select,
+  .debate-block > input,
+  .debate-topic-input {
+    font-size: 9px !important;
+    padding: 3px 5px !important;
+    min-height: 0 !important;
+  }
+  .psy-card textarea,
+  .psy-cell textarea,
+  .psy-q textarea,
+  .debate-cell textarea { min-height: 28px !important; }
+  .psy-table { min-width: 0 !important; font-size: 8.5px !important; }
+  .psy-table th,
+  .psy-table td { padding: 3px !important; }
+  .psy-num,
+  .debate-num { width: 18px; height: 18px; font-size: 9px; border-radius: 4px; }
+  .activity-card--psy,
+  .activity-card--debate {
+    padding: 4px !important;
+    box-shadow: none !important;
+  }
+  .psy-card,
+  .debate-topic,
+  .psy-q { padding: 5px 6px !important; }
+  .psy-pledge { background: #fff !important; }
+  .psy-card.is-blank,
+  input.is-blank,
+  textarea.is-blank {
+    background: #fff !important;
+  }
+}
+
