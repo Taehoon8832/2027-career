@@ -359,7 +359,36 @@
       width: 14px;
       height: 14px;
       flex-shrink: 0;
-      opacity: 0.85;
+      color: #c96442;
+      transition: transform 0.2s ease;
+    }
+    .usage-tour-click-cue svg path {
+      fill: currentColor;
+      stroke: none;
+    }
+    /* 기본 화살표는 오른쪽(▶). 하이라이트 위치에 맞게 회전·배치 */
+    .usage-tour-click-cue.is-dir-left {
+      flex-direction: row-reverse;
+    }
+    .usage-tour-click-cue.is-dir-left svg {
+      transform: scaleX(-1);
+    }
+    .usage-tour-click-cue.is-dir-up {
+      flex-direction: column-reverse;
+      gap: 4px;
+    }
+    .usage-tour-click-cue.is-dir-up svg {
+      transform: rotate(-90deg);
+    }
+    .usage-tour-click-cue.is-dir-down {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .usage-tour-click-cue.is-dir-down svg {
+      transform: rotate(90deg);
+    }
+    .usage-tour-click-cue.is-dir-right svg {
+      transform: none;
     }
     .usage-tour-card {
       position: fixed;
@@ -2637,10 +2666,20 @@
       margin: 0;
       flex: 1;
       min-width: 0;
-      font: 800 16px/1.25 "Noto Serif KR", var(--font-serif);
+      font: 800 16px/1.3 "Noto Sans KR", Pretendard, var(--font-sans);
       color: #fef3c7;
       letter-spacing: -0.02em;
       text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+    }
+    .report-deck-head h3 .deck-title-brand {
+      font-size: calc(1em + 3pt);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-right: 0.28em;
+    }
+    .report-deck-head h3 .deck-title-lesson {
+      font-weight: 700;
+      font-size: 1em;
     }
     .report-deck-head .sub {
       margin: 2px 0 0;
@@ -2800,6 +2839,7 @@
     }
     .report-deck.is-spread .deck-card-meta,
     .report-deck.is-spread .deck-card-arch,
+    .report-deck.is-spread .deck-card-jobs,
     .report-deck.is-spread .deck-card-summary,
     .report-deck.is-spread .deck-card-hint {
       display: none;
@@ -2980,6 +3020,55 @@
       overflow: hidden;
       text-overflow: ellipsis;
       min-height: 1.2em;
+    }
+    .deck-card-jobs {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      width: 100%;
+      margin-top: 2px;
+      text-align: left;
+    }
+    .deck-card-job {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: baseline;
+      gap: 4px;
+      padding: 3px 5px;
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(31, 30, 29, 0.08);
+      min-width: 0;
+    }
+    .deck-card-job span {
+      flex-shrink: 0;
+      font: 800 8.5px/1.1 var(--font-sans);
+      color: #64748b;
+      letter-spacing: -0.02em;
+    }
+    .deck-card-job b {
+      min-width: 0;
+      font: 800 10.5px/1.2 var(--font-sans);
+      color: #1d4ed8;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-card-job.is-runner b { color: #9a3412; }
+    .deck-card-job.is-empty b {
+      color: #94a3b8;
+      font-weight: 600;
+    }
+    .deck-card.is-s3 {
+      min-height: 236px;
+    }
+    .deck-card.is-s3 .deck-card-art {
+      width: 56px;
+      height: 56px;
+    }
+    .report-deck.is-spread .deck-card-jobs {
+      display: none;
     }
     .deck-card-summary {
       display: none !important;
@@ -4783,8 +4872,8 @@
     <div class="usage-tour-veil" id="usageTourVeil" aria-hidden="true"></div>
     <div class="usage-tour-holes" id="usageTourHoles" aria-hidden="true"></div>
     <div class="usage-tour-click-cue" id="usageTourClickCue" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M9 9l3 9 1.5-4.5L18 12 9 9z"/>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 5v14l11-7z"/>
       </svg>
       <span>클릭해 보세요</span>
     </div>
@@ -5210,7 +5299,7 @@
           <div class="report-deck-panel" role="dialog" aria-modal="true" aria-labelledby="reportDeckTitle">
             <div class="report-deck-head">
               <div style="min-width:0;flex:1">
-                <h3 id="reportDeckTitle">&lt;보고서 종합&gt; 카드덱</h3>
+                <h3 id="reportDeckTitle"><span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">카드덱</span></h3>
                 <p class="sub" id="reportDeckSub" hidden></p>
               </div>
               <div class="report-deck-actions">
@@ -6921,14 +7010,16 @@
         };
 
         // 하이라이트(코드번호 포함) 밖·설명 카드 밖만 후보 — 가운데 겹침 금지
+        // 왼쪽 배치를 우선해 화살표(▶)가 하이라이트를 가리키기 쉽게
         const candidates = [
+          { top: union.top + union.height / 2 - cueH / 2, left: union.left - cueW - 12 },
+          { top: union.top + 4, left: union.left - cueW - 12 },
           { top: union.top + union.height + 12, left: union.left + union.width / 2 - cueW / 2 },
           { top: union.top + union.height + 12, left: union.left },
           { top: union.top + union.height + 12, left: union.left + union.width - cueW },
           { top: union.top - cueH - 12, left: union.left + union.width / 2 - cueW / 2 },
           { top: union.top + union.height / 2 - cueH / 2, left: union.left + union.width + 12 },
           { top: union.top + 4, left: union.left + union.width + 12 },
-          { top: union.top + union.height / 2 - cueH / 2, left: union.left - cueW - 12 },
           { top: union.top - cueH - 12, left: union.left + union.width - cueW }
         ];
 
@@ -6957,6 +7048,23 @@
         }
         cue.style.top = `${Math.round(chosen.top)}px`;
         cue.style.left = `${Math.round(chosen.left)}px`;
+
+        // 화살표가 하이라이트 쪽을 향하도록 방향 결정
+        const cueCx = chosen.left + cueW / 2;
+        const cueCy = chosen.top + cueH / 2;
+        const holeCx = union.left + union.width / 2;
+        const holeCy = union.top + union.height / 2;
+        const dx = holeCx - cueCx;
+        const dy = holeCy - cueCy;
+        let dir = "right";
+        if (Math.abs(dx) >= Math.abs(dy)) {
+          dir = dx >= 0 ? "right" : "left";
+        } else {
+          dir = dy >= 0 ? "down" : "up";
+        }
+        cue.dataset.dir = dir;
+        cue.classList.remove("is-dir-left", "is-dir-right", "is-dir-up", "is-dir-down");
+        cue.classList.add(`is-dir-${dir}`);
       }
 
       /** 지정 영역만 네모로 밝게 (SVG 마스크 — 삼각형/번짐 방지) */
@@ -10593,16 +10701,16 @@
             html: `<div class="shell">${yukhaBlock}<section class="activity-card"><h2>제출 내용</h2><pre style="white-space:pre-wrap;margin:0;font:500 14px/1.65 var(--serif)">${escapeHtml(raw || "(내용 없음)")}</pre></section></div>`
           };
         }
-        // 신규 포맷: 상단바 위에 요약을 두어 sticky topbar에 가리지 않음
+        // 신규 포맷: shell 안 맨 위에 요약을 두어 본문과 같은 폭으로 정렬
         if (raw.includes("student-activity-export") && raw.includes("activity-card")) {
           let html = raw;
-          if (/class="student-activity-export"/.test(html)) {
+          if (html.includes('<div class="shell">')) {
+            html = html.replace('<div class="shell">', `<div class="shell">${yukhaBlock}`);
+          } else if (/class="student-activity-export"/.test(html)) {
             html = html.replace(
               /(<div class="student-activity-export"[^>]*>)/,
               `$1${yukhaBlock}`
             );
-          } else if (html.includes('<div class="shell">')) {
-            html = html.replace('<div class="shell">', `<div class="shell">${yukhaBlock}`);
           } else {
             html = yukhaBlock + html;
           }
@@ -11450,42 +11558,140 @@
           const built = buildSubmissionReportBody(sub);
           const reportCss = `
 ${css}
-.submit-fab,.overlay,.hero-qr-wrap{display:none!important}
-.na-manual-info,.na-info-box,.student-info,.info-box,#sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
+html,body{margin:0;background:#f3f1ea}
+body{
+  padding:calc(18px + var(--safe-top,0px)) 16px calc(28px + var(--safe-bottom,0px));
+  font-family:"Noto Sans KR",Pretendard,sans-serif;
+  color:#1f1e1d;
+}
+.student-activity-export{
+  width:min(820px,100%);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-sizing:border-box;
+}
+.student-activity-export > .topbar,
+.student-activity-export > .shell,
+.student-activity-export > .eval-card{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.shell{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  zoom:1!important;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.shell > .eval-card,
+.shell > .hero-card,
+.shell > .activity-card{
+  margin:0!important;
+  width:100%;
+  box-sizing:border-box;
+}
+.submit-fab,.overlay,.hero-qr-wrap,.topbar-actions,
+.sheet-tools,.zoom-controls,.draft-controls,.time-watch,
+.html-forge-copy,.html-forge-badge,.lesson-part-tools,
+.inf-kakao-btn,.wc-btn,.wc-help,.no-print,
+.na-manual-info,.na-info-box,.student-info,.info-box,
+#sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
-.student-activity-export .topbar{position:relative!important;top:auto!important}
-body{padding:calc(16px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom,0px))}
-.student-activity-export > .eval-card{margin:0 0 14px}
+.student-activity-export .topbar{
+  position:relative!important;
+  top:auto!important;
+  left:auto!important;
+  right:auto!important;
+  width:100%!important;
+  margin:0!important;
+  padding:10px 14px!important;
+  border:2px solid #1f1e1d!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.topbar .brand{
+  width:28px;height:28px;flex-shrink:0;
+  display:grid;place-items:center;
+  border-radius:8px;background:#c96442;color:#fff;
+  font:800 14px/1 Georgia,serif;
+}
+.topbar .chip{
+  display:inline-flex;align-items:center;
+  min-height:22px;padding:0 8px;border-radius:999px;
+  background:#fff1ea;color:#8c4022;
+  font:700 11px/1 "Noto Sans KR",sans-serif;
+}
+.topbar .top-meta strong{
+  display:block;margin-top:3px;
+  font:800 15px/1.25 "Noto Sans KR",sans-serif;
+  letter-spacing:-0.02em;color:#1f1e1d;
+}
+.hero-card,.activity-card{
+  box-shadow:none!important;
+  border-radius:14px!important;
+}
+.hero-card{
+  padding:14px 16px!important;
+  grid-template-columns:1fr!important;
+}
+.hero-card h1{
+  margin:4px 0 6px!important;
+  font:800 20px/1.25 "Noto Sans KR",sans-serif!important;
+  letter-spacing:-0.03em;
+}
+.hero-card p{margin:0!important;font:600 13px/1.4 "Noto Sans KR",sans-serif!important;color:#57534e}
+.activity-card{padding:14px 14px 16px!important}
+.activity-card > h2{
+  margin:0 0 10px!important;
+  font:800 16px/1.3 "Noto Sans KR",sans-serif!important;
+}
 .eval-card{
-  position:relative;z-index:2;margin:0 0 14px;padding:16px 16px 18px;border:2.5px solid #111110;border-radius:16px;
-  background:linear-gradient(180deg,#fff 0%,#fbefe7 100%);
+  position:relative;z-index:2;margin:0!important;padding:14px 15px 12px;
+  border:2px solid #1f1e1d;border-radius:14px;
+  background:linear-gradient(180deg,#fff 0%,#fbf4ee 100%);
   cursor:text;outline:none;
   display:block!important;visibility:visible!important;
+  box-sizing:border-box;
 }
 .eval-card.is-editing{border-color:#c96442;box-shadow:0 0 0 3px rgba(201,100,66,0.16)}
-.eval-para{margin:0;padding:0;border:0;font:500 14px/1.7 var(--serif);color:#1f1e1d}
-.eval-para strong{display:block;margin-bottom:8px;font:700 14px/1.2 var(--sans);color:#8c4022}
+.eval-para{margin:0;padding:0;border:0;font:500 14px/1.65 "Noto Sans KR",sans-serif;color:#1f1e1d}
+.eval-para strong{display:block;margin-bottom:6px;font:800 12px/1.2 "Noto Sans KR",sans-serif;letter-spacing:0.04em;color:#8c4022}
 .eval-text{
   display:block;pointer-events:auto;caret-color:#1f1e1d;
   min-height:1.4em;white-space:pre-wrap;word-break:keep-all;outline:none;
 }
 .eval-edit-hint{
-  display:block;margin-top:10px;font:600 11px/1.2 Pretendard,sans-serif;color:#a07860;
+  display:block;margin-top:8px;font:600 11px/1.2 "Noto Sans KR",sans-serif;color:#a07860;
 }
 .eval-card.is-editing .eval-edit-hint{color:#8c4022}
+.html-forge-code,pre.html-forge-code{max-height:180px;overflow:auto}
 .report-close{
   position:fixed;top:max(10px,var(--safe-top,0px));right:max(10px,var(--safe-right,0px));
   z-index:100;display:inline-flex;align-items:center;justify-content:center;gap:6px;
   min-width:44px;min-height:44px;padding:0 14px;border:2px solid #1f1e1d;border-radius:999px;
-  background:#fff;color:#1f1e1d;font:700 14px/1 Pretendard,sans-serif;cursor:pointer;
+  background:#fff;color:#1f1e1d;font:700 14px/1 "Noto Sans KR",sans-serif;cursor:pointer;
   box-shadow:0 4px 14px rgba(31,30,29,0.16);touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
 .report-close svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
 .report-close:active{transform:scale(0.96)}
 @media (max-width:720px){
+  body{padding:14px 10px 22px}
   .report-close{padding:0;width:46px;height:46px}
   .report-close span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .hero-card h1{font-size:17px!important}
+  .student-activity-export{gap:10px}
+  .shell{gap:10px}
 }
 `;
           const doc = `<!DOCTYPE html><html lang="ko"><head>
@@ -11493,7 +11699,7 @@ body{padding:calc(16px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <title>${escapeHtml(built.title || "제출 보고서")}</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;600;700;800&family=Noto+Serif+KR:wght@400;600;700&display=swap"/>
 <style>${reportCss}</style>
 </head><body>
 <button type="button" class="report-close" onclick="window.close()" aria-label="닫기" title="닫기">
@@ -15054,13 +15260,19 @@ h1{margin:2px 0 0;font:800 14px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em;
             const badge = incomplete.incomplete
               ? `<em class="is-warn">${escapeHtml(incompleteBadgeLabel(incomplete))}</em>`
               : `<em class="is-ok">제출</em>`;
-            const mbti = char?.mbti ? `MBTI ${char.mbti}` : "";
-            const arch = char?.arch ? `★ ${char.arch}` : "";
+            let meta = char?.mbti ? `MBTI ${char.mbti}` : "";
+            let arch = char?.arch ? `★ ${char.arch}` : "";
+            if (sessionNo === 3) {
+              const winner = String(yukha?.winnerJob || "").trim();
+              const runner = String(yukha?.runnerUpJob || "").trim();
+              meta = winner ? `직업 ${winner}` : "직업 미입력";
+              arch = runner ? `차순위 ${runner}` : "차순위 미입력";
+            }
             return `<article class="xc${incomplete.incomplete ? " is-warn" : " is-ok"}">
               <div class="xr"><span>${escapeHtml(key || "—")}</span>${badge}</div>
               ${art}
               <strong>${escapeHtml(name)}</strong>
-              <div class="xt">${escapeHtml(mbti)}</div>
+              <div class="xt">${escapeHtml(meta)}</div>
               <div class="xw">${escapeHtml(arch)}</div>
             </article>`;
           })
@@ -15493,6 +15705,10 @@ ${pageCss}</style>
         const no = key || normalizeStudentNo(st.student_no) || String(st.student_no || "");
         const rosterName = String(st.student_name || "").trim();
         const char = (charByKey && charByKey.get(key)) || null;
+        const lessonSession =
+          Number(latest?.session_no) ||
+          Number(lessons.find((l) => l.id === selectedLessonId)?.session_no) ||
+          0;
 
         if (!latest) {
           const displayName =
@@ -15502,18 +15718,26 @@ ${pageCss}</style>
           const art = char?.faceHtml
             ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
             : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
-          return `<button type="button" class="deck-card is-empty" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
+          const emptyJobs =
+            lessonSession === 3
+              ? `<div class="deck-card-jobs" aria-hidden="true">
+                  <div class="deck-card-job is-empty"><span>직업</span><b>—</b></div>
+                  <div class="deck-card-job is-runner is-empty"><span>차순위</span><b>—</b></div>
+                </div>`
+              : "";
+          return `<button type="button" class="deck-card is-empty${lessonSession === 3 ? " is-s3" : ""}" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
             <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(no)}</span></div>
             ${art}
             <div class="deck-card-name">${escapeHtml(displayName)}</div>
             <div class="deck-card-meta">미제출</div>
-            <div class="deck-card-arch">${char?.arch ? `★ ${escapeHtml(char.arch)}` : ""}</div>
+            ${emptyJobs || `<div class="deck-card-arch">${char?.arch ? `★ ${escapeHtml(char.arch)}` : ""}</div>`}
             <div class="deck-card-hint">아직 카드가 뒤집히지 않았어요</div>
           </button>`;
         }
 
         const incomplete = assessSubmissionCompleteness(latest);
         const yukha = buildYukhaSummary(latest);
+        const sessionNo = Number(yukha?.sessionNo) || Number(latest.session_no) || lessonSession;
         const displayName =
           (char?.name && char.name !== "이름 미정" ? char.name : "") ||
           String(latest.student_name || "").trim() ||
@@ -15527,10 +15751,22 @@ ${pageCss}</style>
         const badge = incomplete.incomplete
           ? `<span class="deck-card-badge">${escapeHtml(incompleteBadgeLabel(incomplete))}</span>`
           : "";
-        const metaLine = mbti ? `MBTI ${escapeHtml(mbti)}` : "";
-        const archLine = arch ? `★ ${escapeHtml(arch)}` : "";
 
-        return `<button type="button" class="deck-card" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
+        let metaLine = mbti ? `MBTI ${escapeHtml(mbti)}` : "";
+        let archLine = arch ? `★ ${escapeHtml(arch)}` : "";
+        let jobsHtml = "";
+        if (sessionNo === 3) {
+          const winner = String(yukha?.winnerJob || "").trim();
+          const runner = String(yukha?.runnerUpJob || "").trim();
+          metaLine = "";
+          archLine = "";
+          jobsHtml = `<div class="deck-card-jobs">
+            <div class="deck-card-job${winner ? "" : " is-empty"}"><span>직업</span><b>${escapeHtml(winner || "미입력")}</b></div>
+            <div class="deck-card-job is-runner${runner ? "" : " is-empty"}"><span>차순위</span><b>${escapeHtml(runner || "미입력")}</b></div>
+          </div>`;
+        }
+
+        return `<button type="button" class="deck-card${sessionNo === 3 ? " is-s3" : ""}" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
           <div class="deck-card-rank">
             <span class="deck-card-no">${escapeHtml(no)}</span>
             ${badge}
@@ -15538,7 +15774,7 @@ ${pageCss}</style>
           ${art}
           <div class="deck-card-name">${escapeHtml(displayName)}</div>
           <div class="deck-card-meta">${metaLine}</div>
-          <div class="deck-card-arch">${archLine}</div>
+          ${jobsHtml || `<div class="deck-card-arch">${archLine}</div>`}
           <div class="deck-card-hint">탭! 펼쳐 보기</div>
         </button>`;
       }
@@ -15624,7 +15860,9 @@ ${pageCss}</style>
 
         closeDeckSpread();
         if (title) {
-          title.textContent = `<보고서 종합> ${lesson.session_no}차시 카드덱`;
+          const meta = getLessonMeta(lesson.session_no);
+          const lessonFull = `✅ ${lesson.session_no}차시 · ${meta?.title || "활동"}`;
+          title.innerHTML = `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">${escapeHtml(lessonFull)}</span>`;
         }
         if (subEl) {
           subEl.textContent = "";

@@ -645,7 +645,17 @@
   }
 
   function applyPageZoom(level) {
-    pageZoom = nearestZoomStep(level);
+    let nextLevel = nearestZoomStep(level);
+    // 폰·좁은 화면에서 과도한 확대는 가로 스크롤을 유발하므로 제한
+    try {
+      if (window.matchMedia("(max-width: 720px)").matches) {
+        nextLevel = Math.min(1.1, Math.max(0.9, nextLevel));
+        nextLevel = nearestZoomStep(nextLevel);
+      }
+    } catch {
+      /* ignore */
+    }
+    pageZoom = nextLevel;
     const shell = document.querySelector(".shell");
     document.documentElement.style.setProperty("--page-zoom", String(pageZoom));
     document.documentElement.dataset.pageZoom = String(pageZoom);
@@ -755,6 +765,24 @@
     document.getElementById("btnZoomIn")?.addEventListener("click", () => stepZoom(1));
     document.getElementById("zoomLevelLabel")?.addEventListener("click", () => applyPageZoom(1));
     applyPageZoom(readStoredZoom());
+
+    if (!window.__careerZoomViewportBound) {
+      window.__careerZoomViewportBound = true;
+      let zoomResizeTimer = 0;
+      window.addEventListener(
+        "resize",
+        () => {
+          clearTimeout(zoomResizeTimer);
+          zoomResizeTimer = setTimeout(() => applyPageZoom(pageZoom), 120);
+        },
+        { passive: true }
+      );
+      window.addEventListener(
+        "orientationchange",
+        () => setTimeout(() => applyPageZoom(pageZoom), 180),
+        { passive: true }
+      );
+    }
   }
 
   function snapshotFilledRoot() {
@@ -1143,12 +1171,19 @@ body{padding:16px!important;background:#fff!important}
     padding: 4px 5px;
     background: #fafafe;
   }
+  .q-item.is-starred {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    box-shadow: inset 2px 0 0 #d97706;
+  }
+  .q-star-btn { display: none !important; }
   .q-item .q-title {
     display: block;
     margin: 0 0 2px;
     font: 700 9px/1.25 Pretendard, sans-serif;
     color: #3730a3;
   }
+  .q-item.is-starred .q-title { color: #92400e; }
   .q-item input {
     width: 100%;
     height: 18px;
@@ -1784,14 +1819,20 @@ ${linkedCss}
   }
 
   function ensureSheetTools(actionsHost) {
-    if (document.getElementById("sheetTools")) return;
-
-    const tools = document.createElement("div");
-    tools.className = "sheet-tools";
-    tools.id = "sheetTools";
-    tools.setAttribute("role", "group");
-    tools.setAttribute("aria-label", "출력 및 저장");
-    tools.innerHTML = `
+    if (!document.getElementById("sheetTools")) {
+      const tools = document.createElement("div");
+      tools.className = "sheet-tools";
+      tools.id = "sheetTools";
+      tools.setAttribute("role", "group");
+      tools.setAttribute("aria-label", "출력 및 저장");
+      tools.innerHTML = `
+      <button type="button" class="tool-btn tool-btn-live" id="btnLiveReport" aria-label="실시간 보고서 종합" title="실시간 · 교사만 열 수 있습니다" disabled>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
+        </svg>
+        <span class="live-label">실시간</span>
+      </button>
       <button type="button" class="tool-btn" id="btnPrintSheet" aria-label="출력하기 · 기본 컬러 양면 시트당 페이지 수 2개" title="출력하기 (기본: 컬러 · 양면 · 시트당 페이지 수 2 — 인쇄창에서 선택)">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 8V4h10v4"/>
@@ -1807,11 +1848,531 @@ ${linkedCss}
         </svg>
       </button>`;
 
-    insertInActions(actionsHost, tools, ["zoomControls", "btnSubmitActivity"]);
-    document.getElementById("btnPrintSheet")?.addEventListener("click", printActivitySheet);
-    document.getElementById("btnSaveSheet")?.addEventListener("click", () => {
-      saveActivityHtml().catch((err) => console.error(err));
+      insertInActions(actionsHost, tools, ["zoomControls", "btnSubmitActivity"]);
+      document.getElementById("btnPrintSheet")?.addEventListener("click", printActivitySheet);
+      document.getElementById("btnSaveSheet")?.addEventListener("click", () => {
+        saveActivityHtml().catch((err) => console.error(err));
+      });
+    }
+    ensureLiveReportDeck();
+  }
+
+  function ensureLiveReportDeck() {
+    if (window.__careerLiveReportDeckReady) {
+      syncTeacherSheetTools();
+      return;
+    }
+    window.__careerLiveReportDeckReady = true;
+
+    const authSb = createAuthClient();
+    let channel = null;
+    let boundCode = "";
+    let localState = {
+      open: false,
+      title: "",
+      sub: "",
+      cards: [],
+      focusId: "",
+      fields: [],
+      who: null
+    };
+    const contentById = new Map();
+
+    function lessonTitleText() {
+      const h1 = document.querySelector(".hero-card h1")?.textContent?.trim();
+      const strong = document.querySelector(".top-meta strong")?.textContent?.trim();
+      return h1 || (strong ? `${sessionNo}차시 · ${strong}` : `${sessionNo}차시 활동`);
+    }
+
+    function liveHtmlPlain(raw) {
+      return String(raw || "")
+        .replace(/<script[\s\S]*?<\/script>/gi, " ")
+        .replace(/<style[\s\S]*?<\/style>/gi, " ")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<\/(p|div|li|h\d|tr)>/gi, "\n")
+        .replace(/<[^>]+>/g, " ")
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&quot;/gi, '"')
+        .replace(/\r/g, "")
+        .replace(/[ \t]+\n/g, "\n")
+        .replace(/\n{3,}/g, "\n\n")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+    }
+
+    function extractLiveFieldMap(html) {
+      const map = {};
+      const re =
+        /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|fReflect|wcQ\d+|wcWinner|wcRunnerUp)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
+      let m;
+      while ((m = re.exec(String(html || "")))) {
+        const attrs = m[1] || "";
+        const key = m[2];
+        const ta = m[3];
+        const v =
+          ta != null
+            ? ta
+            : (/value=["']([^"']*)["']/i.exec(attrs) || /value=([^\s>]+)/i.exec(attrs) || [])[1] || "";
+        map[key] = liveHtmlPlain(v);
+      }
+      return map;
+    }
+
+    function buildLiveFields(content) {
+      const map = extractLiveFieldMap(content);
+      const fields = [];
+      const push = (label, value) => {
+        const v = String(value || "").trim();
+        if (!v) return;
+        fields.push({ label, value: v.slice(0, 1200) });
+      };
+      if (sessionNo === 1) {
+        const order = [
+          ["f1", "기본 스펙 & 키워드"],
+          ["f2", "주요 기능 (장점 & 능력)"],
+          ["f3", "전원 충전법 (좋아하는 것)"],
+          ["f4", "주의 사항 (경고)"],
+          ["f5", "알림 설정 (듣고 싶은 말)"],
+          ["f6", "연결 & 호환성"],
+          ["f7", "숨겨진 이스터에그"],
+          ["f8", "기본 탑재 가치관"],
+          ["f9", "네트워크 확장 (관심 진로)"],
+          ["f10", "모듈 조합 (모둠 역할)"],
+          ["f11", "백신 프로그램 (스트레스)"],
+          ["f12", "최근 데이터 저장 (관심사)"],
+          ["f13", "오작동 해결법"],
+          ["f14", "미래 버전 업데이트 계획"]
+        ];
+        for (const [id, lab] of order) push(lab, map[id]);
+      } else if (sessionNo === 3) {
+        push("직업", map.wcWinner);
+        push("차순위", map.wcRunnerUp);
+        push("1등으로 고른 가장 큰 이유", map.wcQ1);
+        push("마지막까지 고민한 직업과의 차이", map.wcQ2);
+        push("필요한 핵심 능력 3가지", map.wcQ3);
+        push("앞으로 90일 안 실천 계획", map.wcQ4);
+      } else {
+        const keys = Object.keys(map)
+          .filter((k) => /^f\d+$/i.test(k))
+          .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+        for (const k of keys) push(k.toUpperCase(), map[k]);
+      }
+      if (map.fReflect) push("느낀점 (세특 참조)", map.fReflect);
+      if (!fields.length) {
+        const plain = liveHtmlPlain(content).slice(0, 800);
+        if (plain) fields.push({ label: "작성 내용", value: plain });
+      }
+      return fields;
+    }
+
+    function cardMetaPreview(content) {
+      if (sessionNo === 3) {
+        const map = extractLiveFieldMap(content);
+        const winner = String(map.wcWinner || "").trim();
+        const runner = String(map.wcRunnerUp || "").trim();
+        if (winner || runner) {
+          const parts = [];
+          if (winner) parts.push(`직업 ${winner}`);
+          if (runner) parts.push(`차순위 ${runner}`);
+          return parts.join(" · ").slice(0, 60);
+        }
+      }
+      const fields = buildLiveFields(content);
+      if (!fields.length) return "제출됨";
+      const first = fields[0];
+      const snippet = String(first.value || "").replace(/\s+/g, " ").slice(0, 42);
+      return snippet ? `${first.label}: ${snippet}` : "제출됨";
+    }
+
+    function ensureDom() {
+      if (!document.getElementById("liveDeckNotoSans")) {
+        const link = document.createElement("link");
+        link.id = "liveDeckNotoSans";
+        link.rel = "stylesheet";
+        link.href =
+          "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap";
+        document.head.appendChild(link);
+      }
+      let root = document.getElementById("liveReportDeck");
+      if (root) return root;
+      root = document.createElement("div");
+      root.id = "liveReportDeck";
+      root.className = "live-deck";
+      root.setAttribute("aria-hidden", "true");
+      root.innerHTML = `
+        <div class="live-deck-panel" role="dialog" aria-modal="true" aria-labelledby="liveDeckTitle">
+          <div class="live-deck-head">
+            <div style="min-width:0;flex:1">
+              <h3 id="liveDeckTitle"><span>&lt;보고서 종합&gt;</span></h3>
+              <p class="live-deck-sub" id="liveDeckSub"></p>
+            </div>
+            <div class="live-deck-actions">
+              <button type="button" class="live-deck-btn" id="btnLiveDeckRefresh" title="제출 새로고침" hidden>새로고침</button>
+              <button type="button" class="live-deck-btn is-emphasis" id="btnLiveDeckBack" title="카드덱으로" hidden>카드덱</button>
+              <button type="button" class="live-deck-btn" id="btnLiveDeckClose" title="닫기" hidden>닫기</button>
+            </div>
+          </div>
+          <div class="live-deck-body">
+            <div class="live-deck-reader" id="liveDeckReader" aria-live="polite"></div>
+            <div class="live-deck-table" id="liveDeckTable"></div>
+          </div>
+        </div>`;
+      document.body.appendChild(root);
+      return root;
+    }
+
+    function paintChrome() {
+      const root = ensureDom();
+      const isTeacher = isActivityTeacherUi();
+      root.classList.toggle("is-viewer", !isTeacher);
+      const refresh = document.getElementById("btnLiveDeckRefresh");
+      const close = document.getElementById("btnLiveDeckClose");
+      const back = document.getElementById("btnLiveDeckBack");
+      if (refresh) refresh.hidden = !isTeacher;
+      if (close) close.hidden = !isTeacher;
+      if (back) back.hidden = !isTeacher || !root.classList.contains("is-spread");
+      const liveBtn = document.getElementById("btnLiveReport");
+      if (liveBtn) liveBtn.classList.toggle("is-on", !!localState.open);
+    }
+
+    function paintFromState(state, opts = {}) {
+      localState = {
+        open: !!state.open,
+        title: state.title || "",
+        sub: state.sub || "",
+        cards: Array.isArray(state.cards) ? state.cards : [],
+        focusId: state.focusId || "",
+        fields: Array.isArray(state.fields) ? state.fields : [],
+        who: state.who || null
+      };
+      const root = ensureDom();
+      const titleEl = document.getElementById("liveDeckTitle");
+      const subEl = document.getElementById("liveDeckSub");
+      const table = document.getElementById("liveDeckTable");
+      const reader = document.getElementById("liveDeckReader");
+      document.body.classList.toggle("live-deck-open", !!localState.open);
+      if (titleEl) {
+        titleEl.innerHTML = localState.title
+          ? localState.title
+          : `<span>&lt;보고서 종합&gt;</span>`;
+      }
+      if (subEl) {
+        subEl.textContent = localState.sub || "";
+        subEl.hidden = !localState.sub;
+      }
+
+      if (!localState.open) {
+        root.classList.remove("is-open", "is-spread");
+        root.setAttribute("aria-hidden", "true");
+        if (table) table.innerHTML = "";
+        if (reader) reader.innerHTML = "";
+        paintChrome();
+        return;
+      }
+
+      root.classList.add("is-open");
+      root.setAttribute("aria-hidden", "false");
+      const focusId = localState.focusId;
+      const isSpread = !!focusId;
+      root.classList.toggle("is-spread", isSpread);
+
+      if (table) {
+        if (!localState.cards.length) {
+          table.innerHTML = `<p class="live-deck-empty">${opts.loading ? "불러오는 중…" : "표시할 제출이 없습니다."}</p>`;
+        } else {
+          const isTeacher = isActivityTeacherUi();
+          table.innerHTML = localState.cards
+            .map((c) => {
+              const empty = !!c.empty;
+              const active = !empty && c.id && c.id === focusId;
+              const cls = `live-card${empty ? " is-empty" : ""}${active ? " is-active" : ""}`;
+              const attrs = empty
+                ? `disabled data-empty="1"`
+                : `data-sub-id="${escapeHtml(c.id || "")}"`;
+              return `<button type="button" class="${cls}" ${attrs} ${isTeacher && !empty ? "" : 'tabindex="-1"'}>
+                <div class="live-card-no">${escapeHtml(c.no || "—")}</div>
+                <div class="live-card-name">${escapeHtml(c.name || "이름 없음")}</div>
+                <div class="live-card-meta">${escapeHtml(c.meta || (empty ? "미제출" : "제출됨"))}</div>
+              </button>`;
+            })
+            .join("");
+        }
+      }
+
+      if (reader) {
+        if (isSpread && localState.who) {
+          const who = localState.who;
+          const fieldHtml = (localState.fields || [])
+            .map(
+              (f) => `<div class="live-field"><b>${escapeHtml(f.label)}</b><p>${escapeHtml(f.value)}</p></div>`
+            )
+            .join("");
+          reader.innerHTML = `<div class="live-reader-sheet">
+            <h4>${escapeHtml(who.no || "")} · ${escapeHtml(who.name || "")}</h4>
+            ${fieldHtml || `<p class="live-card-meta">정리할 입력 내용이 아직 없습니다.</p>`}
+          </div>`;
+        } else {
+          reader.innerHTML = "";
+        }
+      }
+      paintChrome();
+    }
+
+    function snapshotPayload() {
+      return {
+        open: localState.open,
+        title: localState.title,
+        sub: localState.sub,
+        cards: localState.cards,
+        focusId: localState.focusId,
+        fields: localState.fields,
+        who: localState.who,
+        sessionNo
+      };
+    }
+
+    async function broadcastLive(event, payload) {
+      if (!channel || !isActivityTeacherUi()) return;
+      try {
+        await channel.send({
+          type: "broadcast",
+          event,
+          payload: payload || snapshotPayload()
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    async function bindLiveChannel(code) {
+      if (!sb || !code) return;
+      if (channel && boundCode === code) return;
+      try {
+        if (channel) {
+          await sb.removeChannel(channel);
+          channel = null;
+        }
+        boundCode = code;
+        channel = sb.channel(`lesson-live-deck:${code}:${sessionNo}`, {
+          config: { broadcast: { self: false } }
+        });
+        channel.on("broadcast", { event: "state" }, ({ payload }) => {
+          if (isActivityTeacherUi()) return;
+          if (!payload || Number(payload.sessionNo) !== sessionNo) return;
+          paintFromState(payload);
+        });
+        channel.on("broadcast", { event: "close" }, () => {
+          if (isActivityTeacherUi()) return;
+          paintFromState({ open: false, cards: [] });
+        });
+        channel.on("broadcast", { event: "request-sync" }, () => {
+          if (!isActivityTeacherUi() || !localState.open) return;
+          void broadcastLive("state");
+        });
+        await channel.subscribe((status) => {
+          if (status === "SUBSCRIBED" && !isActivityTeacherUi()) {
+            channel
+              .send({ type: "broadcast", event: "request-sync", payload: { sessionNo } })
+              .catch(() => {});
+          }
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
+    async function loadTeacherDeckData() {
+      const code = getSubmitCodeFromPage();
+      if (!code) throw new Error("제출 코드가 없습니다. URL의 code를 확인해 주세요.");
+      if (!authSb) throw new Error("로그인 세션을 확인할 수 없습니다.");
+      const { data: sessionData } = await authSb.auth.getSession();
+      if (!sessionData?.session) throw new Error("교사 로그인이 필요합니다.");
+
+      const { data: lessonRows, error: lessonErr } = await authSb.rpc("get_lesson_by_submit_code", {
+        p_submit_code: code,
+        p_session_no: sessionNo
+      });
+      if (lessonErr) throw lessonErr;
+      const lesson = Array.isArray(lessonRows) ? lessonRows[0] : lessonRows;
+      if (!lesson?.id) throw new Error("이 제출 코드에 해당하는 차시를 찾지 못했습니다.");
+
+      const [{ data: students, error: stErr }, { data: subs, error: subErr }] = await Promise.all([
+        authSb
+          .from("students")
+          .select("id, student_no, student_name, sort_order")
+          .eq("class_id", lesson.class_id)
+          .order("sort_order", { ascending: true }),
+        authSb
+          .from("submissions")
+          .select("id, student_no, student_name, content, created_at")
+          .eq("lesson_id", lesson.id)
+          .order("created_at", { ascending: false })
+      ]);
+      if (stErr) throw stErr;
+      if (subErr) throw subErr;
+
+      contentById.clear();
+      const latestByNo = new Map();
+      for (const row of subs || []) {
+        const key = String(row.student_no || "").trim();
+        if (!key || latestByNo.has(key)) continue;
+        latestByNo.set(key, row);
+        contentById.set(row.id, row.content || "");
+      }
+
+      const roster = (students || []).slice();
+      const known = new Set(roster.map((s) => String(s.student_no || "").trim()));
+      for (const [key, row] of latestByNo) {
+        if (known.has(key)) continue;
+        roster.push({
+          id: `orphan-${key}`,
+          student_no: key,
+          student_name: row.student_name || "명단 외",
+          sort_order: 9000
+        });
+        known.add(key);
+      }
+      roster.sort((a, b) => {
+        const na = Number(String(a.student_no || "").replace(/\D/g, "")) || 0;
+        const nb = Number(String(b.student_no || "").replace(/\D/g, "")) || 0;
+        if (na !== nb) return na - nb;
+        return String(a.student_no || "").localeCompare(String(b.student_no || ""), "ko", {
+          numeric: true
+        });
+      });
+
+      const cards = roster.map((st) => {
+        const no = String(st.student_no || "").trim();
+        const latest = latestByNo.get(no) || null;
+        if (!latest) {
+          return {
+            id: "",
+            no,
+            name: String(st.student_name || "").trim() || "이름 없음",
+            meta: "미제출",
+            empty: true
+          };
+        }
+        return {
+          id: latest.id,
+          no,
+          name:
+            String(latest.student_name || "").trim() ||
+            String(st.student_name || "").trim() ||
+            "이름 없음",
+          meta: cardMetaPreview(latest.content || ""),
+          empty: false
+        };
+      });
+
+      const submitted = cards.filter((c) => !c.empty).length;
+      return {
+        open: true,
+        title: `<span>&lt;보고서 종합&gt;</span> <span>✅ ${escapeHtml(lessonTitleText())}</span>`,
+        sub: `제출 ${submitted} / ${cards.length}명 · 카드를 누르면 학생 화면에 동기화됩니다`,
+        cards,
+        focusId: "",
+        fields: [],
+        who: null,
+        sessionNo
+      };
+    }
+
+    async function openAsTeacher() {
+      if (!isActivityTeacherUi()) return;
+      const code = getSubmitCodeFromPage();
+      await bindLiveChannel(code);
+      paintFromState({ open: true, title: "", sub: "불러오는 중…", cards: [] }, { loading: true });
+      try {
+        const next = await loadTeacherDeckData();
+        paintFromState(next);
+        await broadcastLive("state", snapshotPayload());
+      } catch (err) {
+        console.warn(err);
+        paintFromState({ open: false, cards: [] });
+        showDraftToast(err?.message || "보고서 종합을 열 수 없습니다.", 3200);
+      }
+    }
+
+    async function refreshAsTeacher() {
+      if (!isActivityTeacherUi() || !localState.open) return;
+      const keepFocus = localState.focusId;
+      try {
+        const next = await loadTeacherDeckData();
+        if (keepFocus && contentById.has(keepFocus)) {
+          const card = next.cards.find((c) => c.id === keepFocus);
+          next.focusId = keepFocus;
+          next.who = card ? { no: card.no, name: card.name } : localState.who;
+          next.fields = buildLiveFields(contentById.get(keepFocus) || "");
+        }
+        paintFromState(next);
+        await broadcastLive("state", snapshotPayload());
+        showDraftToast("제출을 새로고침했습니다.", 1600);
+      } catch (err) {
+        showDraftToast(err?.message || "새로고침 실패", 2800);
+      }
+    }
+
+    function focusCard(subId) {
+      if (!isActivityTeacherUi() || !subId) return;
+      const card = localState.cards.find((c) => c.id === subId);
+      if (!card || card.empty) return;
+      const fields = buildLiveFields(contentById.get(subId) || "");
+      paintFromState({
+        ...localState,
+        focusId: subId,
+        fields,
+        who: { no: card.no, name: card.name }
+      });
+      void broadcastLive("state", snapshotPayload());
+    }
+
+    function backToDeck() {
+      if (!isActivityTeacherUi()) return;
+      paintFromState({ ...localState, focusId: "", fields: [], who: null });
+      void broadcastLive("state", snapshotPayload());
+    }
+
+    function closeDeck() {
+      if (!isActivityTeacherUi()) return;
+      paintFromState({ open: false, cards: [] });
+      void broadcastLive("close", { sessionNo });
+    }
+
+    const root = ensureDom();
+    document.getElementById("btnLiveReport")?.addEventListener("click", () => {
+      if (!isActivityTeacherUi()) return;
+      if (localState.open) {
+        closeDeck();
+        return;
+      }
+      void openAsTeacher();
     });
+    document.getElementById("btnLiveDeckClose")?.addEventListener("click", closeDeck);
+    document.getElementById("btnLiveDeckBack")?.addEventListener("click", backToDeck);
+    document.getElementById("btnLiveDeckRefresh")?.addEventListener("click", () => {
+      void refreshAsTeacher();
+    });
+    root.querySelector("#liveDeckTable")?.addEventListener("click", (e) => {
+      if (!isActivityTeacherUi()) return;
+      const btn = e.target?.closest?.(".live-card[data-sub-id]");
+      if (!btn || btn.disabled) return;
+      const id = btn.getAttribute("data-sub-id");
+      if (id) focusCard(id);
+    });
+    // 배경 클릭으로는 닫지 않음 (닫기 버튼만)
+
+    function bootChannel() {
+      const code = getSubmitCodeFromPage();
+      if (code) void bindLiveChannel(code);
+    }
+    bootChannel();
+    document.getElementById("submitCodeInput")?.addEventListener("change", bootChannel);
+    window.addEventListener("career-submit-code-ready", bootChannel);
+    syncTeacherSheetTools();
   }
 
   function autosizeTextarea(el) {
@@ -1929,7 +2490,10 @@ ${linkedCss}
           <input id="twMinutes" type="number" min="1" max="300" step="1" inputmode="numeric" placeholder="50" aria-label="분 입력" />
           <span class="tw-unit">분</span>
         </label>
-        <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+        <div class="tw-display-wrap">
+          <div class="tw-display" id="twDisplay" aria-live="polite" aria-atomic="true">00:00</div>
+          <div class="tw-remain-bubble" id="twRemainBubble" role="status" aria-live="assertive"></div>
+        </div>
         <div class="tw-btns">
           <button type="button" class="tw-act" id="twToggle" title="시작" aria-label="시작">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor" stroke="none"/></svg>
@@ -1947,6 +2511,7 @@ ${linkedCss}
 
     const input = wrap.querySelector("#twMinutes");
     const display = wrap.querySelector("#twDisplay");
+    const bubble = wrap.querySelector("#twRemainBubble");
     const toggleBtn = wrap.querySelector("#twToggle");
     const resetBtn = wrap.querySelector("#twReset");
     const roleBadge = wrap.querySelector("#twRole");
@@ -1966,6 +2531,9 @@ ${linkedCss}
     let pushing = false;
     let channel = null;
     let boundCode = "";
+    let prevRemainSec = null;
+    let bubbleHideTimer = 0;
+    const bubbleShownMarks = new Set();
     const authSb = createAuthClient();
 
     const pad2 = (n) => (n < 10 ? "0" + n : String(n));
@@ -1992,6 +2560,67 @@ ${linkedCss}
       return Math.max(0, remainMs);
     }
 
+    function clearRemainBubbleTracking(opts = {}) {
+      prevRemainSec = opts.seedSec != null ? opts.seedSec : null;
+      if (opts.resetMarks !== false) bubbleShownMarks.clear();
+      if (bubbleHideTimer) {
+        clearTimeout(bubbleHideTimer);
+        bubbleHideTimer = 0;
+      }
+      if (bubble) {
+        bubble.className = "tw-remain-bubble";
+        bubble.textContent = "";
+      }
+    }
+
+    function showRemainBubble(mins) {
+      if (!bubble || !Number.isFinite(mins) || mins < 1) return;
+      let text;
+      let tone = "";
+      if (mins <= 5) {
+        text = `${mins}분 남았어요!!!`;
+        tone = "is-urgent";
+      } else if (mins <= 10) {
+        text = `${mins}분 남았어요!`;
+        tone = "is-exclaim";
+      } else {
+        text = `${mins}분 남았어요`;
+      }
+      bubble.textContent = text;
+      bubble.className = `tw-remain-bubble is-on ${tone}`.trim();
+      if (bubbleHideTimer) clearTimeout(bubbleHideTimer);
+      const holdMs = mins <= 5 ? 4500 : mins <= 10 ? 3600 : 2800;
+      bubbleHideTimer = setTimeout(() => {
+        bubble.classList.remove("is-on", "is-exclaim", "is-urgent");
+        bubbleHideTimer = 0;
+      }, holdMs);
+    }
+
+    function maybeAnnounceRemain(ms) {
+      if (mode !== "running") return;
+      const sec = Math.ceil(Math.max(0, ms) / 1000);
+      if (prevRemainSec == null) {
+        prevRemainSec = sec;
+        return;
+      }
+      const prev = prevRemainSec;
+      prevRemainSec = sec;
+      if (prev <= sec) return;
+
+      const marks = [5];
+      for (let m = 10; m <= 300; m += 10) marks.push(m);
+      marks.sort((a, b) => b - a);
+
+      for (const m of marks) {
+        const boundary = m * 60;
+        if (prev > boundary && sec <= boundary && !bubbleShownMarks.has(m)) {
+          bubbleShownMarks.add(m);
+          showRemainBubble(m);
+          break;
+        }
+      }
+    }
+
     function paint() {
       const ms = currentMs();
       const totalSec = Math.ceil(ms / 1000);
@@ -2008,6 +2637,7 @@ ${linkedCss}
         toggleBtn.setAttribute("aria-label", toggleBtn.title);
       }
       if (resetBtn) resetBtn.disabled = !isTeacher;
+      maybeAnnounceRemain(ms);
     }
 
     function stopTick() {
@@ -2022,6 +2652,7 @@ ${linkedCss}
       mode = "done";
       remainMs = 0;
       endsAt = 0;
+      clearRemainBubbleTracking({ seedSec: 0 });
       paint();
     }
 
@@ -2043,6 +2674,7 @@ ${linkedCss}
       const status = String(row.status || "idle");
       const durationSec = Number(row.duration_sec) || 0;
       const remainSec = Number(row.remain_sec);
+      const prevMode = mode;
       if (row.server_now) {
         const serverMs = new Date(row.server_now).getTime();
         if (Number.isFinite(serverMs)) clockSkewMs = Date.now() - serverMs;
@@ -2054,11 +2686,21 @@ ${linkedCss}
         endsAt = new Date(row.ends_at).getTime();
         remainMs = Math.max(0, endsAt - nowMs());
         mode = remainMs > 0 ? "running" : "done";
-        if (mode === "running") startTick();
-        else {
+        if (mode === "running") {
+          const seed = Math.ceil(remainMs / 1000);
+          if (prevMode !== "running") {
+            if (prevMode === "paused") {
+              prevRemainSec = seed;
+            } else {
+              clearRemainBubbleTracking({ seedSec: seed, resetMarks: true });
+            }
+          }
+          startTick();
+        } else {
           stopTick();
           remainMs = 0;
           endsAt = 0;
+          clearRemainBubbleTracking({ seedSec: 0 });
         }
         paint();
         return;
@@ -2069,6 +2711,14 @@ ${linkedCss}
       if (mode === "done") remainMs = 0;
       else if (Number.isFinite(remainSec)) remainMs = Math.max(0, remainSec) * 1000;
       else remainMs = durationSec > 0 ? durationSec * 1000 : 0;
+      if (mode === "paused") {
+        prevRemainSec = Math.ceil(remainMs / 1000);
+      } else if (mode === "idle" || mode === "done") {
+        clearRemainBubbleTracking({
+          seedSec: mode === "done" ? 0 : Math.ceil(remainMs / 1000),
+          resetMarks: true
+        });
+      }
       paint();
     }
 
@@ -2156,10 +2806,12 @@ ${linkedCss}
         remainMs = currentMs();
         mode = "paused";
         stopTick();
+        prevRemainSec = Math.ceil(remainMs / 1000);
         paint();
         await pushTimer("paused", { remainSec: Math.ceil(remainMs / 1000) });
         return;
       }
+      const fromFresh = mode === "idle" || mode === "done";
       if (mode === "idle" || mode === "done") {
         const mins = readMinutes();
         if (!mins) {
@@ -2174,8 +2826,10 @@ ${linkedCss}
         await pushTimer("done", { remainSec: 0 });
         return;
       }
+      if (fromFresh) clearRemainBubbleTracking({ resetMarks: true });
       mode = "running";
       endsAt = nowMs() + remainMs;
+      prevRemainSec = Math.ceil(remainMs / 1000);
       paint();
       startTick();
       await pushTimer("running", {
@@ -2192,6 +2846,7 @@ ${linkedCss}
       const mins = readMinutes() || 50;
       if (input && !readMinutes()) input.value = String(mins);
       remainMs = mins * 60 * 1000;
+      clearRemainBubbleTracking({ seedSec: Math.ceil(remainMs / 1000), resetMarks: true });
       paint();
       await pushTimer("idle", { durationSec: mins * 60, remainSec: mins * 60 });
     }
@@ -2564,6 +3219,85 @@ ${linkedCss}
     return filled >= 32;
   }
 
+  function syncQuestionCardStarUi(item) {
+    if (!item) return;
+    const star = item.querySelector('input[type="hidden"][data-q-star="1"]');
+    const btn = item.querySelector(".q-star-btn");
+    const on = String(star?.value || "") === "1";
+    item.classList.toggle("is-starred", on);
+    if (btn) {
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.title = on ? "강조 해제" : "강조 체크";
+      btn.setAttribute("aria-label", on ? "강조 해제" : "이 질문 강조하기");
+    }
+  }
+
+  function syncAllQuestionCardStars() {
+    document.querySelectorAll(".questions-grid .q-item").forEach((item) => syncQuestionCardStarUi(item));
+  }
+
+  /** 2차시 100문100답: 강조하고 싶은 질문카드 체크 */
+  function initQuestionCardStars() {
+    const grid = document.querySelector(".questions-grid");
+    if (!grid || grid.dataset.qStarsReady === "1") return;
+    grid.dataset.qStarsReady = "1";
+
+    grid.querySelectorAll(".q-item").forEach((item) => {
+      const input =
+        item.querySelector('input[type="text"], input:not([type]), textarea') ||
+        item.querySelector("input");
+      if (!input) return;
+      const key = String(input.id || input.name || "").replace(/^q/i, "");
+      const starId = `qStar${key || Math.random().toString(36).slice(2, 7)}`;
+
+      let top = item.querySelector(".q-item-top");
+      if (!top) {
+        top = document.createElement("div");
+        top.className = "q-item-top";
+        const label = item.querySelector(".q-title, label");
+        if (label) top.appendChild(label);
+        item.insertBefore(top, item.firstChild);
+      }
+
+      let star = item.querySelector('input[type="hidden"][data-q-star="1"]');
+      if (!star) {
+        star = document.createElement("input");
+        star.type = "hidden";
+        star.dataset.qStar = "1";
+        star.id = starId;
+        star.name = starId;
+        star.value = "0";
+        item.appendChild(star);
+      }
+
+      let btn = item.querySelector(".q-star-btn");
+      if (!btn) {
+        btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "q-star-btn";
+        btn.innerHTML =
+          '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>';
+        top.appendChild(btn);
+      }
+
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const next = String(star.value || "") === "1" ? "0" : "1";
+        star.value = next;
+        syncQuestionCardStarUi(item);
+        star.dispatchEvent(new Event("change", { bubbles: true }));
+        try {
+          if (typeof saveActivityDraft === "function") saveActivityDraft({ toast: false, force: true });
+        } catch {
+          /* ignore */
+        }
+      });
+
+      syncQuestionCardStarUi(item);
+    });
+  }
+
   function applyDraftFields(payload) {
     if (!payload || !payload.fields || typeof payload.fields !== "object") return false;
     const root = document.getElementById("activity-root");
@@ -2593,6 +3327,7 @@ ${linkedCss}
     const nameEl = document.getElementById("sheetDisplayName");
     if (noEl && payload.studentNo) noEl.value = payload.studentNo;
     if (nameEl && payload.studentName) nameEl.value = payload.studentName;
+    syncAllQuestionCardStars();
     return applied > 0 || !!(payload.studentNo || payload.studentName);
   }
 
@@ -2874,7 +3609,7 @@ ${linkedCss}
       if (el.type === "checkbox" || el.type === "radio") {
         el.checked = false;
       } else if (el.type === "hidden") {
-        if (/^wc/i.test(key) || /^job/i.test(key)) el.value = "";
+        if (/^wc/i.test(key) || /^job/i.test(key) || /^qStar/i.test(key)) el.value = /^qStar/i.test(key) ? "0" : "";
         else return;
       } else {
         el.value = "";
@@ -2897,6 +3632,7 @@ ${linkedCss}
     }
 
     ensureAutosizeTextareas();
+    syncAllQuestionCardStars();
     draftRestored = true;
     saveActivityDraft({ toast: false, force: true });
     showDraftToast("초기화되었습니다");
@@ -2913,11 +3649,34 @@ ${linkedCss}
   }
 
   function syncTeacherSheetTools() {
-    const btn = document.getElementById("btnSheetReset");
-    if (!btn) return;
     const show = isActivityTeacherUi();
-    btn.hidden = !show;
-    btn.setAttribute("aria-hidden", show ? "false" : "true");
+    const btn = document.getElementById("btnSheetReset");
+    if (btn) {
+      btn.hidden = !show;
+      btn.setAttribute("aria-hidden", show ? "false" : "true");
+    }
+    const live = document.getElementById("btnLiveReport");
+    if (live) {
+      live.disabled = !show;
+      live.classList.toggle("is-ready", show);
+      live.title = show
+        ? "실시간 보고서 종합 — 학생 화면에 동기화됩니다"
+        : "실시간 · 교사만 열 수 있습니다";
+      live.setAttribute(
+        "aria-label",
+        show ? "실시간 보고서 종합" : "실시간 보고서 종합 (교사 전용)"
+      );
+    }
+    const liveRoot = document.getElementById("liveReportDeck");
+    if (liveRoot) {
+      liveRoot.classList.toggle("is-viewer", !show);
+      const refresh = document.getElementById("btnLiveDeckRefresh");
+      const close = document.getElementById("btnLiveDeckClose");
+      const back = document.getElementById("btnLiveDeckBack");
+      if (refresh) refresh.hidden = !show;
+      if (close) close.hidden = !show;
+      if (back) back.hidden = !show || !liveRoot.classList.contains("is-spread");
+    }
   }
 
   window.__careerSyncTeacherSheetTools = syncTeacherSheetTools;
@@ -3040,6 +3799,7 @@ ${linkedCss}
     void resolveSheetDepartment();
     ensureReflectField();
     ensureAutosizeTextareas();
+    initQuestionCardStars();
     if (document.getElementById("submitOverlay")) {
       const host =
         document.querySelector(".topbar-actions") ||
