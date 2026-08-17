@@ -29,13 +29,12 @@
 .report-deck-panel {
   width: min(1100px, 100%);
   max-height: 100%;
+  height: 100%;
   min-height: 0;
   display: flex;
   flex-direction: column;
   border-radius: 20px;
-  overflow-x: hidden;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
   border: 2px solid rgba(253, 230, 138, 0.45);
   background:
     radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.08), transparent 40%),
@@ -45,10 +44,11 @@
 }
 .report-deck.is-spread .report-deck-panel { width: min(1280px, 100%); overflow: hidden; }
 .report-deck-body {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .report-deck.is-spread .report-deck-body {
   flex: 1;
@@ -273,13 +273,75 @@
 }
 .report-deck-arena {
   flex: 0 0 auto;
-  padding: 10px 12px 12px;
+  padding: 8px 12px 10px;
   border-bottom: 1px solid rgba(253, 230, 138, 0.22);
   background:
     radial-gradient(ellipse 70% 80% at 50% -10%, rgba(250, 204, 21, 0.14), transparent 55%),
     linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.1));
 }
 .report-deck-arena[hidden] { display: none !important; }
+.deck-arena-foldbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.deck-arena-foldbar-label {
+  flex: 1;
+  min-width: 0;
+  font: 400 15px/1.2 "Black Han Sans", "IBM Plex Sans KR", sans-serif;
+  color: #fff7ed;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 0 #ff2d6a;
+}
+.deck-arena-fold-btn {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  appearance: none;
+  border: 2.5px solid #0b1020;
+  border-radius: 12px;
+  background: #22d3ee;
+  color: #0b1020;
+  box-shadow: 3px 3px 0 #0b1020;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.deck-arena-fold-btn:hover {
+  background: #fff;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #0b1020;
+}
+.deck-arena-fold-btn svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.report-deck-arena.is-folded .deck-arena-fold-btn { background: #fbbf24; }
+.report-deck-arena.is-folded .deck-arena-fold-btn svg { transform: rotate(180deg); }
+.deck-arena-fold-body {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.32s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease;
+  opacity: 1;
+}
+.deck-arena-fold-body > .deck-arena-fold-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+.report-deck-arena.is-folded .deck-arena-fold-body {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  pointer-events: none;
+}
+.report-deck-arena.is-folded .deck-arena-foldbar { margin-bottom: 0; }
 .report-deck.is-spread .report-deck-arena .deck-arena-board,
 .report-deck.is-spread .report-deck-arena .deck-arena-modes { display: none; }
 .deck-arena-now {
@@ -942,16 +1004,15 @@ button.deck-arena-col-champ.is-job:focus-visible span {
   }
 }
 .report-deck-table {
-  flex: 1;
-  overflow: auto;
-  padding: 16px 14px 22px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: 12px 14px 16px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
-  gap: 14px 12px;
-  align-content: start;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px 10px;
+  align-content: stretch;
   perspective: 900px;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }
 .report-deck.is-spread .report-deck-table {
   flex: 0 0 auto;

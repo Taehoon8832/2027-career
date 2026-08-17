@@ -1913,6 +1913,19 @@ ${linkedCss}
     const contentById = new Map();
     let liveArenaRollFocus = -999;
     let liveArenaRollToken = 0;
+    let liveArenaFolded = false;
+
+    function applyLiveArenaFoldUi(folded) {
+      liveArenaFolded = !!folded;
+      const host = document.getElementById("liveDeckArena");
+      const btn = document.getElementById("btnLiveArenaFold");
+      if (host) host.classList.toggle("is-folded", liveArenaFolded);
+      if (btn) {
+        btn.setAttribute("aria-expanded", liveArenaFolded ? "false" : "true");
+        btn.title = liveArenaFolded ? "랭킹 펼치기" : "랭킹 접기";
+        btn.setAttribute("aria-label", liveArenaFolded ? "랭킹 펼치기" : "랭킹 접기");
+      }
+    }
 
     function lessonTitleText() {
       const h1 = document.querySelector(".hero-card h1")?.textContent?.trim();
@@ -2431,7 +2444,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2131";
+        css.href = "./live-report-deck.css?v=2132";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2442,7 +2455,8 @@ ${linkedCss}
           !root.querySelector(".report-deck-panel") ||
           !root.querySelector("#btnLiveDeckPrint") ||
           !root.querySelector("#liveDeckArena") ||
-          !root.querySelector("#liveDeckArenaNow")
+          !root.querySelector("#liveDeckArenaNow") ||
+          !root.querySelector("#btnLiveArenaFold")
         ) {
           root.remove();
           root = null;
@@ -2485,8 +2499,18 @@ ${linkedCss}
             </div>
           </div>
           <div class="report-deck-arena" id="liveDeckArena" hidden>
-            <div class="deck-arena-now" id="liveDeckArenaNow" aria-label="현재 학급"></div>
-            <div class="deck-arena-board" id="liveDeckArenaBoard" hidden></div>
+            <div class="deck-arena-foldbar">
+              <span class="deck-arena-foldbar-label">직업 월드컵 랭킹</span>
+              <button type="button" class="deck-arena-fold-btn" id="btnLiveArenaFold" aria-expanded="true" title="랭킹 접기" aria-label="랭킹 접기">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>
+              </button>
+            </div>
+            <div class="deck-arena-fold-body" id="liveDeckArenaFoldBody">
+              <div class="deck-arena-fold-inner">
+                <div class="deck-arena-now" id="liveDeckArenaNow" aria-label="현재 학급"></div>
+                <div class="deck-arena-board" id="liveDeckArenaBoard" hidden></div>
+              </div>
+            </div>
           </div>
           <div class="report-deck-body">
             <div class="report-deck-reader" id="liveDeckReader" aria-live="polite"></div>
@@ -2621,6 +2645,10 @@ ${linkedCss}
         (dept ? `${g}학년 ${c}반 · ${dept}` : `${g}학년 ${c}반`);
       nowEl.innerHTML = `<span class="deck-arena-now-kicker">현재 탐구 학급</span><span class="deck-arena-now-title"><em>${escapeHtml(nowLabel)}</em></span>`;
       host.hidden = false;
+      const foldbar = host.querySelector(".deck-arena-foldbar");
+      if (foldbar) foldbar.hidden = Number(sn) !== 3;
+      if (Number(sn) !== 3) applyLiveArenaFoldUi(false);
+      else if (typeof arena?.folded === "boolean") applyLiveArenaFoldUi(arena.folded);
       if (!board) return;
       if (Number(sn) !== 3) {
         board.hidden = true;
@@ -3520,6 +3548,11 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     document.getElementById("btnLiveDeckBack")?.addEventListener("click", backToDeck);
     document.getElementById("btnLiveDeckPrint")?.addEventListener("click", printLiveDeck);
     document.getElementById("btnLiveDeckSave")?.addEventListener("click", saveLiveDeck);
+    document.getElementById("btnLiveArenaFold")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      applyLiveArenaFoldUi(!liveArenaFolded);
+    });
     root.querySelector("#liveDeckTable")?.addEventListener("click", (e) => {
       if (!isActivityTeacherUi()) return;
       const btn = e.target?.closest?.(".deck-card[data-sub-id]");
