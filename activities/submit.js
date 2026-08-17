@@ -2429,14 +2429,18 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2121";
+        css.href = "./live-report-deck.css?v=2125";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
       if (root) {
         root.classList.add("report-deck");
         root.classList.remove("live-deck");
-        if (!root.querySelector(".report-deck-panel") || !root.querySelector("#btnLiveDeckPrint")) {
+        if (
+          !root.querySelector(".report-deck-panel") ||
+          !root.querySelector("#btnLiveDeckPrint") ||
+          !root.querySelector("#liveDeckArena")
+        ) {
           root.remove();
           root = null;
         } else {
@@ -2477,6 +2481,10 @@ ${linkedCss}
               </button>
             </div>
           </div>
+          <div class="report-deck-arena" id="liveDeckArena" hidden>
+            <div class="deck-arena-axis" id="liveDeckArenaAxis" aria-label="학년·반·학과"></div>
+            <div class="deck-arena-board" id="liveDeckArenaBoard" hidden></div>
+          </div>
           <div class="report-deck-body">
             <div class="report-deck-reader" id="liveDeckReader" aria-live="polite"></div>
             <div class="report-deck-table" id="liveDeckTable"></div>
@@ -2503,6 +2511,97 @@ ${linkedCss}
       if (liveBtn) liveBtn.classList.toggle("is-on", !!localState.open);
     }
 
+    function paintLiveArena(arena, sn) {
+      const host = document.getElementById("liveDeckArena");
+      const axis = document.getElementById("liveDeckArenaAxis");
+      const board = document.getElementById("liveDeckArenaBoard");
+      if (!host || !axis) return;
+      const chips = Array.isArray(arena?.chips) ? arena.chips : [];
+      if (!chips.length && !arena?.grade) {
+        host.hidden = true;
+        if (board) {
+          board.hidden = true;
+          board.innerHTML = "";
+        }
+        return;
+      }
+      const axisChips =
+        chips.length > 0
+          ? chips
+          : [
+              { label: "학년", value: `${Number(arena.grade) || 1}학년` },
+              { label: "반", value: `${Number(arena.classNo) || 1}반` },
+              ...(String(arena.dept || "").trim()
+                ? [{ label: "학과", value: String(arena.dept).trim(), dept: true }]
+                : [])
+            ];
+      axis.innerHTML =
+        `<span class="deck-arena-axis-label">AXIS</span>` +
+        axisChips
+          .map(
+            (chip) =>
+              `<span class="deck-arena-chip${chip.dept ? " is-dept" : ""}"><i>${escapeHtml(chip.label || "")}</i>${escapeHtml(chip.value || "")}</span>`
+          )
+          .join("");
+      host.hidden = false;
+      if (!board) return;
+      const stats = arena?.stats;
+      if (Number(sn) === 3 && stats) {
+        board.hidden = false;
+        board.innerHTML = buildLiveWorldcupArenaHtml(stats);
+        requestAnimationFrame(() => {
+          board.querySelectorAll("[data-arena-row]").forEach((row) => row.classList.add("is-ready"));
+        });
+      } else {
+        board.hidden = true;
+        board.innerHTML = "";
+      }
+    }
+
+    function buildLiveWorldcupArenaHtml(stats) {
+      const played = Number(stats?.played) || 0;
+      const ranks = Array.isArray(stats?.ranks) ? stats.ranks : [];
+      if (!played || !ranks.length) {
+        return `<p class="deck-arena-empty">아직 우승 직업이 없어요. 월드컵을 마치면 랭킹이 올라갑니다.</p>`;
+      }
+      const top = ranks.slice(0, 3);
+      const podium = `<div class="deck-arena-podium">${[0, 1, 2]
+        .map((i) => {
+          const r = top[i];
+          if (!r) {
+            return `<div class="deck-arena-pod is-${i + 1}" style="opacity:.35"><div class="deck-arena-pod-rank">${i + 1}위</div><div class="deck-arena-pod-emoji">—</div><div class="deck-arena-pod-name">대기중</div></div>`;
+          }
+          return `<div class="deck-arena-pod is-${i + 1}">
+            <div class="deck-arena-pod-rank">${i + 1}위</div>
+            <div class="deck-arena-pod-emoji">${escapeHtml(r.emoji || "🏆")}</div>
+            <div class="deck-arena-pod-name">${escapeHtml(r.name)}</div>
+            <div class="deck-arena-pod-pct">${Number(r.pct) || 0}%</div>
+          </div>`;
+        })
+        .join("")}</div>`;
+      const rows = ranks
+        .slice(0, 16)
+        .map((r, i) => {
+          const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+          return `<div class="deck-arena-row${i < 3 ? " is-top" : ""}" style="--i:${i};--pct:${pct}%" data-arena-row="1">
+            <div class="deck-arena-rank">${i + 1}</div>
+            <div class="deck-arena-job"><em>${escapeHtml(r.emoji || "🏆")}</em><b>${escapeHtml(r.name)}</b></div>
+            <div class="deck-arena-meter" aria-hidden="true"><i></i></div>
+            <div class="deck-arena-pct">${pct}%</div>
+            <div class="deck-arena-meta">우승 ${Number(r.wins) || 0}회 / 전체 ${played}게임</div>
+          </div>`;
+        })
+        .join("");
+      return `
+        <div class="deck-arena-board-head">
+          <strong>직업 월드컵 랭킹</strong>
+          <span class="deck-arena-live">LIVE</span>
+          <span>${played}게임 · 우승비율</span>
+        </div>
+        ${podium}
+        <div class="deck-arena-list">${rows}</div>`;
+    }
+
     function paintFromState(state, opts = {}) {
       localState = {
         open: !!state.open,
@@ -2511,7 +2610,9 @@ ${linkedCss}
         cards: Array.isArray(state.cards) ? state.cards : [],
         focusId: state.focusId || "",
         fields: Array.isArray(state.fields) ? state.fields : [],
-        who: state.who || null
+        who: state.who || null,
+        arena: state.arena || null,
+        sessionNo: Number(state.sessionNo) || sessionNo
       };
       const root = ensureDom();
       const titleEl = document.getElementById("liveDeckTitle");
@@ -2534,6 +2635,7 @@ ${linkedCss}
         root.setAttribute("aria-hidden", "true");
         if (table) table.innerHTML = "";
         if (reader) reader.innerHTML = "";
+        paintLiveArena(null, 0);
         paintChrome();
         return;
       }
@@ -2544,6 +2646,7 @@ ${linkedCss}
       const focusId = localState.focusId;
       const isSpread = !!focusId;
       root.classList.toggle("is-spread", isSpread);
+      paintLiveArena(localState.arena, localState.sessionNo);
 
       if (table) {
         if (!localState.cards.length) {
@@ -2575,7 +2678,8 @@ ${linkedCss}
         focusId: localState.focusId,
         fields: localState.fields,
         who: localState.who,
-        sessionNo
+        arena: localState.arena,
+        sessionNo: localState.sessionNo || sessionNo
       };
     }
 
