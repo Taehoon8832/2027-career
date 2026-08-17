@@ -798,7 +798,48 @@
     if (!clone) return clone;
 
     clone.querySelectorAll(".no-print").forEach((el) => el.remove());
+
+    // 1차시: HTML 소스·버튼·대기실 제거, 캐릭터 카드만 남김
+    if (clone.querySelector("#part2-html, #part1-manual, .na-manual")) {
+      clone
+        .querySelectorAll(
+          ".html-forge, .html-forge-copy, .html-forge-badge, .inf-kakao-btn, .inf-bubble, .inf-card-glow, .inf-stats-hint, .inf-empty-cta"
+        )
+        .forEach((el) => el.remove());
+
+      const stage = clone.querySelector("#infStage");
+      const card = clone.querySelector("#infCard");
+      const empty = clone.querySelector("#infStageEmpty");
+      const faceHtml = String(clone.querySelector("#infFaceWrap")?.innerHTML || "").trim();
+      const hasLiveCard =
+        !!faceHtml ||
+        stage?.classList.contains("is-live") ||
+        (card && !card.hasAttribute("hidden"));
+
+      if (hasLiveCard && card) {
+        stage?.classList.add("is-live");
+        empty?.remove();
+        card.hidden = false;
+        card.removeAttribute("hidden");
+        card.style.display = "grid";
+        // 능력치 막대: 애니메이션 전 width:0 방지
+        clone.querySelectorAll(".inf-stat-fill").forEach((bar) => {
+          const w = bar.getAttribute("data-w") || "0";
+          bar.style.width = `${w}%`;
+        });
+      } else {
+        empty?.remove();
+        card?.remove();
+        const part2 = clone.querySelector("#part2-html");
+        if (part2 && !part2.querySelector(".inf-card")) part2.remove();
+      }
+    }
+
     clone.querySelectorAll("details").forEach((d) => {
+      if (d.classList.contains("html-forge") || d.classList.contains("html-forge--fold")) {
+        d.remove();
+        return;
+      }
       d.setAttribute("open", "");
       d.open = true;
     });
@@ -946,7 +987,7 @@ body{padding:16px!important;background:#fff!important}
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   }
 
-  function buildPrintDocument(filledRoot) {
+  function buildPrintDocument(filledRoot, activityCssText = "") {
     const meta = activityMeta();
     const title = meta.title || `${sessionNo}차시 활동지`;
     const bar = filledRoot.querySelector(".activity-sheet-bar");
@@ -959,6 +1000,9 @@ body{padding:16px!important;background:#fff!important}
       }
       lesson.textContent = title;
     }
+    const linkedCss = activityCssText
+      ? `\n/* —— activity.css (인쇄용) —— */\n${activityCssText}\n`
+      : "";
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -1491,6 +1535,127 @@ body{padding:16px!important;background:#fff!important}
     print-color-adjust: exact !important;
     color-adjust: exact !important;
   }
+${linkedCss}
+  /* —— 1차시 캐릭터 카드 인쇄 보정 (activity.css 덮어씀) —— */
+  .topbar, .hero-card, .hero-qr-wrap, .sheet-tools, .zoom-controls,
+  .submit-fab, .draft-fab, .reset-fab, .time-watch, .overlay { display: none !important; }
+  .html-forge, .html-forge--fold, .html-forge-copy, .html-forge-badge,
+  .inf-kakao-btn, .inf-bubble, .inf-card-glow, .inf-stage-empty, .inf-stats-hint,
+  .inf-stage::before, .inf-face-stage::after { display: none !important; }
+  .lesson-part--stage, .lesson-part--html {
+    margin-top: 10px !important; padding-top: 6px !important;
+    border-top: 1.5px solid #e7e5e4; break-inside: auto; page-break-inside: auto;
+  }
+  .lesson-part-head {
+    display: flex !important; align-items: center !important; gap: 8px !important;
+    margin: 0 0 6px !important; padding: 0 !important;
+  }
+  .lesson-part-head strong {
+    font: 700 12.5px/1.25 Pretendard, sans-serif !important; color: #1f1e1d !important;
+  }
+  .lesson-part-tools { display: none !important; }
+  .inf-stage {
+    margin: 0 !important; padding: 0 !important; min-height: 0 !important;
+    height: auto !important; background: #fff !important; border: 1.5px solid #e7e5e4 !important;
+    border-radius: 12px !important; overflow: hidden !important; box-shadow: none !important;
+  }
+  .inf-card,
+  .inf-stage.is-live .inf-card[hidden],
+  #infCard {
+    display: grid !important;
+    grid-template-columns: minmax(160px, 0.85fr) minmax(0, 1.15fr) !important;
+    gap: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+  .inf-portrait {
+    padding: 10px 8px !important; gap: 6px !important; height: auto !important;
+    justify-content: flex-start !important; border-right: 1px solid #e7e5e4 !important;
+    background: linear-gradient(180deg, #fffaf5 0%, #fff 100%) !important;
+  }
+  .inf-face-stage {
+    width: 120px !important; margin: 0 auto !important;
+  }
+  .inf-face-wrap {
+    width: 120px !important; height: 120px !important;
+    transform: none !important; filter: none !important; animation: none !important;
+  }
+  .inf-face-wrap .inf-photo,
+  .inf-face-wrap .inf-photo-frame,
+  .inf-face-wrap .inf-photo-frame > svg {
+    width: 100% !important; height: 100% !important;
+  }
+  .inf-face-wrap .inf-photo-ring,
+  .inf-face-wrap .inf-photo-spark,
+  .inf-face-wrap .inf-photo-shade { display: none !important; }
+  .inf-name {
+    margin: 4px 0 0 !important; font: 800 14px/1.2 Pretendard, sans-serif !important;
+    display: flex !important; flex-direction: column !important; align-items: center !important; gap: 4px !important;
+  }
+  .inf-class-badge {
+    display: inline-flex !important; align-items: center !important; gap: 4px !important;
+    padding: 3px 8px !important; border-radius: 999px !important;
+    background: #ffe4e6 !important; color: #9f1239 !important;
+    font: 700 10px/1.2 Pretendard, sans-serif !important;
+  }
+  .inf-class-badge svg { width: 11px; height: 11px; }
+  .inf-class[hidden] { display: none !important; }
+  .inf-tags {
+    display: flex !important; flex-wrap: wrap !important; justify-content: center !important;
+    gap: 3px !important; margin-top: 2px !important;
+  }
+  .inf-tag {
+    display: inline-flex !important; padding: 2px 6px !important; border-radius: 999px !important;
+    background: #f5f5f4 !important; border: 1px solid #e7e5e4 !important;
+    font: 600 9px/1.2 Pretendard, sans-serif !important; color: #44403c !important;
+  }
+  .inf-stats {
+    padding: 8px !important; gap: 4px !important; height: auto !important;
+    background: #fafaf9 !important; justify-content: flex-start !important;
+  }
+  .inf-stats-grid {
+    display: grid !important; grid-template-columns: 1fr !important; gap: 4px !important;
+    grid-auto-rows: auto !important;
+  }
+  .inf-stat {
+    display: grid !important; grid-template-columns: 28px minmax(0, 1fr) 36px !important;
+    gap: 6px !important; padding: 5px 6px !important; min-height: 0 !important;
+    border-radius: 8px !important; border: 1px solid #e7e5e4 !important;
+    background: #fff !important; box-shadow: none !important; transform: none !important;
+  }
+  .inf-stat-ico {
+    width: 26px !important; height: 26px !important; border-radius: 7px !important;
+    font-size: 8px !important; box-shadow: none !important;
+  }
+  .inf-stat-top b { font-size: 10px !important; }
+  .inf-stat-top span { font-size: 8px !important; color: #78716c !important; }
+  .inf-stat-track {
+    height: 6px !important; border-radius: 999px !important; background: #f5f5f4 !important; overflow: hidden !important;
+  }
+  .inf-stat-fill { display: block !important; height: 100% !important; border-radius: 999px !important; }
+  .inf-stat-val { font: 800 11px/1 Pretendard, sans-serif !important; }
+  .inf-stat-grade {
+    display: inline-grid !important; place-items: center !important;
+    min-width: 16px !important; height: 16px !important; border-radius: 4px !important;
+    font: 800 9px/1 Pretendard, sans-serif !important; color: #fff !important;
+  }
+  .inf-stat-ico.is-atk, .inf-stat-fill.is-atk { background: linear-gradient(90deg, #fb7185, #e11d48) !important; }
+  .inf-stat-ico.is-def, .inf-stat-fill.is-def { background: linear-gradient(90deg, #5eead4, #0d7377) !important; }
+  .inf-stat-ico.is-men, .inf-stat-fill.is-men { background: linear-gradient(90deg, #93c5fd, #1d4ed8) !important; }
+  .inf-stat-ico.is-cha, .inf-stat-fill.is-cha { background: linear-gradient(90deg, #fdba74, #ea580c) !important; }
+  .inf-stat-ico.is-syn, .inf-stat-fill.is-syn { background: linear-gradient(90deg, #fcd34d, #b45309) !important; }
+  .inf-stat-ico.is-buz, .inf-stat-fill.is-buz { background: linear-gradient(90deg, #f9a8d4, #db2777) !important; }
+  .inf-stat, .inf-stat-ico, .inf-stat-fill, .inf-stat-grade, .inf-tag, .inf-class-badge, .inf-portrait, .sheet-dept {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+  .na-manual { margin: 0 0 4px !important; }
+  .lesson-part + .reflect-field, .na-manual + .reflect-field {
+    margin-top: 8px !important; padding-top: 6px !important;
+  }
+  .reflect-field textarea { min-height: 36px !important; height: auto !important; }
 </style>
 </head>
 <body>
@@ -1522,12 +1687,18 @@ body{padding:16px!important;background:#fff!important}
     return false;
   }
 
-  function printActivitySheet() {
+  async function printActivitySheet() {
     if (!guardWorldCupPrintSave()) return;
     syncPrintLessonTitle();
     const filled = snapshotFilledRoot();
     if (!filled) return;
-    const html = buildPrintDocument(filled);
+    let cssText = "";
+    try {
+      cssText = await loadActivityCssText();
+    } catch {
+      cssText = "";
+    }
+    const html = buildPrintDocument(filled, cssText);
 
     showDraftToast(ACTIVITY_PRINT_DEFAULTS.guide(), 4800);
 

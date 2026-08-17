@@ -2636,6 +2636,90 @@
       font-weight: 800;
       letter-spacing: -0.01em;
     }
+    /* 1차시 · 캐릭터 미리보기 (사진·MBTI·이름) */
+    .detail-sub-preview .s1-char-preview {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 6px;
+      min-height: 54px;
+      background:
+        radial-gradient(ellipse 80% 70% at 18% 30%, rgba(251, 191, 36, 0.14), transparent 55%),
+        linear-gradient(180deg, #fffdf9 0%, #faf7f2 100%);
+    }
+    .detail-sub-preview .s1-char-preview.is-incomplete {
+      background:
+        radial-gradient(ellipse 80% 70% at 18% 30%, rgba(232, 165, 152, 0.18), transparent 55%),
+        linear-gradient(180deg, #fff8f6 0%, #fff1ee 100%);
+    }
+    .detail-sub-preview .s1-char-face {
+      position: relative;
+      flex: 0 0 48px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      overflow: hidden;
+      background: #f3e7db;
+      box-shadow: 0 0 0 1.5px rgba(201, 100, 66, 0.35), 0 2px 6px rgba(31, 30, 29, 0.1);
+    }
+    .detail-sub-preview .s1-char-face .inf-photo,
+    .detail-sub-preview .s1-char-face .inf-photo-frame {
+      position: absolute;
+      inset: 0;
+      width: 100% !important;
+      height: 100% !important;
+      border-radius: 50%;
+      overflow: hidden;
+    }
+    .detail-sub-preview .s1-char-face .inf-photo-frame > svg,
+    .detail-sub-preview .s1-char-face svg {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    .detail-sub-preview .s1-char-face .inf-photo-ring,
+    .detail-sub-preview .s1-char-face .inf-photo-spark,
+    .detail-sub-preview .s1-char-face .inf-photo-shade,
+    .detail-sub-preview .s1-char-face .inf-photo-lv,
+    .detail-sub-preview .s1-char-face .inf-photo-arc,
+    .detail-sub-preview .s1-char-face .inf-photo-power,
+    .detail-sub-preview .s1-char-face .inf-photo-mbti {
+      display: none !important;
+    }
+    .detail-sub-preview .s1-char-meta {
+      min-width: 0;
+      flex: 1 1 auto;
+      display: grid;
+      gap: 2px;
+      align-content: center;
+    }
+    .detail-sub-preview .s1-char-name {
+      font: 800 11px/1.2 var(--font-sans);
+      color: #1f1e1d;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .detail-sub-preview .s1-char-mbti {
+      font: 800 9px/1.2 var(--font-sans);
+      color: #1d4ed8;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .detail-sub-preview .s1-char-arch {
+      font: 600 8.5px/1.2 var(--font-sans);
+      color: #9f1239;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .detail-sub-preview .s1-char-flag {
+      font: 700 8px/1 var(--font-sans);
+      color: #a33b2c;
+    }
     .detail-sub-actions {
       display: flex; justify-content: space-between; align-items: center;
       gap: 4px; flex-wrap: nowrap;
@@ -8133,14 +8217,9 @@
         delete sub._yukha;
         const yukha = buildYukhaSummary(sub);
         const incomplete = assessSubmissionCompleteness(sub);
-        const preview = grid.querySelector(`.detail-sub-preview[data-tab-detail="${sub.id}"] .plain-mini`);
+        const preview = grid.querySelector(`.detail-sub-preview[data-tab-detail="${sub.id}"]`);
         if (preview) {
-          const previewText = buildDetailSubPreviewText(yukha, incomplete);
-          preview.innerHTML = formatDetailSubPreviewHtml(
-            previewText,
-            yukha.highlightTerms || yukha.winnerJob
-          );
-          preview.classList.toggle("is-incomplete", !!incomplete.incomplete);
+          preview.innerHTML = buildDetailSubPreviewInnerHtml(sub, yukha, incomplete);
           const block = preview.closest(".detail-sub-block");
           block?.classList.toggle("is-incomplete", !!incomplete.incomplete);
           const row = block?.querySelector(".sub-meta-left");
@@ -8898,6 +8977,95 @@
           map[m[1]] = htmlToPlainTextFast(m[2] || "").trim();
         }
         return map;
+      }
+
+      /** 1차시 제출 HTML에서 캐릭터 사진·이름·MBTI 추출 */
+      function extractSession1CharacterPreview(html) {
+        const raw = String(html || "");
+        if (!raw || (!/infFaceWrap|inf-face-wrap|inf-photo/i.test(raw))) return null;
+        try {
+          const doc = new DOMParser().parseFromString(raw, "text/html");
+          const faceWrap =
+            doc.querySelector("#infFaceWrap") || doc.querySelector(".inf-face-wrap");
+          const photo =
+            faceWrap?.querySelector(".inf-photo") ||
+            doc.querySelector(".inf-photo");
+          if (!photo) return null;
+          const hasSvg = !!photo.querySelector("svg");
+          if (!hasSvg && !String(photo.innerHTML || "").trim()) return null;
+
+          const clone = photo.cloneNode(true);
+          clone
+            .querySelectorAll(
+              "script, .inf-photo-spark, .inf-photo-ring, .inf-photo-shade, .inf-photo-lv, .inf-photo-arc, .inf-photo-power"
+            )
+            .forEach((el) => el.remove());
+
+          const name =
+            (doc.querySelector(".inf-name-text")?.textContent || "").trim() ||
+            (doc.querySelector("#sheetDisplayName")?.getAttribute("value") || "").trim() ||
+            (doc.querySelector("#sheetDisplayName")?.textContent || "").trim();
+
+          let mbti = (doc.querySelector(".inf-photo-mbti")?.textContent || "")
+            .replace(/^MBTI\s*/i, "")
+            .trim();
+          if (!mbti) {
+            mbti = (doc.querySelector(".inf-mbti-bit")?.textContent || "").trim();
+          }
+
+          let arch = "";
+          const badge = doc.querySelector(".inf-class-badge b");
+          if (badge) {
+            const b = badge.cloneNode(true);
+            b.querySelectorAll(".inf-mbti-sep, .inf-mbti-bit").forEach((el) => el.remove());
+            arch = (b.textContent || "").replace(/^★\s*/, "").replace(/,\s*$/, "").trim();
+          }
+
+          if (!name && !mbti && !hasSvg) return null;
+          return {
+            faceHtml: clone.outerHTML,
+            name: name || "이름 미정",
+            mbti,
+            arch
+          };
+        } catch {
+          return null;
+        }
+      }
+
+      function formatSession1CharPreviewHtml(char, incomplete) {
+        if (!char) return "";
+        const flag = incomplete?.incomplete
+          ? `<span class="s1-char-flag">(부족)</span>`
+          : "";
+        const mbtiLine = char.mbti
+          ? `<div class="s1-char-mbti">MBTI ${escapeHtml(char.mbti)}</div>`
+          : "";
+        const archLine = char.arch
+          ? `<div class="s1-char-arch">★ ${escapeHtml(char.arch)}</div>`
+          : "";
+        return `<div class="s1-char-preview${incomplete?.incomplete ? " is-incomplete" : ""}">
+          <div class="s1-char-face" aria-hidden="true">${char.faceHtml}</div>
+          <div class="s1-char-meta">
+            <div class="s1-char-name">${escapeHtml(char.name || "이름 미정")}${flag ? " " + flag : ""}</div>
+            ${mbtiLine}
+            ${archLine}
+          </div>
+        </div>`;
+      }
+
+      /** 제출 현황 미리보기 본문 HTML */
+      function buildDetailSubPreviewInnerHtml(sub, yukha, incomplete) {
+        const sessionNo = Number(yukha?.sessionNo) || Number(sub?.session_no) || 0;
+        if (sessionNo === 1) {
+          const char = extractSession1CharacterPreview(sub?.content);
+          if (char) return formatSession1CharPreviewHtml(char, incomplete);
+        }
+        const previewText = buildDetailSubPreviewText(yukha, incomplete);
+        return `<div class="plain-mini${incomplete?.incomplete ? " is-incomplete" : ""}">${formatDetailSubPreviewHtml(
+          previewText,
+          yukha?.highlightTerms || yukha?.winnerJob
+        )}</div>`;
       }
 
       function paraphraseSession1Snippet(text, maxLen = 28) {
@@ -13850,7 +14018,7 @@ ${built.html}
                 const previewTitle = incomplete.incomplete
                   ? incomplete.title
                   : "새 탭으로 보기";
-                const previewText = buildDetailSubPreviewText(yukha, incomplete);
+                const previewInner = buildDetailSubPreviewInnerHtml(sub, yukha, incomplete);
                 return `
                 <div class="detail-sub-block${idx === 0 ? " is-latest" : ""}${incomplete.incomplete ? " is-incomplete" : ""}">
                   <div class="sub-meta-row">
@@ -13861,7 +14029,7 @@ ${built.html}
                     <span class="sub-time">${escapeHtml(formatTime(sub.created_at) || "")}</span>
                   </div>
                   <div class="detail-sub-preview" data-tab-detail="${sub.id}" title="${escapeHtml(previewTitle)}">
-                    <div class="plain-mini${incomplete.incomplete ? " is-incomplete" : ""}">${formatDetailSubPreviewHtml(previewText, yukha?.highlightTerms || yukha?.winnerJob)}</div>
+                    ${previewInner}
                   </div>
                   <div class="detail-sub-actions">
                     <button type="button" data-tab-detail="${sub.id}">새 탭</button>

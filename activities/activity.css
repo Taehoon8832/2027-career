@@ -6013,34 +6013,81 @@ body.qr-lightbox-open { overflow: hidden; }
 
 @media print {
 
-  .html-forge-copy { display: none !important; }
+  .html-forge-copy,
+  .html-forge,
+  .html-forge--fold,
+  .html-forge-badge,
+  .lesson-part-tools,
+  .inf-kakao-btn,
+  .inf-card-glow,
+  .inf-stage-empty,
+  .inf-bubble,
+  .inf-stats-hint,
+  .inf-stage::before,
+  .inf-face-stage::after {
+    display: none !important;
+  }
 
   .html-forge-code { max-height: none !important; color: #111 !important; background: #f8fafc !important; }
 
-  .html-forge { background: #f8fafc !important; }
+  .inf-stage {
+    min-height: 0 !important;
+    height: auto !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+  }
 
-  .inf-card-glow,
+  .inf-card,
+  .inf-stage.is-live .inf-card[hidden],
+  #infCard:not([hidden]),
+  .inf-stage.is-live #infCard {
+    display: grid !important;
+    grid-template-columns: minmax(160px, 0.85fr) minmax(0, 1.15fr) !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+  }
 
-  .inf-stage-empty,
+  .inf-portrait,
+  .inf-stats {
+    height: auto !important;
+    justify-content: flex-start !important;
+    padding: 10px 8px !important;
+  }
 
-  .inf-bubble { display: none !important; }
+  .inf-face-stage {
+    width: 120px !important;
+  }
 
-  .inf-card[hidden] { display: none !important; }
+  .inf-face-wrap {
+    width: 120px !important;
+    height: 120px !important;
+    transform: none !important;
+    filter: none !important;
+    animation: none !important;
+  }
 
-  .inf-card:not([hidden]) { display: grid !important; }
-
-  .inf-face-wrap { transform: none !important; filter: none !important; animation: none !important; }
+  .inf-stat {
+    min-height: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
 
   .inf-stat-fill,
-
   .inf-stat-ico,
-
-  .inf-stat-grade {
-
+  .inf-stat-grade,
+  .inf-tag,
+  .inf-class-badge,
+  .inf-portrait {
     print-color-adjust: exact !important;
-
     -webkit-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
 
+  .lesson-part--stage,
+  .lesson-part--html {
+    margin-top: 10px !important;
+    padding-top: 6px !important;
   }
 
 }
