@@ -7,7 +7,7 @@
   <title>3차시 · 직업 월드컵</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&display=swap" />
-  <link rel="stylesheet" href="./activity.css?v=2117" />
+  <link rel="stylesheet" href="./activity.css?v=2124" />
   <script>window.ACTIVITY_SESSION = 3;</script>
 </head>
 <body>
@@ -26,7 +26,7 @@
       <div class="hero-copy">
         <div class="theme">3월 · 진로 탐색과 AI 기초 역량 빌드업</div>
         <h1>3차시 · 직업 월드컵</h1>
-        <p>관심 직업 32개로 토너먼트를 치르며 최종 1등 진로를 고르고, 선택 이유와 실천 계획을 정리하는 활동.</p>
+        <p>관심 직업을 스스로 채우고, 못 채운 칸은 목록·랜덤으로 보완한 뒤 옆 짝궁과 월드컵을 하며 진로 시야를 넓히는 활동.</p>
       </div>
       <div class="hero-qr-wrap">
         <a class="hero-qr" id="activityPageQr" href="#" rel="noopener noreferrer" aria-label="활동지 QR — 눌러서 열기"></a>
@@ -46,7 +46,7 @@
           <div class="wc-step is-active" data-step="1">
             <div class="wc-step-num">1</div>
             <strong>직업 입력</strong>
-            <span>32개 채우기</span>
+            <span>스스로 → 남은 칸 보완</span>
           </div>
           <div class="wc-step" data-step="2">
             <div class="wc-step-num">2</div>
@@ -70,22 +70,22 @@
               <div class="wc-howto-item">
                 <div class="wc-howto-ico" style="background:#EFF6FF;">✍️</div>
                 <div>
-                  <strong>1. 직업 32개 입력</strong>
-                  <p>관심 있는 직업을 적거나, 예시 버튼으로 바로 채워보세요.</p>
+                  <strong>1. 관심 직업을 스스로 적기</strong>
+                  <p>빈 칸 32개에 내가 떠올리는 직업을 최대한 셀프로 적어 보세요. 다 못 채우는 것도 시야를 점검하는 과정입니다.</p>
+                </div>
+              </div>
+              <div class="wc-howto-item">
+                <div class="wc-howto-ico" style="background:#ECFDF5;">🎲</div>
+                <div>
+                  <strong>2. 남은 칸 보완하기</strong>
+                  <p>청소년 관심 직업 목록에서 고르거나, <em>남은 칸 랜덤 직업 채우기</em>로 빈 칸만 채웁니다.</p>
                 </div>
               </div>
               <div class="wc-howto-item">
                 <div class="wc-howto-ico" style="background:#FFF7ED;">⚔️</div>
                 <div>
-                  <strong>2. 더 끌리는 쪽 선택</strong>
-                  <p>두 직업이 나오면 마음에 더 드는 카드를 탭하세요.</p>
-                </div>
-              </div>
-              <div class="wc-howto-item">
-                <div class="wc-howto-ico" style="background:#ECFDF5;">🏆</div>
-                <div>
-                  <strong>3. 최종 1등 확인</strong>
-                  <p>우승 직업과 라운드별 진출 목록, 성찰 문항이 나옵니다.</p>
+                  <strong>3. 짝궁과 월드컵 · 우승 직업 성찰</strong>
+                  <p>32강 토너먼트를 이야기하며 진행하고, 우승 직업을 중심으로 진로 시야를 넓혀 봅니다.</p>
                 </div>
               </div>
             </div>
@@ -101,8 +101,10 @@
               <div class="wc-bar"><span id="wc-fill-bar"></span></div>
               <div class="wc-bar-text"><span id="wc-fill-num">0</span>/32</div>
             </div>
+            <p class="wc-fill-hint no-print" id="wc-fill-hint">직접 입력 0개 · 남은 32칸은 목록에서 고르거나 랜덤으로 채울 수 있어요</p>
             <div class="wc-btn-row no-print">
-              <button type="button" class="wc-btn wc-btn-sub" id="wc-btn-samples">요즘 직업 예시로 채우기</button>
+              <button type="button" class="wc-btn wc-btn-sub" id="wc-btn-fill-remain">남은 칸 랜덤 직업 채우기</button>
+              <button type="button" class="wc-btn wc-btn-sub" id="wc-btn-pick-list">직업 목록에서 고르기</button>
               <button type="button" class="wc-btn wc-btn-sub" id="wc-btn-shuffle">입력 순서 섞기</button>
             </div>
             <button type="button" class="wc-btn wc-btn-main no-print" id="wc-btn-start">32강 시작하기</button>
@@ -224,7 +226,8 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="../vendor/qrcode.min.js"></script>
-  <script src="./worldcup.js?v=2040"></script>
-  <script src="./submit.js?v=2117"></script>
+  <script src="./job-pool.js?v=2124"></script>
+  <script src="./worldcup.js?v=2124"></script>
+  <script src="./submit.js?v=2124"></script>
 </body>
 </html>

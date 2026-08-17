@@ -3873,7 +3873,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     return preferDraftPayload(exact, fallback);
   }
 
-  /** 학번·성찰·우승 없이 직업 32칸만 가득 찬 데모(예시 채우기) 초안 */
+  /** 예전 ‘예시 32개로 채우기’ 데모 초안(학번·성찰·우승 없음) — 복원하지 않음 */
   function isWorldcupDemoSampleDraft(payload) {
     if (!document.getElementById("wc-job-inputs")) return false;
     if (!payload || typeof payload !== "object") return false;
@@ -3886,11 +3886,47 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     if (["wc-q1", "wc-q2", "wc-q3", "wc-q4", "fReflect"].some((id) => String(f[id] || "").trim())) {
       return false;
     }
-    let filled = 0;
+    const legacySamples = [
+      "AI 프로덕트 매니저",
+      "프론트엔드 개발자",
+      "데이터 사이언티스트",
+      "게임 기획자",
+      "숏폼 크리에이터",
+      "웹툰 작가",
+      "UX 디자이너",
+      "브랜드 디자이너",
+      "콘텐츠 마케터",
+      "스타트업 창업가",
+      "프로덕트 오너",
+      "투자 애널리스트",
+      "의사",
+      "임상심리사",
+      "약사",
+      "수의사",
+      "환경 엔지니어",
+      "우주항공 엔지니어",
+      "생명공학 연구원",
+      "기후 데이터 분석가",
+      "교사",
+      "외교관",
+      "소방관",
+      "변호사",
+      "패션 스타일리스트",
+      "호텔리어",
+      "스포츠 마케터",
+      "바리스타 창업가",
+      "영상 PD",
+      "로봇 공학자",
+      "사이버보안 전문가",
+      "지속가능 컨설턴트"
+    ];
+    const filled = [];
     for (let i = 1; i <= 32; i++) {
-      if (String(f[`job-${i}`] || f[`job${i}`] || "").trim()) filled += 1;
+      const v = String(f[`job-${i}`] || f[`job${i}`] || "").trim();
+      if (v) filled.push(v);
     }
-    return filled >= 32;
+    if (filled.length < 32) return false;
+    return filled.every((name, i) => name === legacySamples[i]);
   }
 
   function syncQuestionCardStarUi(item) {

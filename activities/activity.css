@@ -1959,6 +1959,16 @@ body.qr-lightbox-open { overflow: hidden; }
   min-width: 48px;
   text-align: right;
 }
+.wc-fill-hint {
+  margin: 6px 0 0;
+  font: 500 0.78rem/1.45 var(--sans);
+  color: #6b7280;
+}
+.wc-howto-item em {
+  font-style: normal;
+  font-weight: 800;
+  color: #1d4ed8;
+}
 .wc-btn {
   appearance: none;
   border: none;
@@ -2024,6 +2034,176 @@ body.qr-lightbox-open { overflow: hidden; }
 }
 @media (min-width: 520px) {
   .wc-btn-row { grid-template-columns: 1fr 1fr; }
+}
+@media (min-width: 720px) {
+  .wc-btn-row:has(#wc-btn-fill-remain) {
+    grid-template-columns: 1.2fr 1fr 0.9fr;
+  }
+}
+
+/* 직업 목록 피커 */
+body.wc-picker-open { overflow: hidden; }
+.wc-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: grid;
+  place-items: end center;
+}
+.wc-picker[hidden] { display: none !important; }
+.wc-picker-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+}
+.wc-picker-sheet {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(88vh, 720px);
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 40px rgba(15, 23, 42, 0.18);
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 18px;
+  animation: wc-picker-up 0.22s ease;
+}
+@keyframes wc-picker-up {
+  from { transform: translateY(24px); opacity: 0.6; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.wc-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.wc-picker-head strong {
+  display: block;
+  font: 800 1.02rem/1.3 var(--sans);
+  color: #111827;
+}
+.wc-picker-head p {
+  margin: 4px 0 0;
+  font: 500 0.78rem/1.4 var(--sans);
+  color: #6b7280;
+}
+.wc-picker-x {
+  appearance: none;
+  border: none;
+  background: #f3f4f6;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #374151;
+  flex-shrink: 0;
+}
+.wc-picker-search {
+  width: 100%;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font: 600 0.92rem/1.3 var(--sans);
+  outline: none;
+  margin-bottom: 8px;
+}
+.wc-picker-search:focus {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+.wc-picker-cats {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.wc-picker-cat {
+  appearance: none;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 999px;
+  padding: 7px 11px;
+  font: 700 0.74rem/1 var(--sans);
+  color: #4b5563;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.wc-picker-cat.is-on {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+.wc-picker-list {
+  flex: 1;
+  min-height: 180px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 2px;
+}
+.wc-picker-empty {
+  margin: 24px 0;
+  text-align: center;
+  color: #9ca3af;
+  font: 600 0.88rem/1.4 var(--sans);
+}
+.wc-picker-item {
+  appearance: none;
+  border: 1px solid #eef2f7;
+  background: #fff;
+  border-radius: 12px;
+  padding: 9px 10px;
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  row-gap: 2px;
+  align-items: center;
+  text-align: left;
+  cursor: pointer;
+}
+.wc-picker-item:hover { background: #f8fafc; border-color: #dbeafe; }
+.wc-picker-item.is-taken { opacity: 0.55; }
+.wc-picker-emoji {
+  grid-row: 1 / span 2;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+}
+.wc-picker-name {
+  grid-column: 2;
+  font: 800 0.9rem/1.3 var(--sans);
+  color: #111827;
+}
+.wc-picker-tag {
+  grid-column: 2;
+  grid-row: 2;
+  font: 600 0.68rem/1.2 var(--sans);
+  color: #2563eb;
+}
+.wc-picker-taken {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  font: 700 0.68rem/1 var(--sans);
+  color: #9ca3af;
+}
+@media (min-width: 640px) {
+  .wc-picker { place-items: center; }
+  .wc-picker-sheet {
+    border-radius: 18px;
+    max-height: min(80vh, 680px);
+  }
 }
 .wc-match-head { text-align: center; margin-bottom: 8px; }
 .wc-round-label {
@@ -3060,11 +3240,13 @@ body.qr-lightbox-open { overflow: hidden; }
   .wc-howto,
   .wc-cats,
   .wc-progress,
+  .wc-fill-hint,
   .wc-btn,
   .wc-btn-row,
   .wc-confetti,
   .wc-toast,
   .wc-help,
+  .wc-picker,
   #wc-play {
     display: none !important;
   }

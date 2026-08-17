@@ -1,41 +1,10 @@
 /* 3차시 · 직업 월드컵 */
 (function () {
-  const JOB_DB = [
-    { name: "AI 프로덕트 매니저", cat: "테크", emoji: "🤖", color: "#DBEAFE" },
-    { name: "프론트엔드 개발자", cat: "테크", emoji: "💻", color: "#E0F2FE" },
-    { name: "데이터 사이언티스트", cat: "테크", emoji: "📊", color: "#DBEAFE" },
-    { name: "게임 기획자", cat: "콘텐츠", emoji: "🎮", color: "#EDE9FE" },
-    { name: "숏폼 크리에이터", cat: "콘텐츠", emoji: "📱", color: "#FCE7F3" },
-    { name: "웹툰 작가", cat: "콘텐츠", emoji: "🖌️", color: "#FFEDD5" },
-    { name: "UX 디자이너", cat: "디자인", emoji: "✨", color: "#D1FAE5" },
-    { name: "브랜드 디자이너", cat: "디자인", emoji: "🎨", color: "#FEF3C7" },
-    { name: "콘텐츠 마케터", cat: "비즈니스", emoji: "📣", color: "#FCE7F3" },
-    { name: "스타트업 창업가", cat: "비즈니스", emoji: "🚀", color: "#D1FAE5" },
-    { name: "프로덕트 오너", cat: "비즈니스", emoji: "🧩", color: "#E0E7FF" },
-    { name: "투자 애널리스트", cat: "비즈니스", emoji: "📈", color: "#DCFCE7" },
-    { name: "의사", cat: "헬스케어", emoji: "🩺", color: "#E0F2FE" },
-    { name: "임상심리사", cat: "헬스케어", emoji: "🧠", color: "#EDE9FE" },
-    { name: "약사", cat: "헬스케어", emoji: "💊", color: "#D1FAE5" },
-    { name: "수의사", cat: "헬스케어", emoji: "🐾", color: "#FEF3C7" },
-    { name: "환경 엔지니어", cat: "사이언스", emoji: "🌱", color: "#DCFCE7" },
-    { name: "우주항공 엔지니어", cat: "사이언스", emoji: "🛰️", color: "#DBEAFE" },
-    { name: "생명공학 연구원", cat: "사이언스", emoji: "🧬", color: "#ECFCCB" },
-    { name: "기후 데이터 분석가", cat: "사이언스", emoji: "🌍", color: "#CFFAFE" },
-    { name: "교사", cat: "공공·교육", emoji: "📚", color: "#FEF3C7" },
-    { name: "외교관", cat: "공공·교육", emoji: "🕊️", color: "#DBEAFE" },
-    { name: "소방관", cat: "공공·교육", emoji: "🚒", color: "#FEE2E2" },
-    { name: "변호사", cat: "공공·교육", emoji: "⚖️", color: "#E0E7FF" },
-    { name: "패션 스타일리스트", cat: "라이프", emoji: "👗", color: "#FCE7F3" },
-    { name: "호텔리어", cat: "라이프", emoji: "🏨", color: "#FFEDD5" },
-    { name: "스포츠 마케터", cat: "라이프", emoji: "⚽", color: "#D1FAE5" },
-    { name: "바리스타 창업가", cat: "라이프", emoji: "☕", color: "#FFEDD5" },
-    { name: "영상 PD", cat: "콘텐츠", emoji: "🎬", color: "#EDE9FE" },
-    { name: "로봇 공학자", cat: "테크", emoji: "🦾", color: "#E0E7FF" },
-    { name: "사이버보안 전문가", cat: "테크", emoji: "🛡️", color: "#DBEAFE" },
-    { name: "지속가능 컨설턴트", cat: "비즈니스", emoji: "♻️", color: "#D1FAE5" }
-  ];
-
+  const JOB_POOL = Array.isArray(window.YOUTH_JOB_POOL) ? window.YOUTH_JOB_POOL : [];
   const CATEGORIES = ["전체", "테크", "콘텐츠", "디자인", "비즈니스", "헬스케어", "사이언스", "공공·교육", "라이프"];
+  const EMPTY_EMOJI = "✏️";
+  const EMPTY_COLOR = "#F3F4F6";
+  const EMPTY_CAT = "직접입력";
   const PICK_BG = [
     "linear-gradient(180deg,#EFF6FF,#FFFFFF)",
     "linear-gradient(180deg,#FFF7ED,#FFFFFF)",
@@ -49,34 +18,47 @@
   let currentMatch = 0;
   let selecting = false;
   let historyData = { r16: [], r8: [], r4: [], r2: [], winner: "", runnerUp: "", semi: [] };
+  let pickerTargetIdx = null;
+  let pickerCat = "전체";
 
   const root = document.getElementById("activity-root");
   const inputContainer = document.getElementById("wc-job-inputs");
   if (!root || !inputContainer) return;
 
   for (let i = 1; i <= 32; i++) {
-    const meta = JOB_DB[i - 1];
     const cell = document.createElement("div");
     cell.className = "wc-job-cell";
-    cell.dataset.cat = meta.cat;
+    cell.dataset.cat = "";
+    cell.dataset.idx = String(i);
     cell.innerHTML = `
       <div class="wc-job-top">
-        <button type="button" class="wc-job-emoji" style="--icon-bg:${meta.color}" aria-label="${meta.name} 선택" title="눌러서 선택/해제">${meta.emoji}</button>
+        <button type="button" class="wc-job-emoji" style="--icon-bg:${EMPTY_COLOR}" aria-label="${i}번 직업 목록에서 고르기" title="눌러서 목록에서 고르기 / 채운 칸은 비우기">${EMPTY_EMOJI}</button>
         <span class="wc-job-idx">${i}</span>
       </div>
       <div class="wc-job-name-row">
-        <input type="text" id="job-${i}" name="job${i}" placeholder="${meta.name}" autocomplete="off" maxlength="40" />
-        <span class="wc-job-cat">${meta.cat}</span>
+        <input type="text" id="job-${i}" name="job${i}" placeholder="관심 직업을 적어 보세요" autocomplete="off" maxlength="40" />
+        <span class="wc-job-cat">${EMPTY_CAT}</span>
       </div>
     `;
     inputContainer.appendChild(cell);
   }
 
+  ensurePickerDom();
+
   inputContainer.addEventListener("click", (e) => {
     const emojiBtn = e.target.closest(".wc-job-emoji");
     if (emojiBtn) {
       e.preventDefault();
-      toggleJobCheck(emojiBtn.closest(".wc-job-cell"));
+      const cell = emojiBtn.closest(".wc-job-cell");
+      const input = cell?.querySelector("input");
+      if (!input) return;
+      if (input.value.trim()) {
+        clearCell(cell);
+        updateFillMeter();
+        toast("칸을 비웠어요 · 다시 직접 입력하거나 목록에서 고를 수 있어요");
+      } else {
+        openPicker(Number(cell.dataset.idx) || null);
+      }
       return;
     }
     const nameRow = e.target.closest(".wc-job-name-row");
@@ -85,7 +67,11 @@
     }
   });
 
-  inputContainer.addEventListener("input", () => updateFillMeter());
+  inputContainer.addEventListener("input", (e) => {
+    const input = e.target.closest?.("input");
+    if (input) syncCellFromTyped(input);
+    updateFillMeter();
+  });
   updateFillMeter();
 
   const rail = document.getElementById("wc-category-rail");
@@ -97,13 +83,20 @@
     btn.addEventListener("click", () => {
       [...rail.children].forEach((b) => b.classList.toggle("is-on", b === btn));
       [...inputContainer.children].forEach((cell) => {
-        cell.style.display = cat === "전체" || cell.dataset.cat === cat ? "" : "none";
+        const cellCat = cell.dataset.cat || "";
+        if (cat === "전체") {
+          cell.style.display = "";
+          return;
+        }
+        // 빈 칸은 어떤 분야 필터에서도 보이게 (직접 채우기 유도)
+        cell.style.display = !cellCat || cellCat === cat ? "" : "none";
       });
     });
     rail.appendChild(btn);
   });
 
-  document.getElementById("wc-btn-samples")?.addEventListener("click", fillSamples);
+  document.getElementById("wc-btn-fill-remain")?.addEventListener("click", fillRemainingRandom);
+  document.getElementById("wc-btn-pick-list")?.addEventListener("click", () => openPicker(firstEmptyIdx()));
   document.getElementById("wc-btn-shuffle")?.addEventListener("click", shuffleInputs);
   document.getElementById("wc-btn-start")?.addEventListener("click", startWorldCup);
   document.getElementById("wc-btn-reset")?.addEventListener("click", resetAll);
@@ -156,18 +149,83 @@
     root.classList.toggle("is-wc-done", which === "result");
   }
 
-  function toggleJobCheck(cell) {
+  function clearCell(cell) {
     if (!cell) return;
     const input = cell.querySelector("input");
-    if (!input) return;
-    if (input.value.trim()) {
-      input.value = "";
-      cell.classList.remove("is-checked");
-    } else {
-      input.value = input.placeholder || "";
-      cell.classList.add("is-checked");
+    if (input) input.value = "";
+    cell.classList.remove("is-checked");
+    cell.dataset.cat = "";
+    const emoji = cell.querySelector(".wc-job-emoji");
+    const cat = cell.querySelector(".wc-job-cat");
+    if (emoji) {
+      emoji.textContent = EMPTY_EMOJI;
+      emoji.style.setProperty("--icon-bg", EMPTY_COLOR);
     }
-    updateFillMeter();
+    if (cat) cat.textContent = EMPTY_CAT;
+  }
+
+  function applyJobToCell(cell, job) {
+    if (!cell || !job) return;
+    const input = cell.querySelector("input");
+    if (!input) return;
+    input.value = job.name;
+    cell.classList.add("is-checked");
+    cell.dataset.cat = job.cat || "";
+    const emoji = cell.querySelector(".wc-job-emoji");
+    const cat = cell.querySelector(".wc-job-cat");
+    if (emoji) {
+      emoji.textContent = job.emoji || guessEmoji(job.name);
+      emoji.style.setProperty("--icon-bg", job.color || "#EFF6FF");
+    }
+    if (cat) cat.textContent = job.cat || EMPTY_CAT;
+  }
+
+  function syncCellFromTyped(input) {
+    const cell = input.closest(".wc-job-cell");
+    if (!cell) return;
+    const val = input.value.trim();
+    if (!val) {
+      clearCell(cell);
+      return;
+    }
+    const meta = jobMeta(val);
+    cell.classList.add("is-checked");
+    cell.dataset.cat = meta.cat === "관심직업" ? "" : meta.cat;
+    const emoji = cell.querySelector(".wc-job-emoji");
+    const cat = cell.querySelector(".wc-job-cat");
+    if (emoji) {
+      emoji.textContent = meta.emoji;
+      emoji.style.setProperty("--icon-bg", meta.color || "#EFF6FF");
+    }
+    if (cat) cat.textContent = meta.cat === "관심직업" ? EMPTY_CAT : meta.cat;
+  }
+
+  function filledNamesSet() {
+    const set = new Set();
+    for (let i = 1; i <= 32; i++) {
+      const v = document.getElementById(`job-${i}`)?.value.trim();
+      if (v) set.add(v);
+    }
+    return set;
+  }
+
+  function emptyCells() {
+    const list = [];
+    for (let i = 1; i <= 32; i++) {
+      const input = document.getElementById(`job-${i}`);
+      if (input && !input.value.trim()) {
+        list.push(input.closest(".wc-job-cell"));
+      }
+    }
+    return list.filter(Boolean);
+  }
+
+  function firstEmptyIdx() {
+    for (let i = 1; i <= 32; i++) {
+      const input = document.getElementById(`job-${i}`);
+      if (input && !input.value.trim()) return i;
+    }
+    return null;
   }
 
   function updateFillMeter() {
@@ -184,20 +242,179 @@
     const bar = document.getElementById("wc-fill-bar");
     if (num) num.textContent = String(checked);
     if (bar) bar.style.width = `${(checked / 32) * 100}%`;
+    const hint = document.getElementById("wc-fill-hint");
+    if (hint) {
+      const remain = 32 - checked;
+      hint.textContent =
+        remain > 0
+          ? `직접 입력 ${checked}개 · 남은 ${remain}칸은 목록에서 고르거나 랜덤으로 채울 수 있어요`
+          : "32칸이 모두 채워졌어요 · 옆 짝궁과 월드컵을 시작해 보세요";
+    }
   }
 
-  function fillSamples() {
-    JOB_DB.forEach((job, idx) => {
-      const input = document.getElementById(`job-${idx + 1}`);
-      if (!input) return;
-      const cell = input.closest(".wc-job-cell");
-      input.value = job.name;
-      const emoji = cell?.querySelector(".wc-job-emoji");
-      if (emoji) emoji.textContent = job.emoji;
-      cell?.classList.add("is-checked");
+  function fillRemainingRandom() {
+    const blanks = emptyCells();
+    if (!blanks.length) {
+      toast("이미 32칸이 모두 채워져 있어요");
+      return;
+    }
+    if (!JOB_POOL.length) {
+      toast("직업 목록을 불러오지 못했어요 · 페이지를 새로고침해 주세요");
+      return;
+    }
+    const used = filledNamesSet();
+    const available = shuffle(JOB_POOL.filter((j) => j && j.name && !used.has(j.name)));
+    if (available.length < blanks.length) {
+      toast("남은 칸보다 고를 직업이 부족해요 · 일부만 채울게요");
+    }
+    let filled = 0;
+    blanks.forEach((cell, idx) => {
+      const job = available[idx];
+      if (!job) return;
+      applyJobToCell(cell, job);
+      filled += 1;
     });
     updateFillMeter();
-    toast("관심 직업 예시 32개를 선택했어요");
+    toast(`남은 칸 ${filled}개를 랜덤 직업으로 채웠어요`);
+  }
+
+  function ensurePickerDom() {
+    if (document.getElementById("wc-job-picker")) return;
+    const wrap = document.createElement("div");
+    wrap.id = "wc-job-picker";
+    wrap.className = "wc-picker";
+    wrap.hidden = true;
+    wrap.innerHTML = `
+      <div class="wc-picker-backdrop" data-wc-picker-close="1"></div>
+      <div class="wc-picker-sheet" role="dialog" aria-modal="true" aria-labelledby="wc-picker-title">
+        <div class="wc-picker-head">
+          <div>
+            <strong id="wc-picker-title">청소년 관심 직업 목록</strong>
+            <p id="wc-picker-sub">빈 칸에 넣을 직업을 고르세요 · ${JOB_POOL.length || "수백"}가지</p>
+          </div>
+          <button type="button" class="wc-picker-x" data-wc-picker-close="1" aria-label="닫기">×</button>
+        </div>
+        <input type="search" id="wc-picker-search" class="wc-picker-search" placeholder="직업 이름 검색" autocomplete="off" />
+        <div class="wc-picker-cats" id="wc-picker-cats"></div>
+        <div class="wc-picker-list" id="wc-picker-list"></div>
+      </div>
+    `;
+    document.body.appendChild(wrap);
+
+    const catsHost = wrap.querySelector("#wc-picker-cats");
+    CATEGORIES.forEach((cat) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "wc-picker-cat" + (cat === "전체" ? " is-on" : "");
+      btn.textContent = cat;
+      btn.addEventListener("click", () => {
+        pickerCat = cat;
+        [...catsHost.children].forEach((b) => b.classList.toggle("is-on", b === btn));
+        renderPickerList();
+      });
+      catsHost.appendChild(btn);
+    });
+
+    wrap.addEventListener("click", (e) => {
+      if (e.target.closest?.("[data-wc-picker-close]")) closePicker();
+    });
+    wrap.querySelector("#wc-picker-search")?.addEventListener("input", () => renderPickerList());
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !wrap.hidden) closePicker();
+    });
+  }
+
+  function openPicker(targetIdx) {
+    ensurePickerDom();
+    const wrap = document.getElementById("wc-job-picker");
+    if (!wrap) return;
+    if (!JOB_POOL.length) {
+      toast("직업 목록을 불러오지 못했어요 · 페이지를 새로고침해 주세요");
+      return;
+    }
+    pickerTargetIdx = targetIdx || firstEmptyIdx();
+    const sub = document.getElementById("wc-picker-sub");
+    if (sub) {
+      sub.textContent = pickerTargetIdx
+        ? `${pickerTargetIdx}번 칸에 넣을 직업을 고르세요 · ${JOB_POOL.length}가지`
+        : `이미 32칸이 찼어요 · 직업을 고르면 첫 칸부터 교체할 수 있어요`;
+    }
+    const search = document.getElementById("wc-picker-search");
+    if (search) search.value = "";
+    pickerCat = "전체";
+    document.querySelectorAll(".wc-picker-cat").forEach((b, i) => b.classList.toggle("is-on", i === 0));
+    renderPickerList();
+    wrap.hidden = false;
+    document.body.classList.add("wc-picker-open");
+    setTimeout(() => search?.focus(), 50);
+  }
+
+  function closePicker() {
+    const wrap = document.getElementById("wc-job-picker");
+    if (wrap) wrap.hidden = true;
+    document.body.classList.remove("wc-picker-open");
+    pickerTargetIdx = null;
+  }
+
+  function renderPickerList() {
+    const host = document.getElementById("wc-picker-list");
+    const search = document.getElementById("wc-picker-search");
+    if (!host) return;
+    const q = String(search?.value || "")
+      .trim()
+      .toLowerCase();
+    const used = filledNamesSet();
+    const items = JOB_POOL.filter((j) => {
+      if (!j?.name) return false;
+      if (pickerCat !== "전체" && j.cat !== pickerCat) return false;
+      if (q && !String(j.name).toLowerCase().includes(q)) return false;
+      return true;
+    });
+    if (!items.length) {
+      host.innerHTML = `<p class="wc-picker-empty">조건에 맞는 직업이 없어요</p>`;
+      return;
+    }
+    host.innerHTML = items
+      .slice(0, 220)
+      .map((j) => {
+        const taken = used.has(j.name);
+        return `<button type="button" class="wc-picker-item${taken ? " is-taken" : ""}" data-job="${escapeHtml(j.name)}">
+          <span class="wc-picker-emoji" style="background:${j.color || "#EFF6FF"}">${j.emoji || "⭐"}</span>
+          <span class="wc-picker-name">${escapeHtml(j.name)}</span>
+          <span class="wc-picker-tag">${escapeHtml(j.cat || "")}</span>
+          ${taken ? '<span class="wc-picker-taken">이미 입력</span>' : ""}
+        </button>`;
+      })
+      .join("");
+    host.querySelectorAll(".wc-picker-item").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const name = btn.getAttribute("data-job") || "";
+        const job = JOB_POOL.find((j) => j.name === name);
+        if (!job) return;
+        let idx = pickerTargetIdx;
+        if (!idx || document.getElementById(`job-${idx}`)?.value.trim()) {
+          idx = firstEmptyIdx();
+        }
+        if (!idx) {
+          toast("빈 칸이 없어요 · 먼저 칸을 비우거나 직접 수정해 주세요");
+          return;
+        }
+        const cell = document.getElementById(`job-${idx}`)?.closest(".wc-job-cell");
+        applyJobToCell(cell, job);
+        updateFillMeter();
+        const next = firstEmptyIdx();
+        if (next) {
+          pickerTargetIdx = next;
+          const sub = document.getElementById("wc-picker-sub");
+          if (sub) sub.textContent = `${next}번 칸에 넣을 직업을 고르세요 · 이어서 고를 수 있어요`;
+          renderPickerList();
+          toast(`${idx}번에 「${job.name}」을(를) 넣었어요`);
+        } else {
+          closePicker();
+          toast("32칸이 모두 채워졌어요");
+        }
+      });
+    });
   }
 
   function shuffleInputs() {
@@ -208,10 +425,11 @@
       if (!input || !cell) continue;
       values.push({
         value: input.value,
-        emoji: cell.querySelector(".wc-job-emoji")?.textContent || "⭐",
-        cat: cell.querySelector(".wc-job-cat")?.textContent || "",
+        emoji: cell.querySelector(".wc-job-emoji")?.textContent || EMPTY_EMOJI,
+        cat: cell.querySelector(".wc-job-cat")?.textContent || EMPTY_CAT,
+        dataCat: cell.dataset.cat || "",
         checked: cell.classList.contains("is-checked"),
-        color: cell.querySelector(".wc-job-emoji")?.style.getPropertyValue("--icon-bg") || "#EFF6FF"
+        color: cell.querySelector(".wc-job-emoji")?.style.getPropertyValue("--icon-bg") || EMPTY_COLOR
       });
     }
     shuffle(values);
@@ -227,6 +445,7 @@
       }
       const cat = cell.querySelector(".wc-job-cat");
       if (cat) cat.textContent = item.cat;
+      cell.dataset.cat = item.dataCat;
       cell.classList.toggle("is-checked", item.checked);
     });
     updateFillMeter();
@@ -242,7 +461,7 @@
   }
 
   function jobMeta(name) {
-    const found = JOB_DB.find((j) => j.name === name);
+    const found = JOB_POOL.find((j) => j.name === name);
     if (found) return found;
     return { name, cat: "관심직업", emoji: guessEmoji(name), color: "#EFF6FF" };
   }
@@ -287,7 +506,7 @@
       const input = document.getElementById(`job-${i}`);
       const val = input?.value.trim() || "";
       if (!val) {
-        toast(`${i}번 직업을 입력하거나 아이콘으로 선택해 주세요`);
+        toast(`${i}번이 비어 있어요 · 직접 적거나 ‘남은 칸 랜덤 채우기’를 눌러 주세요`);
         input?.closest(".wc-job-cell")?.scrollIntoView({ behavior: "smooth", block: "center" });
         input?.focus();
         return;
@@ -309,7 +528,7 @@
     setStep(2);
     renderBracketMini();
     updateMatchUI();
-    toast("더 끌리는 직업을 눌러 주세요");
+    toast("더 끌리는 직업을 눌러 주세요 · 옆 짝궁과 이야기하며 진행해 보세요");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -466,7 +685,7 @@
     }
 
     burstConfetti();
-    toast("최종 1등이 정해졌어요");
+    toast("최종 1등이 정해졌어요 · 우승 직업을 중심으로 시야를 넓혀 보세요");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -567,19 +786,11 @@
       if (!input || !cell) continue;
       const val = String(input.value || "").trim();
       if (!val) {
-        cell.classList.remove("is-checked");
+        clearCell(cell);
         continue;
       }
       const meta = jobMeta(val);
-      const emoji = cell.querySelector(".wc-job-emoji");
-      const cat = cell.querySelector(".wc-job-cat");
-      if (emoji) {
-        emoji.textContent = meta.emoji;
-        emoji.style.setProperty("--icon-bg", meta.color || "#EFF6FF");
-      }
-      if (cat) cat.textContent = meta.cat;
-      cell.dataset.cat = meta.cat;
-      cell.classList.add("is-checked");
+      applyJobToCell(cell, meta);
     }
     updateFillMeter();
 
@@ -610,21 +821,8 @@
   /** 체크·입력 없는 기본(직업 입력) 화면으로 맞춤 — 임시저장 복원 생략 시 */
   window.__careerWorldcupEnsurePristine = function () {
     for (let i = 1; i <= 32; i++) {
-      const input = document.getElementById(`job-${i}`);
-      const cell = input?.closest(".wc-job-cell");
-      if (input) input.value = "";
-      cell?.classList.remove("is-checked");
-      const meta = JOB_DB[i - 1];
-      if (meta && cell) {
-        const emoji = cell.querySelector(".wc-job-emoji");
-        const cat = cell.querySelector(".wc-job-cat");
-        if (emoji) {
-          emoji.textContent = meta.emoji;
-          emoji.style.setProperty("--icon-bg", meta.color);
-        }
-        if (cat) cat.textContent = meta.cat;
-        cell.dataset.cat = meta.cat;
-      }
+      const cell = document.getElementById(`job-${i}`)?.closest(".wc-job-cell");
+      clearCell(cell);
     }
     currentJobs = [];
     nextRoundJobs = [];
