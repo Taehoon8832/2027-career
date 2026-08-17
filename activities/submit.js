@@ -1906,7 +1906,7 @@ ${linkedCss}
     function extractLiveFieldMap(html) {
       const map = {};
       const re =
-        /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|fReflect|wcQ\d+|wcWinner|wcRunnerUp)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
+        /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|q\d+|fReflect|bReflect|wcQ\d+|wcWinner|wcRunnerUp)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
       let m;
       while ((m = re.exec(String(html || "")))) {
         const attrs = m[1] || "";
@@ -1921,14 +1921,62 @@ ${linkedCss}
       return map;
     }
 
+    function extractLiveQuestionLabels(html) {
+      const labels = {};
+      const re = /<label[^>]*\bfor=["']((?:q|f)\d+)["'][^>]*>([\s\S]*?)<\/label>/gi;
+      let m;
+      while ((m = re.exec(String(html || "")))) {
+        const key = m[1];
+        let lab = liveHtmlPlain(m[2]).replace(/\s+/g, " ").trim();
+        lab = lab.replace(/^\d+\s*[.)]\s*/, "").trim();
+        if (lab) labels[key] = lab;
+      }
+      return labels;
+    }
+
+    function extractLiveLabeledAnswers(html) {
+      const s = String(html || "");
+      const out = [];
+      const re =
+        /<label[^>]*>([\s\S]*?)<\/label>[\s\S]{0,400}?(?:<textarea[^>]*>([\s\S]*?)<\/textarea>|<input[^>]*value="([^"]*)"[^>]*>|<input[^>]*value='([^']*)'[^>]*>)/gi;
+      let m;
+      while ((m = re.exec(s)) && out.length < 120) {
+        let label = liveHtmlPlain(m[1]).replace(/\s+/g, " ").trim();
+        if (!label) continue;
+        if (/^(학번|이름)\b/.test(label)) continue;
+        if (/차시\s*활동|학생\s*활동지|코드번호|눌러서|제출|임시|초기화|동기화/.test(label)) continue;
+        label = label.replace(/^\d+\s*[.)]\s*/, "").trim();
+        const value = liveHtmlPlain(m[2] || m[3] || m[4] || "").trim();
+        if (!value) continue;
+        out.push({ label: label.slice(0, 80), value: value.slice(0, 1200) });
+      }
+      return out;
+    }
+
+    function isLiveChromeNoise(text) {
+      const t = String(text || "").replace(/\s+/g, " ").trim();
+      if (!t) return true;
+      if (t.length < 2) return true;
+      return /^(학번|이름|\*|학생\s*활동지|\d+차시\s*활동|코드번호|눌러서\s*열기|미용과|진로\s*탐색)/.test(t);
+    }
+
     function buildLiveFields(content) {
       const map = extractLiveFieldMap(content);
+      const labels = extractLiveQuestionLabels(content);
       const fields = [];
-      const push = (label, value) => {
+      const push = (label, value, opts = {}) => {
         const v = String(value || "").trim();
-        if (!v) return;
-        fields.push({ label, value: v.slice(0, 1200) });
+        if (!v || isLiveChromeNoise(v)) return;
+        const lab = String(label || "").trim() || "응답";
+        if (isLiveChromeNoise(lab) && lab === "작성 내용") return;
+        fields.push({
+          label: lab.slice(0, 80),
+          value: v.slice(0, 1200),
+          num: opts.num || "",
+          accent: !!opts.accent
+        });
       };
+
       if (sessionNo === 1) {
         const order = [
           ["f1", "기본 스펙 & 키워드"],
@@ -1947,44 +1995,139 @@ ${linkedCss}
           ["f14", "미래 버전 업데이트 계획"]
         ];
         for (const [id, lab] of order) push(lab, map[id]);
+      } else if (sessionNo === 2) {
+        const keys = Object.keys(map)
+          .filter((k) => /^q\d+$/i.test(k))
+          .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+        for (const k of keys) {
+          const n = Number(k.slice(1)) || "";
+          push(labels[k] || `${n}번 문항`, map[k], { num: String(n) });
+        }
       } else if (sessionNo === 3) {
-        push("직업", map.wcWinner);
-        push("차순위", map.wcRunnerUp);
+        push("직업", map.wcWinner, { accent: true, num: "1" });
+        push("차순위", map.wcRunnerUp, { accent: true, num: "2" });
         push("1등으로 고른 가장 큰 이유", map.wcQ1);
         push("마지막까지 고민한 직업과의 차이", map.wcQ2);
         push("필요한 핵심 능력 3가지", map.wcQ3);
         push("앞으로 90일 안 실천 계획", map.wcQ4);
       } else {
         const keys = Object.keys(map)
-          .filter((k) => /^f\d+$/i.test(k))
-          .sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
-        for (const k of keys) push(k.toUpperCase(), map[k]);
+          .filter((k) => /^(?:f|q)\d+$/i.test(k))
+          .sort((a, b) => {
+            const pa = a[0].toLowerCase() === "q" ? 1 : 0;
+            const pb = b[0].toLowerCase() === "q" ? 1 : 0;
+            if (pa !== pb) return pa - pb;
+            return Number(a.slice(1)) - Number(b.slice(1));
+          });
+        for (const k of keys) {
+          const n = k.replace(/\D/g, "");
+          push(labels[k] || k.toUpperCase(), map[k], { num: n });
+        }
       }
-      if (map.fReflect) push("느낀점 (세특 참조)", map.fReflect);
+
+      if (map.fReflect || map.bReflect) {
+        push("느낀점 (세특 참조)", map.fReflect || map.bReflect, { accent: true });
+      }
+
       if (!fields.length) {
-        const plain = liveHtmlPlain(content).slice(0, 800);
-        if (plain) fields.push({ label: "작성 내용", value: plain });
+        const labeled = extractLiveLabeledAnswers(content);
+        for (const a of labeled) push(a.label, a.value);
       }
       return fields;
     }
 
-    function cardMetaPreview(content) {
-      if (sessionNo === 3) {
-        const map = extractLiveFieldMap(content);
-        const winner = String(map.wcWinner || "").trim();
-        const runner = String(map.wcRunnerUp || "").trim();
-        if (winner || runner) {
-          const parts = [];
-          if (winner) parts.push(`직업 ${winner}`);
-          if (runner) parts.push(`차순위 ${runner}`);
-          return parts.join(" · ").slice(0, 60);
-        }
+    function sectionLabelForLive() {
+      if (sessionNo === 1) return "「나」 사용 설명서";
+      if (sessionNo === 2) return "100문 100답";
+      if (sessionNo === 3) return "직업 월드컵 작성 내용";
+      if (sessionNo === 4) return "SWOT 작성 내용";
+      return "학생 작성 내용";
+    }
+
+    function buildLiveReaderHtml(who, fields) {
+      const list = Array.isArray(fields) ? fields : [];
+      const displayName = who?.name || "이름 없음";
+      const no = who?.no || "—";
+      const art = `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(
+        String(displayName).slice(0, 1) || "?"
+      )}</div>`;
+      const tags = [
+        `<span class="deck-reader-tag">${escapeHtml(String(sessionNo))}차시</span>`,
+        list.length
+          ? `<span class="deck-reader-tag is-blue">작성 ${list.length}문항</span>`
+          : `<span class="deck-reader-tag is-warn">작성 내용 없음</span>`
+      ];
+      const withWide = list.map((f) => ({
+        ...f,
+        wide: !!(f.wide || (f.value || "").length > 48)
+      }));
+      // 짧은 답은 2~3열 그리드, 전부 긴 서술일 때만 세로 플로우
+      const useFlow = withWide.length > 0 && withWide.every((f) => f.wide);
+      const fieldHtml = withWide.length
+        ? `<div class="${useFlow ? "deck-reader-flow" : "deck-reader-grid"}">${withWide
+            .map((f) => {
+              return `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
+              <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
+              <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
+            </article>`;
+            })
+            .join("")}</div>`
+        : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
+
+      return `<div class="deck-reader-sheet">
+        <div class="deck-reader-top">
+          ${art}
+          <div class="deck-reader-who">
+            <div class="deck-reader-no">${escapeHtml(no)}</div>
+            <div class="deck-reader-name">${escapeHtml(displayName)}</div>
+            <div class="deck-reader-tags">${tags.join("")}</div>
+          </div>
+        </div>
+        <section class="deck-reader-section">
+          <p class="deck-reader-label">${escapeHtml(sectionLabelForLive())}</p>
+          ${fieldHtml}
+        </section>
+      </div>`;
+    }
+
+    function buildLiveCardHtml(card, dealIdx, focusId, isTeacher) {
+      const empty = !!card.empty;
+      const active = !empty && card.id && card.id === focusId;
+      const s3 = sessionNo === 3;
+      const name = card.name || "이름 없음";
+      const art = `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(
+        String(name).slice(0, 1) || "?"
+      )}</div>`;
+      let mid = "";
+      if (s3) {
+        const winner = String(card.winner || "").trim();
+        const runner = String(card.runner || "").trim();
+        mid = `<div class="deck-card-jobs"${empty ? ' aria-hidden="true"' : ""}>
+          <div class="deck-card-job${winner || empty ? (winner ? "" : " is-empty") : " is-empty"}"><span>직업</span><b>${escapeHtml(
+            empty ? "—" : winner || "미입력"
+          )}</b></div>
+          <div class="deck-card-job is-runner${runner || empty ? (runner ? "" : " is-empty") : " is-empty"}"><span>차순위</span><b>${escapeHtml(
+            empty ? "—" : runner || "미입력"
+          )}</b></div>
+        </div>`;
+      } else {
+        mid = `<div class="deck-card-meta">${escapeHtml(card.meta || (empty ? "미제출" : "제출됨"))}</div>
+          <div class="deck-card-arch"></div>`;
       }
-      const fields = buildLiveFields(content);
-      if (!fields.length) return "제출됨";
-      const first = fields[0];
-      const snippet = String(first.value || "").replace(/\s+/g, " ").slice(0, 42);
-      return snippet ? `${first.label}: ${snippet}` : "제출됨";
+      const attrs = empty
+        ? `disabled data-empty="1"`
+        : `data-sub-id="${escapeHtml(card.id || "")}"`;
+      return `<button type="button" class="deck-card${empty ? " is-empty" : ""}${active ? " is-active" : ""}${
+        s3 ? " is-s3" : ""
+      }" ${attrs} style="--deal:${dealIdx}" ${isTeacher && !empty ? "" : 'tabindex="-1"'} title="${
+        empty ? "미제출" : "펼쳐서 내용 보기"
+      }">
+        <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(card.no || "—")}</span></div>
+        ${art}
+        <div class="deck-card-name">${escapeHtml(name)}</div>
+        ${mid}
+        <div class="deck-card-hint">${empty ? "아직 카드가 뒤집히지 않았어요" : "탭! 펼쳐 보기"}</div>
+      </button>`;
     }
 
     function ensureDom() {
@@ -1993,34 +2136,64 @@ ${linkedCss}
         link.id = "liveDeckNotoSans";
         link.rel = "stylesheet";
         link.href =
-          "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&display=swap";
+          "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&family=Noto+Serif+KR:wght@600;700;800&display=swap";
         document.head.appendChild(link);
       }
+      if (!document.getElementById("liveReportDeckCss")) {
+        const css = document.createElement("link");
+        css.id = "liveReportDeckCss";
+        css.rel = "stylesheet";
+        css.href = "./live-report-deck.css?v=2111";
+        document.head.appendChild(css);
+      }
       let root = document.getElementById("liveReportDeck");
-      if (root) return root;
-      root = document.createElement("div");
-      root.id = "liveReportDeck";
-      root.className = "live-deck";
-      root.setAttribute("aria-hidden", "true");
-      root.innerHTML = `
-        <div class="live-deck-panel" role="dialog" aria-modal="true" aria-labelledby="liveDeckTitle">
-          <div class="live-deck-head">
+      if (root) {
+        root.classList.add("report-deck");
+        root.classList.remove("live-deck");
+        if (!root.querySelector(".report-deck-panel")) {
+          root.remove();
+          root = null;
+        } else {
+          return root;
+        }
+      }
+      if (!root) {
+        root = document.createElement("div");
+        root.id = "liveReportDeck";
+        root.className = "report-deck";
+        root.setAttribute("aria-hidden", "true");
+        root.innerHTML = `
+        <div class="report-deck-panel" role="dialog" aria-modal="true" aria-labelledby="liveDeckTitle">
+          <div class="report-deck-head">
             <div style="min-width:0;flex:1">
-              <h3 id="liveDeckTitle"><span>&lt;보고서 종합&gt;</span></h3>
-              <p class="live-deck-sub" id="liveDeckSub"></p>
+              <h3 id="liveDeckTitle"><span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">카드덱</span></h3>
+              <p class="sub" id="liveDeckSub" hidden></p>
             </div>
-            <div class="live-deck-actions">
-              <button type="button" class="live-deck-btn" id="btnLiveDeckRefresh" title="제출 새로고침" hidden>새로고침</button>
-              <button type="button" class="live-deck-btn is-emphasis" id="btnLiveDeckBack" title="카드덱으로" hidden>카드덱</button>
-              <button type="button" class="live-deck-btn" id="btnLiveDeckClose" title="닫기" hidden>닫기</button>
+            <div class="report-deck-actions">
+              <button type="button" class="deck-icon-btn" id="btnLiveDeckRefresh" title="제출 새로고침" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+                <span>새로고침</span>
+              </button>
+              <button type="button" class="deck-icon-btn is-emphasis" id="btnLiveDeckBack" title="카드덱으로" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="4.5" y="7.5" width="11" height="13" rx="1.6" transform="rotate(-12 10 14)"/>
+                  <rect x="7.5" y="5.5" width="11" height="13" rx="1.6"/>
+                </svg>
+                <span>카드덱</span>
+              </button>
+              <button type="button" class="deck-icon-btn" id="btnLiveDeckClose" title="닫기" hidden>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                <span>닫기</span>
+              </button>
             </div>
           </div>
-          <div class="live-deck-body">
-            <div class="live-deck-reader" id="liveDeckReader" aria-live="polite"></div>
-            <div class="live-deck-table" id="liveDeckTable"></div>
+          <div class="report-deck-body">
+            <div class="report-deck-reader" id="liveDeckReader" aria-live="polite"></div>
+            <div class="report-deck-table" id="liveDeckTable"></div>
           </div>
         </div>`;
-      document.body.appendChild(root);
+        document.body.appendChild(root);
+      }
       return root;
     }
 
@@ -2057,7 +2230,7 @@ ${linkedCss}
       if (titleEl) {
         titleEl.innerHTML = localState.title
           ? localState.title
-          : `<span>&lt;보고서 종합&gt;</span>`;
+          : `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">카드덱</span>`;
       }
       if (subEl) {
         subEl.textContent = localState.sub || "";
@@ -2081,39 +2254,18 @@ ${linkedCss}
 
       if (table) {
         if (!localState.cards.length) {
-          table.innerHTML = `<p class="live-deck-empty">${opts.loading ? "불러오는 중…" : "표시할 제출이 없습니다."}</p>`;
+          table.innerHTML = `<p class="report-deck-empty">${opts.loading ? "카드를 섞는 중…" : "표시할 학생이 없습니다."}</p>`;
         } else {
           const isTeacher = isActivityTeacherUi();
           table.innerHTML = localState.cards
-            .map((c) => {
-              const empty = !!c.empty;
-              const active = !empty && c.id && c.id === focusId;
-              const cls = `live-card${empty ? " is-empty" : ""}${active ? " is-active" : ""}`;
-              const attrs = empty
-                ? `disabled data-empty="1"`
-                : `data-sub-id="${escapeHtml(c.id || "")}"`;
-              return `<button type="button" class="${cls}" ${attrs} ${isTeacher && !empty ? "" : 'tabindex="-1"'}>
-                <div class="live-card-no">${escapeHtml(c.no || "—")}</div>
-                <div class="live-card-name">${escapeHtml(c.name || "이름 없음")}</div>
-                <div class="live-card-meta">${escapeHtml(c.meta || (empty ? "미제출" : "제출됨"))}</div>
-              </button>`;
-            })
+            .map((c, i) => buildLiveCardHtml(c, i, focusId, isTeacher))
             .join("");
         }
       }
 
       if (reader) {
         if (isSpread && localState.who) {
-          const who = localState.who;
-          const fieldHtml = (localState.fields || [])
-            .map(
-              (f) => `<div class="live-field"><b>${escapeHtml(f.label)}</b><p>${escapeHtml(f.value)}</p></div>`
-            )
-            .join("");
-          reader.innerHTML = `<div class="live-reader-sheet">
-            <h4>${escapeHtml(who.no || "")} · ${escapeHtml(who.name || "")}</h4>
-            ${fieldHtml || `<p class="live-card-meta">정리할 입력 내용이 아직 없습니다.</p>`}
-          </div>`;
+          reader.innerHTML = buildLiveReaderHtml(localState.who, localState.fields);
         } else {
           reader.innerHTML = "";
         }
@@ -2253,9 +2405,12 @@ ${linkedCss}
             no,
             name: String(st.student_name || "").trim() || "이름 없음",
             meta: "미제출",
-            empty: true
+            empty: true,
+            winner: "",
+            runner: ""
           };
         }
+        const previewFields = sessionNo === 3 ? extractLiveFieldMap(latest.content || "") : null;
         return {
           id: latest.id,
           no,
@@ -2264,14 +2419,18 @@ ${linkedCss}
             String(st.student_name || "").trim() ||
             "이름 없음",
           meta: cardMetaPreview(latest.content || ""),
-          empty: false
+          empty: false,
+          winner: previewFields ? String(previewFields.wcWinner || "").trim() : "",
+          runner: previewFields ? String(previewFields.wcRunnerUp || "").trim() : ""
         };
       });
 
       const submitted = cards.filter((c) => !c.empty).length;
       return {
         open: true,
-        title: `<span>&lt;보고서 종합&gt;</span> <span>✅ ${escapeHtml(lessonTitleText())}</span>`,
+        title: `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">✅ ${escapeHtml(
+          lessonTitleText()
+        )}</span>`,
         sub: `제출 ${submitted} / ${cards.length}명 · 카드를 누르면 학생 화면에 동기화됩니다`,
         cards,
         focusId: "",
@@ -2358,7 +2517,7 @@ ${linkedCss}
     });
     root.querySelector("#liveDeckTable")?.addEventListener("click", (e) => {
       if (!isActivityTeacherUi()) return;
-      const btn = e.target?.closest?.(".live-card[data-sub-id]");
+      const btn = e.target?.closest?.(".deck-card[data-sub-id]");
       if (!btn || btn.disabled) return;
       const id = btn.getAttribute("data-sub-id");
       if (id) focusCard(id);
@@ -3670,6 +3829,7 @@ ${linkedCss}
     const liveRoot = document.getElementById("liveReportDeck");
     if (liveRoot) {
       liveRoot.classList.toggle("is-viewer", !show);
+      liveRoot.classList.add("report-deck");
       const refresh = document.getElementById("btnLiveDeckRefresh");
       const close = document.getElementById("btnLiveDeckClose");
       const back = document.getElementById("btnLiveDeckBack");
@@ -3792,6 +3952,123 @@ ${linkedCss}
     })();
   }
 
+  function consumeLiveHintFlag() {
+    try {
+      const u = new URL(location.href);
+      if (u.searchParams.get("liveHint") !== "1") return false;
+      u.searchParams.delete("liveHint");
+      const next = `${u.pathname}${u.search}${u.hash}`;
+      history.replaceState({}, "", next);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function hideLiveHintCoach() {
+    const el = document.getElementById("liveHintCoach");
+    if (!el) return;
+    el.classList.add("is-out");
+    const done = () => el.remove();
+    el.addEventListener("transitionend", done, { once: true });
+    setTimeout(done, 700);
+  }
+
+  function positionLiveHintCoach() {
+    const coach = document.getElementById("liveHintCoach");
+    const btn = document.getElementById("btnLiveReport");
+    const ring = coach?.querySelector(".live-hint-ring");
+    const label = coach?.querySelector(".live-hint-label");
+    if (!coach || !btn || !ring || !label) return false;
+    const r = btn.getBoundingClientRect();
+    if (r.width < 4 || r.height < 4) return false;
+
+    const pad = 6;
+    ring.style.top = `${Math.round(r.top - pad)}px`;
+    ring.style.left = `${Math.round(r.left - pad)}px`;
+    ring.style.width = `${Math.round(r.width + pad * 2)}px`;
+    ring.style.height = `${Math.round(r.height + pad * 2)}px`;
+    ring.style.borderRadius = `${Math.round(Math.min(r.height + pad * 2, 999))}px`;
+
+    const labelW = Math.min(300, Math.max(180, window.innerWidth - 24));
+    label.style.width = `${labelW}px`;
+    let top = r.top + r.height / 2 - 20;
+    let left = r.right + 12;
+    if (left + labelW > window.innerWidth - 10) {
+      left = Math.max(10, r.left - labelW - 12);
+      label.classList.add("is-left");
+    } else {
+      label.classList.remove("is-left");
+    }
+    if (top < 8) top = 8;
+    if (top + 56 > window.innerHeight - 8) top = window.innerHeight - 64;
+    label.style.top = `${Math.round(top)}px`;
+    label.style.left = `${Math.round(left)}px`;
+    return true;
+  }
+
+  function showLiveHintCoach() {
+    hideLiveHintCoach();
+    const existing = document.getElementById("liveHintCoach");
+    existing?.remove();
+
+    const coach = document.createElement("div");
+    coach.id = "liveHintCoach";
+    coach.className = "live-hint-coach";
+    coach.setAttribute("aria-live", "polite");
+    coach.innerHTML = `
+      <div class="live-hint-ring" aria-hidden="true"></div>
+      <p class="live-hint-label">학생 화면에서 <strong>[실시간]</strong>을 누르면,<br />선생님 화면이 동기화되어 보입니다.</p>`;
+    document.body.appendChild(coach);
+
+    const place = () => {
+      if (!positionLiveHintCoach()) return false;
+      requestAnimationFrame(() => coach.classList.add("is-on"));
+      return true;
+    };
+
+    // 상단 도구가 자리를 잡을 때까지 재시도
+    let tries = 0;
+    const tryPlace = () => {
+      tries += 1;
+      if (place() || tries >= 20) return;
+      setTimeout(tryPlace, 80);
+    };
+    tryPlace();
+
+    const onReposition = () => positionLiveHintCoach();
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+
+    const holdMs = 4200;
+    const fadeTimer = setTimeout(() => {
+      coach.classList.add("is-out");
+      coach.classList.remove("is-on");
+    }, holdMs);
+    const removeTimer = setTimeout(() => {
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+      coach.remove();
+    }, holdMs + 700);
+
+    coach._cleanup = () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+    };
+  }
+
+  function scheduleLiveHintCoach() {
+    if (!consumeLiveHintFlag()) return;
+    void (async () => {
+      await waitActivityTeacherResolved(2000);
+      // 도구 버튼 생성 직후
+      await new Promise((r) => setTimeout(r, 280));
+      showLiveHintCoach();
+    })();
+  }
+
   function ensureUi() {
     stripSheetIdentityFields();
     ensureHeroQr();
@@ -3813,6 +4090,7 @@ ${linkedCss}
       // 복원 먼저 → 이후 pagehide/visibility가 빈 폼으로 덮어쓰지 않음
       scheduleDraftRestore();
       bindDraftAutosave();
+      scheduleLiveHintCoach();
       return;
     }
 
@@ -3904,6 +4182,7 @@ ${linkedCss}
     });
     document.getElementById("btnConfirmSubmit").addEventListener("click", submitActivity);
     prefillCodeFromUrl();
+    scheduleLiveHintCoach();
   }
 
   function setMsg(text, type) {

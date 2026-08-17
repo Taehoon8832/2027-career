@@ -2479,8 +2479,9 @@
       100% { opacity: 1; transform: translateY(0) scale(1); }
     }
     .deck-reader-sheet {
-      max-width: 820px;
-      margin: 0 auto;
+      width: 100%;
+      max-width: none;
+      margin: 0;
       padding: 18px 20px 22px;
       border-radius: 18px;
       border: 2px solid #1f1e1d;
@@ -2490,6 +2491,7 @@
         0 1px 0 rgba(255,255,255,0.9) inset,
         0 16px 36px rgba(0,0,0,0.28);
       color: #1f1e1d;
+      box-sizing: border-box;
     }
     .deck-reader-top {
       display: flex;
@@ -2604,6 +2606,11 @@
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
+    }
+    @media (min-width: 980px) {
+      .deck-reader-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
     }
     .deck-reader-field {
       padding: 12px 13px;
@@ -13069,10 +13076,19 @@ ${built.html}
 
       /** 활동지 열기 — 실제 활동지 URL로 이동 (QR에 찍히는 주소와 동일해야 함) */
       function openActivitySheet(url, opts = {}) {
-        const href = String(url || "").trim();
+        let href = String(url || "").trim();
         if (!href) {
           toast("활동지 주소를 만들 수 없습니다.");
           return;
+        }
+        if (opts.liveHint) {
+          try {
+            const u = new URL(href, location.href);
+            u.searchParams.set("liveHint", "1");
+            href = u.href;
+          } catch {
+            /* keep href */
+          }
         }
         if (location.protocol === "file:") {
           toast("로컬 파일(file://) QR은 학생 휴대폰에서 열리지 않습니다. 웹 주소(https)로 배포·접속해 주세요.");
@@ -15529,7 +15545,8 @@ ${pageCss}</style>
           for (const [id, lab] of order) {
             const raw = map[id] || "";
             if (!raw || isLowQualityAnswer(raw, whoName, whoNo)) continue;
-            push(lab, raw, { wide: true });
+            // 짧은 답은 그리드 칸, 긴 서술만 전체 폭
+            push(lab, raw);
           }
         } else if (sessionNo === 4) {
           const map = {};
@@ -15621,11 +15638,12 @@ ${pageCss}</style>
               : sessionNo === 4
                 ? "SWOT 작성 내용"
                 : "학생 작성 내용";
-        const useFlow = sessionNo === 1 || fields.every((f) => f.wide);
+        // 짧은 답은 2~3열 그리드로 폭을 쓰고, 전부 긴 서술일 때만 세로 플로우
+        const useFlow = fields.length > 0 && fields.every((f) => f.wide);
         const fieldHtml = fields.length
           ? `<div class="${useFlow ? "deck-reader-flow" : "deck-reader-grid"}">${fields
               .map(
-                (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide || useFlow ? " is-wide" : ""}">
+                (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
               <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
               <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
             </article>`
@@ -16546,7 +16564,7 @@ ${pageCss}</style>
         }
         $("btnOpenActivity")?.addEventListener("click", (e) => {
           e.preventDefault();
-          void openActivitySheet(url);
+          void openActivitySheet(url, { liveHint: true });
         });
         $("btnCopyLink").addEventListener("click", async () => {
           try {
