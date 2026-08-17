@@ -2476,8 +2476,8 @@
         radial-gradient(ellipse 70% 55% at 50% 35%, rgba(255, 255, 255, 0.12), transparent 60%),
         radial-gradient(ellipse 90% 80% at 50% 100%, rgba(0,0,0,0.35), transparent 55%),
         linear-gradient(160deg, #0f3d2e 0%, #14532d 40%, #166534 70%, #0b3b28 100%);
-      /* 발표용 · 두꺼운 원형 빨강 레이저 */
-      --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='16%25' stop-color='%23ffc9c9'/%3E%3Cstop offset='38%25' stop-color='%23ff3b3b'/%3E%3Cstop offset='62%25' stop-color='%23dc2626' stop-opacity='0.55'/%3E%3Cstop offset='100%25' stop-color='%23dc2626' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='22' fill='url(%23g)'/%3E%3Ccircle cx='24' cy='24' r='11' fill='%23ef4444' fill-opacity='0.4'/%3E%3Ccircle cx='24' cy='24' r='8.2' fill='%23dc2626'/%3E%3Ccircle cx='24' cy='24' r='8.2' fill='none' stroke='%23991b1b' stroke-width='2'/%3E%3Ccircle cx='24' cy='24' r='4.6' fill='%23fff1f2'/%3E%3Ccircle cx='24' cy='24' r='2.8' fill='%23ff0000'/%3E%3C/svg%3E") 24 24, crosshair;
+      /* 발표용 · 기본 화살표 형태 + 형광 파랑 · 약 +2pt */
+      --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cdefs%3E%3Cfilter id='g' x='-50%25' y='-50%25' width='200%25' height='200%25'%3E%3CfeGaussianBlur stdDeviation='1.1' result='b'/%3E%3CfeMerge%3E%3CfeMergeNode in='b'/%3E%3CfeMergeNode in='SourceGraphic'/%3E%3C/feMerge%3E%3C/filter%3E%3C/defs%3E%3Cpath filter='url(%23g)' d='M2.2 1.2 L2.2 22.2 L7.6 16.8 L12.2 27.2 L16.4 25.4 L11.8 15 L18.6 15 Z' fill='%2338bdf8' fill-opacity='0.55'/%3E%3Cpath d='M2 1 L2 22 L7.5 16.6 L12.1 27 L16.2 25.2 L11.6 14.8 L18.5 14.8 Z' fill='%2360a5fa' stroke='%231d4ed8' stroke-width='1.35' stroke-linejoin='round'/%3E%3Cpath d='M4.4 5.2 L4.4 17.6 L8.2 14 L11.6 21.6 L14 20.5 L10.6 12.8 L15.8 12.8 Z' fill='%23dbeafe' fill-opacity='0.7'/%3E%3C/svg%3E") 2 1, default;
     }
     .report-deck.is-open { display: flex; }
     .report-deck.is-open,
@@ -2490,7 +2490,9 @@
       display: flex;
       flex-direction: column;
       border-radius: 20px;
-      overflow: hidden;
+      overflow-x: hidden;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
       border: 2px solid rgba(253, 230, 138, 0.45);
       background:
         radial-gradient(circle at 12% 8%, rgba(255,255,255,0.08), transparent 40%),
@@ -2500,12 +2502,18 @@
     }
     .report-deck.is-spread .report-deck-panel {
       width: min(1280px, 100%);
+      overflow: hidden;
     }
     .report-deck-body {
-      flex: 1;
+      flex: 0 0 auto;
       min-height: 0;
       display: flex;
       flex-direction: column;
+    }
+    .report-deck.is-spread .report-deck-body {
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
     }
     .report-deck-reader {
       display: none;
@@ -2751,94 +2759,151 @@
     }
     .report-deck-arena {
       flex: 0 0 auto;
-      padding: 8px 12px 10px;
+      padding: 10px 12px 12px;
       border-bottom: 1px solid rgba(253, 230, 138, 0.22);
       background:
-        linear-gradient(180deg, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.08)),
-        repeating-linear-gradient(
-          90deg,
-          transparent,
-          transparent 11px,
-          rgba(253, 230, 138, 0.035) 11px,
-          rgba(253, 230, 138, 0.035) 12px
-        );
+        radial-gradient(ellipse 70% 80% at 50% -10%, rgba(250, 204, 21, 0.14), transparent 55%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.28), rgba(0, 0, 0, 0.1));
     }
     .report-deck-arena[hidden] { display: none !important; }
-    .report-deck.is-spread .report-deck-arena .deck-arena-board {
-      display: none;
+    .report-deck.is-spread .report-deck-arena .deck-arena-board,
+    .report-deck.is-spread .report-deck-arena .deck-arena-modes { display: none; }
+    .deck-arena-now {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 8px 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(253, 230, 138, 0.45);
+      background:
+        linear-gradient(135deg, rgba(253, 230, 138, 0.18), rgba(34, 197, 94, 0.08) 55%, rgba(6, 40, 28, 0.55)),
+        rgba(3, 24, 18, 0.65);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), 0 8px 22px rgba(0,0,0,0.22);
+      overflow: hidden;
     }
-    .deck-arena-axis {
+    .deck-arena-now::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,0.12) 48%, transparent 62%);
+      transform: translateX(-120%);
+      animation: deckArenaShine 3.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes deckArenaShine {
+      0%, 55% { transform: translateX(-120%); }
+      80%, 100% { transform: translateX(120%); }
+    }
+    .deck-arena-now-kicker {
+      font: 800 10px/1 var(--font-sans);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(253, 230, 138, 0.7);
+    }
+    .deck-arena-now-title {
+      font: 900 clamp(1.15rem, 2.8vw, 1.55rem)/1.15 "Noto Sans KR", var(--font-sans);
+      color: #fffbeb;
+      letter-spacing: -0.04em;
+      text-shadow: 0 2px 0 rgba(0,0,0,0.25);
+    }
+    .deck-arena-now-title em {
+      font-style: normal;
+      color: #fde68a;
+    }
+    .deck-arena-modes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .deck-arena-mode {
+      appearance: none;
+      border: 1px solid rgba(253, 230, 138, 0.28);
+      background: rgba(255,255,255,0.06);
+      color: rgba(254, 243, 199, 0.78);
+      border-radius: 999px;
+      padding: 7px 11px;
+      font: 800 11px/1 var(--font-sans);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+    }
+    .deck-arena-mode:hover { background: rgba(255,255,255,0.12); color: #fff; }
+    .deck-arena-mode.is-on {
+      background: linear-gradient(180deg, #fde68a, #f59e0b);
+      border-color: #fbbf24;
+      color: #1c1917;
+      box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35);
+      transform: translateY(-1px);
+    }
+    .deck-arena-board {
+      position: relative;
+      margin-top: 8px;
+      border-radius: 16px;
+      border: 1px solid rgba(253, 230, 138, 0.32);
+      background:
+        radial-gradient(ellipse 90% 70% at 50% -20%, rgba(250, 204, 21, 0.22), transparent 58%),
+        linear-gradient(180deg, rgba(6, 40, 28, 0.88), rgba(2, 18, 14, 0.96));
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 28px rgba(0, 0, 0, 0.28);
+    }
+    .deck-arena-board::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        180deg,
+        transparent,
+        transparent 3px,
+        rgba(255,255,255,0.015) 3px,
+        rgba(255,255,255,0.015) 4px
+      );
+      pointer-events: none;
+      opacity: 0.7;
+    }
+    .deck-arena-board-head {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: 6px;
-    }
-    .deck-arena-axis-label {
-      font: 800 10px/1 var(--font-sans);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: rgba(253, 230, 138, 0.55);
-      margin-right: 2px;
-    }
-    .deck-arena-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      min-height: 26px;
-      padding: 0 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(253, 230, 138, 0.35);
-      background: linear-gradient(180deg, rgba(253, 230, 138, 0.16), rgba(253, 230, 138, 0.05));
-      color: #fef3c7;
-      font: 800 12px/1 var(--font-sans);
-      letter-spacing: -0.02em;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    }
-    .deck-arena-chip i {
-      font-style: normal;
-      opacity: 0.55;
-      font-weight: 700;
-      font-size: 0.78em;
-    }
-    .deck-arena-chip.is-dept {
-      border-color: rgba(125, 211, 252, 0.45);
-      background: linear-gradient(180deg, rgba(56, 189, 248, 0.18), rgba(14, 116, 144, 0.12));
-      color: #e0f2fe;
-    }
-    .deck-arena-board {
-      margin-top: 8px;
-      border-radius: 14px;
-      border: 1px solid rgba(253, 230, 138, 0.28);
-      background:
-        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(250, 204, 21, 0.12), transparent 55%),
-        linear-gradient(180deg, rgba(6, 40, 28, 0.75), rgba(3, 24, 18, 0.9));
-      overflow: hidden;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 20px rgba(0, 0, 0, 0.25);
-    }
-    .deck-arena-board-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       gap: 8px;
-      padding: 8px 10px 6px;
+      padding: 10px 12px 8px;
       border-bottom: 1px solid rgba(253, 230, 138, 0.16);
     }
     .deck-arena-board-head strong {
-      font: 800 13px/1.2 var(--font-sans);
+      font: 900 15px/1.2 var(--font-sans);
       color: #fde68a;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
     }
     .deck-arena-board-head span {
       font: 700 11px/1.2 var(--font-sans);
-      color: rgba(254, 243, 199, 0.65);
+      color: rgba(254, 243, 199, 0.7);
       white-space: nowrap;
+    }
+    .deck-arena-replay {
+      margin-left: auto;
+      appearance: none;
+      border: 1px solid rgba(253, 230, 138, 0.35);
+      background: rgba(0, 0, 0, 0.25);
+      color: #fde68a;
+      border-radius: 999px;
+      padding: 5px 10px;
+      font: 800 11px/1 var(--font-sans);
+      letter-spacing: 0.04em;
+      cursor: pointer;
+    }
+    .deck-arena-replay:hover {
+      background: rgba(250, 204, 21, 0.18);
+      border-color: rgba(253, 230, 138, 0.55);
     }
     .deck-arena-live {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-      font: 800 10px/1 var(--font-sans);
-      letter-spacing: 0.06em;
+      font: 900 10px/1 var(--font-sans);
+      letter-spacing: 0.08em;
       color: #86efac;
     }
     .deck-arena-live::before {
@@ -2847,107 +2912,190 @@
       height: 7px;
       border-radius: 50%;
       background: #22c55e;
-      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.25);
-      animation: deckArenaPulse 1.2s ease-in-out infinite;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.28);
+      animation: deckArenaPulse 1.1s ease-in-out infinite;
     }
     @keyframes deckArenaPulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.55; transform: scale(0.85); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+    .deck-arena-stage {
+      position: relative;
+      z-index: 1;
+      padding: 10px 10px 6px;
     }
     .deck-arena-podium {
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 6px;
-      padding: 8px 8px 4px;
+      gap: 8px;
+      align-items: end;
+      min-height: 148px;
     }
     .deck-arena-pod {
       position: relative;
       min-width: 0;
-      padding: 10px 6px 8px;
-      border-radius: 12px;
+      padding: 12px 8px 10px;
+      border-radius: 14px 14px 10px 10px;
       text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.05);
       overflow: hidden;
+      animation: deckPodPop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: calc(var(--pod-i, 0) * 90ms);
     }
+    @keyframes deckPodPop {
+      0% { opacity: 0; transform: translateY(28px) scale(0.92); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .report-deck.is-snap .deck-arena-pod { animation: none; }
     .deck-arena-pod.is-1 {
       order: 2;
-      background: linear-gradient(180deg, rgba(250, 204, 21, 0.28), rgba(250, 204, 21, 0.06));
-      border-color: rgba(250, 204, 21, 0.55);
-      box-shadow: 0 0 24px rgba(250, 204, 21, 0.18);
-      transform: translateY(-4px);
+      min-height: 148px;
+      background: linear-gradient(180deg, rgba(250, 204, 21, 0.42), rgba(250, 204, 21, 0.08));
+      border-color: rgba(250, 204, 21, 0.7);
+      box-shadow: 0 0 0 1px rgba(253,230,138,0.25), 0 12px 28px rgba(250, 204, 21, 0.22);
+      transform: translateY(-6px);
     }
-    .deck-arena-pod.is-2 { order: 1; }
-    .deck-arena-pod.is-3 { order: 3; }
+    .deck-arena-pod.is-2 { order: 1; min-height: 124px; }
+    .deck-arena-pod.is-3 { order: 3; min-height: 110px; }
+    .deck-arena-pod-crown {
+      position: absolute;
+      top: 6px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 1.05rem;
+      animation: deckCrownBob 1.6s ease-in-out infinite;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+    }
+    @keyframes deckCrownBob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-3px); }
+    }
     .deck-arena-pod-rank {
       font: 900 11px/1 var(--font-sans);
       color: #fde68a;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
+      margin-top: 14px;
     }
+    .deck-arena-pod.is-1 .deck-arena-pod-rank { margin-top: 22px; color: #fffbeb; }
     .deck-arena-pod-emoji {
-      font-size: 1.35rem;
+      font-size: 1.7rem;
       line-height: 1;
-      margin: 4px 0 2px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
+      margin: 6px 0 4px;
+      filter: drop-shadow(0 3px 6px rgba(0,0,0,0.4));
+      animation: deckEmojiBounce 1.8s ease-in-out infinite;
+      animation-delay: calc(var(--pod-i, 0) * 120ms);
+    }
+    @keyframes deckEmojiBounce {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-4px) scale(1.06); }
     }
     .deck-arena-pod-name {
-      font: 800 12px/1.25 var(--font-sans);
+      font: 900 13px/1.25 var(--font-sans);
       color: #fff7ed;
       letter-spacing: -0.03em;
       word-break: keep-all;
     }
-    .deck-arena-pod-pct {
+    .deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 15px; }
+    button.deck-arena-pod-name.is-job {
+      appearance: none;
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+      cursor: pointer;
+      text-decoration: underline;
+      text-decoration-color: rgba(253, 230, 138, 0.45);
+      text-underline-offset: 3px;
+    }
+    button.deck-arena-pod-name.is-job:hover,
+    button.deck-arena-pod-name.is-job:focus-visible {
+      color: #fef08a;
+      text-decoration-color: #fde68a;
+    }
+    .deck-arena-pod-hint {
       margin-top: 4px;
-      font: 900 15px/1 var(--font-sans);
+      font: 700 10px/1.2 var(--font-sans);
+      color: rgba(254, 243, 199, 0.55);
+    }
+    .deck-arena-pod-pct {
+      margin-top: 6px;
+      font: 900 clamp(1.15rem, 3vw, 1.45rem)/1 var(--font-sans);
       color: #fde68a;
       font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 18px rgba(250, 204, 21, 0.35);
     }
     .deck-arena-list {
+      position: relative;
+      z-index: 1;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      padding: 4px 8px 8px;
-      max-height: min(42vh, 320px);
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: thin;
+      gap: 5px;
+      padding: 6px 10px 12px;
     }
     .deck-arena-row {
       --pct: 0%;
       display: grid;
-      grid-template-columns: 28px minmax(0, 1.1fr) minmax(72px, 1.4fr) 52px;
+      grid-template-columns: 34px minmax(0, 1.15fr) minmax(80px, 1.5fr) 58px;
       align-items: center;
       gap: 8px;
-      padding: 7px 8px;
-      border-radius: 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      animation: deckArenaRowIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
-      animation-delay: calc(var(--i, 0) * 28ms);
+      padding: 9px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.045);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      animation: deckArenaRowIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: calc(var(--i, 0) * 45ms + 180ms);
     }
     .report-deck.is-snap .deck-arena-row { animation: none; }
     @keyframes deckArenaRowIn {
-      from { opacity: 0; transform: translateX(-10px); }
-      to { opacity: 1; transform: translateX(0); }
+      from { opacity: 0; transform: translateX(-16px) scale(0.98); }
+      to { opacity: 1; transform: translateX(0) scale(1); }
     }
     .deck-arena-row.is-top {
-      background: linear-gradient(90deg, rgba(250, 204, 21, 0.14), rgba(255, 255, 255, 0.03));
-      border-color: rgba(250, 204, 21, 0.28);
+      background: linear-gradient(90deg, rgba(250, 204, 21, 0.18), rgba(255, 255, 255, 0.03));
+      border-color: rgba(250, 204, 21, 0.35);
+      box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.08);
     }
     .deck-arena-rank {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 9px;
+      background: rgba(0,0,0,0.28);
       font: 900 13px/1 var(--font-sans);
       color: #fde68a;
-      text-align: center;
       font-variant-numeric: tabular-nums;
+    }
+    .deck-arena-row.is-top .deck-arena-rank {
+      background: linear-gradient(180deg, #fde68a, #f59e0b);
+      color: #1c1917;
     }
     .deck-arena-job {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 7px;
       min-width: 0;
-      font: 800 12.5px/1.25 var(--font-sans);
+      font: 800 13.5px/1.25 var(--font-sans);
       color: #fff7ed;
       letter-spacing: -0.02em;
+    }
+    button.deck-arena-job.is-job {
+      appearance: none;
+      border: none;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+      text-align: left;
+      cursor: pointer;
+    }
+    button.deck-arena-job.is-job:hover b,
+    button.deck-arena-job.is-job:focus-visible b {
+      color: #fef08a;
+      text-decoration: underline;
+      text-decoration-color: rgba(253, 230, 138, 0.7);
+      text-underline-offset: 3px;
     }
     .deck-arena-job b {
       overflow: hidden;
@@ -2957,69 +3105,398 @@
     .deck-arena-job em {
       flex-shrink: 0;
       font-style: normal;
-      font-size: 1.05rem;
+      font-size: 1.15rem;
+    }
+    .deck-arena-meta-link {
+      color: #fde68a;
+      font-weight: 800;
     }
     .deck-arena-meter {
       position: relative;
-      height: 12px;
+      height: 14px;
       border-radius: 999px;
-      background: rgba(0, 0, 0, 0.35);
+      background: rgba(0, 0, 0, 0.4);
       overflow: hidden;
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
     }
     .deck-arena-meter > i {
       display: block;
       height: 100%;
       width: 0;
       border-radius: inherit;
-      background: linear-gradient(90deg, #fbbf24, #f59e0b 55%, #fde68a);
-      box-shadow: 0 0 12px rgba(251, 191, 36, 0.45);
-      transition: width 0.85s cubic-bezier(0.22, 1, 0.36, 1);
-      transition-delay: calc(var(--i, 0) * 28ms + 40ms);
+      background: linear-gradient(90deg, #f59e0b, #fbbf24 45%, #fef3c7 85%, #fff);
+      box-shadow: 0 0 16px rgba(251, 191, 36, 0.55);
+      transition: width 1.05s cubic-bezier(0.16, 1, 0.3, 1);
+      transition-delay: calc(var(--i, 0) * 45ms + 220ms);
+      position: relative;
     }
-    .deck-arena-row.is-ready .deck-arena-meter > i {
-      width: var(--pct);
+    .deck-arena-meter > i::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.45), transparent);
+      animation: deckMeterShine 1.8s ease-in-out infinite;
     }
+    @keyframes deckMeterShine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+    .deck-arena-row.is-ready .deck-arena-meter > i { width: var(--pct); }
     .report-deck.is-snap .deck-arena-row .deck-arena-meter > i {
       transition: none;
       width: var(--pct);
     }
+    .report-deck.is-snap .deck-arena-meter > i::after { animation: none; }
     .deck-arena-pct {
       text-align: right;
-      font: 900 12px/1 var(--font-sans);
+      font: 900 14px/1 var(--font-sans);
       color: #fde68a;
       font-variant-numeric: tabular-nums;
     }
     .deck-arena-meta {
       grid-column: 2 / -1;
       margin-top: -2px;
-      font: 600 10px/1.2 var(--font-sans);
-      color: rgba(254, 243, 199, 0.55);
+      font: 700 10.5px/1.2 var(--font-sans);
+      color: rgba(254, 243, 199, 0.58);
     }
     .deck-arena-empty {
       margin: 0;
-      padding: 14px 10px 16px;
+      padding: 18px 12px 20px;
       text-align: center;
-      font: 600 12px/1.45 var(--font-sans);
+      font: 600 13px/1.5 var(--font-sans);
+      color: rgba(254, 243, 199, 0.7);
+    }
+    .deck-arena-compare {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 8px;
+      padding: 10px;
+    }
+    .deck-arena-col {
+      min-width: 0;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      animation: deckArenaRowIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+      animation-delay: calc(var(--i, 0) * 40ms);
+    }
+    .deck-arena-col.is-current {
+      border-color: rgba(250, 204, 21, 0.55);
+      background: linear-gradient(180deg, rgba(250, 204, 21, 0.16), rgba(255,255,255,0.03));
+      box-shadow: 0 0 0 1px rgba(250, 204, 21, 0.12);
+    }
+    .deck-arena-col-h {
+      font: 900 12px/1.2 var(--font-sans);
+      color: #fef3c7;
+      letter-spacing: -0.02em;
+      margin-bottom: 8px;
+    }
+    .deck-arena-col-h small {
+      display: block;
+      margin-top: 3px;
+      font: 700 10px/1.2 var(--font-sans);
+      color: rgba(254, 243, 199, 0.55);
+    }
+    .deck-arena-col-champ {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      width: 100%;
+      margin-bottom: 4px;
+      font: 800 12.5px/1.25 var(--font-sans);
+      color: #fff;
+    }
+    button.deck-arena-col-champ.is-job {
+      appearance: none;
+      border: none;
+      background: transparent;
+      padding: 0;
+      cursor: pointer;
+      text-align: left;
+    }
+    button.deck-arena-col-champ.is-job:hover span,
+    button.deck-arena-col-champ.is-job:focus-visible span {
+      color: #fef08a;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .deck-arena-col-champ b {
+      color: #fde68a;
+      margin-left: auto;
+      font-variant-numeric: tabular-nums;
+    }
+    .deck-arena-col-hint {
+      margin: -2px 0 8px;
+      font: 700 10px/1.2 var(--font-sans);
+      color: rgba(253, 230, 138, 0.7);
+    }
+    .deck-arena-who {
+      position: relative;
+      z-index: 2;
+      margin: 0 10px 12px;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(253, 230, 138, 0.45);
+      background:
+        linear-gradient(180deg, rgba(254, 243, 199, 0.14), rgba(6, 40, 28, 0.92));
+      box-shadow: 0 12px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.1);
+      animation: deckArenaRowIn 0.28s ease both;
+    }
+    .deck-arena-who[hidden] { display: none !important; }
+    .deck-arena-who-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .deck-arena-who-head strong {
+      display: block;
+      font: 900 16px/1.25 var(--font-sans);
+      color: #fffbeb;
+      letter-spacing: -0.03em;
+    }
+    .deck-arena-who-head span {
+      display: block;
+      margin-top: 3px;
+      font: 700 12px/1.3 var(--font-sans);
+      color: rgba(253, 230, 138, 0.8);
+    }
+    .deck-arena-who-x {
+      appearance: none;
+      border: 1px solid rgba(253, 230, 138, 0.4);
+      background: rgba(0,0,0,0.25);
+      color: #fef3c7;
+      border-radius: 999px;
+      padding: 7px 12px;
+      font: 800 12px/1 var(--font-sans);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .deck-arena-who-x:hover { background: rgba(255,255,255,0.12); }
+    .deck-arena-who-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: min(42vh, 360px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .deck-arena-who-list li {
+      display: grid;
+      grid-template-columns: 28px 72px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .deck-arena-who-idx {
+      width: 24px;
+      height: 24px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.28);
+      font: 900 11px/1 var(--font-sans);
+      color: #fde68a;
+    }
+    .deck-arena-who-no {
+      font: 900 15px/1.2 var(--font-sans);
+      color: #fde68a;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+    }
+    .deck-arena-who-name {
+      font: 800 16px/1.25 var(--font-sans);
+      color: #fff;
+      letter-spacing: -0.03em;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .deck-arena-who-empty {
+      margin: 4px 0 0;
+      text-align: center;
+      font: 600 13px/1.45 var(--font-sans);
       color: rgba(254, 243, 199, 0.65);
     }
+    .deck-arena-start {
+      position: relative;
+      z-index: 1;
+      padding: 28px 16px 32px;
+      text-align: center;
+      overflow: hidden;
+    }
+    .deck-arena-start::before {
+      content: "";
+      position: absolute;
+      inset: -20%;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(250, 204, 21, 0.2), transparent 45%),
+        repeating-conic-gradient(from 0deg, rgba(253,230,138,0.06) 0 8deg, transparent 8deg 16deg);
+      animation: deckArenaSpin 18s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes deckArenaSpin {
+      to { transform: rotate(360deg); }
+    }
+    .deck-arena-start-inner {
+      position: relative;
+      z-index: 1;
+    }
+    .deck-arena-start-kicker {
+      font: 900 11px/1 var(--font-sans);
+      letter-spacing: 0.18em;
+      color: rgba(253, 230, 138, 0.75);
+      text-transform: uppercase;
+    }
+    .deck-arena-start-title {
+      margin: 10px 0 6px;
+      font: 900 clamp(1.35rem, 4vw, 1.85rem)/1.15 var(--font-sans);
+      color: #fffbeb;
+      letter-spacing: -0.04em;
+      text-shadow: 0 0 24px rgba(250, 204, 21, 0.25);
+    }
+    .deck-arena-start-sub {
+      margin: 0 0 18px;
+      font: 700 13px/1.45 var(--font-sans);
+      color: rgba(254, 243, 199, 0.72);
+    }
+    .deck-arena-start-sub strong {
+      color: #fde68a;
+      font-size: 1.15em;
+    }
+    .deck-arena-start-btn {
+      appearance: none;
+      border: none;
+      cursor: pointer;
+      min-width: min(280px, 86vw);
+      padding: 16px 28px;
+      border-radius: 999px;
+      font: 900 clamp(1.35rem, 5vw, 1.75rem)/1 var(--font-sans);
+      letter-spacing: 0.12em;
+      color: #1c1917;
+      background: linear-gradient(180deg, #fef3c7 0%, #fbbf24 45%, #f59e0b 100%);
+      box-shadow:
+        0 0 0 3px rgba(253, 230, 138, 0.35),
+        0 10px 28px rgba(245, 158, 11, 0.45),
+        inset 0 1px 0 rgba(255,255,255,0.65);
+      animation: deckStartPulse 1.4s ease-in-out infinite;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+    .deck-arena-start-btn:hover {
+      filter: brightness(1.06);
+      transform: translateY(-2px) scale(1.02);
+    }
+    .deck-arena-start-btn:active {
+      transform: translateY(1px) scale(0.98);
+    }
+    .deck-arena-start-btn:disabled {
+      opacity: 0.55;
+      cursor: default;
+      animation: none;
+    }
+    @keyframes deckStartPulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(253, 230, 138, 0.3), 0 10px 28px rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(253, 230, 138, 0.12), 0 14px 36px rgba(245, 158, 11, 0.55); }
+    }
+    .deck-arena-start-hint {
+      margin-top: 14px;
+      font: 700 11px/1.4 var(--font-sans);
+      color: rgba(254, 243, 199, 0.5);
+      letter-spacing: 0.04em;
+    }
+    .deck-arena-count {
+      position: relative;
+      z-index: 1;
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      padding: 24px 12px;
+      text-align: center;
+    }
+    .deck-arena-count-num {
+      font: 900 clamp(4.5rem, 18vw, 7rem)/1 var(--font-sans);
+      color: #fde68a;
+      letter-spacing: -0.06em;
+      text-shadow:
+        0 0 40px rgba(250, 204, 21, 0.55),
+        0 8px 0 rgba(0,0,0,0.25);
+      animation: deckCountPop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    .deck-arena-count-num.is-go {
+      font-size: clamp(3.2rem, 14vw, 5.2rem);
+      letter-spacing: 0.08em;
+      color: #fffbeb;
+    }
+    .deck-arena-count-cap {
+      margin-top: 8px;
+      font: 900 13px/1.3 var(--font-sans);
+      letter-spacing: 0.16em;
+      color: rgba(254, 243, 199, 0.7);
+      text-transform: uppercase;
+    }
+    @keyframes deckCountPop {
+      0% { opacity: 0; transform: scale(0.45) rotate(-6deg); filter: blur(6px); }
+      60% { opacity: 1; transform: scale(1.12) rotate(1deg); filter: blur(0); }
+      100% { opacity: 1; transform: scale(1) rotate(0); }
+    }
+    .deck-arena-board.is-counting {
+      background:
+        radial-gradient(ellipse 90% 70% at 50% 30%, rgba(250, 204, 21, 0.28), transparent 55%),
+        linear-gradient(180deg, rgba(6, 40, 28, 0.92), rgba(2, 18, 14, 0.98));
+    }
+    .deck-arena-col-bar {
+      --pct: 0%;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.35);
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .deck-arena-col-bar > i {
+      display: block;
+      height: 100%;
+      width: 0;
+      background: linear-gradient(90deg, #f59e0b, #fde68a);
+      transition: width 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+      transition-delay: calc(var(--i, 0) * 40ms + 120ms);
+    }
+    .deck-arena-col.is-ready .deck-arena-col-bar > i { width: var(--pct); }
+    .deck-arena-col-empty {
+      font: 600 11px/1.35 var(--font-sans);
+      color: rgba(254, 243, 199, 0.5);
+    }
     @media (max-width: 720px) {
-      .deck-arena-podium { gap: 4px; padding: 6px; }
-      .deck-arena-pod { padding: 8px 4px; }
-      .deck-arena-pod-name { font-size: 11px; }
-      .deck-arena-pod-pct { font-size: 13px; }
+      .deck-arena-now-title { font-size: 1.12rem; }
+      .deck-arena-podium { gap: 5px; min-height: 132px; }
+      .deck-arena-pod { padding: 10px 5px 8px; }
+      .deck-arena-pod.is-1 { min-height: 132px; }
+      .deck-arena-pod.is-2 { min-height: 112px; }
+      .deck-arena-pod.is-3 { min-height: 100px; }
+      .deck-arena-pod-name { font-size: 11.5px; }
+      .deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 13px; }
       .deck-arena-row {
-        grid-template-columns: 22px minmax(0, 1fr) 44px;
+        grid-template-columns: 28px minmax(0, 1fr) 48px;
         grid-template-rows: auto auto;
       }
       .deck-arena-meter { grid-column: 1 / -1; }
       .deck-arena-pct { grid-column: 3; grid-row: 1; }
       .deck-arena-meta { grid-column: 2 / 3; }
-      .deck-arena-list { max-height: min(36vh, 260px); }
+      .deck-arena-compare { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); }
     }
     @media (max-width: 420px) {
-      .report-deck-arena { padding: 6px 8px 8px; }
-      .deck-arena-chip { min-height: 24px; font-size: 11px; padding: 0 8px; }
+      .report-deck-arena { padding: 8px 8px 10px; }
+      .deck-arena-now { padding: 10px 11px; }
+      .deck-arena-mode { padding: 6px 9px; font-size: 10.5px; }
     }
     .report-deck-head .btn-tiny {
       border-color: rgba(253, 230, 138, 0.5);
@@ -3129,8 +3606,8 @@
       .deck-icon-btn.is-emphasis { width: 36px; }
     }
     .report-deck-table {
-      flex: 1;
-      overflow: auto;
+      flex: 0 0 auto;
+      overflow: visible;
       padding: 16px 14px 22px;
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
@@ -5704,7 +6181,8 @@
               </div>
             </div>
             <div class="report-deck-arena" id="reportDeckArena" hidden>
-              <div class="deck-arena-axis" id="reportDeckArenaAxis" aria-label="학년·반·학과"></div>
+              <div class="deck-arena-now" id="reportDeckArenaNow" aria-label="현재 학급"></div>
+              <div class="deck-arena-modes" id="reportDeckArenaModes" hidden></div>
               <div class="deck-arena-board" id="reportDeckArenaBoard" hidden></div>
             </div>
             <div class="report-deck-body">
@@ -15604,6 +16082,12 @@ ${built.html}
       let liveDeckChannel = null;
       let liveDeckBoundKey = "";
       let liveDeckFocusId = "";
+      let arenaViewMode = "ours"; // ours | grade | class | dept
+      let arenaCompareBundle = null; // { sessionNo, units: [...] }
+      let arenaComparePromise = null;
+      let arenaOursPhase = "idle"; // idle | countdown | revealed
+      let arenaOursCountdown = 0;
+      let arenaRevealTimer = 0;
       let liveDeckCharByKey = new Map();
       let liveDeckSubscribed = false;
       let liveDeckCharCacheKey = "";
@@ -15814,7 +16298,7 @@ ${built.html}
               departmentNameFor(grade, classNo, classMeta) || classMeta?.department_name || ""
             ).trim()
           : "";
-        const chips = buildDeckClassAxis(grade, classNo, dept);
+        const nowLabel = formatDeckNowClassLabel(grade, classNo, dept);
         const arenaStats =
           sessionNo === 3 ? aggregateWorldcupArenaFromStudents(students, grade, classNo) : null;
         return {
@@ -15830,8 +16314,15 @@ ${built.html}
             grade,
             classNo,
             dept,
-            chips,
-            stats: arenaStats
+            nowLabel,
+            mode: arenaViewMode || "ours",
+            phase: arenaOursPhase || "idle",
+            countdown: arenaOursCountdown || 0,
+            stats: arenaStats,
+            compare:
+              sessionNo === 3 && arenaCompareBundle?.sessionNo === 3
+                ? { units: arenaCompareBundle.units }
+                : null
           }
         };
       }
@@ -15864,6 +16355,12 @@ ${built.html}
       function closeReportDeck() {
         const el = $("reportDeck");
         if (!el) return;
+        if (arenaRevealTimer) {
+          clearTimeout(arenaRevealTimer);
+          arenaRevealTimer = 0;
+        }
+        arenaOursPhase = "idle";
+        arenaOursCountdown = 0;
         closeDeckSpread({ silent: true });
         el.classList.remove("is-open", "is-snap");
         el.setAttribute("aria-hidden", "true");
@@ -15875,6 +16372,7 @@ ${built.html}
           if (board) {
             board.hidden = true;
             board.innerHTML = "";
+            board.classList.remove("is-counting");
           }
         }
         void broadcastReportDeckLive("close");
@@ -16209,6 +16707,8 @@ h1{margin:2px 0 0;font:800 14px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em;
         const stamp = new Date().toISOString().slice(0, 10);
         const clone = panel.cloneNode(true);
         clone.querySelector(".report-deck-actions")?.remove();
+        // 인쇄/저장은 카드(또는 펼친 보고서)만 — 월드컵 랭킹 아레나는 제외
+        clone.querySelector(".report-deck-arena")?.remove();
         clone.querySelectorAll("[hidden]").forEach((el) => el.remove());
         clone.querySelectorAll(".deck-card-hint").forEach((el) => el.remove());
         clone.querySelectorAll(".deck-card").forEach((el) => {
@@ -16233,6 +16733,7 @@ body{padding:6mm;font-family:Pretendard,"Noto Sans KR",sans-serif}
 .report-deck-head{border:none!important;background:transparent!important;padding:0 0 4mm!important;margin:0 0 3mm;border-bottom:2px solid #1f1e1d!important}
 .report-deck-head h3{color:#1f1e1d!important;text-shadow:none!important;font-size:15px!important}
 .report-deck-body{display:block!important}
+.report-deck-arena,.deck-arena-now,.deck-arena-modes,.deck-arena-board{display:none!important}
 .report-deck-reader{display:block!important;overflow:visible!important;padding:0!important;animation:none!important}
 .deck-reader-sheet{max-width:none!important;margin:0!important;box-shadow:none!important}
 @page{size:A4 portrait;margin:6mm}
@@ -16246,6 +16747,7 @@ body{padding:4mm;min-height:100vh;box-sizing:border-box;font-family:Pretendard,"
 .report-deck-head{border:none!important;background:transparent!important;padding:0 0 2mm!important;margin:0 0 2mm;border-bottom:1.5px solid rgba(253,230,138,.45)!important}
 .report-deck-head h3{color:#fef3c7!important;text-shadow:none!important;font-size:13px!important}
 .report-deck-body{display:block!important}
+.report-deck-arena,.deck-arena-now,.deck-arena-modes,.deck-arena-board{display:none!important}
 .report-deck-table{
   display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
   gap:2mm!important;padding:0!important;overflow:visible!important;perspective:none!important;
@@ -16723,18 +17225,43 @@ ${pageCss}</style>
         return "🏆";
       }
 
-      function buildDeckClassAxis(grade, classNo, dept) {
-        const chips = [
-          { key: "grade", label: "학년", value: `${Number(grade) || 1}학년` },
-          { key: "class", label: "반", value: `${Number(classNo) || 1}반` }
-        ];
+      function formatDeckNowClassLabel(grade, classNo, dept) {
+        const g = Number(grade) || 1;
+        const c = Number(classNo) || 1;
         const d = String(dept || "").trim();
-        if (d) chips.push({ key: "dept", label: "학과", value: d, dept: true });
-        return chips;
+        return d ? `${g}학년 ${c}반 · ${d}` : `${g}학년 ${c}반`;
+      }
+
+      function sortArenaStudents(list) {
+        return (list || [])
+          .slice()
+          .sort((a, b) => {
+            const na = Number(String(a.no || "").replace(/\D/g, "")) || 0;
+            const nb = Number(String(b.no || "").replace(/\D/g, "")) || 0;
+            if (na !== nb) return na - nb;
+            return String(a.no || "").localeCompare(String(b.no || ""), "ko", { numeric: true });
+          });
+      }
+
+      function ranksFromWinnerMaps(counts, peopleByJob, played) {
+        return [...counts.entries()]
+          .map(([name, wins]) => ({
+            name,
+            wins,
+            pct: played ? Math.round((wins / played) * 1000) / 10 : 0,
+            emoji: deckArenaJobEmoji(name),
+            students: sortArenaStudents(peopleByJob?.get(name) || [])
+          }))
+          .sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name, "ko"));
+      }
+
+      function ranksFromWinnerCounts(counts, played) {
+        return ranksFromWinnerMaps(counts, new Map(), played);
       }
 
       function aggregateWorldcupArenaFromStudents(students, grade, classNo) {
         const counts = new Map();
+        const peopleByJob = new Map();
         let played = 0;
         let submitted = 0;
         for (const st of students || []) {
@@ -16756,67 +17283,530 @@ ${pageCss}</style>
           if (!winner) continue;
           played += 1;
           counts.set(winner, (counts.get(winner) || 0) + 1);
+          const no = key || normalizeStudentNo(st.student_no) || String(st.student_no || "").trim();
+          const name =
+            String(st.student_name || "").trim() ||
+            String(latest.student_name || "").trim() ||
+            "이름 없음";
+          if (!peopleByJob.has(winner)) peopleByJob.set(winner, []);
+          peopleByJob.get(winner).push({ no, name });
         }
-        const ranks = [...counts.entries()]
-          .map(([name, wins]) => ({
-            name,
-            wins,
-            pct: played ? Math.round((wins / played) * 1000) / 10 : 0,
-            emoji: deckArenaJobEmoji(name)
-          }))
-          .sort((a, b) => b.wins - a.wins || a.name.localeCompare(b.name, "ko"));
-        return { played, submitted, roster: (students || []).length, ranks };
+        return {
+          played,
+          submitted,
+          roster: (students || []).length,
+          ranks: ranksFromWinnerMaps(counts, peopleByJob, played)
+        };
       }
 
-      function buildWorldcupArenaHtml(stats) {
+      function extractWinnerFast(html) {
+        try {
+          const m = extractWorldcupFieldMap(html);
+          return sanitizeSeteukText(m?.wcWinner || "").trim();
+        } catch {
+          return "";
+        }
+      }
+
+      async function ensureArenaCompareBundle(sessionNo) {
+        const sn = Number(sessionNo) || 0;
+        if (sn !== 3 || !sb) return null;
+        if (arenaCompareBundle?.sessionNo === sn && Array.isArray(arenaCompareBundle.units)) {
+          return arenaCompareBundle;
+        }
+        if (arenaComparePromise) return arenaComparePromise;
+        arenaComparePromise = (async () => {
+          const classes = (teacherClasses || []).filter((c) => c.is_active && c.class_no);
+          const pairs = await Promise.all(
+            classes.map(async (c) => {
+              try {
+                const ls = await fetchLessonsForClass(c.id, { seed: false });
+                const lesson = (ls || []).find((l) => Number(l.session_no) === 3) || null;
+                return { classRow: c, lesson };
+              } catch {
+                return { classRow: c, lesson: null };
+              }
+            })
+          );
+          const lessonIds = pairs.filter((p) => p.lesson?.id).map((p) => p.lesson.id);
+          const byLesson = new Map();
+          if (lessonIds.length) {
+            const { data, error } = await sb
+              .from("submissions")
+              .select("lesson_id, student_no, student_name, content, created_at")
+              .in("lesson_id", lessonIds)
+              .order("created_at", { ascending: false });
+            if (!error) {
+              for (const row of data || []) {
+                const lid = row.lesson_id;
+                if (!byLesson.has(lid)) byLesson.set(lid, new Map());
+                const bag = byLesson.get(lid);
+                const sno = normalizeStudentNo(row.student_no) || String(row.student_no || "").trim();
+                if (!sno || bag.has(sno)) continue;
+                bag.set(sno, row);
+              }
+            }
+          }
+          const units = pairs.map(({ classRow, lesson }) => {
+            const grade = Number(classRow.grade) || 1;
+            const classNo = Number(classRow.class_no) || 1;
+            const dept = isVocational()
+              ? String(
+                  departmentNameFor(grade, classNo, classRow) || classRow.department_name || ""
+                ).trim()
+              : "";
+            const counts = new Map();
+            const peopleByJob = new Map();
+            let played = 0;
+            let submitted = 0;
+            if (lesson?.id) {
+              const bag = byLesson.get(lesson.id);
+              if (bag) {
+                for (const row of bag.values()) {
+                  submitted += 1;
+                  const winner = extractWinnerFast(row.content);
+                  if (!winner) continue;
+                  played += 1;
+                  counts.set(winner, (counts.get(winner) || 0) + 1);
+                  const no =
+                    resolveRosterStudentKey(row.student_no, grade, classNo) ||
+                    normalizeStudentNo(row.student_no) ||
+                    String(row.student_no || "").trim();
+                  const name = String(row.student_name || "").trim() || "이름 없음";
+                  if (!peopleByJob.has(winner)) peopleByJob.set(winner, []);
+                  peopleByJob.get(winner).push({ no, name });
+                }
+              }
+            }
+            return {
+              classId: classRow.id,
+              grade,
+              classNo,
+              dept,
+              label: formatDeckNowClassLabel(grade, classNo, dept),
+              short: dept ? `${classNo}반 · ${dept}` : `${classNo}반`,
+              played,
+              submitted,
+              ranks: ranksFromWinnerMaps(counts, peopleByJob, played)
+            };
+          });
+          arenaCompareBundle = { sessionNo: sn, units };
+          return arenaCompareBundle;
+        })()
+          .catch((e) => {
+            console.warn(e);
+            arenaCompareBundle = { sessionNo: sn, units: [] };
+            return arenaCompareBundle;
+          })
+          .finally(() => {
+            arenaComparePromise = null;
+          });
+        return arenaComparePromise;
+      }
+
+      function mergeArenaUnits(units) {
+        const counts = new Map();
+        const peopleByJob = new Map();
+        let played = 0;
+        for (const u of units || []) {
+          for (const r of u.ranks || []) {
+            counts.set(r.name, (counts.get(r.name) || 0) + (Number(r.wins) || 0));
+            played += Number(r.wins) || 0;
+            if (!peopleByJob.has(r.name)) peopleByJob.set(r.name, []);
+            const bag = peopleByJob.get(r.name);
+            for (const st of r.students || []) {
+              const key = `${st.no}|${st.name}`;
+              if (bag.some((x) => `${x.no}|${x.name}` === key)) continue;
+              bag.push({ no: st.no, name: st.name });
+            }
+          }
+        }
+        return { played, ranks: ranksFromWinnerMaps(counts, peopleByJob, played) };
+      }
+
+      function buildCompareColumns(mode, bundle, currentClassId) {
+        const units = Array.isArray(bundle?.units) ? bundle.units : [];
+        if (mode === "grade") {
+          const grades = [1, 2, 3];
+          return grades
+            .map((g) => {
+              const group = units.filter((u) => Number(u.grade) === g);
+              if (!group.length) return null;
+              const merged = mergeArenaUnits(group);
+              return {
+                key: `g${g}`,
+                title: `${g}학년`,
+                sub: `${group.length}개 학급 · ${merged.played}게임`,
+                current: group.some((u) => u.classId === currentClassId),
+                ...merged
+              };
+            })
+            .filter(Boolean);
+        }
+        if (mode === "dept") {
+          const map = new Map();
+          for (const u of units) {
+            const key = String(u.dept || "").trim() || "(학과 미설정)";
+            if (!map.has(key)) map.set(key, []);
+            map.get(key).push(u);
+          }
+          return [...map.entries()]
+            .map(([title, group]) => {
+              const merged = mergeArenaUnits(group);
+              return {
+                key: `d:${title}`,
+                title,
+                sub: `${group.length}개 학급 · ${merged.played}게임`,
+                current: group.some((u) => u.classId === currentClassId),
+                ...merged
+              };
+            })
+            .sort((a, b) => b.played - a.played || a.title.localeCompare(b.title, "ko"));
+        }
+        // class
+        return units
+          .slice()
+          .sort((a, b) => a.grade - b.grade || a.classNo - b.classNo || a.label.localeCompare(b.label, "ko"))
+          .map((u) => ({
+            key: u.classId,
+            title: u.label,
+            sub: `${u.played}게임 · 제출 ${u.submitted}`,
+            current: u.classId === currentClassId,
+            played: u.played,
+            ranks: u.ranks
+          }));
+      }
+
+      function buildWorldcupArenaStartHtml(stats) {
+        const played = Number(stats?.played) || 0;
+        const jobs = Array.isArray(stats?.ranks) ? stats.ranks.length : 0;
+        return `
+          <div class="deck-arena-board-head">
+            <strong>직업 월드컵 랭킹 · 우리 반</strong>
+            <span class="deck-arena-live">READY</span>
+            <span>집계 대기</span>
+          </div>
+          <div class="deck-arena-start">
+            <div class="deck-arena-start-inner">
+              <div class="deck-arena-start-kicker">World Cup Ranking</div>
+              <div class="deck-arena-start-title">우승 직업 집계</div>
+              <p class="deck-arena-start-sub">
+                <strong>${played}</strong>게임 완료
+                ${jobs ? ` · 후보 직업 <strong>${jobs}</strong>종` : ""}
+              </p>
+              <button type="button" class="deck-arena-start-btn" id="deckArenaStartBtn" ${played ? "" : "disabled"}>START</button>
+              <p class="deck-arena-start-hint">${played ? "버튼을 누르면 카운트다운 후 순위가 공개됩니다" : "아직 우승 결과가 없어요"}</p>
+            </div>
+          </div>`;
+      }
+
+      function buildWorldcupArenaCountdownHtml(n) {
+        const isGo = n === 0;
+        return `
+          <div class="deck-arena-board-head">
+            <strong>직업 월드컵 랭킹 · 우리 반</strong>
+            <span class="deck-arena-live">LIVE</span>
+            <span>집계 시작</span>
+          </div>
+          <div class="deck-arena-count">
+            <div>
+              <div class="deck-arena-count-num${isGo ? " is-go" : ""}" key="${n}">${isGo ? "GO!" : String(n)}</div>
+              <div class="deck-arena-count-cap">${isGo ? "ranking reveal" : "get ready"}</div>
+            </div>
+          </div>`;
+      }
+
+      function revealOursArenaRanking(board, stats) {
+        if (!board) return;
+        arenaOursPhase = "revealed";
+        arenaOursCountdown = 0;
+        board.classList.remove("is-counting");
+        board.innerHTML = buildWorldcupArenaHtml(stats, {
+          title: "직업 월드컵 랭킹 · 우리 반",
+          sub: `${stats?.played || 0}게임 · 우승비율`,
+          replay: true
+        });
+        bindArenaJobClicks(board, stats?.ranks || [], null);
+        bindOursArenaReplay(board, stats);
+        activateArenaMotion(board);
+        void broadcastReportDeckLive("state");
+      }
+
+      function startOursArenaReveal(board, stats) {
+        if (!board || arenaOursPhase === "countdown") return;
+        if (!(Number(stats?.played) > 0)) {
+          toast("아직 우승 결과가 없어요");
+          return;
+        }
+        if (arenaRevealTimer) {
+          clearTimeout(arenaRevealTimer);
+          arenaRevealTimer = 0;
+        }
+        arenaOursPhase = "countdown";
+        const steps = [3, 2, 1, 0];
+        let i = 0;
+        const tick = () => {
+          if (!$("reportDeck")?.classList.contains("is-open")) return;
+          if (arenaViewMode !== "ours") return;
+          const n = steps[i];
+          arenaOursCountdown = n;
+          board.classList.add("is-counting");
+          board.innerHTML = buildWorldcupArenaCountdownHtml(n);
+          void broadcastReportDeckLive("state");
+          i += 1;
+          if (i < steps.length) {
+            arenaRevealTimer = setTimeout(tick, n === 0 ? 700 : 780);
+          } else {
+            arenaRevealTimer = setTimeout(() => revealOursArenaRanking(board, stats), 120);
+          }
+        };
+        tick();
+      }
+
+      function bindOursArenaStart(board, stats) {
+        const btn = board?.querySelector("#deckArenaStartBtn");
+        if (!btn) return;
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          startOursArenaReveal(board, stats);
+        });
+      }
+
+      function bindOursArenaReplay(board, stats) {
+        const btn = board?.querySelector("#deckArenaReplayBtn");
+        if (!btn) return;
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          arenaOursPhase = "idle";
+          arenaOursCountdown = 0;
+          board.classList.remove("is-counting");
+          board.innerHTML = buildWorldcupArenaStartHtml(stats);
+          bindOursArenaStart(board, stats);
+          void broadcastReportDeckLive("state");
+        });
+      }
+
+      function buildWorldcupArenaHtml(stats, opts = {}) {
         const played = Number(stats?.played) || 0;
         const ranks = Array.isArray(stats?.ranks) ? stats.ranks : [];
+        const title = opts.title || "직업 월드컵 랭킹";
+        const sub = opts.sub || `${played}게임 · 우승비율`;
         if (!played || !ranks.length) {
-          return `<p class="deck-arena-empty">아직 우승 직업이 없어요. 학생들이 월드컵을 마치면 실시간 랭킹이 올라갑니다.</p>`;
+          return `
+            <div class="deck-arena-board-head">
+              <strong>${escapeHtml(title)}</strong>
+              <span class="deck-arena-live">LIVE</span>
+              <span>${escapeHtml(sub)}</span>
+            </div>
+            <p class="deck-arena-empty">아직 우승 직업이 없어요. 학생들이 월드컵을 마치면 실시간 랭킹이 올라갑니다.</p>`;
         }
         const top = ranks.slice(0, 3);
-        const podium = `<div class="deck-arena-podium">${[0, 1, 2]
+        const podium = `<div class="deck-arena-stage"><div class="deck-arena-podium">${[0, 1, 2]
           .map((i) => {
             const r = top[i];
+            const crown = i === 0 ? `<div class="deck-arena-pod-crown" aria-hidden="true">👑</div>` : "";
             if (!r) {
-              return `<div class="deck-arena-pod is-${i + 1}" style="opacity:.35"><div class="deck-arena-pod-rank">${i + 1}위</div><div class="deck-arena-pod-emoji">—</div><div class="deck-arena-pod-name">대기중</div></div>`;
+              return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i};opacity:.35">${crown}<div class="deck-arena-pod-rank">${i + 1}위</div><div class="deck-arena-pod-emoji">—</div><div class="deck-arena-pod-name">대기중</div></div>`;
             }
-            return `<div class="deck-arena-pod is-${i + 1}">
+            const n = (r.students || []).length || r.wins || 0;
+            return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i}">
+              ${crown}
               <div class="deck-arena-pod-rank">${i + 1}위</div>
               <div class="deck-arena-pod-emoji">${r.emoji || "🏆"}</div>
-              <div class="deck-arena-pod-name">${escapeHtml(r.name)}</div>
-              <div class="deck-arena-pod-pct">${r.pct}%</div>
+              <button type="button" class="deck-arena-pod-name is-job" data-arena-job="${escapeHtml(r.name)}" title="이 직업을 고른 학생 보기">${escapeHtml(r.name)}</button>
+              <div class="deck-arena-pod-pct" data-count-to="${r.pct}">0%</div>
+              <div class="deck-arena-pod-hint">${n}명 · 눌러 명단</div>
             </div>`;
           })
-          .join("")}</div>`;
+          .join("")}</div></div>`;
         const rows = ranks
           .slice(0, 16)
           .map((r, i) => {
             const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+            const n = (r.students || []).length || r.wins || 0;
             return `<div class="deck-arena-row${i < 3 ? " is-top" : ""}" style="--i:${i};--pct:${pct}%" data-arena-row="1">
               <div class="deck-arena-rank">${i + 1}</div>
-              <div class="deck-arena-job"><em>${r.emoji || "🏆"}</em><b>${escapeHtml(r.name)}</b></div>
+              <button type="button" class="deck-arena-job is-job" data-arena-job="${escapeHtml(r.name)}" title="이 직업을 고른 학생 보기">
+                <em>${r.emoji || "🏆"}</em><b>${escapeHtml(r.name)}</b>
+              </button>
               <div class="deck-arena-meter" aria-hidden="true"><i></i></div>
-              <div class="deck-arena-pct">${pct}%</div>
-              <div class="deck-arena-meta">우승 ${r.wins}회 / 전체 ${played}게임</div>
+              <div class="deck-arena-pct" data-count-to="${pct}">0%</div>
+              <div class="deck-arena-meta">우승 ${r.wins}회 / 전체 ${played}게임 · <span class="deck-arena-meta-link">명단 ${n}명 ▸</span></div>
             </div>`;
           })
           .join("");
         return `
           <div class="deck-arena-board-head">
-            <strong>직업 월드컵 랭킹</strong>
+            <strong>${escapeHtml(title)}</strong>
             <span class="deck-arena-live">LIVE</span>
-            <span>${played}게임 · 우승비율</span>
+            <span>${escapeHtml(sub)} · 직업명 클릭 → 학생</span>
+            ${opts.replay ? `<button type="button" class="deck-arena-replay" id="deckArenaReplayBtn">다시 START</button>` : ""}
           </div>
           ${podium}
-          <div class="deck-arena-list">${rows}</div>`;
+          <div class="deck-arena-list">${rows}</div>
+          <div class="deck-arena-who" id="reportDeckArenaWho" hidden></div>`;
       }
 
-      function paintReportDeckArena({ grade, classNo, sessionNo, students, arena } = {}) {
+      function buildWorldcupCompareHtml(cols, modeLabel) {
+        if (!cols.length) {
+          return `
+            <div class="deck-arena-board-head">
+              <strong>${escapeHtml(modeLabel)}</strong>
+              <span class="deck-arena-live">LIVE</span>
+            </div>
+            <p class="deck-arena-empty">비교할 학급 데이터가 아직 없어요.</p>`;
+        }
+        const body = cols
+          .map((col, i) => {
+            const top = (col.ranks || []).slice(0, 3);
+            const bars = top.length
+              ? top
+                  .map((r) => {
+                    const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+                    const n = (r.students || []).length || r.wins || 0;
+                    return `<button type="button" class="deck-arena-col-champ is-job" data-arena-job="${escapeHtml(r.name)}" data-arena-scope="${escapeHtml(col.key || col.title)}" title="이 직업을 고른 학생 보기">
+                        <span>${r.emoji || "🏆"} ${escapeHtml(r.name)}</span><b>${pct}%</b>
+                      </button>
+                      <div class="deck-arena-col-bar" style="--pct:${pct}%"><i></i></div>
+                      <div class="deck-arena-col-hint">명단 ${n}명 ▸</div>`;
+                  })
+                  .join("")
+              : `<p class="deck-arena-col-empty">우승 기록 없음</p>`;
+            return `<div class="deck-arena-col${col.current ? " is-current" : ""}" style="--i:${i}" data-arena-col="1" data-arena-scope="${escapeHtml(col.key || col.title)}">
+              <div class="deck-arena-col-h">${escapeHtml(col.title)}<small>${escapeHtml(col.sub || "")}</small></div>
+              ${bars}
+            </div>`;
+          })
+          .join("");
+        return `
+          <div class="deck-arena-board-head">
+            <strong>${escapeHtml(modeLabel)}</strong>
+            <span class="deck-arena-live">LIVE</span>
+            <span>직업명 클릭 → 학생</span>
+          </div>
+          <div class="deck-arena-compare">${body}</div>
+          <div class="deck-arena-who" id="reportDeckArenaWho" hidden></div>`;
+      }
+
+      let arenaJobLookup = new Map(); // `${scope}::${job}` or `::${job}` -> { job, students, scopeLabel }
+
+      function registerArenaJobLookup(ranks, scopeKey = "", scopeLabel = "") {
+        for (const r of ranks || []) {
+          if (!r?.name) continue;
+          const key = `${scopeKey}::${r.name}`;
+          arenaJobLookup.set(key, {
+            job: r.name,
+            emoji: r.emoji || "🏆",
+            students: sortArenaStudents(r.students || []),
+            scopeLabel
+          });
+          if (!scopeKey) {
+            arenaJobLookup.set(`::${r.name}`, arenaJobLookup.get(key));
+          }
+        }
+      }
+
+      function openArenaWhoPanel(board, jobName, scopeKey = "") {
+        if (!board || !jobName) return;
+        let who = board.querySelector(".deck-arena-who");
+        if (!who) {
+          who = document.createElement("div");
+          who.className = "deck-arena-who";
+          board.appendChild(who);
+        }
+        const hit =
+          arenaJobLookup.get(`${scopeKey}::${jobName}`) ||
+          arenaJobLookup.get(`::${jobName}`) ||
+          null;
+        const students = hit?.students || [];
+        const emoji = hit?.emoji || deckArenaJobEmoji(jobName);
+        const scopeLabel = hit?.scopeLabel ? ` · ${hit.scopeLabel}` : "";
+        who.hidden = false;
+        who.innerHTML = `
+          <div class="deck-arena-who-head">
+            <div>
+              <strong>${emoji} ${escapeHtml(jobName)}</strong>
+              <span>${students.length}명${escapeHtml(scopeLabel)} · 학번 순</span>
+            </div>
+            <button type="button" class="deck-arena-who-x" data-arena-who-close="1" aria-label="닫기">닫기</button>
+          </div>
+          ${
+            students.length
+              ? `<ol class="deck-arena-who-list">${students
+                  .map(
+                    (st, idx) =>
+                      `<li><span class="deck-arena-who-idx">${idx + 1}</span><span class="deck-arena-who-no">${escapeHtml(st.no || "—")}</span><span class="deck-arena-who-name">${escapeHtml(st.name || "이름 없음")}</span></li>`
+                  )
+                  .join("")}</ol>`
+              : `<p class="deck-arena-who-empty">이 직업을 우승으로 고른 학생이 아직 없어요.</p>`
+          }`;
+        who.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        who.querySelector("[data-arena-who-close]")?.addEventListener("click", () => {
+          who.hidden = true;
+          who.innerHTML = "";
+        });
+      }
+
+      function bindArenaJobClicks(board, ranks, cols) {
+        if (!board) return;
+        arenaJobLookup = new Map();
+        registerArenaJobLookup(ranks, "", "우리 반");
+        for (const col of cols || []) {
+          registerArenaJobLookup(col.ranks, col.key || col.title, col.title);
+        }
+        board.querySelectorAll("[data-arena-job]").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const job = btn.getAttribute("data-arena-job") || "";
+            const scope =
+              btn.getAttribute("data-arena-scope") ||
+              btn.closest?.("[data-arena-scope]")?.getAttribute("data-arena-scope") ||
+              "";
+            openArenaWhoPanel(board, job, scope);
+          });
+        });
+      }
+
+      function runArenaCountUps(root) {
+        if (!root) return;
+        root.querySelectorAll("[data-count-to]").forEach((el) => {
+          const target = Number(el.getAttribute("data-count-to")) || 0;
+          if (root.closest?.(".report-deck.is-snap")) {
+            el.textContent = `${target}%`;
+            return;
+          }
+          const start = performance.now();
+          const dur = 900;
+          const tick = (now) => {
+            const t = Math.min(1, (now - start) / dur);
+            const eased = 1 - Math.pow(1 - t, 3);
+            el.textContent = `${Math.round(target * eased * 10) / 10}%`;
+            if (t < 1) requestAnimationFrame(tick);
+            else el.textContent = `${target}%`;
+          };
+          requestAnimationFrame(tick);
+        });
+      }
+
+      function activateArenaMotion(board) {
+        if (!board) return;
+        requestAnimationFrame(() => {
+          board.querySelectorAll("[data-arena-row], [data-arena-col]").forEach((el) => {
+            el.classList.add("is-ready");
+          });
+          runArenaCountUps(board);
+        });
+      }
+
+      function paintReportDeckArena({ grade, classNo, sessionNo, students, arena, mode } = {}) {
         const host = $("reportDeckArena");
-        const axisEl = $("reportDeckArenaAxis");
+        const nowEl = $("reportDeckArenaNow");
+        const modesEl = $("reportDeckArenaModes");
         const board = $("reportDeckArenaBoard");
-        if (!host || !axisEl) return null;
+        if (!host || !nowEl) return null;
 
         const classId = activeClassId || teacherClass?.id || null;
         const meta = classMetaById(classId);
@@ -16825,46 +17815,123 @@ ${pageCss}</style>
         const dept = isVocational()
           ? String(departmentNameFor(g, c, meta) || meta?.department_name || "").trim()
           : "";
-        const chips = buildDeckClassAxis(g, c, dept);
-        axisEl.innerHTML =
-          `<span class="deck-arena-axis-label">AXIS</span>` +
-          chips
-            .map(
-              (chip) =>
-                `<span class="deck-arena-chip${chip.dept ? " is-dept" : ""}"><i>${escapeHtml(chip.label)}</i>${escapeHtml(chip.value)}</span>`
-            )
-            .join("");
+        const nowLabel = formatDeckNowClassLabel(g, c, dept);
+        nowEl.innerHTML = `<span class="deck-arena-now-kicker">현재 탐구 학급</span><span class="deck-arena-now-title"><em>${escapeHtml(nowLabel)}</em></span>`;
 
         const sn = Number(sessionNo) || 0;
-        let stats = arena || null;
-        if (!stats && sn === 3) {
-          stats = aggregateWorldcupArenaFromStudents(students || detailStudentsCache, g, c);
-        }
+        const viewMode = mode || arenaViewMode || "ours";
+        arenaViewMode = viewMode;
 
         host.hidden = false;
-        if (board) {
-          if (sn === 3 && stats) {
-            board.hidden = false;
-            board.innerHTML = buildWorldcupArenaHtml(stats);
-            requestAnimationFrame(() => {
-              board.querySelectorAll("[data-arena-row]").forEach((row) => row.classList.add("is-ready"));
+        if (modesEl) {
+          if (sn === 3) {
+            modesEl.hidden = false;
+            const modeBtns = [
+              { id: "ours", label: "우리 반" },
+              { id: "grade", label: "학년별 비교" },
+              { id: "class", label: "반별 비교" }
+            ];
+            if (isVocational()) modeBtns.push({ id: "dept", label: "학과별 비교" });
+            modesEl.innerHTML = modeBtns
+              .map(
+                (m) =>
+                  `<button type="button" class="deck-arena-mode${viewMode === m.id ? " is-on" : ""}" data-arena-mode="${m.id}">${m.label}</button>`
+              )
+              .join("");
+            modesEl.querySelectorAll("[data-arena-mode]").forEach((btn) => {
+              btn.addEventListener("click", () => {
+                const next = btn.getAttribute("data-arena-mode") || "ours";
+                if (next === arenaViewMode) return;
+                if (arenaOursPhase === "countdown") {
+                  if (arenaRevealTimer) {
+                    clearTimeout(arenaRevealTimer);
+                    arenaRevealTimer = 0;
+                  }
+                  arenaOursPhase = "idle";
+                  arenaOursCountdown = 0;
+                }
+                arenaViewMode = next;
+                paintReportDeckArena({ grade: g, classNo: c, sessionNo: sn, students });
+                void broadcastReportDeckLive("state");
+              });
             });
           } else {
-            board.hidden = true;
-            board.innerHTML = "";
+            modesEl.hidden = true;
+            modesEl.innerHTML = "";
           }
+        }
+
+        if (!board) {
+          return { grade: g, classNo: c, dept, nowLabel, sessionNo: sn, mode: viewMode, stats: null };
+        }
+
+        if (sn !== 3) {
+          board.hidden = true;
+          board.innerHTML = "";
+          return { grade: g, classNo: c, dept, nowLabel, sessionNo: sn, mode: viewMode, stats: null };
+        }
+
+        board.hidden = false;
+        const oursStats =
+          arena?.stats ||
+          aggregateWorldcupArenaFromStudents(students || detailStudentsCache, g, c);
+
+        if (viewMode === "ours") {
+          if (arenaOursPhase === "revealed") {
+            board.innerHTML = buildWorldcupArenaHtml(oursStats, {
+              title: "직업 월드컵 랭킹 · 우리 반",
+              sub: `${oursStats.played || 0}게임 · 우승비율`,
+              replay: true
+            });
+            bindArenaJobClicks(board, oursStats.ranks || [], null);
+            bindOursArenaReplay(board, oursStats);
+            activateArenaMotion(board);
+          } else if (arenaOursPhase === "countdown") {
+            board.classList.add("is-counting");
+            board.innerHTML = buildWorldcupArenaCountdownHtml(arenaOursCountdown || 3);
+          } else {
+            board.classList.remove("is-counting");
+            board.innerHTML = buildWorldcupArenaStartHtml(oursStats);
+            bindOursArenaStart(board, oursStats);
+          }
+        } else {
+          board.classList.remove("is-counting");
+          board.innerHTML = `
+            <div class="deck-arena-board-head">
+              <strong>${viewMode === "grade" ? "학년별" : viewMode === "dept" ? "학과별" : "반별"} 비교</strong>
+              <span class="deck-arena-live">LIVE</span>
+              <span>불러오는 중…</span>
+            </div>
+            <p class="deck-arena-empty">다른 학급 랭킹을 모으는 중이에요…</p>`;
+          void ensureArenaCompareBundle(3).then((bundle) => {
+            if (!$("reportDeck")?.classList.contains("is-open")) return;
+            if (arenaViewMode !== viewMode) return;
+            const label =
+              viewMode === "grade" ? "학년별 우승 비교" : viewMode === "dept" ? "학과별 우승 비교" : "반별 우승 비교";
+            const cols = buildCompareColumns(viewMode, bundle, classId);
+            board.innerHTML = buildWorldcupCompareHtml(cols, label);
+            bindArenaJobClicks(board, null, cols);
+            activateArenaMotion(board);
+            void broadcastReportDeckLive("state");
+          });
         }
 
         return {
           grade: g,
           classNo: c,
           dept,
-          chips,
+          nowLabel,
           sessionNo: sn,
-          stats: sn === 3 ? stats : null
+          mode: viewMode,
+          phase: arenaOursPhase,
+          stats: oursStats,
+          chips: [
+            { key: "grade", label: "학년", value: `${g}학년` },
+            { key: "class", label: "반", value: `${c}반` },
+            ...(dept ? [{ key: "dept", label: "학과", value: dept, dept: true }] : [])
+          ]
         };
       }
-
       function paintReportDeckCards(ordered, grade, classNo, charByKey) {
         const table = $("reportDeckTable");
         if (!table) return;
@@ -16968,7 +18035,17 @@ ${pageCss}</style>
         }
 
         paintReportDeckCards(ordered, grade, classNo, charByKey);
+        arenaOursPhase = "idle";
+        arenaOursCountdown = 0;
+        if (arenaRevealTimer) {
+          clearTimeout(arenaRevealTimer);
+          arenaRevealTimer = 0;
+        }
         paintReportDeckArena({ grade, classNo, sessionNo, students: ordered });
+        if (sessionNo === 3) {
+          arenaCompareBundle = null;
+          void ensureArenaCompareBundle(3);
+        }
 
         // 2) 학생 화면 강제 동기화 (채널 준비되는 대로 즉시 방송)
         const pushLive = async () => {

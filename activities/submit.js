@@ -2429,7 +2429,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2125";
+        css.href = "./live-report-deck.css?v=2129";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2439,7 +2439,8 @@ ${linkedCss}
         if (
           !root.querySelector(".report-deck-panel") ||
           !root.querySelector("#btnLiveDeckPrint") ||
-          !root.querySelector("#liveDeckArena")
+          !root.querySelector("#liveDeckArena") ||
+          !root.querySelector("#liveDeckArenaNow")
         ) {
           root.remove();
           root = null;
@@ -2482,7 +2483,7 @@ ${linkedCss}
             </div>
           </div>
           <div class="report-deck-arena" id="liveDeckArena" hidden>
-            <div class="deck-arena-axis" id="liveDeckArenaAxis" aria-label="학년·반·학과"></div>
+            <div class="deck-arena-now" id="liveDeckArenaNow" aria-label="현재 학급"></div>
             <div class="deck-arena-board" id="liveDeckArenaBoard" hidden></div>
           </div>
           <div class="report-deck-body">
@@ -2511,13 +2512,98 @@ ${linkedCss}
       if (liveBtn) liveBtn.classList.toggle("is-on", !!localState.open);
     }
 
+    function sortLiveArenaStudents(list) {
+      return (list || [])
+        .slice()
+        .sort((a, b) => {
+          const na = Number(String(a.no || "").replace(/\D/g, "")) || 0;
+          const nb = Number(String(b.no || "").replace(/\D/g, "")) || 0;
+          if (na !== nb) return na - nb;
+          return String(a.no || "").localeCompare(String(b.no || ""), "ko", { numeric: true });
+        });
+    }
+
+    let liveArenaJobLookup = new Map();
+
+    function openLiveArenaWho(board, jobName, scopeKey = "") {
+      if (!board || !jobName) return;
+      let who = board.querySelector(".deck-arena-who");
+      if (!who) {
+        who = document.createElement("div");
+        who.className = "deck-arena-who";
+        board.appendChild(who);
+      }
+      const hit =
+        liveArenaJobLookup.get(`${scopeKey}::${jobName}`) ||
+        liveArenaJobLookup.get(`::${jobName}`) ||
+        null;
+      const students = sortLiveArenaStudents(hit?.students || []);
+      const emoji = hit?.emoji || "🏆";
+      const scopeLabel = hit?.scopeLabel ? ` · ${hit.scopeLabel}` : "";
+      who.hidden = false;
+      who.innerHTML = `
+        <div class="deck-arena-who-head">
+          <div>
+            <strong>${escapeHtml(emoji)} ${escapeHtml(jobName)}</strong>
+            <span>${students.length}명${escapeHtml(scopeLabel)} · 학번 순</span>
+          </div>
+          <button type="button" class="deck-arena-who-x" data-arena-who-close="1" aria-label="닫기">닫기</button>
+        </div>
+        ${
+          students.length
+            ? `<ol class="deck-arena-who-list">${students
+                .map(
+                  (st, idx) =>
+                    `<li><span class="deck-arena-who-idx">${idx + 1}</span><span class="deck-arena-who-no">${escapeHtml(st.no || "—")}</span><span class="deck-arena-who-name">${escapeHtml(st.name || "이름 없음")}</span></li>`
+                )
+                .join("")}</ol>`
+            : `<p class="deck-arena-who-empty">이 직업을 우승으로 고른 학생이 아직 없어요.</p>`
+        }`;
+      who.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      who.querySelector("[data-arena-who-close]")?.addEventListener("click", () => {
+        who.hidden = true;
+        who.innerHTML = "";
+      });
+    }
+
+    function bindLiveArenaJobClicks(board, ranks, cols) {
+      if (!board) return;
+      liveArenaJobLookup = new Map();
+      const register = (list, scopeKey, scopeLabel) => {
+        for (const r of list || []) {
+          if (!r?.name) continue;
+          const key = `${scopeKey}::${r.name}`;
+          liveArenaJobLookup.set(key, {
+            job: r.name,
+            emoji: r.emoji || "🏆",
+            students: r.students || [],
+            scopeLabel
+          });
+          if (!scopeKey) liveArenaJobLookup.set(`::${r.name}`, liveArenaJobLookup.get(key));
+        }
+      };
+      register(ranks, "", "우리 반");
+      for (const col of cols || []) register(col.ranks, col.key || col.title, col.title);
+      board.querySelectorAll("[data-arena-job]").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const job = btn.getAttribute("data-arena-job") || "";
+          const scope =
+            btn.getAttribute("data-arena-scope") ||
+            btn.closest?.("[data-arena-scope]")?.getAttribute("data-arena-scope") ||
+            "";
+          openLiveArenaWho(board, job, scope);
+        });
+      });
+    }
+
     function paintLiveArena(arena, sn) {
       const host = document.getElementById("liveDeckArena");
-      const axis = document.getElementById("liveDeckArenaAxis");
+      const nowEl = document.getElementById("liveDeckArenaNow");
       const board = document.getElementById("liveDeckArenaBoard");
-      if (!host || !axis) return;
-      const chips = Array.isArray(arena?.chips) ? arena.chips : [];
-      if (!chips.length && !arena?.grade) {
+      if (!host || !nowEl) return;
+      if (!arena && !Number(sn)) {
         host.hidden = true;
         if (board) {
           board.hidden = true;
@@ -2525,81 +2611,268 @@ ${linkedCss}
         }
         return;
       }
-      const axisChips =
-        chips.length > 0
-          ? chips
-          : [
-              { label: "학년", value: `${Number(arena.grade) || 1}학년` },
-              { label: "반", value: `${Number(arena.classNo) || 1}반` },
-              ...(String(arena.dept || "").trim()
-                ? [{ label: "학과", value: String(arena.dept).trim(), dept: true }]
-                : [])
-            ];
-      axis.innerHTML =
-        `<span class="deck-arena-axis-label">AXIS</span>` +
-        axisChips
-          .map(
-            (chip) =>
-              `<span class="deck-arena-chip${chip.dept ? " is-dept" : ""}"><i>${escapeHtml(chip.label || "")}</i>${escapeHtml(chip.value || "")}</span>`
-          )
-          .join("");
+      const g = Number(arena?.grade) || 1;
+      const c = Number(arena?.classNo) || 1;
+      const dept = String(arena?.dept || "").trim();
+      const nowLabel =
+        String(arena?.nowLabel || "").trim() ||
+        (dept ? `${g}학년 ${c}반 · ${dept}` : `${g}학년 ${c}반`);
+      nowEl.innerHTML = `<span class="deck-arena-now-kicker">현재 탐구 학급</span><span class="deck-arena-now-title"><em>${escapeHtml(nowLabel)}</em></span>`;
       host.hidden = false;
       if (!board) return;
-      const stats = arena?.stats;
-      if (Number(sn) === 3 && stats) {
-        board.hidden = false;
-        board.innerHTML = buildLiveWorldcupArenaHtml(stats);
-        requestAnimationFrame(() => {
-          board.querySelectorAll("[data-arena-row]").forEach((row) => row.classList.add("is-ready"));
-        });
-      } else {
+      if (Number(sn) !== 3) {
         board.hidden = true;
         board.innerHTML = "";
+        return;
       }
+      board.hidden = false;
+      const mode = arena?.mode || "ours";
+      let cols = null;
+      if (mode !== "ours") {
+        if (arena?.compare?.units) {
+          const built = buildLiveCompareHtml(mode, arena.compare.units, arena);
+          board.innerHTML = built.html;
+          cols = built.cols;
+          bindLiveArenaJobClicks(board, null, cols);
+        } else {
+          board.innerHTML = `<div class="deck-arena-board-head"><strong>비교</strong><span class="deck-arena-live">LIVE</span></div><p class="deck-arena-empty">비교 데이터를 불러오는 중…</p>`;
+        }
+      } else {
+        const phase = arena?.phase || "idle";
+        const stats = arena?.stats || { played: 0, ranks: [] };
+        if (phase === "revealed") {
+          board.classList.remove("is-counting");
+          board.innerHTML = buildLiveWorldcupArenaHtml(stats);
+          bindLiveArenaJobClicks(board, stats.ranks || [], null);
+        } else if (phase === "countdown") {
+          board.classList.add("is-counting");
+          board.innerHTML = buildLiveCountdownHtml(Number(arena?.countdown) || 3);
+        } else {
+          board.classList.remove("is-counting");
+          board.innerHTML = buildLiveStartHtml(stats);
+        }
+      }
+      requestAnimationFrame(() => {
+        board.querySelectorAll("[data-arena-row], [data-arena-col]").forEach((el) => {
+          el.classList.add("is-ready");
+        });
+        board.querySelectorAll("[data-count-to]").forEach((el) => {
+          el.textContent = `${el.getAttribute("data-count-to") || 0}%`;
+        });
+      });
+    }
+
+    function buildLiveStartHtml(stats) {
+      const played = Number(stats?.played) || 0;
+      const jobs = Array.isArray(stats?.ranks) ? stats.ranks.length : 0;
+      return `
+        <div class="deck-arena-board-head">
+          <strong>직업 월드컵 랭킹 · 우리 반</strong>
+          <span class="deck-arena-live">READY</span>
+          <span>집계 대기</span>
+        </div>
+        <div class="deck-arena-start">
+          <div class="deck-arena-start-inner">
+            <div class="deck-arena-start-kicker">World Cup Ranking</div>
+            <div class="deck-arena-start-title">우승 직업 집계</div>
+            <p class="deck-arena-start-sub">
+              <strong>${played}</strong>게임 완료
+              ${jobs ? ` · 후보 직업 <strong>${jobs}</strong>종` : ""}
+            </p>
+            <button type="button" class="deck-arena-start-btn" disabled>START</button>
+            <p class="deck-arena-start-hint">교사가 START를 누르면 카운트다운이 시작됩니다</p>
+          </div>
+        </div>`;
+    }
+
+    function buildLiveCountdownHtml(n) {
+      const isGo = Number(n) === 0;
+      return `
+        <div class="deck-arena-board-head">
+          <strong>직업 월드컵 랭킹 · 우리 반</strong>
+          <span class="deck-arena-live">LIVE</span>
+          <span>집계 시작</span>
+        </div>
+        <div class="deck-arena-count">
+          <div>
+            <div class="deck-arena-count-num${isGo ? " is-go" : ""}">${isGo ? "GO!" : String(n)}</div>
+            <div class="deck-arena-count-cap">${isGo ? "ranking reveal" : "get ready"}</div>
+          </div>
+        </div>`;
     }
 
     function buildLiveWorldcupArenaHtml(stats) {
       const played = Number(stats?.played) || 0;
       const ranks = Array.isArray(stats?.ranks) ? stats.ranks : [];
       if (!played || !ranks.length) {
-        return `<p class="deck-arena-empty">아직 우승 직업이 없어요. 월드컵을 마치면 랭킹이 올라갑니다.</p>`;
+        return `
+          <div class="deck-arena-board-head">
+            <strong>직업 월드컵 랭킹 · 우리 반</strong>
+            <span class="deck-arena-live">LIVE</span>
+          </div>
+          <p class="deck-arena-empty">아직 우승 직업이 없어요. 월드컵을 마치면 랭킹이 올라갑니다.</p>`;
       }
       const top = ranks.slice(0, 3);
-      const podium = `<div class="deck-arena-podium">${[0, 1, 2]
+      const podium = `<div class="deck-arena-stage"><div class="deck-arena-podium">${[0, 1, 2]
         .map((i) => {
           const r = top[i];
+          const crown = i === 0 ? `<div class="deck-arena-pod-crown" aria-hidden="true">👑</div>` : "";
           if (!r) {
-            return `<div class="deck-arena-pod is-${i + 1}" style="opacity:.35"><div class="deck-arena-pod-rank">${i + 1}위</div><div class="deck-arena-pod-emoji">—</div><div class="deck-arena-pod-name">대기중</div></div>`;
+            return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i};opacity:.35">${crown}<div class="deck-arena-pod-rank">${i + 1}위</div><div class="deck-arena-pod-emoji">—</div><div class="deck-arena-pod-name">대기중</div></div>`;
           }
-          return `<div class="deck-arena-pod is-${i + 1}">
+          const n = (r.students || []).length || r.wins || 0;
+          return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i}">
+            ${crown}
             <div class="deck-arena-pod-rank">${i + 1}위</div>
             <div class="deck-arena-pod-emoji">${escapeHtml(r.emoji || "🏆")}</div>
-            <div class="deck-arena-pod-name">${escapeHtml(r.name)}</div>
-            <div class="deck-arena-pod-pct">${Number(r.pct) || 0}%</div>
+            <button type="button" class="deck-arena-pod-name is-job" data-arena-job="${escapeHtml(r.name)}" title="이 직업을 고른 학생 보기">${escapeHtml(r.name)}</button>
+            <div class="deck-arena-pod-pct" data-count-to="${Number(r.pct) || 0}">${Number(r.pct) || 0}%</div>
+            <div class="deck-arena-pod-hint">${n}명 · 눌러 명단</div>
           </div>`;
         })
-        .join("")}</div>`;
+        .join("")}</div></div>`;
       const rows = ranks
         .slice(0, 16)
         .map((r, i) => {
           const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+          const n = (r.students || []).length || r.wins || 0;
           return `<div class="deck-arena-row${i < 3 ? " is-top" : ""}" style="--i:${i};--pct:${pct}%" data-arena-row="1">
             <div class="deck-arena-rank">${i + 1}</div>
-            <div class="deck-arena-job"><em>${escapeHtml(r.emoji || "🏆")}</em><b>${escapeHtml(r.name)}</b></div>
+            <button type="button" class="deck-arena-job is-job" data-arena-job="${escapeHtml(r.name)}" title="이 직업을 고른 학생 보기">
+              <em>${escapeHtml(r.emoji || "🏆")}</em><b>${escapeHtml(r.name)}</b>
+            </button>
             <div class="deck-arena-meter" aria-hidden="true"><i></i></div>
-            <div class="deck-arena-pct">${pct}%</div>
-            <div class="deck-arena-meta">우승 ${Number(r.wins) || 0}회 / 전체 ${played}게임</div>
+            <div class="deck-arena-pct" data-count-to="${pct}">${pct}%</div>
+            <div class="deck-arena-meta">우승 ${Number(r.wins) || 0}회 / 전체 ${played}게임 · <span class="deck-arena-meta-link">명단 ${n}명 ▸</span></div>
           </div>`;
         })
         .join("");
       return `
         <div class="deck-arena-board-head">
-          <strong>직업 월드컵 랭킹</strong>
+          <strong>직업 월드컵 랭킹 · 우리 반</strong>
           <span class="deck-arena-live">LIVE</span>
-          <span>${played}게임 · 우승비율</span>
+          <span>${played}게임 · 직업명 클릭 → 학생</span>
         </div>
         ${podium}
-        <div class="deck-arena-list">${rows}</div>`;
+        <div class="deck-arena-list">${rows}</div>
+        <div class="deck-arena-who" hidden></div>`;
+    }
+
+    function buildLiveCompareHtml(mode, units, arena) {
+      const label =
+        mode === "grade" ? "학년별 우승 비교" : mode === "dept" ? "학과별 우승 비교" : "반별 우승 비교";
+      const nowLabel = String(arena?.nowLabel || "");
+      let cols = [];
+
+      const mergeRanks = (group) => {
+        const counts = new Map();
+        const people = new Map();
+        let played = 0;
+        for (const u of group) {
+          for (const r of u.ranks || []) {
+            counts.set(r.name, (counts.get(r.name) || 0) + (Number(r.wins) || 0));
+            played += Number(r.wins) || 0;
+            if (!people.has(r.name)) people.set(r.name, []);
+            const bag = people.get(r.name);
+            for (const st of r.students || []) {
+              const key = `${st.no}|${st.name}`;
+              if (bag.some((x) => `${x.no}|${x.name}` === key)) continue;
+              bag.push({ no: st.no, name: st.name });
+            }
+          }
+        }
+        const ranks = [...counts.entries()]
+          .map(([name, wins]) => ({
+            name,
+            wins,
+            pct: played ? Math.round((wins / played) * 1000) / 10 : 0,
+            emoji: "🏆",
+            students: sortLiveArenaStudents(people.get(name) || [])
+          }))
+          .sort((a, b) => b.wins - a.wins);
+        return { played, ranks };
+      };
+
+      if (mode === "grade") {
+        cols = [1, 2, 3]
+          .map((g) => {
+            const group = (units || []).filter((u) => Number(u.grade) === g);
+            if (!group.length) return null;
+            const merged = mergeRanks(group);
+            return {
+              key: `g${g}`,
+              title: `${g}학년`,
+              sub: `${group.length}개 학급 · ${merged.played}게임`,
+              current: group.some((u) => u.label === nowLabel),
+              ranks: merged.ranks
+            };
+          })
+          .filter(Boolean);
+      } else if (mode === "dept") {
+        const map = new Map();
+        for (const u of units || []) {
+          const key = String(u.dept || "").trim() || "(학과 미설정)";
+          if (!map.has(key)) map.set(key, []);
+          map.get(key).push(u);
+        }
+        cols = [...map.entries()].map(([title, group]) => {
+          const merged = mergeRanks(group);
+          return {
+            key: `d:${title}`,
+            title,
+            sub: `${group.length}개 학급 · ${merged.played}게임`,
+            current: group.some((u) => u.label === nowLabel),
+            ranks: merged.ranks
+          };
+        });
+      } else {
+        cols = (units || []).map((u) => ({
+          key: u.classId || u.label,
+          title: u.label,
+          sub: `${u.played || 0}게임`,
+          current: u.label === nowLabel,
+          ranks: u.ranks || []
+        }));
+      }
+      if (!cols.length) {
+        return {
+          html: `<div class="deck-arena-board-head"><strong>${escapeHtml(label)}</strong><span class="deck-arena-live">LIVE</span></div><p class="deck-arena-empty">비교 데이터가 없어요.</p>`,
+          cols: []
+        };
+      }
+      const body = cols
+        .map((col, i) => {
+          const top = (col.ranks || []).slice(0, 3);
+          const bars = top.length
+            ? top
+                .map((r) => {
+                  const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+                  const n = (r.students || []).length || r.wins || 0;
+                  return `<button type="button" class="deck-arena-col-champ is-job" data-arena-job="${escapeHtml(r.name)}" data-arena-scope="${escapeHtml(col.key || col.title)}" title="이 직업을 고른 학생 보기">
+                      <span>${escapeHtml(r.emoji || "🏆")} ${escapeHtml(r.name)}</span><b>${pct}%</b>
+                    </button>
+                    <div class="deck-arena-col-bar" style="--pct:${pct}%"><i></i></div>
+                    <div class="deck-arena-col-hint">명단 ${n}명 ▸</div>`;
+                })
+                .join("")
+            : `<p class="deck-arena-col-empty">우승 기록 없음</p>`;
+          return `<div class="deck-arena-col${col.current ? " is-current" : ""}" style="--i:${i}" data-arena-col="1" data-arena-scope="${escapeHtml(col.key || col.title)}">
+            <div class="deck-arena-col-h">${escapeHtml(col.title)}<small>${escapeHtml(col.sub || "")}</small></div>
+            ${bars}
+          </div>`;
+        })
+        .join("");
+      return {
+        html: `
+        <div class="deck-arena-board-head">
+          <strong>${escapeHtml(label)}</strong>
+          <span class="deck-arena-live">LIVE</span>
+          <span>직업명 클릭 → 학생</span>
+        </div>
+        <div class="deck-arena-compare">${body}</div>
+        <div class="deck-arena-who" hidden></div>`,
+        cols
+      };
     }
 
     function paintFromState(state, opts = {}) {
