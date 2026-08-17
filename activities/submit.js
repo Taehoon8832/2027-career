@@ -1981,7 +1981,8 @@ ${linkedCss}
           label: lab.slice(0, 80),
           value: v.slice(0, 1200),
           num: opts.num || "",
-          accent: !!opts.accent
+          accent: !!opts.accent,
+          wide: opts.wide === true || (opts.wide !== false && v.length > 48)
         });
       };
 
@@ -2012,12 +2013,39 @@ ${linkedCss}
           push(labels[k] || `${n}번 문항`, map[k], { num: String(n) });
         }
       } else if (sessionNo === 3) {
-        push("직업", map.wcWinner, { accent: true, num: "1" });
-        push("차순위", map.wcRunnerUp, { accent: true, num: "2" });
-        push("1등으로 고른 가장 큰 이유", map.wcQ1);
-        push("마지막까지 고민한 직업과의 차이", map.wcQ2);
-        push("필요한 핵심 능력 3가지", map.wcQ3);
-        push("앞으로 90일 안 실천 계획", map.wcQ4);
+        push("직업", map.wcWinner, { accent: true, wide: false });
+        push("차순위", map.wcRunnerUp, { accent: true, wide: false });
+        push("1등으로 고른 가장 큰 이유", map.wcQ1, { wide: true });
+        push("마지막까지 고민한 직업과의 차이", map.wcQ2, { wide: true });
+        push("필요한 핵심 능력 3가지", map.wcQ3, { wide: true });
+        push("앞으로 90일 안 실천 계획", map.wcQ4, { wide: true });
+      } else if (sessionNo === 4) {
+        const order = [
+          ["f1", "희망 직업명", true],
+          ["f2", "관련 학과/전공", true],
+          ["f3", "필요 자격 및 준비 사항", false],
+          ["f4", "초봉 예상 연봉", false],
+          ["f5", "5년차 예상 연봉", false],
+          ["f6", "10년차 이상 예상 연봉", false],
+          ["f7", "예상 퇴직 시점", false],
+          ["f8", "직업 전망 (향후 10년)", false],
+          ["f9", "직업의 주요 특징 및 업무", false],
+          ["f10", "강점 Strength", false],
+          ["f11", "약점 Weakness", false],
+          ["f12", "기회 Opportunity", false],
+          ["f13", "위협 Threat", false],
+          ["f14", "강점 활용 방안", false],
+          ["f15", "약점 보완 방안", false],
+          ["f16", "단기 실행 계획", false],
+          ["f17", "중장기 실행 계획", false],
+          ["f18", "필요 역량 및 조력자", false],
+          ["f19", "진로 포부 및 종합 성찰", false]
+        ];
+        for (const [id, lab, accent] of order) {
+          const raw = map[id] || "";
+          if (!raw) continue;
+          push(lab, raw, { accent, wide: raw.length > 36 });
+        }
       } else {
         const keys = Object.keys(map)
           .filter((k) => /^(?:f|q)\d+$/i.test(k))
@@ -2034,7 +2062,7 @@ ${linkedCss}
       }
 
       if (map.fReflect || map.bReflect) {
-        push("느낀점 (세특 참조)", map.fReflect || map.bReflect, { accent: true });
+        push("느낀점 (세특 참조)", map.fReflect || map.bReflect, { wide: true });
       }
 
       if (!fields.length) {
@@ -2046,39 +2074,133 @@ ${linkedCss}
 
     function sectionLabelForLive() {
       if (sessionNo === 1) return "「나」 사용 설명서";
-      if (sessionNo === 2) return "100문 100답";
       if (sessionNo === 3) return "직업 월드컵 작성 내용";
       if (sessionNo === 4) return "SWOT 작성 내용";
       return "학생 작성 내용";
+    }
+
+    function extractLiveSession1Char(html) {
+      const raw = String(html || "");
+      if (!raw || !/infFaceWrap|inf-face-wrap|inf-photo/i.test(raw)) return null;
+      try {
+        const doc = new DOMParser().parseFromString(raw, "text/html");
+        const faceWrap =
+          doc.querySelector("#infFaceWrap") || doc.querySelector(".inf-face-wrap");
+        const photo =
+          faceWrap?.querySelector(".inf-photo") || doc.querySelector(".inf-photo");
+        if (!photo) return null;
+        const hasSvg = !!photo.querySelector("svg");
+        if (!hasSvg && !String(photo.innerHTML || "").trim()) return null;
+        const clone = photo.cloneNode(true);
+        clone
+          .querySelectorAll(
+            "script, .inf-photo-spark, .inf-photo-ring, .inf-photo-shade, .inf-photo-lv, .inf-photo-arc, .inf-photo-power"
+          )
+          .forEach((el) => el.remove());
+        const name =
+          (doc.querySelector(".inf-name-text")?.textContent || "").trim() ||
+          (doc.querySelector("#sheetDisplayName")?.getAttribute("value") || "").trim() ||
+          (doc.querySelector("#sheetDisplayName")?.textContent || "").trim();
+        let mbti = (doc.querySelector(".inf-photo-mbti")?.textContent || "")
+          .replace(/^MBTI\s*/i, "")
+          .trim();
+        if (!mbti) mbti = (doc.querySelector(".inf-mbti-bit")?.textContent || "").trim();
+        let arch = "";
+        const badge = doc.querySelector(".inf-class-badge b");
+        if (badge) {
+          const b = badge.cloneNode(true);
+          b.querySelectorAll(".inf-mbti-sep, .inf-mbti-bit").forEach((el) => el.remove());
+          arch = (b.textContent || "")
+            .replace(/,?\s*MBTI는\s*/gi, "")
+            .replace(/^★\s*/, "")
+            .replace(/,\s*$/, "")
+            .trim();
+        }
+        if (!name && !mbti && !hasSvg) return null;
+        return {
+          faceHtml: clone.outerHTML,
+          name: name || "이름 미정",
+          mbti,
+          arch
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    function assessLiveCompleteness(content) {
+      const html = String(content || "");
+      const exportAttr = /data-complete=["']([01])["']/i.exec(html);
+      const filledAttr = /data-filled=["'](\d+)["']/i.exec(html);
+      const fieldsAttr = /data-fields=["'](\d+)["']/i.exec(html);
+      const filled = Number(filledAttr?.[1]) || 0;
+      const fieldCount = Number(fieldsAttr?.[1]) || 0;
+      const pct = fieldCount > 0 ? Math.max(0, Math.min(100, Math.round((filled / fieldCount) * 100))) : exportAttr?.[1] === "0" ? 0 : 100;
+      if (exportAttr) {
+        if (exportAttr[1] === "0") {
+          return { incomplete: true, pct, label: `(${pct}% 작성됨)` };
+        }
+        return { incomplete: false, pct: 100, label: "" };
+      }
+      if (sessionNo === 3) {
+        const map = extractLiveFieldMap(html);
+        if (String(map.wcWinner || "").trim() || /is-wc-done/i.test(html)) {
+          return { incomplete: false, pct: 100, label: "" };
+        }
+      }
+      return { incomplete: false, pct: 100, label: "" };
+    }
+
+    function formatLiveTime(iso) {
+      try {
+        return new Date(iso).toLocaleString("ko-KR", {
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch {
+        return "";
+      }
     }
 
     function buildLiveReaderHtml(who, fields) {
       const list = Array.isArray(fields) ? fields : [];
       const displayName = who?.name || "이름 없음";
       const no = who?.no || "—";
-      const art = `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(
-        String(displayName).slice(0, 1) || "?"
-      )}</div>`;
-      const tags = [
-        `<span class="deck-reader-tag">${escapeHtml(String(sessionNo))}차시</span>`,
-        list.length
-          ? `<span class="deck-reader-tag is-blue">작성 ${list.length}문항</span>`
-          : `<span class="deck-reader-tag is-warn">작성 내용 없음</span>`
-      ];
+      const art = who?.faceHtml
+        ? `<div class="deck-reader-art" aria-hidden="true">${who.faceHtml}</div>`
+        : `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(
+            String(displayName).slice(0, 1) || "?"
+          )}</div>`;
+      const tags = [];
+      if (who?.incompleteLabel) {
+        tags.push(`<span class="deck-reader-tag is-warn">${escapeHtml(who.incompleteLabel)}</span>`);
+      }
+      if (who?.mbti) {
+        tags.push(`<span class="deck-reader-tag is-blue">MBTI ${escapeHtml(who.mbti)}</span>`);
+      }
+      if (who?.arch) {
+        tags.push(`<span class="deck-reader-tag">★ ${escapeHtml(who.arch)}</span>`);
+      }
+      tags.push(`<span class="deck-reader-tag">${escapeHtml(String(sessionNo))}차시</span>`);
+      if (who?.createdAt) {
+        const t = formatLiveTime(who.createdAt);
+        if (t) tags.push(`<span class="deck-reader-tag">${escapeHtml(t)}</span>`);
+      }
       const withWide = list.map((f) => ({
         ...f,
         wide: !!(f.wide || (f.value || "").length > 48)
       }));
-      // 짧은 답은 2~3열 그리드, 전부 긴 서술일 때만 세로 플로우
       const useFlow = withWide.length > 0 && withWide.every((f) => f.wide);
       const fieldHtml = withWide.length
         ? `<div class="${useFlow ? "deck-reader-flow" : "deck-reader-grid"}">${withWide
-            .map((f) => {
-              return `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
+            .map(
+              (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
               <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
               <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
-            </article>`;
-            })
+            </article>`
+            )
             .join("")}</div>`
         : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
 
@@ -2103,9 +2225,15 @@ ${linkedCss}
       const active = !empty && card.id && card.id === focusId;
       const s3 = sessionNo === 3;
       const name = card.name || "이름 없음";
-      const art = `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(
-        String(name).slice(0, 1) || "?"
-      )}</div>`;
+      const art = card.faceHtml
+        ? `<div class="deck-card-art" aria-hidden="true">${card.faceHtml}</div>`
+        : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(
+            String(name).slice(0, 1) || "?"
+          )}</div>`;
+      const badge =
+        !empty && card.incompleteLabel
+          ? `<span class="deck-card-badge">${escapeHtml(card.incompleteLabel)}</span>`
+          : "";
       let mid = "";
       if (s3) {
         const winner = String(card.winner || "").trim();
@@ -2119,8 +2247,14 @@ ${linkedCss}
           )}</b></div>
         </div>`;
       } else {
-        mid = `<div class="deck-card-meta">${escapeHtml(card.meta || (empty ? "미제출" : "제출됨"))}</div>
-          <div class="deck-card-arch"></div>`;
+        const metaLine = empty
+          ? "미제출"
+          : card.mbti
+            ? `MBTI ${card.mbti}`
+            : card.meta || "제출됨";
+        const archLine = !empty && card.arch ? `★ ${card.arch}` : "";
+        mid = `<div class="deck-card-meta">${escapeHtml(metaLine)}</div>
+          <div class="deck-card-arch">${escapeHtml(archLine)}</div>`;
       }
       const attrs = empty
         ? `disabled data-empty="1"`
@@ -2130,7 +2264,7 @@ ${linkedCss}
       }" ${attrs} style="--deal:${dealIdx}" ${isTeacher && !empty ? "" : 'tabindex="-1"'} title="${
         empty ? "미제출" : "펼쳐서 내용 보기"
       }">
-        <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(card.no || "—")}</span></div>
+        <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(card.no || "—")}</span>${badge}</div>
         ${art}
         <div class="deck-card-name">${escapeHtml(name)}</div>
         ${mid}
@@ -2151,14 +2285,14 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2116";
+        css.href = "./live-report-deck.css?v=2118";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
       if (root) {
         root.classList.add("report-deck");
         root.classList.remove("live-deck");
-        if (!root.querySelector(".report-deck-panel")) {
+        if (!root.querySelector(".report-deck-panel") || !root.querySelector("#btnLiveDeckPrint")) {
           root.remove();
           root = null;
         } else {
@@ -2178,18 +2312,22 @@ ${linkedCss}
               <p class="sub" id="liveDeckSub" hidden></p>
             </div>
             <div class="report-deck-actions">
-              <button type="button" class="deck-icon-btn" id="btnLiveDeckRefresh" title="제출 새로고침" hidden>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
-                <span>새로고침</span>
+              <button type="button" class="deck-icon-btn" id="btnLiveDeckPrint" title="현재 화면 인쇄">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4"/><rect x="5" y="12" width="14" height="8" rx="1.5"/><path d="M5 14H3.5A1.5 1.5 0 0 1 2 12.5v-3A1.5 1.5 0 0 1 3.5 8h17A1.5 1.5 0 0 1 22 9.5v3a1.5 1.5 0 0 1-1.5 1.5H19"/><path d="M8 16h8"/></svg>
+                <span>인쇄</span>
               </button>
-              <button type="button" class="deck-icon-btn is-emphasis" id="btnLiveDeckBack" title="카드덱으로" hidden>
+              <button type="button" class="deck-icon-btn" id="btnLiveDeckSave" title="현재 화면 저장">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 18h14"/></svg>
+                <span>저장</span>
+              </button>
+              <button type="button" class="deck-icon-btn is-emphasis" id="btnLiveDeckBack" hidden title="카드덱으로 돌아가기">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <rect x="4.5" y="7.5" width="11" height="13" rx="1.6" transform="rotate(-12 10 14)"/>
                   <rect x="7.5" y="5.5" width="11" height="13" rx="1.6"/>
                 </svg>
                 <span>카드덱</span>
               </button>
-              <button type="button" class="deck-icon-btn" id="btnLiveDeckClose" title="닫기" hidden>
+              <button type="button" class="deck-icon-btn" id="btnLiveDeckClose" title="닫기">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
                 <span>닫기</span>
               </button>
@@ -2209,10 +2347,12 @@ ${linkedCss}
       const root = ensureDom();
       const isTeacher = isActivityTeacherUi();
       root.classList.toggle("is-viewer", !isTeacher);
-      const refresh = document.getElementById("btnLiveDeckRefresh");
+      const printBtn = document.getElementById("btnLiveDeckPrint");
+      const saveBtn = document.getElementById("btnLiveDeckSave");
       const close = document.getElementById("btnLiveDeckClose");
       const back = document.getElementById("btnLiveDeckBack");
-      if (refresh) refresh.hidden = !isTeacher;
+      if (printBtn) printBtn.hidden = !isTeacher;
+      if (saveBtn) saveBtn.hidden = !isTeacher;
       if (close) close.hidden = false;
       if (back) back.hidden = !isTeacher || !root.classList.contains("is-spread");
       const liveBtn = document.getElementById("btnLiveReport");
@@ -2404,6 +2544,38 @@ ${linkedCss}
         contentById.set(row.id, row.content || "");
       }
 
+      // 1차시 캐릭터(얼굴·MBTI·아키타입) — 보고서 종합과 동일
+      const charByNo = new Map();
+      const fillCharsFromRows = (rows) => {
+        for (const row of rows || []) {
+          const key = String(row.student_no || "").trim();
+          if (!key || charByNo.has(key)) continue;
+          const char = extractLiveSession1Char(row.content || "");
+          if (char?.faceHtml) charByNo.set(key, char);
+        }
+      };
+      if (sessionNo === 1) {
+        fillCharsFromRows(subs);
+      } else {
+        try {
+          const { data: lesson1Rows } = await authSb.rpc("get_lesson_by_submit_code", {
+            p_submit_code: code,
+            p_session_no: 1
+          });
+          const lesson1 = Array.isArray(lesson1Rows) ? lesson1Rows[0] : lesson1Rows;
+          if (lesson1?.id) {
+            const { data: s1subs } = await authSb
+              .from("submissions")
+              .select("student_no, content, created_at")
+              .eq("lesson_id", lesson1.id)
+              .order("created_at", { ascending: false });
+            fillCharsFromRows(s1subs);
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
       const roster = (students || []).slice();
       const known = new Set(roster.map((s) => String(s.student_no || "").trim()));
       for (const [key, row] of latestByNo) {
@@ -2428,39 +2600,53 @@ ${linkedCss}
       const cards = roster.map((st) => {
         const no = String(st.student_no || "").trim();
         const latest = latestByNo.get(no) || null;
+        const char = charByNo.get(no) || null;
+        const rosterName = String(st.student_name || "").trim() || "이름 없음";
         if (!latest) {
           return {
             id: "",
             no,
-            name: String(st.student_name || "").trim() || "이름 없음",
+            name:
+              (char?.name && char.name !== "이름 미정" ? char.name : "") || rosterName,
             meta: "미제출",
             empty: true,
             winner: "",
-            runner: ""
+            runner: "",
+            faceHtml: char?.faceHtml || "",
+            mbti: char?.mbti || "",
+            arch: char?.arch || "",
+            incompleteLabel: "",
+            createdAt: ""
           };
         }
         const previewFields = sessionNo === 3 ? extractLiveFieldMap(latest.content || "") : null;
+        const incomplete = assessLiveCompleteness(latest.content || "");
+        const displayName =
+          (char?.name && char.name !== "이름 미정" ? char.name : "") ||
+          String(latest.student_name || "").trim() ||
+          rosterName;
         return {
           id: latest.id,
           no,
-          name:
-            String(latest.student_name || "").trim() ||
-            String(st.student_name || "").trim() ||
-            "이름 없음",
-          meta: cardMetaPreview(latest.content || ""),
+          name: displayName,
+          meta: char?.mbti ? `MBTI ${char.mbti}` : "제출됨",
           empty: false,
           winner: previewFields ? String(previewFields.wcWinner || "").trim() : "",
-          runner: previewFields ? String(previewFields.wcRunnerUp || "").trim() : ""
+          runner: previewFields ? String(previewFields.wcRunnerUp || "").trim() : "",
+          faceHtml: char?.faceHtml || "",
+          mbti: char?.mbti || "",
+          arch: char?.arch || "",
+          incompleteLabel: incomplete.incomplete ? incomplete.label : "",
+          createdAt: latest.created_at || ""
         };
       });
 
-      const submitted = cards.filter((c) => !c.empty).length;
       return {
         open: true,
         title: `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">✅ ${escapeHtml(
           lessonTitleText()
         )}</span>`,
-        sub: `제출 ${submitted} / ${cards.length}명 · 카드를 누르면 학생 화면에 동기화됩니다`,
+        sub: "",
         cards,
         focusId: "",
         fields: [],
@@ -2522,8 +2708,20 @@ ${linkedCss}
         if (keepFocus && contentById.has(keepFocus)) {
           const card = next.cards.find((c) => c.id === keepFocus);
           next.focusId = keepFocus;
-          next.who = card ? { no: card.no, name: card.name } : localState.who;
-          next.fields = buildLiveFields(contentById.get(keepFocus) || "");
+          const content = contentById.get(keepFocus) || "";
+          const char = extractLiveSession1Char(content);
+          next.who = card
+            ? {
+                no: card.no,
+                name: card.name,
+                faceHtml: char?.faceHtml || card.faceHtml || "",
+                mbti: char?.mbti || card.mbti || "",
+                arch: char?.arch || card.arch || "",
+                incompleteLabel: card.incompleteLabel || "",
+                createdAt: card.createdAt || ""
+              }
+            : localState.who;
+          next.fields = buildLiveFields(content);
         }
         paintFromState(next);
         await broadcastLive("state", snapshotPayload());
@@ -2537,12 +2735,22 @@ ${linkedCss}
       if (!isActivityTeacherUi() || !subId) return;
       const card = localState.cards.find((c) => c.id === subId);
       if (!card || card.empty) return;
-      const fields = buildLiveFields(contentById.get(subId) || "");
+      const content = contentById.get(subId) || "";
+      const fields = buildLiveFields(content);
+      const char = extractLiveSession1Char(content);
       paintFromState({
         ...localState,
         focusId: subId,
         fields,
-        who: { no: card.no, name: card.name }
+        who: {
+          no: card.no,
+          name: card.name,
+          faceHtml: char?.faceHtml || card.faceHtml || "",
+          mbti: char?.mbti || card.mbti || "",
+          arch: char?.arch || card.arch || "",
+          incompleteLabel: card.incompleteLabel || "",
+          createdAt: card.createdAt || ""
+        }
       });
       void broadcastLive("state", snapshotPayload());
     }
@@ -2551,6 +2759,56 @@ ${linkedCss}
       if (!isActivityTeacherUi()) return;
       paintFromState({ ...localState, focusId: "", fields: [], who: null });
       void broadcastLive("state", snapshotPayload());
+    }
+
+    function exportLiveDeckHtml() {
+      const panel = document.querySelector("#liveReportDeck .report-deck-panel");
+      if (!panel) return "";
+      const clone = panel.cloneNode(true);
+      clone.querySelectorAll(".report-deck-actions").forEach((el) => el.remove());
+      return `<!DOCTYPE html><html lang="ko"><head><meta charset="utf-8"/><title>보고서 종합</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&family=Noto+Serif+KR:wght@600;700;800&display=swap"/>
+<style>
+body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
+.report-deck-panel{max-width:1100px;margin:16px auto;border-radius:20px;overflow:hidden;border:2px solid rgba(253,230,138,.45);background:linear-gradient(180deg,rgba(20,83,45,.35),rgba(6,40,28,.55))}
+</style>
+<link rel="stylesheet" href="${location.origin}${location.pathname.replace(/[^/]+$/, "")}live-report-deck.css"/>
+</head><body><div class="report-deck is-open is-spread">${clone.outerHTML}</div></body></html>`;
+    }
+
+    function printLiveDeck() {
+      if (!isActivityTeacherUi() || !localState.open) return;
+      const html = exportLiveDeckHtml();
+      if (!html) return;
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;opacity:0";
+      document.body.appendChild(iframe);
+      const doc = iframe.contentDocument;
+      doc.open();
+      doc.write(html);
+      doc.close();
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch (e) {
+          console.warn(e);
+        }
+        setTimeout(() => iframe.remove(), 1200);
+      }, 300);
+    }
+
+    function saveLiveDeck() {
+      if (!isActivityTeacherUi() || !localState.open) return;
+      const html = exportLiveDeckHtml();
+      if (!html) return;
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `보고서종합-${sessionNo}차시.html`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1500);
+      showDraftToast("보고서를 저장했습니다.", 1600);
     }
 
     function closeDeckLocal() {
@@ -2580,9 +2838,8 @@ ${linkedCss}
     });
     document.getElementById("btnLiveDeckClose")?.addEventListener("click", closeDeck);
     document.getElementById("btnLiveDeckBack")?.addEventListener("click", backToDeck);
-    document.getElementById("btnLiveDeckRefresh")?.addEventListener("click", () => {
-      void refreshAsTeacher();
-    });
+    document.getElementById("btnLiveDeckPrint")?.addEventListener("click", printLiveDeck);
+    document.getElementById("btnLiveDeckSave")?.addEventListener("click", saveLiveDeck);
     root.querySelector("#liveDeckTable")?.addEventListener("click", (e) => {
       if (!isActivityTeacherUi()) return;
       const btn = e.target?.closest?.(".deck-card[data-sub-id]");
@@ -3899,10 +4156,12 @@ ${linkedCss}
     if (liveRoot) {
       liveRoot.classList.toggle("is-viewer", !show);
       liveRoot.classList.add("report-deck");
-      const refresh = document.getElementById("btnLiveDeckRefresh");
+      const printBtn = document.getElementById("btnLiveDeckPrint");
+      const saveBtn = document.getElementById("btnLiveDeckSave");
       const close = document.getElementById("btnLiveDeckClose");
       const back = document.getElementById("btnLiveDeckBack");
-      if (refresh) refresh.hidden = !show;
+      if (printBtn) printBtn.hidden = !show;
+      if (saveBtn) saveBtn.hidden = !show;
       if (close) close.hidden = false;
       if (back) back.hidden = !show || !liveRoot.classList.contains("is-spread");
     }

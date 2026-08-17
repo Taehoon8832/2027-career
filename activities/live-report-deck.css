@@ -2,8 +2,8 @@
 .report-deck {
   --font-sans: "Noto Sans KR", Pretendard, sans-serif;
   --font-serif: "Noto Serif KR", Georgia, serif;
-  /* 발표용 레이저 포인터 커서 (핫스팟 = 빨간 점 중심) */
-  --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='28%25' stop-color='%23ff6b6b'/%3E%3Cstop offset='55%25' stop-color='%23ef4444' stop-opacity='0.85'/%3E%3Cstop offset='100%25' stop-color='%23ef4444' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cline x1='14.5' y1='14.5' x2='27' y2='27' stroke='%231f1e1d' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='14.8' y1='14.8' x2='26.2' y2='26.2' stroke='%2378716c' stroke-width='1' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='10' r='9' fill='url(%23g)'/%3E%3Ccircle cx='10' cy='10' r='3.2' fill='%23ffffff'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23dc2626'/%3E%3C/svg%3E") 10 10, crosshair;
+  /* 발표용 · 두꺼운 원형 빨강 레이저 */
+  --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='16%25' stop-color='%23ffc9c9'/%3E%3Cstop offset='38%25' stop-color='%23ff3b3b'/%3E%3Cstop offset='62%25' stop-color='%23dc2626' stop-opacity='0.55'/%3E%3Cstop offset='100%25' stop-color='%23dc2626' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='22' fill='url(%23g)'/%3E%3Ccircle cx='24' cy='24' r='11' fill='%23ef4444' fill-opacity='0.4'/%3E%3Ccircle cx='24' cy='24' r='8.2' fill='%23dc2626'/%3E%3Ccircle cx='24' cy='24' r='8.2' fill='none' stroke='%23991b1b' stroke-width='2'/%3E%3Ccircle cx='24' cy='24' r='4.6' fill='%23fff1f2'/%3E%3Ccircle cx='24' cy='24' r='2.8' fill='%23ff0000'/%3E%3C/svg%3E") 24 24, crosshair;
   position: fixed;
   inset: 0;
   z-index: 120;
@@ -95,6 +95,23 @@
   background: linear-gradient(160deg, #ffedd5, #fed7aa);
   box-shadow: 0 0 0 2px #1f1e1d, 0 4px 12px rgba(0, 0, 0, 0.16);
 }
+.deck-reader-art .inf-photo,
+.deck-reader-art .inf-photo-frame {
+  position: absolute; inset: 0;
+  width: 100% !important; height: 100% !important;
+  border-radius: 50%; overflow: hidden;
+}
+.deck-reader-art .inf-photo-frame > svg,
+.deck-reader-art svg {
+  width: 100% !important; height: 100% !important; display: block;
+}
+.deck-reader-art .inf-photo-ring,
+.deck-reader-art .inf-photo-spark,
+.deck-reader-art .inf-photo-shade,
+.deck-reader-art .inf-photo-lv,
+.deck-reader-art .inf-photo-arc,
+.deck-reader-art .inf-photo-power,
+.deck-reader-art .inf-photo-mbti { display: none !important; }
 .deck-reader-art.is-fallback {
   display: grid;
   place-items: center;
@@ -408,6 +425,18 @@
   color: #9a3412;
 }
 .deck-card.is-empty .deck-card-no { color: #93c5fd; }
+.deck-card-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 16px;
+  padding: 0 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(31, 30, 29, 0.2);
+  background: #fff;
+  font: 800 7.5px/1 var(--font-sans);
+  color: #a33b2c;
+  white-space: nowrap;
+}
 .deck-card-art {
   position: relative;
   width: 72px;
@@ -418,6 +447,23 @@
   background: linear-gradient(160deg, #ffedd5, #fed7aa);
   box-shadow: 0 0 0 2px #1f1e1d, 0 4px 10px rgba(0, 0, 0, 0.18);
 }
+.deck-card-art .inf-photo,
+.deck-card-art .inf-photo-frame {
+  position: absolute; inset: 0;
+  width: 100% !important; height: 100% !important;
+  border-radius: 50%; overflow: hidden;
+}
+.deck-card-art .inf-photo-frame > svg,
+.deck-card-art svg {
+  width: 100% !important; height: 100% !important; display: block;
+}
+.deck-card-art .inf-photo-ring,
+.deck-card-art .inf-photo-spark,
+.deck-card-art .inf-photo-shade,
+.deck-card-art .inf-photo-lv,
+.deck-card-art .inf-photo-arc,
+.deck-card-art .inf-photo-power,
+.deck-card-art .inf-photo-mbti { display: none !important; }
 .deck-card-art.is-fallback {
   display: grid;
   place-items: center;

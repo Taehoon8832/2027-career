@@ -2438,8 +2438,8 @@
         radial-gradient(ellipse 70% 55% at 50% 35%, rgba(255, 255, 255, 0.12), transparent 60%),
         radial-gradient(ellipse 90% 80% at 50% 100%, rgba(0,0,0,0.35), transparent 55%),
         linear-gradient(160deg, #0f3d2e 0%, #14532d 40%, #166534 70%, #0b3b28 100%);
-      /* 발표용 레이저 포인터 커서 (핫스팟 = 빨간 점 중심) */
-      --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='28%25' stop-color='%23ff6b6b'/%3E%3Cstop offset='55%25' stop-color='%23ef4444' stop-opacity='0.85'/%3E%3Cstop offset='100%25' stop-color='%23ef4444' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cline x1='14.5' y1='14.5' x2='27' y2='27' stroke='%231f1e1d' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='14.8' y1='14.8' x2='26.2' y2='26.2' stroke='%2378716c' stroke-width='1' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='10' r='9' fill='url(%23g)'/%3E%3Ccircle cx='10' cy='10' r='3.2' fill='%23ffffff'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23dc2626'/%3E%3C/svg%3E") 10 10, crosshair;
+      /* 발표용 · 두꺼운 원형 빨강 레이저 */
+      --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='16%25' stop-color='%23ffc9c9'/%3E%3Cstop offset='38%25' stop-color='%23ff3b3b'/%3E%3Cstop offset='62%25' stop-color='%23dc2626' stop-opacity='0.55'/%3E%3Cstop offset='100%25' stop-color='%23dc2626' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='24' cy='24' r='22' fill='url(%23g)'/%3E%3Ccircle cx='24' cy='24' r='11' fill='%23ef4444' fill-opacity='0.4'/%3E%3Ccircle cx='24' cy='24' r='8.2' fill='%23dc2626'/%3E%3Ccircle cx='24' cy='24' r='8.2' fill='none' stroke='%23991b1b' stroke-width='2'/%3E%3Ccircle cx='24' cy='24' r='4.6' fill='%23fff1f2'/%3E%3Ccircle cx='24' cy='24' r='2.8' fill='%23ff0000'/%3E%3C/svg%3E") 24 24, crosshair;
     }
     .report-deck.is-open { display: flex; }
     .report-deck.is-open,
@@ -15034,6 +15034,7 @@ ${built.html}
       let liveDeckChannel = null;
       let liveDeckBoundKey = "";
       let liveDeckFocusId = "";
+      let liveDeckCharByKey = new Map();
 
       async function ensureLiveDeckChannel(code, sessionNo) {
         if (!sb || !code) return null;
@@ -15085,15 +15086,29 @@ ${built.html}
           const latest = list[0] || null;
           const no = key || String(st.student_no || "").trim() || "—";
           const rosterName = String(st.student_name || "").trim() || "이름 없음";
+          let char = liveDeckCharByKey.get(key) || null;
+          try {
+            if (!char?.faceHtml && latest?.content) {
+              char = extractSession1CharacterPreview(latest.content) || char;
+            }
+          } catch {
+            /* keep char */
+          }
           if (!latest) {
             cards.push({
               id: "",
               no,
-              name: rosterName,
+              name:
+                (char?.name && char.name !== "이름 미정" ? char.name : "") || rosterName,
               meta: "미제출",
               empty: true,
               winner: "",
-              runner: ""
+              runner: "",
+              faceHtml: char?.faceHtml || "",
+              mbti: char?.mbti || "",
+              arch: char?.arch || "",
+              incompleteLabel: "",
+              createdAt: ""
             });
             continue;
           }
@@ -15103,12 +15118,18 @@ ${built.html}
             id: latest.id,
             no,
             name:
+              (char?.name && char.name !== "이름 미정" ? char.name : "") ||
               String(latest.student_name || "").trim() ||
               rosterName,
-            meta: deckExportSnippet(latest, yukha, incomplete) || "제출됨",
+            meta: char?.mbti ? `MBTI ${char.mbti}` : deckExportSnippet(latest, yukha, incomplete) || "제출됨",
             empty: false,
             winner: String(yukha?.winnerJob || "").trim(),
-            runner: String(yukha?.runnerUpJob || "").trim()
+            runner: String(yukha?.runnerUpJob || "").trim(),
+            faceHtml: char?.faceHtml || "",
+            mbti: char?.mbti || "",
+            arch: char?.arch || "",
+            incompleteLabel: incomplete.incomplete ? incompleteBadgeLabel(incomplete) : "",
+            createdAt: latest.created_at || ""
           });
         }
 
@@ -15124,19 +15145,37 @@ ${built.html}
               accent: !!f.accent,
               wide: !!f.wide
             }));
+            const subKey =
+              resolveRosterStudentKey(sub.student_no, grade, classNo) ||
+              normalizeStudentNo(sub.student_no);
+            let char = liveDeckCharByKey.get(subKey) || null;
+            try {
+              const fromSub = extractSession1CharacterPreview(sub.content);
+              if (fromSub?.faceHtml) char = fromSub;
+            } catch {
+              /* keep */
+            }
+            const incomplete = assessSubmissionCompleteness(sub);
             who = {
               no: normalizeStudentNo(sub.student_no) || String(sub.student_no || ""),
-              name: String(sub.student_name || "").trim() || "이름 없음"
+              name:
+                (char?.name && char.name !== "이름 미정" ? char.name : "") ||
+                String(sub.student_name || "").trim() ||
+                "이름 없음",
+              faceHtml: char?.faceHtml || "",
+              mbti: char?.mbti || "",
+              arch: char?.arch || "",
+              incompleteLabel: incomplete.incomplete ? incompleteBadgeLabel(incomplete) : "",
+              createdAt: sub.created_at || ""
             };
           }
         }
 
-        const submitted = cards.filter((c) => !c.empty).length;
         const lessonFull = `✅ ${sessionNo}차시 · ${meta?.title || "활동"}`;
         return {
           open: true,
           title: `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">${escapeHtml(lessonFull)}</span>`,
-          sub: `제출 ${submitted} / ${cards.length}명`,
+          sub: "",
           cards,
           focusId,
           fields,
@@ -16054,6 +16093,7 @@ ${pageCss}</style>
         }
         await Promise.all(latestSubs.map((sub) => ensureSubmissionContent(sub)));
         const charByKey = await loadSession1CharByStudentKey(classId, grade, classNo);
+        liveDeckCharByKey = charByKey;
 
         const cards = [];
         let dealIdx = 0;
