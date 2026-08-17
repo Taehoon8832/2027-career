@@ -2451,16 +2451,20 @@
     }
     .report-deck-live-hint {
       margin: 0;
-      max-width: min(420px, 46vw);
+      max-width: none;
+      flex: 1 1 auto;
       font: 500 12px/1.35 "Noto Sans KR", Pretendard, var(--font-sans);
       letter-spacing: -0.02em;
       color: var(--text-tertiary, #78716c);
-      word-break: keep-all;
-      white-space: normal;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-    .report-deck-live-hint b {
-      font-weight: 700;
-      color: #64748b;
+    .report-deck-live-hint .hint-em {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: 600;
+      color: #57534e;
     }
     .report-deck {
       position: fixed; inset: 0; z-index: 90;
@@ -17112,7 +17116,7 @@ ${pageCss}</style>
               </svg>
               <span>&lt;보고서 종합&gt;</span>
             </button>
-            <p class="report-deck-live-hint">▶ “보고서 종합”을 누르면 &lt;학생 활동지&gt;를 작성 중인 학생들의 화면이 자동으로 강제 동기화되어, 교사 화면의 ‘보고서 종합’ 화면으로 전환됩니다.</p>
+            <p class="report-deck-live-hint">▶ “보고서 종합”을 누르면 <span class="hint-em">학생 화면도 자동 동기화되어 ‘보고서 종합’ 화면으로 전환</span>됩니다.</p>
             <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
