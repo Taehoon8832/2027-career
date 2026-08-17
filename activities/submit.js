@@ -1,4 +1,4 @@
-(() => {
+﻿(() => {
   const CONFIG = {
     SUPABASE_URL: "https://wdpohasgttifsxjqblhf.supabase.co",
     SUPABASE_ANON_KEY: "sb_publishable_JDkkbUVPruBg33cvLEh11A_ipF3VPCv"
@@ -1055,9 +1055,9 @@ body{padding:16px!important;background:#fff!important}
   .activity-sheet-bar {
     position: relative;
     display: grid;
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     align-items: center;
-    column-gap: 8px;
+    column-gap: 10px;
     min-height: 34px;
     margin: 0 0 8px;
     padding: 2px 0 6px;
@@ -1075,8 +1075,8 @@ body{padding:16px!important;background:#fff!important}
     justify-self: start;
     align-self: center;
     z-index: 1;
-    width: max-content;
-    max-width: min(42vw, 200px);
+    width: auto;
+    max-width: 100%;
     margin: 0;
     padding: 0;
     font: 700 10.5px/1.25 "Noto Serif KR", Pretendard, serif;
@@ -1088,11 +1088,14 @@ body{padding:16px!important;background:#fff!important}
     writing-mode: horizontal-tb;
   }
   .activity-sheet-bar-title {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, calc(-50% - 0.2cm));
-    z-index: 0;
+    position: static;
+    left: auto;
+    top: auto;
+    transform: none;
+    grid-column: 2;
+    justify-self: center;
+    align-self: center;
+    z-index: 1;
     margin: 0;
     text-align: center;
     white-space: nowrap;
@@ -1100,7 +1103,7 @@ body{padding:16px!important;background:#fff!important}
   }
   .activity-sheet-bar h2 {
     margin: 0;
-    font: 700 calc(17px + 5pt)/1.25 Pretendard, sans-serif;
+    font: 700 calc(15px + 3pt)/1.25 Pretendard, sans-serif;
     text-align: center;
   }
   .sheet-identity {
@@ -1109,27 +1112,32 @@ body{padding:16px!important;background:#fff!important}
     align-self: center;
     z-index: 1;
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     gap: 8px;
-    padding-top: 0.1cm;
+    padding-top: 0;
   }
   @media print {
     .activity-sheet-bar-title {
-      left: 50%;
-      transform: translate(-50%, calc(-50% - 0.2cm));
+      position: static !important;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+      grid-column: 2 !important;
+      justify-self: center !important;
     }
     .activity-sheet-bar h2 {
-      font-size: calc(17px + 5pt);
+      font-size: calc(15px + 3pt);
     }
     .print-lesson-title {
       white-space: nowrap !important;
       word-break: keep-all !important;
-      max-width: none !important;
-      width: max-content !important;
+      max-width: 100% !important;
+      width: auto !important;
       writing-mode: horizontal-tb !important;
     }
     .sheet-identity {
-      padding-top: 0.1cm;
+      padding-top: 0;
     }
   }
   .sheet-identity label {
@@ -2143,7 +2151,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2111";
+        css.href = "./live-report-deck.css?v=2116";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2205,7 +2213,7 @@ ${linkedCss}
       const close = document.getElementById("btnLiveDeckClose");
       const back = document.getElementById("btnLiveDeckBack");
       if (refresh) refresh.hidden = !isTeacher;
-      if (close) close.hidden = !isTeacher;
+      if (close) close.hidden = false;
       if (back) back.hidden = !isTeacher || !root.classList.contains("is-spread");
       const liveBtn = document.getElementById("btnLiveReport");
       if (liveBtn) liveBtn.classList.toggle("is-on", !!localState.open);
@@ -2284,6 +2292,27 @@ ${linkedCss}
         who: localState.who,
         sessionNo
       };
+    }
+
+    function cardMetaPreview(content) {
+      if (sessionNo === 3) {
+        const map = extractLiveFieldMap(content);
+        const winner = String(map.wcWinner || "").trim();
+        const runner = String(map.wcRunnerUp || "").trim();
+        if (winner || runner) {
+          const parts = [];
+          if (winner) parts.push(`직업 ${winner}`);
+          if (runner) parts.push(`차순위 ${runner}`);
+          return parts.join(" · ").slice(0, 60);
+        }
+      }
+      const fields = buildLiveFields(content);
+      if (!fields.length) return "제출됨";
+      const first = fields[0];
+      const snippet = String(first.value || "")
+        .replace(/\s+/g, " ")
+        .slice(0, 42);
+      return snippet ? `${first.label}: ${snippet}`.slice(0, 72) : "제출됨";
     }
 
     async function broadcastLive(event, payload) {
@@ -2440,6 +2469,35 @@ ${linkedCss}
       };
     }
 
+    async function openAsViewer() {
+      const code = getSubmitCodeFromPage();
+      if (!code) {
+        showDraftToast("제출 코드가 없습니다.", 2400);
+        return;
+      }
+      await bindLiveChannel(code);
+      paintFromState(
+        {
+          open: true,
+          title: `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">${escapeHtml(
+            lessonTitleText()
+          )}</span>`,
+          sub: "선생님 화면과 동기화 대기 중…",
+          cards: []
+        },
+        { loading: true }
+      );
+      try {
+        await channel?.send({
+          type: "broadcast",
+          event: "request-sync",
+          payload: { sessionNo }
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+
     async function openAsTeacher() {
       if (!isActivityTeacherUi()) return;
       const code = getSubmitCodeFromPage();
@@ -2495,20 +2553,30 @@ ${linkedCss}
       void broadcastLive("state", snapshotPayload());
     }
 
+    function closeDeckLocal() {
+      paintFromState({ open: false, cards: [] });
+    }
+
     function closeDeck() {
-      if (!isActivityTeacherUi()) return;
+      if (!isActivityTeacherUi()) {
+        closeDeckLocal();
+        return;
+      }
       paintFromState({ open: false, cards: [] });
       void broadcastLive("close", { sessionNo });
     }
 
     const root = ensureDom();
     document.getElementById("btnLiveReport")?.addEventListener("click", () => {
-      if (!isActivityTeacherUi()) return;
       if (localState.open) {
         closeDeck();
         return;
       }
-      void openAsTeacher();
+      if (isActivityTeacherUi()) {
+        void openAsTeacher();
+        return;
+      }
+      void openAsViewer();
     });
     document.getElementById("btnLiveDeckClose")?.addEventListener("click", closeDeck);
     document.getElementById("btnLiveDeckBack")?.addEventListener("click", backToDeck);
@@ -3816,14 +3884,15 @@ ${linkedCss}
     }
     const live = document.getElementById("btnLiveReport");
     if (live) {
-      live.disabled = !show;
+      // 학생도 보기(동기화 대기) 가능 · 조작은 교사만
+      live.disabled = false;
       live.classList.toggle("is-ready", show);
       live.title = show
         ? "실시간 보고서 종합 — 학생 화면에 동기화됩니다"
-        : "실시간 · 교사만 열 수 있습니다";
+        : "실시간 — 선생님 보고서 종합과 동기화됩니다";
       live.setAttribute(
         "aria-label",
-        show ? "실시간 보고서 종합" : "실시간 보고서 종합 (교사 전용)"
+        show ? "실시간 보고서 종합" : "실시간 보고서 종합 보기"
       );
     }
     const liveRoot = document.getElementById("liveReportDeck");
@@ -3834,7 +3903,7 @@ ${linkedCss}
       const close = document.getElementById("btnLiveDeckClose");
       const back = document.getElementById("btnLiveDeckBack");
       if (refresh) refresh.hidden = !show;
-      if (close) close.hidden = !show;
+      if (close) close.hidden = false;
       if (back) back.hidden = !show || !liveRoot.classList.contains("is-spread");
     }
   }
@@ -3990,18 +4059,27 @@ ${linkedCss}
     ring.style.height = `${Math.round(r.height + pad * 2)}px`;
     ring.style.borderRadius = `${Math.round(Math.min(r.height + pad * 2, 999))}px`;
 
-    const labelW = Math.min(300, Math.max(180, window.innerWidth - 24));
+    // 인쇄·줌 등 우측 도구와 겹치지 않도록 버튼 아래(빈 본문 쪽) 말풍선 배치
+    const labelW = Math.min(300, Math.max(200, Math.min(280, window.innerWidth - 24)));
     label.style.width = `${labelW}px`;
-    let top = r.top + r.height / 2 - 20;
-    let left = r.right + 12;
-    if (left + labelW > window.innerWidth - 10) {
-      left = Math.max(10, r.left - labelW - 12);
-      label.classList.add("is-left");
-    } else {
-      label.classList.remove("is-left");
+    label.classList.remove("is-left", "is-right", "is-below", "is-above");
+
+    const gap = 12;
+    const labelH = label.offsetHeight || 64;
+    let top = r.bottom + gap;
+    let left = Math.round(r.left);
+    let place = "below";
+
+    if (top + labelH > window.innerHeight - 10) {
+      top = Math.max(8, r.top - labelH - gap);
+      place = "above";
     }
-    if (top < 8) top = 8;
-    if (top + 56 > window.innerHeight - 8) top = window.innerHeight - 64;
+    if (left + labelW > window.innerWidth - 10) {
+      left = Math.max(10, window.innerWidth - labelW - 10);
+    }
+    if (left < 10) left = 10;
+
+    label.classList.add(place === "above" ? "is-above" : "is-below");
     label.style.top = `${Math.round(top)}px`;
     label.style.left = `${Math.round(left)}px`;
     return true;
@@ -4018,7 +4096,7 @@ ${linkedCss}
     coach.setAttribute("aria-live", "polite");
     coach.innerHTML = `
       <div class="live-hint-ring" aria-hidden="true"></div>
-      <p class="live-hint-label">학생 화면에서 <strong>[실시간]</strong>을 누르면,<br />선생님 화면이 동기화되어 보입니다.</p>`;
+      <p class="live-hint-label"><strong>[교사용]</strong> 실시간 동기화 기능입니다.</p>`;
     document.body.appendChild(coach);
 
     const place = () => {

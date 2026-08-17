@@ -2438,8 +2438,14 @@
         radial-gradient(ellipse 70% 55% at 50% 35%, rgba(255, 255, 255, 0.12), transparent 60%),
         radial-gradient(ellipse 90% 80% at 50% 100%, rgba(0,0,0,0.35), transparent 55%),
         linear-gradient(160deg, #0f3d2e 0%, #14532d 40%, #166534 70%, #0b3b28 100%);
+      /* 발표용 레이저 포인터 커서 (핫스팟 = 빨간 점 중심) */
+      --deck-laser-cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ffffff'/%3E%3Cstop offset='28%25' stop-color='%23ff6b6b'/%3E%3Cstop offset='55%25' stop-color='%23ef4444' stop-opacity='0.85'/%3E%3Cstop offset='100%25' stop-color='%23ef4444' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cline x1='14.5' y1='14.5' x2='27' y2='27' stroke='%231f1e1d' stroke-width='2.4' stroke-linecap='round'/%3E%3Cline x1='14.8' y1='14.8' x2='26.2' y2='26.2' stroke='%2378716c' stroke-width='1' stroke-linecap='round'/%3E%3Ccircle cx='10' cy='10' r='9' fill='url(%23g)'/%3E%3Ccircle cx='10' cy='10' r='3.2' fill='%23ffffff'/%3E%3Ccircle cx='10' cy='10' r='1.7' fill='%23dc2626'/%3E%3C/svg%3E") 10 10, crosshair;
     }
     .report-deck.is-open { display: flex; }
+    .report-deck.is-open,
+    .report-deck.is-open *:not(input):not(textarea) {
+      cursor: var(--deck-laser-cursor) !important;
+    }
     .report-deck-panel {
       width: min(1100px, 100%);
       max-height: 100%;
@@ -15025,19 +15031,161 @@ ${built.html}
         }
       }
 
+      let liveDeckChannel = null;
+      let liveDeckBoundKey = "";
+      let liveDeckFocusId = "";
+
+      async function ensureLiveDeckChannel(code, sessionNo) {
+        if (!sb || !code) return null;
+        const key = `${String(code).toUpperCase()}:${Number(sessionNo) || 0}`;
+        if (liveDeckChannel && liveDeckBoundKey === key) return liveDeckChannel;
+        try {
+          if (liveDeckChannel) {
+            await sb.removeChannel(liveDeckChannel);
+            liveDeckChannel = null;
+          }
+        } catch {
+          liveDeckChannel = null;
+        }
+        liveDeckBoundKey = key;
+        liveDeckChannel = sb.channel(`lesson-live-deck:${String(code).toUpperCase()}:${Number(sessionNo) || 0}`, {
+          config: { broadcast: { self: false } }
+        });
+        liveDeckChannel.on("broadcast", { event: "request-sync" }, () => {
+          if ($("reportDeck")?.classList.contains("is-open")) {
+            void broadcastReportDeckLive("state");
+          }
+        });
+        await new Promise((resolve) => {
+          const t = setTimeout(resolve, 2500);
+          liveDeckChannel.subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              clearTimeout(t);
+              resolve();
+            }
+          });
+        });
+        return liveDeckChannel;
+      }
+
+      function buildReportDeckLivePayload() {
+        const ctx = getReportDeckExportContext();
+        if (!ctx?.lesson) return null;
+        const { lesson, grade, classNo, students } = ctx;
+        const sessionNo = Number(lesson.session_no) || 0;
+        const meta = getLessonMeta(sessionNo);
+        const cards = [];
+        for (const st of students) {
+          const key =
+            resolveRosterStudentKey(st.student_no, grade, classNo) ||
+            normalizeStudentNo(st.student_no) ||
+            String(st.student_no || "").trim();
+          const list =
+            detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
+          const latest = list[0] || null;
+          const no = key || String(st.student_no || "").trim() || "—";
+          const rosterName = String(st.student_name || "").trim() || "이름 없음";
+          if (!latest) {
+            cards.push({
+              id: "",
+              no,
+              name: rosterName,
+              meta: "미제출",
+              empty: true,
+              winner: "",
+              runner: ""
+            });
+            continue;
+          }
+          const yukha = buildYukhaSummary(latest);
+          const incomplete = assessSubmissionCompleteness(latest);
+          cards.push({
+            id: latest.id,
+            no,
+            name:
+              String(latest.student_name || "").trim() ||
+              rosterName,
+            meta: deckExportSnippet(latest, yukha, incomplete) || "제출됨",
+            empty: false,
+            winner: String(yukha?.winnerJob || "").trim(),
+            runner: String(yukha?.runnerUpJob || "").trim()
+          });
+        }
+
+        const focusId = liveDeckFocusId || "";
+        let fields = [];
+        let who = null;
+        if (focusId) {
+          const sub = findSubmissionById(focusId);
+          if (sub) {
+            fields = buildDeckReaderFields(sub).map((f) => ({
+              label: f.label,
+              value: f.value,
+              accent: !!f.accent,
+              wide: !!f.wide
+            }));
+            who = {
+              no: normalizeStudentNo(sub.student_no) || String(sub.student_no || ""),
+              name: String(sub.student_name || "").trim() || "이름 없음"
+            };
+          }
+        }
+
+        const submitted = cards.filter((c) => !c.empty).length;
+        const lessonFull = `✅ ${sessionNo}차시 · ${meta?.title || "활동"}`;
+        return {
+          open: true,
+          title: `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">${escapeHtml(lessonFull)}</span>`,
+          sub: `제출 ${submitted} / ${cards.length}명`,
+          cards,
+          focusId,
+          fields,
+          who,
+          sessionNo
+        };
+      }
+
+      async function broadcastReportDeckLive(event) {
+        const lesson = lessons.find((l) => l.id === selectedLessonId);
+        if (!lesson) return;
+        const code = lessonSubmitCode(lesson);
+        const sessionNo = Number(lesson.session_no) || 0;
+        if (!code) return;
+        try {
+          const ch = await ensureLiveDeckChannel(code, sessionNo);
+          if (!ch) return;
+          if (event === "close") {
+            await ch.send({
+              type: "broadcast",
+              event: "close",
+              payload: { sessionNo }
+            });
+            return;
+          }
+          const payload = buildReportDeckLivePayload();
+          if (!payload) return;
+          await ch.send({ type: "broadcast", event: "state", payload });
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
       function closeReportDeck() {
         const el = $("reportDeck");
         if (!el) return;
-        closeDeckSpread();
+        closeDeckSpread({ silent: true });
         el.classList.remove("is-open");
         el.setAttribute("aria-hidden", "true");
+        liveDeckFocusId = "";
+        void broadcastReportDeckLive("close");
       }
 
-      function closeDeckSpread() {
+      function closeDeckSpread(opts = {}) {
         const deck = $("reportDeck");
         const reader = $("reportDeckReader");
         const back = $("btnReportDeckBack");
         if (!deck) return;
+        const wasOpen = deck.classList.contains("is-open");
         deck.classList.remove("is-spread");
         if (reader) reader.innerHTML = "";
         if (back) back.hidden = true;
@@ -15047,6 +15195,8 @@ ${built.html}
           subEl.textContent = "";
           subEl.hidden = true;
         }
+        liveDeckFocusId = "";
+        if (wasOpen && !opts.silent) void broadcastReportDeckLive("state");
       }
 
       function getReportDeckExportContext() {
@@ -15717,6 +15867,8 @@ ${pageCss}</style>
         } catch {
           /* ignore */
         }
+        liveDeckFocusId = submissionId;
+        void broadcastReportDeckLive("state");
       }
 
       function buildDeckCardHtml(st, key, latest, dealIdx, charByKey) {
@@ -15924,6 +16076,8 @@ ${pageCss}</style>
           subEl.hidden = true;
           delete subEl.dataset.deckHint;
         }
+        liveDeckFocusId = "";
+        void broadcastReportDeckLive("state");
       }
 
       function paintDetailRosterGrid(students) {
