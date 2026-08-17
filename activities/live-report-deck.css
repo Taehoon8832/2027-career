@@ -402,6 +402,11 @@
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
+.report-deck.is-snap .deck-card {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: rotate(var(--tilt)) translateY(0) scale(1) !important;
+}
 .report-deck.is-viewer .deck-card { cursor: default; }
 .deck-card:nth-child(4n + 1) { --tilt: -2.2deg; }
 .deck-card:nth-child(4n + 2) { --tilt: 1.6deg; }

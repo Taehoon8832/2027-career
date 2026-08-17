@@ -2927,6 +2927,12 @@
       transition: transform 0.18s ease, box-shadow 0.18s ease;
       -webkit-tap-highlight-color: transparent;
     }
+    /* 보고서 종합 첫 진입: 딜레이 없이 즉시 표시 */
+    .report-deck.is-snap .deck-card {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: rotate(var(--tilt)) translateY(0) scale(1) !important;
+    }
     .deck-card:nth-child(4n+1) { --tilt: -2.2deg; }
     .deck-card:nth-child(4n+2) { --tilt: 1.6deg; }
     .deck-card:nth-child(4n+3) { --tilt: -1.1deg; }
@@ -10916,10 +10922,34 @@
       }
 
       function stripReportPlaceholders(html) {
-        return String(html || "").replace(
+        let out = String(html || "").replace(
           /\splaceholder\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi,
           ""
         );
+        // 공란 입력칸에 is-blank 표시 → 하늘색 그라데이션 제외
+        try {
+          const doc = new DOMParser().parseFromString(out, "text/html");
+          doc.querySelectorAll("input, textarea").forEach((el) => {
+            if (el.type === "checkbox" || el.type === "radio") return;
+            const empty =
+              el.tagName === "TEXTAREA"
+                ? !String(el.value || el.textContent || "").trim()
+                : !String(el.value || el.getAttribute("value") || "").trim();
+            el.classList.toggle("is-blank", empty);
+            if (empty) el.setAttribute("data-blank", "1");
+            else el.removeAttribute("data-blank");
+          });
+          const root = doc.body;
+          out = root?.innerHTML || out;
+          // student-activity-export 등 최상위 래퍼 유지
+          if (/student-activity-export/i.test(String(html || ""))) {
+            const exportEl = doc.querySelector(".student-activity-export");
+            if (exportEl) out = exportEl.outerHTML;
+          }
+        } catch {
+          /* keep out */
+        }
+        return out;
       }
 
       function buildSubmissionReportBody(sub) {
@@ -11845,6 +11875,16 @@ body{
 #sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
 input::placeholder,textarea::placeholder{color:transparent!important;opacity:0!important;-webkit-text-fill-color:transparent!important}
+.na-card textarea.is-blank,.activity-card .na-card textarea.is-blank,
+.na-card textarea[data-blank="1"],.activity-card .na-card textarea[data-blank="1"],
+.q-item input.is-blank,.bingo-cell textarea.is-blank,.reflect-field textarea.is-blank,
+.swot-cell input.is-blank,.swot-cell textarea.is-blank,.swot-step input.is-blank,
+.swot-card textarea.is-blank,.swot-plan textarea.is-blank,
+.field input.is-blank,.field textarea.is-blank,input.is-blank,textarea.is-blank{
+  background:#fff!important;
+  box-shadow:inset 0 0 0 1px #e5e7eb!important;
+  color:#94a3b8!important;
+}
 .student-activity-export .topbar{
   position:relative!important;
   top:auto!important;
@@ -15264,22 +15304,44 @@ ${built.html}
       let liveDeckBoundKey = "";
       let liveDeckFocusId = "";
       let liveDeckCharByKey = new Map();
+      let liveDeckSubscribed = false;
+      let liveDeckCharCacheKey = "";
 
       async function ensureLiveDeckChannel(code, sessionNo) {
         if (!sb || !code) return null;
         const key = `${String(code).toUpperCase()}:${Number(sessionNo) || 0}`;
-        if (liveDeckChannel && liveDeckBoundKey === key) return liveDeckChannel;
+        if (liveDeckChannel && liveDeckBoundKey === key && liveDeckSubscribed) {
+          return liveDeckChannel;
+        }
         try {
-          if (liveDeckChannel) {
+          if (liveDeckChannel && liveDeckBoundKey !== key) {
             await sb.removeChannel(liveDeckChannel);
             liveDeckChannel = null;
+            liveDeckSubscribed = false;
           }
         } catch {
           liveDeckChannel = null;
+          liveDeckSubscribed = false;
+        }
+        if (liveDeckChannel && liveDeckBoundKey === key) {
+          if (liveDeckSubscribed) return liveDeckChannel;
+          await new Promise((resolve) => {
+            const t = setTimeout(resolve, 500);
+            const poll = setInterval(() => {
+              if (liveDeckSubscribed) {
+                clearInterval(poll);
+                clearTimeout(t);
+                resolve();
+              }
+            }, 40);
+            setTimeout(() => clearInterval(poll), 500);
+          });
+          return liveDeckChannel;
         }
         liveDeckBoundKey = key;
+        liveDeckSubscribed = false;
         liveDeckChannel = sb.channel(`lesson-live-deck:${String(code).toUpperCase()}:${Number(sessionNo) || 0}`, {
-          config: { broadcast: { self: false } }
+          config: { broadcast: { self: false, ack: false } }
         });
         liveDeckChannel.on("broadcast", { event: "request-sync" }, () => {
           if ($("reportDeck")?.classList.contains("is-open")) {
@@ -15287,15 +15349,53 @@ ${built.html}
           }
         });
         await new Promise((resolve) => {
-          const t = setTimeout(resolve, 2500);
+          const t = setTimeout(resolve, 700);
           liveDeckChannel.subscribe((status) => {
             if (status === "SUBSCRIBED") {
+              liveDeckSubscribed = true;
               clearTimeout(t);
               resolve();
             }
           });
         });
         return liveDeckChannel;
+      }
+
+      /** 카드덱용 가벼운 미리보기 — buildYukhaSummary(세특 문단) 전체 생성 생략 */
+      function deckCardQuickMeta(sub) {
+        const sessionNo = Number(sub?.session_no) || 0;
+        const whoName = sanitizeSeteukText(sub?.student_name || "학생");
+        const whoNo = sanitizeSeteukText(sub?.student_no || "-");
+        let winnerJob = "";
+        let runnerUpJob = "";
+        let swotJob = "";
+        let swotMajor = "";
+        try {
+          if (sessionNo === 3) {
+            const m = extractWorldcupFieldMap(sub.content);
+            winnerJob = sanitizeSeteukText(m?.wcWinner || "").trim();
+            runnerUpJob = sanitizeSeteukText(m?.wcRunnerUp || "").trim();
+          } else if (sessionNo === 4) {
+            const m = extractSwotFieldMap(sub.content);
+            const job = sanitizeSeteukText(m?.f1 || "").trim();
+            const major = sanitizeSeteukText(m?.f2 || "").trim();
+            const dump = (t) =>
+              /관련\s*학과/.test(t) && /필요\s*자격/.test(t) && /직업\s*전망|예상\s*연봉/.test(t);
+            swotJob =
+              job && !isLowQualityAnswer(job, whoName, whoNo) && !dump(job) ? job : "";
+            swotMajor =
+              major && !isLowQualityAnswer(major, whoName, whoNo) && !dump(major) ? major : "";
+          }
+        } catch {
+          /* ignore */
+        }
+        return {
+          sessionNo,
+          winnerJob,
+          runnerUpJob,
+          swotJob,
+          swotMajor
+        };
       }
 
       function buildReportDeckLivePayload() {
@@ -15341,7 +15441,7 @@ ${built.html}
             });
             continue;
           }
-          const yukha = buildYukhaSummary(latest);
+          const quick = deckCardQuickMeta(latest);
           const incomplete = assessSubmissionCompleteness(latest);
           cards.push({
             id: latest.id,
@@ -15350,16 +15450,16 @@ ${built.html}
               (char?.name && char.name !== "이름 미정" ? char.name : "") ||
               String(latest.student_name || "").trim() ||
               rosterName,
-            meta: char?.mbti ? `MBTI ${char.mbti}` : deckExportSnippet(latest, yukha, incomplete) || "제출됨",
+            meta: char?.mbti ? `MBTI ${char.mbti}` : "제출됨",
             empty: false,
             winner:
               sessionNo === 4
-                ? String(yukha?.swotJob || "").trim()
-                : String(yukha?.winnerJob || "").trim(),
+                ? String(quick.swotJob || "").trim()
+                : String(quick.winnerJob || "").trim(),
             runner:
               sessionNo === 4
-                ? String(yukha?.swotMajor || "").trim()
-                : String(yukha?.runnerUpJob || "").trim(),
+                ? String(quick.swotMajor || "").trim()
+                : String(quick.runnerUpJob || "").trim(),
             faceHtml: char?.faceHtml || "",
             mbti: char?.mbti || "",
             arch: char?.arch || "",
@@ -15448,7 +15548,7 @@ ${built.html}
         const el = $("reportDeck");
         if (!el) return;
         closeDeckSpread({ silent: true });
-        el.classList.remove("is-open");
+        el.classList.remove("is-open", "is-snap");
         el.setAttribute("aria-hidden", "true");
         liveDeckFocusId = "";
         void broadcastReportDeckLive("close");
@@ -16166,8 +16266,8 @@ ${pageCss}</style>
         }
 
         const incomplete = assessSubmissionCompleteness(latest);
-        const yukha = buildYukhaSummary(latest);
-        const sessionNo = Number(yukha?.sessionNo) || Number(latest.session_no) || lessonSession;
+        const quick = deckCardQuickMeta(latest);
+        const sessionNo = Number(quick.sessionNo) || Number(latest.session_no) || lessonSession;
         const displayName =
           (char?.name && char.name !== "이름 미정" ? char.name : "") ||
           String(latest.student_name || "").trim() ||
@@ -16186,8 +16286,8 @@ ${pageCss}</style>
         let archLine = arch ? `★ ${escapeHtml(arch)}` : "";
         let jobsHtml = "";
         if (sessionNo === 3) {
-          const winner = String(yukha?.winnerJob || "").trim();
-          const runner = String(yukha?.runnerUpJob || "").trim();
+          const winner = String(quick.winnerJob || "").trim();
+          const runner = String(quick.runnerUpJob || "").trim();
           metaLine = "";
           archLine = "";
           jobsHtml = `<div class="deck-card-jobs">
@@ -16195,8 +16295,8 @@ ${pageCss}</style>
             <div class="deck-card-job is-runner${runner ? "" : " is-empty"}"><span>차순위</span><b>${escapeHtml(runner || "미입력")}</b></div>
           </div>`;
         } else if (sessionNo === 4) {
-          const job = String(yukha?.swotJob || "").trim();
-          const major = String(yukha?.swotMajor || "").trim();
+          const job = String(quick.swotJob || "").trim();
+          const major = String(quick.swotMajor || "").trim();
           metaLine = "";
           archLine = "";
           jobsHtml = `<div class="deck-card-jobs">
@@ -16224,19 +16324,29 @@ ${pageCss}</style>
       async function loadSession1CharByStudentKey(classId, grade, classNo) {
         const map = new Map();
         if (!sb || !classId) return map;
+        const cacheKey = `${classId}`;
+        if (liveDeckCharCacheKey === cacheKey && liveDeckCharByKey.size) {
+          return liveDeckCharByKey;
+        }
         const lesson1 = lessons.find((l) => Number(l.session_no) === 1);
         if (!lesson1?.id) return map;
 
         // 현재 보고 있는 차시가 1차시면 이미 로드된 detailSubMap 우선
         if (Number(lessons.find((l) => l.id === selectedLessonId)?.session_no) === 1) {
+          const latestList = [];
           for (const [key, list] of detailSubMap) {
             const latest = list?.[0];
-            if (!latest) continue;
-            await ensureSubmissionContent(latest);
+            if (latest) latestList.push({ key, latest });
+          }
+          await Promise.all(latestList.map(({ latest }) => ensureSubmissionContent(latest)));
+          for (const { key, latest } of latestList) {
             const char = extractSession1CharacterPreview(latest.content);
             if (char?.faceHtml) map.set(key, char);
           }
-          if (map.size) return map;
+          if (map.size) {
+            liveDeckCharCacheKey = cacheKey;
+            return map;
+          }
         }
 
         try {
@@ -16255,10 +16365,31 @@ ${pageCss}</style>
             const char = extractSession1CharacterPreview(row.content || "");
             if (char?.faceHtml) map.set(key, char);
           }
+          liveDeckCharCacheKey = cacheKey;
         } catch (e) {
           console.warn(e);
         }
         return map;
+      }
+
+      function paintReportDeckCards(ordered, grade, classNo, charByKey) {
+        const table = $("reportDeckTable");
+        if (!table) return;
+        const cards = [];
+        let dealIdx = 0;
+        for (const st of ordered) {
+          const key =
+            resolveRosterStudentKey(st.student_no, grade, classNo) ||
+            normalizeStudentNo(st.student_no);
+          const list =
+            detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
+          const latest = list[0] || null;
+          cards.push(buildDeckCardHtml(st, key, latest, dealIdx, charByKey));
+          dealIdx += 1;
+        }
+        table.innerHTML = cards.length
+          ? cards.join("")
+          : `<p class="report-deck-empty">표시할 학생이 없습니다.</p>`;
       }
 
       async function openReportDeck() {
@@ -16277,6 +16408,8 @@ ${pageCss}</style>
         const meta = classMetaById(classId);
         const grade = meta?.grade || 1;
         const classNo = meta?.class_no || 1;
+        const sessionNo = Number(lesson.session_no) || 0;
+        const code = lessonSubmitCode(lesson);
 
         const ordered = students.slice().sort((a, b) => {
           const keyA =
@@ -16299,10 +16432,10 @@ ${pageCss}</style>
         const subEl = $("reportDeckSub");
         if (!deck || !table) return;
 
-        closeDeckSpread();
+        closeDeckSpread({ silent: true });
         if (title) {
-          const meta = getLessonMeta(lesson.session_no);
-          const lessonFull = `✅ ${lesson.session_no}차시 · ${meta?.title || "활동"}`;
+          const lessonMeta = getLessonMeta(lesson.session_no);
+          const lessonFull = `✅ ${lesson.session_no}차시 · ${lessonMeta?.title || "활동"}`;
           title.innerHTML = `<span class="deck-title-brand">&lt;보고서 종합&gt;</span> <span class="deck-title-lesson">${escapeHtml(lessonFull)}</span>`;
         }
         if (subEl) {
@@ -16310,10 +16443,20 @@ ${pageCss}</style>
           subEl.hidden = true;
           delete subEl.dataset.deckHint;
         }
-        table.innerHTML = `<p class="report-deck-empty">카드를 섞는 중…</p>`;
-        deck.classList.add("is-open");
-        deck.setAttribute("aria-hidden", "false");
 
+        // 1) 화면을 즉시 열고 · 채널/동기화는 병렬 시작
+        liveDeckFocusId = "";
+        deck.classList.add("is-open", "is-snap");
+        deck.setAttribute("aria-hidden", "false");
+        const channelReady = code ? ensureLiveDeckChannel(code, sessionNo) : Promise.resolve(null);
+
+        // 캐시된 캐릭터로 바로 1차 페인트 (없으면 빈 맵)
+        let charByKey =
+          liveDeckCharCacheKey === String(classId || "") && liveDeckCharByKey.size
+            ? liveDeckCharByKey
+            : new Map();
+
+        // content가 비어 있는 제출만 보충 로드 (이미 로드된 건 스킵)
         const latestSubs = [];
         for (const st of ordered) {
           const key =
@@ -16323,33 +16466,47 @@ ${pageCss}</style>
             detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
           if (list[0]) latestSubs.push(list[0]);
         }
-        await Promise.all(latestSubs.map((sub) => ensureSubmissionContent(sub)));
-        const charByKey = await loadSession1CharByStudentKey(classId, grade, classNo);
-        liveDeckCharByKey = charByKey;
-
-        const cards = [];
-        let dealIdx = 0;
-        for (const st of ordered) {
-          const key =
-            resolveRosterStudentKey(st.student_no, grade, classNo) ||
-            normalizeStudentNo(st.student_no);
-          const list =
-            detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
-          const latest = list[0] || null;
-          cards.push(buildDeckCardHtml(st, key, latest, dealIdx, charByKey));
-          dealIdx += 1;
+        const needContent = latestSubs.filter(
+          (sub) => !(typeof sub.content === "string" && sub.content.length)
+        );
+        if (needContent.length) {
+          table.innerHTML = `<p class="report-deck-empty">카드를 펼치는 중…</p>`;
+          await Promise.all(needContent.map((sub) => ensureSubmissionContent(sub)));
         }
 
-        table.innerHTML = cards.length
-          ? cards.join("")
-          : `<p class="report-deck-empty">표시할 학생이 없습니다.</p>`;
-        if (subEl) {
-          subEl.textContent = "";
-          subEl.hidden = true;
-          delete subEl.dataset.deckHint;
-        }
-        liveDeckFocusId = "";
-        void broadcastReportDeckLive("state");
+        paintReportDeckCards(ordered, grade, classNo, charByKey);
+
+        // 2) 학생 화면 강제 동기화 (채널 준비되는 대로 즉시 방송)
+        const pushLive = async () => {
+          try {
+            await channelReady;
+            await broadcastReportDeckLive("state");
+            // 늦게 접속한 학생용 1회 재전송
+            setTimeout(() => {
+              if ($("reportDeck")?.classList.contains("is-open")) {
+                void broadcastReportDeckLive("state");
+              }
+            }, 450);
+          } catch (e) {
+            console.warn(e);
+          }
+        };
+        void pushLive();
+
+        // 3) 캐릭터 보강은 백그라운드 (완료 후 재페인트·재방송)
+        void (async () => {
+          try {
+            const nextChars = await loadSession1CharByStudentKey(classId, grade, classNo);
+            if (!$("reportDeck")?.classList.contains("is-open")) return;
+            if (nextChars?.size) {
+              liveDeckCharByKey = nextChars;
+              paintReportDeckCards(ordered, grade, classNo, nextChars);
+              void broadcastReportDeckLive("state");
+            }
+          } catch (e) {
+            console.warn(e);
+          }
+        })();
       }
 
       function paintDetailRosterGrid(students) {
@@ -16934,7 +17091,7 @@ ${pageCss}</style>
               </svg>
               <span>&lt;보고서 종합&gt;</span>
             </button>
-            <p class="report-deck-live-hint">▶ 학생 활동지에서 <b>[실시간]</b> 동기화 가능합니다.</p>
+            <p class="report-deck-live-hint">▶ 클릭 시 학생 활동지가 <b>보고서 종합(실시간)</b>으로 동기화됩니다.</p>
             <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
@@ -17015,6 +17172,10 @@ ${pageCss}</style>
         $("btnReportDeck")?.addEventListener("click", () => {
           void openReportDeck();
         });
+        // 보고서 종합 채널 선행 연결 → 클릭 시 즉시 방송
+        if (submitCode) {
+          void ensureLiveDeckChannel(submitCode, Number(lesson.session_no) || 0);
+        }
 
         if (!classId) return;
         const students = await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no);

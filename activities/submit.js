@@ -827,17 +827,17 @@
 
     clone.querySelectorAll(".no-print").forEach((el) => el.remove());
 
-    // 공란 입력칸: 보고서·인쇄·저장본에 placeholder(예시문)가 보이지 않게 제거
+    // 공란 입력칸: 예시문 제거 + 하늘색 그라데이션 제외 표시
     clone.querySelectorAll("input, textarea").forEach((el) => {
+      if (el.type === "checkbox" || el.type === "radio") return;
       const empty =
         el.tagName === "TEXTAREA"
           ? !String(el.value || el.textContent || "").trim()
-          : el.type === "checkbox" || el.type === "radio"
-            ? false
-            : !String(el.value || el.getAttribute("value") || "").trim();
-      if (empty || el.hasAttribute("readonly")) {
-        el.removeAttribute("placeholder");
-      }
+          : !String(el.value || el.getAttribute("value") || "").trim();
+      el.removeAttribute("placeholder");
+      el.classList.toggle("is-blank", empty);
+      if (empty) el.setAttribute("data-blank", "1");
+      else el.removeAttribute("data-blank");
     });
 
     // 1차시: HTML 소스·버튼·대기실 제거, 캐릭터 카드만 남김
@@ -1740,6 +1740,13 @@ ${linkedCss}
     box-shadow: inset 0 0 0 1px #e2e8f0 !important;
     border-radius: 4px !important;
   }
+  .na-card textarea.is-blank,
+  .activity-card .na-card textarea.is-blank,
+  textarea.is-blank,
+  input.is-blank {
+    background: #fff !important;
+    box-shadow: inset 0 0 0 1px #e5e7eb !important;
+  }
   input::placeholder,
   textarea::placeholder {
     color: transparent !important;
@@ -2410,7 +2417,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2120";
+        css.href = "./live-report-deck.css?v=2121";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2511,7 +2518,7 @@ ${linkedCss}
       }
 
       if (!localState.open) {
-        root.classList.remove("is-open", "is-spread");
+        root.classList.remove("is-open", "is-spread", "is-snap");
         root.setAttribute("aria-hidden", "true");
         if (table) table.innerHTML = "";
         if (reader) reader.innerHTML = "";
@@ -2520,6 +2527,7 @@ ${linkedCss}
       }
 
       root.classList.add("is-open");
+      if (!opts.loading) root.classList.add("is-snap");
       root.setAttribute("aria-hidden", "false");
       const focusId = localState.focusId;
       const isSpread = !!focusId;
@@ -2619,10 +2627,21 @@ ${linkedCss}
         channel.on("broadcast", { event: "state" }, ({ payload }) => {
           if (isActivityTeacherUi()) return;
           if (!payload || Number(payload.sessionNo) !== sessionNo) return;
+          // 교사 <보고서 종합> 열림 → 학생 활동지에서 강제 동기화
+          ensureDom();
+          const root = document.getElementById("liveReportDeck");
+          if (payload.open) root?.classList.add("is-snap");
           paintFromState(payload);
+          if (payload.open) {
+            requestAnimationFrame(() => {
+              // 첫 페인트 후 snap 유지(즉시 표시). 닫힐 때 제거.
+            });
+          }
         });
         channel.on("broadcast", { event: "close" }, () => {
           if (isActivityTeacherUi()) return;
+          const root = document.getElementById("liveReportDeck");
+          root?.classList.remove("is-snap");
           paintFromState({ open: false, cards: [] });
         });
         channel.on("broadcast", { event: "request-sync" }, () => {
@@ -3003,9 +3022,16 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
 
     function bootChannel() {
       const code = getSubmitCodeFromPage();
-      if (code) void bindLiveChannel(code);
+      if (code) {
+        // DOM/CSS 선행 로드 → 교사 강제 동기화 시 즉시 표시
+        ensureDom();
+        void bindLiveChannel(code);
+      }
     }
     bootChannel();
+    // 제출코드가 늦게 채워지는 경우 재시도
+    setTimeout(bootChannel, 800);
+    setTimeout(bootChannel, 2200);
     document.getElementById("submitCodeInput")?.addEventListener("change", bootChannel);
     window.addEventListener("career-submit-code-ready", bootChannel);
     syncTeacherSheetTools();
@@ -4298,10 +4324,10 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       live.classList.toggle("is-ready", show);
       live.title = show
         ? "실시간 보고서 종합 — 학생 화면에 동기화됩니다"
-        : "실시간 — 선생님 보고서 종합과 동기화됩니다";
+        : "선생님 <보고서 종합> 열리면 이 화면으로 자동 동기화됩니다";
       live.setAttribute(
         "aria-label",
-        show ? "실시간 보고서 종합" : "실시간 보고서 종합 보기"
+        show ? "실시간 보고서 종합" : "실시간 보고서 종합 (자동 동기화)"
       );
     }
     const liveRoot = document.getElementById("liveReportDeck");
