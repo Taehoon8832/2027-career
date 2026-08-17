@@ -8135,8 +8135,7 @@
         const incomplete = assessSubmissionCompleteness(sub);
         const preview = grid.querySelector(`.detail-sub-preview[data-tab-detail="${sub.id}"] .plain-mini`);
         if (preview) {
-          const summary = yukha.oneLine || yukha.paragraph || "내용 없음";
-          const previewText = incomplete.incomplete ? `미비 · ${summary}` : summary;
+          const previewText = buildDetailSubPreviewText(yukha, incomplete);
           preview.innerHTML = formatDetailSubPreviewHtml(
             previewText,
             yukha.highlightTerms || yukha.winnerJob
@@ -8153,7 +8152,7 @@
                 badge.className = "sub-incomplete-badge";
                 row.appendChild(badge);
               }
-              badge.textContent = "미비";
+              badge.textContent = incompleteBadgeLabel(yukha);
               badge.title = incomplete.title;
             } else if (badge) {
               badge.remove();
@@ -9363,7 +9362,7 @@
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v12|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v14|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -9487,14 +9486,21 @@
         // 교사 관찰 평가·학생 활동 요약은 항상 나이스 음슴체
         paragraph = toNeisEumseumStyle(paragraph);
         if (editedEarly) paragraph = toNeisEumseumStyle(editedEarly);
+        const session4PreviewLine = [swotJob, swotMajor]
+          .map((v, i) => {
+            if (!v) return "";
+            return i === 0 ? `(직업: ${v})` : `(학과: ${v})`;
+          })
+          .filter(Boolean)
+          .join(" ");
         const oneLine = previewText(
           toNeisEumseumStyle(
             sessionNo === 1
               ? `${whoName}, ${lessonTitle}, 자기이해 탐구`
               : sessionNo === 3 && winnerJob
                 ? `${whoName}, ${lessonTitle}, ${winnerJob}`
-                : sessionNo === 4 && (swotJob || swotMajor)
-                  ? [whoName, swotJob, swotMajor].filter(Boolean).join(", ")
+                : sessionNo === 4
+                  ? session4PreviewLine || lessonTitle
                 : `${whoName}, ${lessonTitle}, ${whatCore}`
           ),
           80
@@ -9519,6 +9525,25 @@
           sessionNo
         };
         return sub._yukha;
+      }
+
+      /** 제출 현황 미리보기 한 줄 텍스트 */
+      function buildDetailSubPreviewText(yukha, incomplete) {
+        const sessionNo = Number(yukha?.sessionNo) || 0;
+        if (sessionNo === 4) {
+          const parts = [];
+          if (incomplete?.incomplete) parts.push("(부족)");
+          if (yukha?.swotJob) parts.push(`(직업: ${yukha.swotJob})`);
+          if (yukha?.swotMajor) parts.push(`(학과: ${yukha.swotMajor})`);
+          if (parts.length) return parts.join(" ");
+          return yukha?.oneLine || "내용 없음";
+        }
+        const summary = yukha?.oneLine || yukha?.paragraph || "내용 없음";
+        return incomplete?.incomplete ? `미비 · ${summary}` : summary;
+      }
+
+      function incompleteBadgeLabel(yukha) {
+        return Number(yukha?.sessionNo) === 4 ? "(부족)" : "미비";
       }
 
       /** 제출 현황 한 줄 요약 — 강조어(최종 직업·희망직업·관련학과 등) 파란 강조 */
@@ -13809,7 +13834,6 @@ ${built.html}
             bodyHtml = `<div class="detail-sub-stack">${list
               .map((sub, idx) => {
                 const yukha = buildYukhaSummary(sub);
-                const summary = yukha?.oneLine || "내용 없음";
                 const incomplete = assessSubmissionCompleteness(sub);
                 // list는 최신순. 라벨은 제출 순서 기준: 처음 → N번 제출 → 최근 제출
                 const n = list.length;
@@ -13821,14 +13845,12 @@ ${built.html}
                   else verLabel = `${chronoIdx}번 제출`;
                 }
                 const badge = incomplete.incomplete
-                  ? `<span class="sub-incomplete-badge" title="${escapeHtml(incomplete.title)}">미비</span>`
+                  ? `<span class="sub-incomplete-badge" title="${escapeHtml(incomplete.title)}">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`
                   : "";
                 const previewTitle = incomplete.incomplete
                   ? incomplete.title
                   : "새 탭으로 보기";
-                const previewText = incomplete.incomplete
-                  ? `미비 · ${summary}`
-                  : summary;
+                const previewText = buildDetailSubPreviewText(yukha, incomplete);
                 return `
                 <div class="detail-sub-block${idx === 0 ? " is-latest" : ""}${incomplete.incomplete ? " is-incomplete" : ""}">
                   <div class="sub-meta-row">
