@@ -2337,10 +2337,24 @@
     }
     .detail-toolbar .grow { flex: 1; min-width: 8px; }
     .detail-toolbar .detail-missing-list {
+      flex: 1 1 100%;
+      order: 20;
+      box-sizing: border-box;
+      width: 100%;
+      margin: 2px 0 0;
+      padding: 8px 2px;
+      border-top: 1px solid rgba(31, 30, 29, 0.12);
+      border-bottom: 1px solid rgba(31, 30, 29, 0.12);
       color: var(--text-secondary);
-      font: 600 10px/1.35 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+      font: 600 10px/1.45 "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       letter-spacing: -0.01em;
       word-break: keep-all;
+    }
+    .detail-toolbar .detail-missing-list:empty {
+      display: none;
+      margin: 0;
+      padding: 0;
+      border: 0;
     }
     .detail-toolbar .detail-missing-list .missing-head {
       color: #c62828;
@@ -2573,7 +2587,7 @@
       grid-column: 1 / -1;
     }
     .deck-reader-field.is-accent {
-      border-color: rgba(29, 78, 216, 0.28);
+      border-color: rgba(29, 78, 216, 0.22);
       background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
     }
     .deck-reader-field-k {
@@ -2582,7 +2596,9 @@
       color: #64748b;
       letter-spacing: -0.01em;
     }
-    .deck-reader-field.is-accent .deck-reader-field-k { color: #1d4ed8; }
+    .deck-reader-field.is-accent .deck-reader-field-k {
+      color: #64748b;
+    }
     .deck-reader-field-v {
       margin: 0;
       font: 600 14px/1.55 var(--font-sans);
@@ -2593,6 +2609,8 @@
     .deck-reader-field.is-accent .deck-reader-field-v {
       font-weight: 800;
       color: #1d4ed8;
+      font-size: 15px;
+      letter-spacing: -0.02em;
     }
     .deck-reader-empty {
       margin: 0;
@@ -2684,9 +2702,57 @@
       cursor: wait;
       transform: none;
     }
+    .deck-icon-btn.is-emphasis {
+      position: relative;
+      height: 34px;
+      padding: 0 12px 0 9px;
+      border-color: #fde68a;
+      color: #422006;
+      font-size: 12px;
+      background:
+        linear-gradient(180deg, #fff7c2 0%, #fbbf24 55%, #f59e0b 100%);
+      box-shadow:
+        0 0 0 2px rgba(253, 230, 138, 0.35),
+        0 1px 0 rgba(255,255,255,0.55) inset,
+        0 6px 16px rgba(245, 158, 11, 0.45);
+      animation: deckBackPulse 1.8s ease-in-out infinite;
+    }
+    .deck-icon-btn.is-emphasis svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 2.2;
+    }
+    .deck-icon-btn.is-emphasis:hover {
+      background:
+        linear-gradient(180deg, #fef3c7 0%, #f59e0b 60%, #d97706 100%);
+      transform: translateY(-2px) scale(1.04);
+      box-shadow:
+        0 0 0 3px rgba(253, 230, 138, 0.5),
+        0 1px 0 rgba(255,255,255,0.65) inset,
+        0 10px 22px rgba(245, 158, 11, 0.55);
+    }
+    .deck-icon-btn.is-emphasis:active {
+      transform: translateY(0) scale(0.98);
+      animation: none;
+    }
+    @keyframes deckBackPulse {
+      0%, 100% {
+        box-shadow:
+          0 0 0 2px rgba(253, 230, 138, 0.3),
+          0 1px 0 rgba(255,255,255,0.55) inset,
+          0 6px 14px rgba(245, 158, 11, 0.4);
+      }
+      50% {
+        box-shadow:
+          0 0 0 4px rgba(253, 230, 138, 0.55),
+          0 1px 0 rgba(255,255,255,0.65) inset,
+          0 8px 20px rgba(245, 158, 11, 0.6);
+      }
+    }
     @media (max-width: 520px) {
       .deck-icon-btn span { display: none; }
       .deck-icon-btn { width: 34px; padding: 0; justify-content: center; }
+      .deck-icon-btn.is-emphasis { width: 36px; }
     }
     .report-deck-table {
       flex: 1;
@@ -2763,7 +2829,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      min-height: 228px;
+      min-height: 188px;
       padding: 10px 10px 12px;
       border: 2px solid #1f1e1d;
       border-radius: 14px;
@@ -2843,8 +2909,9 @@
       border-radius: 999px;
       border: 1px solid rgba(31,30,29,0.2);
       background: #fff;
-      font: 800 8px/1 var(--font-sans);
+      font: 800 7.5px/1 var(--font-sans);
       color: #a33b2c;
+      white-space: nowrap;
     }
     .deck-card-art {
       position: relative;
@@ -2915,18 +2982,8 @@
       min-height: 1.2em;
     }
     .deck-card-summary {
-      margin-top: 2px;
-      text-align: center;
-      font: 600 9.5px/1.35 var(--font-sans);
-      color: #334155;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      word-break: keep-all;
-      min-height: 2.7em;
+      display: none !important;
     }
-    .deck-card.is-empty .deck-card-summary { color: #94a3b8; }
     .deck-card-hint {
       margin-top: auto;
       text-align: center;
@@ -2935,6 +2992,17 @@
       letter-spacing: -0.01em;
     }
     .deck-card.is-empty .deck-card-hint { color: #64748b; }
+    .deck-reader-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .deck-reader-flow .deck-reader-field {
+      grid-column: auto;
+    }
+    .deck-reader-flow .deck-reader-field-v {
+      white-space: pre-wrap;
+    }
     @media (max-width: 720px) {
       .report-deck-table {
         grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
@@ -5146,16 +5214,25 @@
                 <p class="sub" id="reportDeckSub" hidden></p>
               </div>
               <div class="report-deck-actions">
-                <button type="button" class="deck-icon-btn" id="btnReportDeckPrint" title="인쇄하기 — 한 장에 모아 출력">
+                <button type="button" class="deck-icon-btn" id="btnReportDeckPrint" title="현재 화면 인쇄">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4"/><rect x="5" y="12" width="14" height="8" rx="1.5"/><path d="M5 14H3.5A1.5 1.5 0 0 1 2 12.5v-3A1.5 1.5 0 0 1 3.5 8h17A1.5 1.5 0 0 1 22 9.5v3a1.5 1.5 0 0 1-1.5 1.5H19"/><path d="M8 16h8"/></svg>
                   <span>인쇄</span>
                 </button>
-                <button type="button" class="deck-icon-btn" id="btnReportDeckSave" title="저장하기 — 한 장 시트 HTML 다운로드">
+                <button type="button" class="deck-icon-btn" id="btnReportDeckSave" title="현재 화면 저장">
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 18h14"/></svg>
                   <span>저장</span>
                 </button>
-                <button type="button" class="btn-tiny" id="btnReportDeckBack" hidden>카드덱</button>
-                <button type="button" class="btn-tiny" id="btnReportDeckClose">닫기</button>
+                <button type="button" class="deck-icon-btn is-emphasis" id="btnReportDeckBack" hidden title="카드덱으로 돌아가기">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <rect x="4.5" y="7.5" width="11" height="13" rx="1.6" transform="rotate(-12 10 14)"/>
+                    <rect x="7.5" y="5.5" width="11" height="13" rx="1.6"/>
+                  </svg>
+                  <span>카드덱</span>
+                </button>
+                <button type="button" class="deck-icon-btn" id="btnReportDeckClose" title="닫기">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+                  <span>닫기</span>
+                </button>
               </div>
             </div>
             <div class="report-deck-body">
@@ -8844,7 +8921,7 @@
                 badge.className = "sub-incomplete-badge";
                 row.appendChild(badge);
               }
-              badge.textContent = incompleteBadgeLabel(yukha);
+              badge.textContent = incompleteBadgeLabel(incomplete);
               badge.title = incomplete.title;
             } else if (badge) {
               badge.remove();
@@ -9481,6 +9558,114 @@
         return false;
       }
 
+      function computeSubmissionFillProgress(sub) {
+        const html = String(sub?.content || "");
+        const whoName = sub?.student_name || "";
+        const whoNo = sub?.student_no || "";
+        const sessionNo = Number(sub?.session_no) || 0;
+        const quality = (v) => {
+          const t = String(v || "").trim();
+          return !!t && !isLowQualityAnswer(t, whoName, whoNo);
+        };
+
+        const filledAttr = /data-filled=["'](\d+)["']/i.exec(html);
+        const fieldsAttr = /data-fields=["'](\d+)["']/i.exec(html);
+        if (filledAttr && fieldsAttr && Number(fieldsAttr[1]) > 0) {
+          const fieldCount = Math.max(1, Number(fieldsAttr[1]) || 1);
+          const filledCount = Math.max(0, Number(filledAttr[1]) || 0);
+          return {
+            filledCount,
+            fieldCount,
+            pct: Math.max(0, Math.min(100, Math.round((filledCount / fieldCount) * 100)))
+          };
+        }
+
+        if (sessionNo === 1) {
+          const map = extractSession1FieldMap(html);
+          const ids = Array.from({ length: 14 }, (_, i) => `f${i + 1}`);
+          let filledCount = ids.filter((id) => quality(map[id])).length;
+          if (quality(map.fReflect || extractReflectText(html))) filledCount += 1;
+          const fieldCount = 15;
+          return {
+            filledCount,
+            fieldCount,
+            pct: Math.round((filledCount / fieldCount) * 100)
+          };
+        }
+
+        const isWc =
+          sessionNo === 3 ||
+          /id=["']wc-result["']/i.test(html) ||
+          /activity-card--worldcup/i.test(html) ||
+          /name=["']wcWinner["']/i.test(html);
+        if (isWc) {
+          let jobFilled = 0;
+          const jobRe = /<input\b[^>]*(?:id|name)=["']job-\d+["'][^>]*>/gi;
+          let jm;
+          while ((jm = jobRe.exec(html))) {
+            const v = /value=["']([^"']*)["']/i.exec(jm[0]);
+            if (v && String(v[1] || "").trim()) jobFilled++;
+          }
+          const wc =
+            typeof extractWorldcupFieldMap === "function" ? extractWorldcupFieldMap(html) : {};
+          let filledCount = jobFilled;
+          if (String(wc.wcWinner || "").trim()) filledCount += 1;
+          if (String(wc.wcRunnerUp || "").trim()) filledCount += 1;
+          for (const k of ["wcQ1", "wcQ2", "wcQ3", "wcQ4"]) {
+            if (quality(wc[k])) filledCount += 1;
+          }
+          if (quality(wc.fReflect || extractReflectText(html))) filledCount += 1;
+          const fieldCount = 39;
+          return {
+            filledCount,
+            fieldCount,
+            pct: Math.round((filledCount / fieldCount) * 100)
+          };
+        }
+
+        if (sessionNo === 4) {
+          const map = {};
+          const re =
+            /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|fReflect)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
+          let m;
+          while ((m = re.exec(html))) {
+            const attrs = m[1] || "";
+            const key = m[2];
+            const ta = m[3];
+            const v =
+              ta != null
+                ? ta
+                : (/value=["']([^"']*)["']/i.exec(attrs) || /value=([^\s>]+)/i.exec(attrs) || [])[1] ||
+                  "";
+            map[key] = htmlToPlainTextFast(v).trim();
+          }
+          const ids = Array.from({ length: 19 }, (_, i) => `f${i + 1}`);
+          let filledCount = ids.filter((id) => quality(map[id])).length;
+          if (quality(map.fReflect || extractReflectText(html))) filledCount += 1;
+          const fieldCount = 20;
+          return {
+            filledCount,
+            fieldCount,
+            pct: Math.round((filledCount / fieldCount) * 100)
+          };
+        }
+
+        const answers = extractActivityAnswersFast(html).filter(
+          (a) => !/느낀\s*점|세특\s*참조|학번|이름/.test(a.label || "")
+        );
+        const filledCount = answers.filter((a) => quality(a.value)).length;
+        const fieldCount = Math.max(
+          answers.length,
+          (html.match(/<textarea\b/gi) || []).length,
+          1
+        );
+        return {
+          filledCount,
+          fieldCount,
+          pct: Math.round((filledCount / fieldCount) * 100)
+        };
+      }
+
       /**
        * 제출물 미비 여부.
        * - 입력란을 제대로 채우지 않음
@@ -9492,11 +9677,37 @@
         const whoNo = sub?.student_no || "";
         const sessionNo = Number(sub?.session_no) || 0;
         const reasons = [];
+        const fill = computeSubmissionFillProgress(sub);
+        const pack = (incomplete, uniq = []) => ({
+          incomplete: !!incomplete,
+          reasons: uniq,
+          label: incomplete ? `${fill.pct}% 작성됨` : "",
+          title: incomplete ? incompletenessTitle(uniq, fill.pct) : "",
+          pct: fill.pct,
+          filledCount: fill.filledCount,
+          fieldCount: fill.fieldCount
+        });
 
         const exportAttr = /data-complete=["']([01])["']/i.exec(html);
         const reasonAttr = /data-incomplete-reasons=["']([^"']*)["']/i.exec(html);
         const finalAttr = /data-reached-final=["']([01])["']/i.exec(html);
         if (exportAttr) {
+          const wcMapEarly =
+            sessionNo === 3 || /name=["']wcWinner["']/i.test(html)
+              ? typeof extractWorldcupFieldMap === "function"
+                ? extractWorldcupFieldMap(html)
+                : {}
+              : null;
+          const reachedFinalEarly =
+            finalAttr?.[1] === "1" ||
+            !!(wcMapEarly && String(wcMapEarly.wcWinner || "").trim()) ||
+            /is-wc-done/i.test(html);
+
+          // 3차시 직업 월드컵: 최종 페이지 도달이면 미비가 아님
+          if ((sessionNo === 3 || wcMapEarly) && reachedFinalEarly) {
+            return pack(false);
+          }
+
           if (exportAttr[1] === "0") {
             const listed = String(reasonAttr?.[1] || "")
               .split(",")
@@ -9509,14 +9720,9 @@
             reasons.push("no-final");
           }
           if (reasons.length) {
-            return {
-              incomplete: true,
-              reasons: [...new Set(reasons)],
-              label: "미비",
-              title: incompletenessTitle(reasons)
-            };
+            return pack(true, [...new Set(reasons)]);
           }
-          return { incomplete: false, reasons: [], label: "", title: "" };
+          return pack(false);
         }
 
         const isWc =
@@ -9541,11 +9747,7 @@
             if (v && String(v[1] || "").trim()) jobFilled++;
           }
           if (!reachedFinal && jobFilled < 16) reasons.push("sparse");
-
-          const qGood = ["wcQ1", "wcQ2", "wcQ3", "wcQ4"].filter(
-            (k) => !isLowQualityAnswer(wc[k] || "", whoName, whoNo)
-          ).length;
-          if (reachedFinal && qGood < 2) reasons.push("sparse");
+          // 최종 페이지까지 갔다면 성찰 문항 미작성만으로 미비 처리하지 않음
         } else {
           const filled = extractActivityAnswersFast(html)
             .filter((a) => a.value)
@@ -9561,22 +9763,20 @@
         }
 
         const uniq = [...new Set(reasons)];
-        if (!uniq.length) {
-          return { incomplete: false, reasons: [], label: "", title: "" };
-        }
-        return {
-          incomplete: true,
-          reasons: uniq,
-          label: "미비",
-          title: incompletenessTitle(uniq)
-        };
+        if (!uniq.length) return pack(false);
+        return pack(true, uniq);
       }
 
-      function incompletenessTitle(reasons) {
+      function incompletenessTitle(reasons, pct) {
         const bits = [];
         if ((reasons || []).includes("no-final")) bits.push("최종 단계 미도달");
         if ((reasons || []).includes("sparse")) bits.push("입력 미비");
-        return bits.length ? `제출 미비 · ${bits.join(", ")}` : "제출 미비";
+        const pctBit =
+          Number.isFinite(Number(pct)) ? `${Math.max(0, Math.min(100, Math.round(Number(pct))))}% 작성됨` : "";
+        if (bits.length && pctBit) return `제출 미비 · ${bits.join(", ")} · ${pctBit}`;
+        if (bits.length) return `제출 미비 · ${bits.join(", ")}`;
+        if (pctBit) return `제출 미비 · ${pctBit}`;
+        return "제출 미비";
       }
 
       /** 1차시 활동지 필드 id 기준 추출 */
@@ -9653,7 +9853,7 @@
       function formatSession1CharPreviewHtml(char, incomplete) {
         if (!char) return "";
         const flag = incomplete?.incomplete
-          ? `<span class="s1-char-flag">(부족)</span>`
+          ? `<span class="s1-char-flag">${escapeHtml(incompleteBadgeLabel(incomplete))}</span>`
           : "";
         const mbtiLine = char.mbti
           ? `<div class="s1-char-mbti">MBTI ${escapeHtml(char.mbti)}</div>`
@@ -10147,7 +10347,7 @@
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v16|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v17|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -10282,7 +10482,7 @@
         const session3PreviewLine = [winnerJob, runnerUpJob]
           .map((v, i) => {
             if (!v) return "";
-            return i === 0 ? `(최종직업: ${v})` : `(결승진출 직업: ${v})`;
+            return i === 0 ? `(직업: ${v})` : `(차순위: ${v})`;
           })
           .filter(Boolean)
           .join(" ");
@@ -10324,31 +10524,31 @@
       /** 제출 현황 미리보기 한 줄 텍스트 */
       function buildDetailSubPreviewText(yukha, incomplete) {
         const sessionNo = Number(yukha?.sessionNo) || 0;
+        const pctLabel = incomplete?.incomplete ? incompleteBadgeLabel(incomplete) : "";
         if (sessionNo === 3) {
           const parts = [];
-          if (incomplete?.incomplete) parts.push("(미비됨)");
-          if (yukha?.winnerJob) parts.push(`(최종직업: ${yukha.winnerJob})`);
-          if (yukha?.runnerUpJob) parts.push(`(결승진출 직업: ${yukha.runnerUpJob})`);
+          if (yukha?.winnerJob) parts.push(`(직업: ${yukha.winnerJob})`);
+          if (yukha?.runnerUpJob) parts.push(`(차순위: ${yukha.runnerUpJob})`);
           if (parts.length) return parts.join(" ");
+          if (pctLabel) return pctLabel;
           return "내용 없음";
         }
         if (sessionNo === 4) {
           const parts = [];
-          if (incomplete?.incomplete) parts.push("(부족)");
+          if (pctLabel) parts.push(pctLabel);
           if (yukha?.swotJob) parts.push(`(직업: ${yukha.swotJob})`);
           if (yukha?.swotMajor) parts.push(`(학과: ${yukha.swotMajor})`);
           if (parts.length) return parts.join(" ");
           return yukha?.oneLine || "내용 없음";
         }
         const summary = yukha?.oneLine || yukha?.paragraph || "내용 없음";
-        return incomplete?.incomplete ? `미비 · ${summary}` : summary;
+        return pctLabel ? `${pctLabel} ${summary}` : summary;
       }
 
-      function incompleteBadgeLabel(yukha) {
-        const sessionNo = Number(yukha?.sessionNo) || 0;
-        if (sessionNo === 4) return "(부족)";
-        if (sessionNo === 3) return "(미비됨)";
-        return "미비";
+      function incompleteBadgeLabel(incomplete) {
+        const pct = Number(incomplete?.pct);
+        const n = Number.isFinite(pct) ? Math.max(0, Math.min(100, Math.round(pct))) : 0;
+        return `(${n}% 작성됨)`;
       }
 
       /** 제출 현황 한 줄 요약 — 강조어(최종 직업·희망직업·관련학과 등) 파란 강조 */
@@ -14659,8 +14859,8 @@ ${built.html}
         const sessionNo = Number(sub.session_no) || Number(yukha?.sessionNo) || 0;
         if (sessionNo === 3) {
           const bits = [];
-          if (yukha?.winnerJob) bits.push(`최종 ${yukha.winnerJob}`);
-          if (yukha?.runnerUpJob) bits.push(`결승 ${yukha.runnerUpJob}`);
+          if (yukha?.winnerJob) bits.push(`직업 ${yukha.winnerJob}`);
+          if (yukha?.runnerUpJob) bits.push(`차순위 ${yukha.runnerUpJob}`);
           if (bits.length) return bits.join(" · ");
         }
         if (sessionNo === 4) {
@@ -14675,6 +14875,7 @@ ${built.html}
             yukha?.paragraph ||
             ""
         )
+          .replace(/^\(\d+%\s*작성됨\)\s*/, "")
           .replace(/^\(미비됨\)\s*/, "")
           .replace(/^\(부족\)\s*/, "")
           .replace(/^미비\s*·\s*/, "")
@@ -14688,61 +14889,67 @@ ${built.html}
             ? `
 html,body{margin:0;padding:0;background:#fff;color:#1f1e1d}
 body{font-family:Pretendard,"Noto Sans KR",sans-serif;padding:7mm}
-.xh{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:0 0 4mm;padding:0 0 2.5mm;border-bottom:2px solid #1f1e1d}
+.xh{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:0 0 3mm;padding:0 0 2.2mm;border-bottom:2px solid #1f1e1d}
 .xk{font:800 9px/1 sans-serif;letter-spacing:.08em;color:#8c4022;text-transform:uppercase}
 h1{margin:2px 0 0;font:800 16px/1.15 "Noto Serif KR",serif;letter-spacing:-.03em}
 .xm{font:700 9px/1.2 sans-serif;color:#57534e;white-space:nowrap}
-.xs{margin:0 0 3mm;padding:2.2mm 2.6mm;border:1.2px solid #c4a484;border-radius:3mm;background:linear-gradient(180deg,#fff,#faf4ee)}
-.xs h2{margin:0 0 1.2mm;font:800 9px/1 sans-serif;color:#8c4022;letter-spacing:.06em}
-.xs p{margin:0;font:500 10.5px/1.45 "Noto Serif KR",serif;word-break:keep-all}
-.xg{display:grid;grid-template-columns:1fr 1fr;gap:2mm}
+.xs{margin:0 0 2mm}
+.xs h2{margin:0;font:800 10px/1 sans-serif;color:#8c4022;letter-spacing:.06em}
+.xg{display:flex;flex-direction:column;gap:1.8mm}
 .xf{padding:2mm 2.3mm;border:1px solid #d6d3d1;border-radius:2.4mm;background:#fff;min-width:0;break-inside:avoid}
 .xf.is-a{border-color:#93c5fd;background:#f8fbff}
 .xf.is-w{grid-column:1/-1}
 .xf b{display:block;margin:0 0 1mm;font:800 8.5px/1.1 sans-serif;color:#78716c}
-.xf.is-a b{color:#1d4ed8}
-.xf p{margin:0;font:600 10px/1.35 sans-serif;white-space:pre-wrap;word-break:keep-all}
-.xe{grid-column:1/-1;text-align:center;color:#a8a29e;font:600 11px/1.4 sans-serif}
+.xf.is-a b{color:#64748b}
+.xf p{margin:0;font:600 10px/1.35 sans-serif;white-space:pre-wrap;word-break:keep-all;color:#1f1e1d}
+.xf.is-a p{color:#1d4ed8;font-weight:800}
+.xe{text-align:center;color:#a8a29e;font:600 11px/1.4 sans-serif}
 @page{size:A4 portrait;margin:6mm}
 @media print{
   body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .xg{gap:1.6mm}
-  .xf,.xs{padding:1.6mm 2mm}
+  .xg{gap:1.4mm}
+  .xf{padding:1.5mm 2mm}
   h1{font-size:14px}
-  .xs p{font-size:9.5px;line-height:1.35}
   .xf p{font-size:9px;line-height:1.28}
 }`
             : `
-html,body{margin:0;padding:0;background:#f7f3eb;color:#1f1e1d}
-body{font-family:Pretendard,"Noto Sans KR",sans-serif;padding:5mm}
-.xh{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:0 0 3mm;padding:0 0 2mm;border-bottom:2.5px solid #14532d}
-.xk{font:800 9px/1 sans-serif;letter-spacing:.1em;color:#166534;text-transform:uppercase}
-h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
-.xm{font:800 9px/1.2 sans-serif;color:#3f3f46;white-space:nowrap}
-.xb{display:grid;grid-template-columns:repeat(var(--cols,6),minmax(0,1fr));gap:2.2mm;align-content:stretch}
-.xc{display:flex;flex-direction:column;gap:1.2mm;min-height:0;padding:2mm 2.2mm;border:1.4px solid #1f1e1d;border-radius:2.2mm;background:linear-gradient(165deg,#fffef9,#fff7ed 70%,#ffedd5);box-shadow:0 1px 0 #fff inset;break-inside:avoid}
+html,body{margin:0;padding:0;background:#0f3d2e;color:#1f1e1d}
+body{font-family:Pretendard,"Noto Sans KR",sans-serif;padding:4mm;min-height:100vh;box-sizing:border-box;
+  background:linear-gradient(160deg,#0f3d2e 0%,#14532d 42%,#166534 72%,#0b3b28 100%)}
+.xh{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:0 0 2.5mm;padding:0 0 1.8mm;border-bottom:1.5px solid rgba(253,230,138,.45)}
+.xk{font:800 8.5px/1 sans-serif;letter-spacing:.1em;color:#fde68a;text-transform:uppercase}
+h1{margin:2px 0 0;font:800 14px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em;color:#fef3c7}
+.xm{font:800 8.5px/1.2 sans-serif;color:rgba(254,243,199,.75);white-space:nowrap}
+.xb{display:grid;grid-template-columns:repeat(var(--cols,6),minmax(0,1fr));gap:2mm;align-content:stretch}
+.xc{display:flex;flex-direction:column;align-items:center;gap:1mm;min-height:0;padding:1.8mm 1.6mm 2mm;border:1.5px solid #1f1e1d;border-radius:2.4mm;background:linear-gradient(165deg,#fffef9,#fff7ed 70%,#ffedd5);box-shadow:0 1px 0 #fff inset;break-inside:avoid;text-align:center}
 .xc.is-empty{background:repeating-linear-gradient(-45deg,#1e3a5f 0 5px,#172554 5px 10px);color:#e2e8f0;border-color:#0f172a}
-.xc.is-warn{box-shadow:inset 2.5px 0 0 #a33b2c,0 1px 0 #fff inset}
-.xc.is-ok{box-shadow:inset 2.5px 0 0 #15803d,0 1px 0 #fff inset}
-.xr{display:flex;justify-content:space-between;align-items:center;gap:2px}
-.xr span{font:800 8.5px/1 sans-serif;letter-spacing:-.02em}
-.xr em{font:800 7.5px/1 sans-serif;font-style:normal;padding:1.5px 4px;border-radius:999px;border:1px solid rgba(31,30,29,.2);background:#fff;color:#334155}
+.xc.is-warn{box-shadow:inset 2.2px 0 0 #a33b2c,0 1px 0 #fff inset}
+.xc.is-ok{box-shadow:inset 2.2px 0 0 #15803d,0 1px 0 #fff inset}
+.xr{width:100%;display:flex;justify-content:space-between;align-items:center;gap:2px}
+.xr span{font:800 8px/1 sans-serif;letter-spacing:-.02em;color:#9a3412}
+.xc.is-empty .xr span{color:#93c5fd}
+.xr em{font:800 7px/1 sans-serif;font-style:normal;padding:1.2px 3.5px;border-radius:999px;border:1px solid rgba(31,30,29,.2);background:#fff;color:#a33b2c}
 .xr em.is-ok{color:#15803d;border-color:rgba(21,128,61,.35);background:#f0fdf4}
-.xr em.is-warn{color:#a33b2c;border-color:rgba(163,59,44,.35);background:#fff7f5}
-.xc.is-empty .xr em{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#cbd5e1}
-.xc strong{font:800 10px/1.15 sans-serif;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.xc p{margin:0;flex:1;font:600 8px/1.25 sans-serif;color:#334155;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
-.xc.is-empty p{color:#94a3b8}
-@page{size:A4 landscape;margin:5mm}
+.xa{width:11mm;height:11mm;border-radius:50%;overflow:hidden;margin:0.4mm 0;background:linear-gradient(160deg,#ffedd5,#fed7aa);box-shadow:0 0 0 1.2px #1f1e1d;position:relative;flex-shrink:0}
+.xa.is-fb{display:grid;place-items:center;font:800 12px/1 "Noto Serif KR",serif;color:#9a3412}
+.xa .inf-photo,.xa .inf-photo-frame{position:absolute;inset:0;width:100%!important;height:100%!important;border-radius:50%;overflow:hidden}
+.xa svg{width:100%!important;height:100%!important;display:block}
+.xa .inf-photo-ring,.xa .inf-photo-spark,.xa .inf-photo-shade,.xa .inf-photo-lv,.xa .inf-photo-arc,.xa .inf-photo-power,.xa .inf-photo-mbti{display:none!important}
+.xc strong{width:100%;font:800 9px/1.15 sans-serif;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xt{width:100%;font:700 7.2px/1.15 sans-serif;color:#1d4ed8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1em}
+.xc.is-empty .xt{color:#94a3b8;font-weight:600}
+.xw{width:100%;font:600 7px/1.15 sans-serif;color:#9f1239;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:1em}
+@page{size:A4 landscape;margin:4mm}
 @media print{
-  html,body{background:#fff}
+  html,body{background:#0f3d2e}
   body{padding:0;height:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  .xh{margin-bottom:2mm;padding-bottom:1.5mm}
-  h1{font-size:13px}
-  .xb{gap:1.6mm;height:calc(100vh - 12mm)}
-  .xc{padding:1.5mm 1.8mm;border-radius:1.8mm}
-  .xc strong{font-size:9px}
-  .xc p{font-size:7.2px;line-height:1.2;-webkit-line-clamp:5}
+  .xh{margin-bottom:2mm;padding-bottom:1.4mm}
+  h1{font-size:12px}
+  .xb{gap:1.5mm;height:calc(100vh - 10mm)}
+  .xc{padding:1.4mm 1.3mm 1.6mm;border-radius:2mm}
+  .xa{width:9.5mm;height:9.5mm}
+  .xc strong{font-size:8.2px}
+  .xt,.xw{font-size:6.6px}
 }`;
 
         return `<!DOCTYPE html><html lang="ko"><head>
@@ -14755,27 +14962,38 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
 </head><body>${body}</body></html>`;
       }
 
-      function buildDeckExportDocument({ focusSubId = "" } = {}) {
+      async function buildDeckExportDocument({ focusSubId = "", charByKey = null } = {}) {
         const ctx = getReportDeckExportContext();
         if (!ctx) throw new Error("차시·명단을 먼저 확인해 주세요.");
-        const { lesson, grade, classNo, classLabel, students } = ctx;
+        const { lesson, classId, grade, classNo, classLabel, students } = ctx;
         const sessionNo = Number(lesson.session_no) || 0;
         const stamp = new Date().toISOString().slice(0, 10);
         const title = `${sessionNo}차시 보고서 종합 · ${classLabel}`;
+        const chars =
+          charByKey || (await loadSession1CharByStudentKey(classId, grade, classNo));
 
         const focusSub = focusSubId ? findSubmissionById(focusSubId) : null;
         if (focusSub) {
+          await ensureSubmissionContent(focusSub);
           const yukha = buildYukhaSummary(focusSub);
           const incomplete = assessSubmissionCompleteness(focusSub);
-          const fields = buildDeckReaderFields(focusSub);
+          const fields = buildDeckReaderFields(focusSub).map((f) => ({ ...f, wide: true }));
           const name = String(focusSub.student_name || "").trim() || "이름 없음";
           const no =
             resolveRosterStudentKey(focusSub.student_no, grade, classNo) ||
             normalizeStudentNo(focusSub.student_no) ||
             String(focusSub.student_no || "");
+          const sectionLabel =
+            sessionNo === 1
+              ? "「나」 사용 설명서"
+              : sessionNo === 3
+                ? "직업 월드컵 작성 내용"
+                : sessionNo === 4
+                  ? "SWOT 작성 내용"
+                  : "학생 작성 내용";
           const fieldHtml = fields
             .map(
-              (f) => `<div class="xf${f.accent ? " is-a" : ""}${f.wide ? " is-w" : ""}">
+              (f) => `<div class="xf${f.accent ? " is-a" : ""} is-w">
               <b>${escapeHtml(f.label)}</b>
               <p>${escapeHtml(f.value)}</p>
             </div>`
@@ -14786,13 +15004,9 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
               <div class="xk">${escapeHtml(classLabel)} · ${escapeHtml(String(sessionNo))}차시</div>
               <h1>${escapeHtml(no)} ${escapeHtml(name)}</h1>
             </div>
-            <div class="xm">${escapeHtml(stamp)}${incomplete.incomplete ? ` · ${escapeHtml(incompleteBadgeLabel(yukha))}` : ""}</div>
+            <div class="xm">${escapeHtml(stamp)}${incomplete.incomplete ? ` · ${escapeHtml(incompleteBadgeLabel(incomplete))}` : ""}</div>
           </header>
-          ${
-            yukha?.paragraph
-              ? `<section class="xs"><h2>요약</h2><p>${escapeHtml(yukha.paragraph)}</p></section>`
-              : ""
-          }
+          <section class="xs"><h2>${escapeHtml(sectionLabel)}</h2></section>
           <section class="xg">${fieldHtml || `<p class="xe">입력 내용 없음</p>`}</section>`;
 
           return {
@@ -14812,25 +15026,42 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
             const list =
               detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
             const latest = list[0] || null;
+            const char = chars.get(key) || null;
             const rosterName = String(st.student_name || "").trim() || "이름 없음";
             if (!latest) {
+              const displayName =
+                (char?.name && char.name !== "이름 미정" ? char.name : "") || rosterName;
+              const art = char?.faceHtml
+                ? `<div class="xa">${char.faceHtml}</div>`
+                : `<div class="xa is-fb">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
               return `<article class="xc is-empty">
                 <div class="xr"><span>${escapeHtml(key || "—")}</span><em>미제출</em></div>
-                <strong>${escapeHtml(rosterName)}</strong>
-                <p>—</p>
+                ${art}
+                <strong>${escapeHtml(displayName)}</strong>
+                <div class="xt">미제출</div>
+                <div class="xw"></div>
               </article>`;
             }
             const yukha = buildYukhaSummary(latest);
             const incomplete = assessSubmissionCompleteness(latest);
-            const name = String(latest.student_name || "").trim() || rosterName;
-            const snippet = deckExportSnippet(latest, yukha, incomplete);
+            const name =
+              (char?.name && char.name !== "이름 미정" ? char.name : "") ||
+              String(latest.student_name || "").trim() ||
+              rosterName;
+            const art = char?.faceHtml
+              ? `<div class="xa">${char.faceHtml}</div>`
+              : `<div class="xa is-fb">${escapeHtml(name.slice(0, 1) || "?")}</div>`;
             const badge = incomplete.incomplete
-              ? `<em class="is-warn">${escapeHtml(incompleteBadgeLabel(yukha))}</em>`
+              ? `<em class="is-warn">${escapeHtml(incompleteBadgeLabel(incomplete))}</em>`
               : `<em class="is-ok">제출</em>`;
+            const mbti = char?.mbti ? `MBTI ${char.mbti}` : "";
+            const arch = char?.arch ? `★ ${char.arch}` : "";
             return `<article class="xc${incomplete.incomplete ? " is-warn" : " is-ok"}">
               <div class="xr"><span>${escapeHtml(key || "—")}</span>${badge}</div>
+              ${art}
               <strong>${escapeHtml(name)}</strong>
-              <p>${escapeHtml(snippet)}</p>
+              <div class="xt">${escapeHtml(mbti)}</div>
+              <div class="xw">${escapeHtml(arch)}</div>
             </article>`;
           })
           .join("");
@@ -14860,17 +15091,128 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
         };
       }
 
-      function printReportDeck() {
+      function collectReportDeckScreenStyles() {
+        const chunks = [];
+        try {
+          for (const sheet of Array.from(document.styleSheets || [])) {
+            let rules;
+            try {
+              rules = sheet.cssRules;
+            } catch {
+              continue;
+            }
+            if (!rules) continue;
+            for (const rule of Array.from(rules)) {
+              const text = String(rule.cssText || "");
+              if (
+                /report-deck|deck-card|deck-reader|inf-photo|s1-char|\.plain-mini|\.wc-final/.test(
+                  text
+                )
+              ) {
+                chunks.push(text);
+              }
+            }
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+        return chunks.join("\n");
+      }
+
+      /** 지금 화면에 보이는 보고서 종합 내용을 그대로 문서화 */
+      function buildCurrentDeckScreenDocument() {
+        const deck = $("reportDeck");
+        const panel = deck?.querySelector(".report-deck-panel");
+        if (!deck?.classList.contains("is-open") || !panel) {
+          throw new Error("보고서 종합 화면이 열려 있지 않습니다.");
+        }
+        const isSpread = deck.classList.contains("is-spread");
+        const titleText = ($("reportDeckTitle")?.textContent || "보고서 종합").trim();
+        const stamp = new Date().toISOString().slice(0, 10);
+        const clone = panel.cloneNode(true);
+        clone.querySelector(".report-deck-actions")?.remove();
+        clone.querySelectorAll("[hidden]").forEach((el) => el.remove());
+        clone.querySelectorAll(".deck-card-hint").forEach((el) => el.remove());
+        clone.querySelectorAll(".deck-card").forEach((el) => {
+          el.removeAttribute("style");
+          el.classList.remove("is-active");
+          el.style.animation = "none";
+          el.style.opacity = "1";
+          el.style.transform = "none";
+        });
+        if (isSpread) {
+          clone.querySelector(".report-deck-table")?.remove();
+        } else {
+          clone.querySelector(".report-deck-reader")?.remove();
+        }
+
+        const liveCss = collectReportDeckScreenStyles();
+        const pageCss = isSpread
+          ? `
+html,body{margin:0;padding:0;background:#fff}
+body{padding:6mm;font-family:Pretendard,"Noto Sans KR",sans-serif}
+.report-deck-panel{border:none!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;width:100%!important;max-height:none!important}
+.report-deck-head{border:none!important;background:transparent!important;padding:0 0 4mm!important;margin:0 0 3mm;border-bottom:2px solid #1f1e1d!important}
+.report-deck-head h3{color:#1f1e1d!important;text-shadow:none!important;font-size:15px!important}
+.report-deck-body{display:block!important}
+.report-deck-reader{display:block!important;overflow:visible!important;padding:0!important;animation:none!important}
+.deck-reader-sheet{max-width:none!important;margin:0!important;box-shadow:none!important}
+@page{size:A4 portrait;margin:6mm}
+@media print{body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+`
+          : `
+html,body{margin:0;padding:0;background:#0f3d2e}
+body{padding:4mm;min-height:100vh;box-sizing:border-box;font-family:Pretendard,"Noto Sans KR",sans-serif;
+  background:linear-gradient(160deg,#0f3d2e 0%,#14532d 42%,#166534 72%,#0b3b28 100%)}
+.report-deck-panel{border:none!important;background:transparent!important;box-shadow:none!important;border-radius:0!important;width:100%!important;max-height:none!important;overflow:visible!important}
+.report-deck-head{border:none!important;background:transparent!important;padding:0 0 2mm!important;margin:0 0 2mm;border-bottom:1.5px solid rgba(253,230,138,.45)!important}
+.report-deck-head h3{color:#fef3c7!important;text-shadow:none!important;font-size:13px!important}
+.report-deck-body{display:block!important}
+.report-deck-table{
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+  gap:2mm!important;padding:0!important;overflow:visible!important;perspective:none!important;
+  height:calc(100vh - 12mm)!important;align-content:stretch!important
+}
+.deck-card{
+  min-height:0!important;height:auto!important;padding:1.6mm!important;gap:1mm!important;
+  animation:none!important;opacity:1!important;transform:none!important;box-shadow:0 1px 0 #fff inset!important
+}
+.deck-card-art{width:10mm!important;height:10mm!important;margin:0 auto!important}
+.deck-card-name{font-size:8.5px!important}
+.deck-card-meta,.deck-card-arch{font-size:6.8px!important;min-height:0!important}
+.deck-card-summary,.deck-card-hint{display:none!important}
+.report-deck-empty{color:#fef3c7!important}
+@page{size:A4 landscape;margin:4mm}
+@media print{
+  body{padding:0;height:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .report-deck-table{height:calc(100vh - 10mm)!important;gap:1.5mm!important}
+}
+`;
+
+        const safeName = titleText.replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "");
+        const html = `<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${escapeHtml(titleText)}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;800&display=swap"/>
+<style>${liveCss}
+${pageCss}</style>
+</head><body class="${isSpread ? "is-spread-print" : "is-grid-print"}">${clone.outerHTML}</body></html>`;
+
+        return {
+          title: titleText,
+          filename: `${safeName || "보고서종합"}_${stamp}.html`,
+          html,
+          isSpread
+        };
+      }
+
+      async function printReportDeck() {
         const btn = $("btnReportDeckPrint");
         if (btn) btn.disabled = true;
         try {
-          const deck = $("reportDeck");
-          const active = deck?.querySelector(".deck-card.is-active[data-sub-id]");
-          const focusSubId =
-            deck?.classList.contains("is-spread") && active
-              ? active.getAttribute("data-sub-id") || ""
-              : "";
-          const doc = buildDeckExportDocument({ focusSubId });
+          const doc = buildCurrentDeckScreenDocument();
           const win = window.open("", "_blank");
           if (!win) {
             toast("인쇄 창을 열 수 없습니다. 팝업을 허용해 주세요.");
@@ -14887,9 +15229,9 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
               console.warn(e);
             }
           };
-          if (win.document.readyState === "complete") setTimeout(trigger, 180);
-          else win.addEventListener("load", () => setTimeout(trigger, 180));
-          toast("인쇄 미리보기 준비 · 한 장 맞춤 레이아웃");
+          if (win.document.readyState === "complete") setTimeout(trigger, 240);
+          else win.addEventListener("load", () => setTimeout(trigger, 240));
+          toast(doc.isSpread ? "현재 학생 화면 인쇄" : "현재 카드덱 화면 인쇄");
         } catch (e) {
           console.error(e);
           toast(e.message || "인쇄에 실패했습니다.");
@@ -14898,17 +15240,11 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
         }
       }
 
-      function saveReportDeck() {
+      async function saveReportDeck() {
         const btn = $("btnReportDeckSave");
         if (btn) btn.disabled = true;
         try {
-          const deck = $("reportDeck");
-          const active = deck?.querySelector(".deck-card.is-active[data-sub-id]");
-          const focusSubId =
-            deck?.classList.contains("is-spread") && active
-              ? active.getAttribute("data-sub-id") || ""
-              : "";
-          const doc = buildDeckExportDocument({ focusSubId });
+          const doc = buildCurrentDeckScreenDocument();
           const blob = new Blob([doc.html], { type: "text/html;charset=utf-8" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -14918,7 +15254,7 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
           a.click();
           a.remove();
           setTimeout(() => URL.revokeObjectURL(url), 2000);
-          toast(`저장 완료 · ${doc.filename}`);
+          toast(`현재 화면 저장 · ${doc.filename}`);
         } catch (e) {
           console.error(e);
           toast(e.message || "저장에 실패했습니다.");
@@ -14947,8 +15283,8 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
 
         if (sessionNo === 3) {
           const wc = extractWorldcupFieldMap(html);
-          push("최종직업", wc.wcWinner, { accent: true, wide: false });
-          push("결승진출 직업", wc.wcRunnerUp, { accent: true, wide: false });
+          push("직업", wc.wcWinner, { accent: true, wide: false });
+          push("차순위", wc.wcRunnerUp, { accent: true, wide: false });
           const qLabels = {
             wcQ1: "1등으로 고른 가장 큰 이유",
             wcQ2: "마지막까지 고민한 직업과의 차이",
@@ -15044,6 +15380,7 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
       function buildDeckReaderHtml(sub, char) {
         const yukha = buildYukhaSummary(sub);
         const incomplete = assessSubmissionCompleteness(sub);
+        const sessionNo = Number(sub?.session_no) || Number(yukha?.sessionNo) || 0;
         const displayName =
           (char?.name && char.name !== "이름 미정" ? char.name : "") ||
           String(sub.student_name || "").trim() ||
@@ -15054,7 +15391,7 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
           : `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
         const tags = [];
         if (incomplete.incomplete) {
-          tags.push(`<span class="deck-reader-tag is-warn">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`);
+          tags.push(`<span class="deck-reader-tag is-warn">${escapeHtml(incompleteBadgeLabel(incomplete))}</span>`);
         }
         if (char?.mbti) tags.push(`<span class="deck-reader-tag is-blue">MBTI ${escapeHtml(char.mbti)}</span>`);
         if (char?.arch) tags.push(`<span class="deck-reader-tag">★ ${escapeHtml(char.arch)}</span>`);
@@ -15064,18 +15401,25 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
         }
 
         const fields = buildDeckReaderFields(sub);
+        const sectionLabel =
+          sessionNo === 1
+            ? "「나」 사용 설명서"
+            : sessionNo === 3
+              ? "직업 월드컵 작성 내용"
+              : sessionNo === 4
+                ? "SWOT 작성 내용"
+                : "학생 작성 내용";
+        const useFlow = sessionNo === 1 || fields.every((f) => f.wide);
         const fieldHtml = fields.length
-          ? `<div class="deck-reader-grid">${fields
+          ? `<div class="${useFlow ? "deck-reader-flow" : "deck-reader-grid"}">${fields
               .map(
-                (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
+                (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide || useFlow ? " is-wide" : ""}">
               <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
               <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
             </article>`
               )
               .join("")}</div>`
           : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
-
-        const summary = String(yukha?.paragraph || "").trim();
 
         return `<div class="deck-reader-sheet">
           <div class="deck-reader-top">
@@ -15086,16 +15430,8 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
               <div class="deck-reader-tags">${tags.join("")}</div>
             </div>
           </div>
-          ${
-            summary
-              ? `<section class="deck-reader-section">
-            <p class="deck-reader-label">요약</p>
-            <p class="deck-reader-summary">${escapeHtml(summary)}</p>
-          </section>`
-              : ""
-          }
           <section class="deck-reader-section">
-            <p class="deck-reader-label">학생 입력</p>
+            <p class="deck-reader-label">${escapeHtml(sectionLabel)}</p>
             ${fieldHtml}
           </section>
         </div>`;
@@ -15172,7 +15508,6 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
             <div class="deck-card-name">${escapeHtml(displayName)}</div>
             <div class="deck-card-meta">미제출</div>
             <div class="deck-card-arch">${char?.arch ? `★ ${escapeHtml(char.arch)}` : ""}</div>
-            <div class="deck-card-summary"></div>
             <div class="deck-card-hint">아직 카드가 뒤집히지 않았어요</div>
           </button>`;
         }
@@ -15186,25 +15521,11 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
           "이름 없음";
         const mbti = char?.mbti || "";
         const arch = char?.arch || "";
-        const summary = previewText(
-          String(yukha?.paragraph || "")
-            .replace(/^미비\s*·\s*/, "")
-            .replace(/^\(부족\)\s*/, "")
-            .replace(/^\(미비됨\)\s*/, "")
-            .trim() ||
-            buildDetailSubPreviewText(yukha, incomplete)
-              .replace(/^미비\s*·\s*/, "")
-              .replace(/^\(부족\)\s*/, "")
-              .replace(/^\(미비됨\)\s*/, "")
-              .trim() ||
-            "",
-          72
-        );
         const art = char?.faceHtml
           ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
           : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
         const badge = incomplete.incomplete
-          ? `<span class="deck-card-badge">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`
+          ? `<span class="deck-card-badge">${escapeHtml(incompleteBadgeLabel(incomplete))}</span>`
           : "";
         const metaLine = mbti ? `MBTI ${escapeHtml(mbti)}` : "";
         const archLine = arch ? `★ ${escapeHtml(arch)}` : "";
@@ -15218,7 +15539,6 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
           <div class="deck-card-name">${escapeHtml(displayName)}</div>
           <div class="deck-card-meta">${metaLine}</div>
           <div class="deck-card-arch">${archLine}</div>
-          <div class="deck-card-summary">${escapeHtml(summary || "요약 준비 중…")}</div>
           <div class="deck-card-hint">탭! 펼쳐 보기</div>
         </button>`;
       }
@@ -15404,7 +15724,7 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
                   else verLabel = `${chronoIdx}번 제출`;
                 }
                 const badge = incomplete.incomplete
-                  ? `<span class="sub-incomplete-badge" title="${escapeHtml(incomplete.title)}">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`
+                  ? `<span class="sub-incomplete-badge" title="${escapeHtml(incomplete.title)}">${escapeHtml(incompleteBadgeLabel(incomplete))}</span>`
                   : "";
                 const previewTitle = incomplete.incomplete
                   ? incomplete.title
@@ -15932,7 +16252,7 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
               </svg>
               <span>&lt;보고서 종합&gt;</span>
             </button>
-            <span class="settings-sub detail-missing-list" style="margin:0" id="detailMissingSubmitters"></span>
+            <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
           <div class="detail-roster-grid is-loading" id="detailRosterGrid">
@@ -16358,12 +16678,15 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
       });
       $("btnReportDeckClose")?.addEventListener("click", () => closeReportDeck());
       $("btnReportDeckBack")?.addEventListener("click", () => closeDeckSpread());
-      $("btnReportDeckPrint")?.addEventListener("click", () => printReportDeck());
-      $("btnReportDeckSave")?.addEventListener("click", () => saveReportDeck());
+      $("btnReportDeckPrint")?.addEventListener("click", () => {
+        void printReportDeck();
+      });
+      $("btnReportDeckSave")?.addEventListener("click", () => {
+        void saveReportDeck();
+      });
       $("reportDeck")?.addEventListener("click", (e) => {
-        if (e.target === $("reportDeck")) closeReportDeck();
         const card = e.target.closest?.(".deck-card[data-sub-id]");
-        if (card) {
+        if (card && $("reportDeck")?.contains(card)) {
           const id = card.getAttribute("data-sub-id");
           if (id) void openDeckSpread(id, card);
         }
@@ -16372,8 +16695,8 @@ h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
         if (e.key !== "Escape") return;
         const deck = $("reportDeck");
         if (!deck?.classList.contains("is-open")) return;
+        // 전체 닫기는 닫기 버튼만 허용. Esc는 펼침 보기에서 카드덱으로만 복귀.
         if (deck.classList.contains("is-spread")) closeDeckSpread();
-        else closeReportDeck();
       });
       $("btnObsEvalClose")?.addEventListener("click", () => closeObsEvalSheet());
       $("btnObsEvalSave")?.addEventListener("click", () => saveObsEvalSheet());

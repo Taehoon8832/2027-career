@@ -3204,17 +3204,13 @@ ${linkedCss}
         if (el && String(el.value || "").trim()) jobFilled++;
       }
       if (!reachedFinal && jobFilled < 16) reasons.push("sparse");
-
-      const qGood = ["wc-q1", "wc-q2", "wc-q3", "wc-q4"].filter((qid) =>
-        isMeaningfulFieldValue(document.getElementById(qid)?.value, id.studentName, id.studentNo)
-      ).length;
-      if (reachedFinal && qGood < 2) reasons.push("sparse");
+      // 최종 페이지 도달 시 성찰 문항 미작성만으로 미비 처리하지 않음
 
       return {
         complete: reasons.length === 0,
         reasons: [...new Set(reasons)],
         reachedFinal,
-        filledCount: jobFilled + qGood + (winner ? 1 : 0),
+        filledCount: jobFilled + (winner ? 1 : 0),
         fieldCount: 32 + 4
       };
     }
