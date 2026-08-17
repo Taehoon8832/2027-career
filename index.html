@@ -2409,6 +2409,203 @@
         radial-gradient(circle at 12% 8%, rgba(255,255,255,0.08), transparent 40%),
         linear-gradient(180deg, rgba(20, 83, 45, 0.35) 0%, rgba(6, 40, 28, 0.55) 100%);
       box-shadow: 0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+      transition: width 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .report-deck.is-spread .report-deck-panel {
+      width: min(1280px, 100%);
+    }
+    .report-deck-body {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .report-deck-reader {
+      display: none;
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 10px 14px 8px;
+    }
+    .report-deck.is-spread .report-deck-reader {
+      display: block;
+      animation: deckReaderIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+    @keyframes deckReaderIn {
+      0% { opacity: 0; transform: translateY(18px) scale(0.985); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .deck-reader-sheet {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 18px 20px 22px;
+      border-radius: 18px;
+      border: 2px solid #1f1e1d;
+      background:
+        linear-gradient(180deg, #fffefb 0%, #fff8f0 48%, #fff1e4 100%);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.9) inset,
+        0 16px 36px rgba(0,0,0,0.28);
+      color: #1f1e1d;
+    }
+    .deck-reader-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding-bottom: 14px;
+      border-bottom: 1.5px solid rgba(31, 30, 29, 0.12);
+    }
+    .deck-reader-art {
+      width: 76px;
+      height: 76px;
+      flex-shrink: 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(160deg, #ffedd5, #fed7aa);
+      box-shadow: 0 0 0 2px #1f1e1d, 0 4px 12px rgba(0,0,0,0.16);
+    }
+    .deck-reader-art .inf-photo,
+    .deck-reader-art .inf-photo-frame {
+      position: absolute; inset: 0;
+      width: 100% !important; height: 100% !important;
+      border-radius: 50%; overflow: hidden;
+    }
+    .deck-reader-art { position: relative; }
+    .deck-reader-art .inf-photo-frame > svg,
+    .deck-reader-art svg {
+      width: 100% !important; height: 100% !important; display: block;
+    }
+    .deck-reader-art .inf-photo-ring,
+    .deck-reader-art .inf-photo-spark,
+    .deck-reader-art .inf-photo-shade,
+    .deck-reader-art .inf-photo-lv,
+    .deck-reader-art .inf-photo-arc,
+    .deck-reader-art .inf-photo-power,
+    .deck-reader-art .inf-photo-mbti { display: none !important; }
+    .deck-reader-art.is-fallback {
+      display: grid;
+      place-items: center;
+      font: 800 26px/1 "Noto Serif KR", var(--font-serif);
+      color: #9a3412;
+    }
+    .deck-reader-who {
+      flex: 1;
+      min-width: 0;
+    }
+    .deck-reader-no {
+      font: 800 12px/1 var(--font-sans);
+      letter-spacing: 0.04em;
+      color: #9a3412;
+    }
+    .deck-reader-name {
+      margin: 4px 0 6px;
+      font: 800 22px/1.2 "Noto Serif KR", var(--font-serif);
+      letter-spacing: -0.03em;
+    }
+    .deck-reader-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .deck-reader-tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 0 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(31,30,29,0.14);
+      background: rgba(255,255,255,0.72);
+      font: 700 11px/1 var(--font-sans);
+      color: #334155;
+    }
+    .deck-reader-tag.is-warn {
+      border-color: rgba(163, 59, 44, 0.35);
+      color: #a33b2c;
+      background: #fff7f5;
+    }
+    .deck-reader-tag.is-blue {
+      color: #1d4ed8;
+      border-color: rgba(29, 78, 216, 0.28);
+      background: #eff6ff;
+    }
+    .deck-reader-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .deck-reader-section {
+      margin-top: 14px;
+    }
+    .deck-reader-section:first-of-type { margin-top: 0; }
+    .deck-reader-label {
+      margin: 0 0 6px;
+      font: 800 11px/1.2 var(--font-sans);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #8c4022;
+    }
+    .deck-reader-summary {
+      margin: 0;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(140, 64, 34, 0.22);
+      background: linear-gradient(180deg, #fff 0%, #fbf4ee 100%);
+      font: 500 14px/1.7 "Noto Serif KR", var(--font-serif);
+      color: #1f1e1d;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+    .deck-reader-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .deck-reader-field {
+      padding: 12px 13px;
+      border-radius: 12px;
+      border: 1.5px solid rgba(31, 30, 29, 0.12);
+      background: rgba(255,255,255,0.78);
+      min-width: 0;
+    }
+    .deck-reader-field.is-wide {
+      grid-column: 1 / -1;
+    }
+    .deck-reader-field.is-accent {
+      border-color: rgba(29, 78, 216, 0.28);
+      background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);
+    }
+    .deck-reader-field-k {
+      margin: 0 0 5px;
+      font: 800 11px/1.2 var(--font-sans);
+      color: #64748b;
+      letter-spacing: -0.01em;
+    }
+    .deck-reader-field.is-accent .deck-reader-field-k { color: #1d4ed8; }
+    .deck-reader-field-v {
+      margin: 0;
+      font: 600 14px/1.55 var(--font-sans);
+      color: #1f1e1d;
+      white-space: pre-wrap;
+      word-break: keep-all;
+    }
+    .deck-reader-field.is-accent .deck-reader-field-v {
+      font-weight: 800;
+      color: #1d4ed8;
+    }
+    .deck-reader-empty {
+      margin: 0;
+      padding: 28px 12px;
+      text-align: center;
+      color: #78716c;
+      font: 600 13px/1.5 var(--font-sans);
+    }
+    @media (max-width: 720px) {
+      .deck-reader-grid { grid-template-columns: 1fr; }
+      .deck-reader-sheet { padding: 14px 12px 16px; }
+      .deck-reader-name { font-size: 18px; }
+      .deck-reader-art { width: 64px; height: 64px; }
     }
     .report-deck-head {
       display: flex;
@@ -2440,6 +2637,57 @@
     .report-deck-head .btn-tiny:hover {
       background: rgba(255,255,255,0.18);
     }
+    .report-deck-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .deck-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 32px;
+      padding: 0 10px 0 8px;
+      border: 1.5px solid rgba(253, 230, 138, 0.55);
+      border-radius: 999px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.06) 100%);
+      color: #fef3c7;
+      font: 800 11px/1 var(--font-sans);
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.12) inset, 0 2px 8px rgba(0,0,0,0.18);
+      transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .deck-icon-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .deck-icon-btn:hover {
+      background: linear-gradient(180deg, rgba(254, 243, 199, 0.22) 0%, rgba(255,255,255,0.1) 100%);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.18) inset, 0 4px 12px rgba(0,0,0,0.22);
+      transform: translateY(-1px);
+    }
+    .deck-icon-btn:active {
+      transform: translateY(0) scale(0.97);
+    }
+    .deck-icon-btn:disabled {
+      opacity: 0.45;
+      cursor: wait;
+      transform: none;
+    }
+    @media (max-width: 520px) {
+      .deck-icon-btn span { display: none; }
+      .deck-icon-btn { width: 34px; padding: 0; justify-content: center; }
+    }
     .report-deck-table {
       flex: 1;
       overflow: auto;
@@ -2449,6 +2697,58 @@
       gap: 14px 12px;
       align-content: start;
       perspective: 900px;
+      transition: padding 0.28s ease, gap 0.28s ease;
+    }
+    .report-deck.is-spread .report-deck-table {
+      flex: 0 0 auto;
+      max-height: none;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 10px;
+      padding: 8px 14px 14px;
+      perspective: none;
+      border-top: 1px solid rgba(253, 230, 138, 0.22);
+      background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.22));
+      scrollbar-width: thin;
+    }
+    .report-deck.is-spread .deck-card {
+      flex: 0 0 108px;
+      width: 108px;
+      min-height: 0;
+      height: auto;
+      padding: 7px 6px 8px;
+      gap: 3px;
+      transform: none !important;
+      opacity: 1 !important;
+      animation: none;
+      border-radius: 12px;
+    }
+    .report-deck.is-spread .deck-card-art {
+      width: 44px;
+      height: 44px;
+    }
+    .report-deck.is-spread .deck-card-name {
+      font-size: 11px;
+    }
+    .report-deck.is-spread .deck-card-meta,
+    .report-deck.is-spread .deck-card-arch,
+    .report-deck.is-spread .deck-card-summary,
+    .report-deck.is-spread .deck-card-hint {
+      display: none;
+    }
+    .report-deck.is-spread .deck-card.is-active {
+      outline: 2px solid #fde68a;
+      box-shadow:
+        0 0 0 3px rgba(253, 230, 138, 0.35),
+        0 10px 18px rgba(0,0,0,0.35);
+      transform: translateY(-4px) scale(1.04) !important;
+      z-index: 2;
+    }
+    .report-deck.is-spread .deck-card:hover,
+    .report-deck.is-spread .deck-card:focus-visible {
+      transform: translateY(-4px) scale(1.03) !important;
     }
     .report-deck-empty {
       grid-column: 1 / -1;
@@ -2463,7 +2763,7 @@
       display: flex;
       flex-direction: column;
       gap: 6px;
-      min-height: 196px;
+      min-height: 228px;
       padding: 10px 10px 12px;
       border: 2px solid #1f1e1d;
       border-radius: 14px;
@@ -2614,6 +2914,19 @@
       text-overflow: ellipsis;
       min-height: 1.2em;
     }
+    .deck-card-summary {
+      margin-top: 2px;
+      text-align: center;
+      font: 600 9.5px/1.35 var(--font-sans);
+      color: #334155;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      word-break: keep-all;
+      min-height: 2.7em;
+    }
+    .deck-card.is-empty .deck-card-summary { color: #94a3b8; }
     .deck-card-hint {
       margin-top: auto;
       text-align: center;
@@ -2628,7 +2941,7 @@
         gap: 10px;
         padding: 12px 10px 18px;
       }
-      .deck-card { min-height: 178px; padding: 8px; }
+      .deck-card { min-height: 210px; padding: 8px; }
       .deck-card-art { width: 64px; height: 64px; }
     }
     .detail-roster-grid {
@@ -4830,11 +5143,25 @@
             <div class="report-deck-head">
               <div style="min-width:0;flex:1">
                 <h3 id="reportDeckTitle">&lt;보고서 종합&gt; 카드덱</h3>
-                <p class="sub" id="reportDeckSub">번호순으로 펼쳐진 카드를 눌러 보고서를 확인하세요</p>
+                <p class="sub" id="reportDeckSub" hidden></p>
               </div>
-              <button type="button" class="btn-tiny" id="btnReportDeckClose">닫기</button>
+              <div class="report-deck-actions">
+                <button type="button" class="deck-icon-btn" id="btnReportDeckPrint" title="인쇄하기 — 한 장에 모아 출력">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V4h10v4"/><rect x="5" y="12" width="14" height="8" rx="1.5"/><path d="M5 14H3.5A1.5 1.5 0 0 1 2 12.5v-3A1.5 1.5 0 0 1 3.5 8h17A1.5 1.5 0 0 1 22 9.5v3a1.5 1.5 0 0 1-1.5 1.5H19"/><path d="M8 16h8"/></svg>
+                  <span>인쇄</span>
+                </button>
+                <button type="button" class="deck-icon-btn" id="btnReportDeckSave" title="저장하기 — 한 장 시트 HTML 다운로드">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v10"/><path d="M8 10l4 4 4-4"/><path d="M5 18h14"/></svg>
+                  <span>저장</span>
+                </button>
+                <button type="button" class="btn-tiny" id="btnReportDeckBack" hidden>카드덱</button>
+                <button type="button" class="btn-tiny" id="btnReportDeckClose">닫기</button>
+              </div>
             </div>
-            <div class="report-deck-table" id="reportDeckTable"></div>
+            <div class="report-deck-body">
+              <div class="report-deck-reader" id="reportDeckReader" aria-live="polite"></div>
+              <div class="report-deck-table" id="reportDeckTable"></div>
+            </div>
           </div>
         </div>
         <div class="obs-eval-sheet" id="obsEvalSheet" aria-hidden="true">
@@ -9820,7 +10147,7 @@
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v14|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v16|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -9843,6 +10170,7 @@
           meta?.title || (sub.session_no ? `${sub.session_no}차시 활동` : "활동")
         );
         const winnerJob = sanitizeSeteukText(wcMap?.wcWinner || "").trim();
+        const runnerUpJob = sanitizeSeteukText(wcMap?.wcRunnerUp || "").trim();
         const swotJobRaw = sanitizeSeteukText(swotMap?.f1 || "").trim();
         const swotMajorRaw = sanitizeSeteukText(swotMap?.f2 || "").trim();
         const swotJob =
@@ -9951,12 +10279,19 @@
           })
           .filter(Boolean)
           .join(" ");
+        const session3PreviewLine = [winnerJob, runnerUpJob]
+          .map((v, i) => {
+            if (!v) return "";
+            return i === 0 ? `(최종직업: ${v})` : `(결승진출 직업: ${v})`;
+          })
+          .filter(Boolean)
+          .join(" ");
         const oneLine = previewText(
           toNeisEumseumStyle(
             sessionNo === 1
               ? `${whoName}, ${lessonTitle}, 자기이해 탐구`
-              : sessionNo === 3 && winnerJob
-                ? `${whoName}, ${lessonTitle}, ${winnerJob}`
+              : sessionNo === 3
+                ? session3PreviewLine || `${whoName}, ${lessonTitle}`
                 : sessionNo === 4
                   ? session4PreviewLine || lessonTitle
                 : `${whoName}, ${lessonTitle}, ${whatCore}`
@@ -9965,8 +10300,8 @@
         );
         const sheetText = lines.map((l) => `${l.k}: ${l.v}`).join(" / ");
         const highlightTerms =
-          sessionNo === 3 && winnerJob
-            ? [winnerJob]
+          sessionNo === 3
+            ? [winnerJob, runnerUpJob].filter(Boolean)
             : sessionNo === 4
               ? [swotJob, swotMajor].filter(Boolean)
               : [];
@@ -9977,6 +10312,7 @@
           lines,
           sheetText,
           winnerJob: sessionNo === 3 ? winnerJob : "",
+          runnerUpJob: sessionNo === 3 ? runnerUpJob : "",
           swotJob: sessionNo === 4 ? swotJob : "",
           swotMajor: sessionNo === 4 ? swotMajor : "",
           highlightTerms,
@@ -9988,6 +10324,14 @@
       /** 제출 현황 미리보기 한 줄 텍스트 */
       function buildDetailSubPreviewText(yukha, incomplete) {
         const sessionNo = Number(yukha?.sessionNo) || 0;
+        if (sessionNo === 3) {
+          const parts = [];
+          if (incomplete?.incomplete) parts.push("(미비됨)");
+          if (yukha?.winnerJob) parts.push(`(최종직업: ${yukha.winnerJob})`);
+          if (yukha?.runnerUpJob) parts.push(`(결승진출 직업: ${yukha.runnerUpJob})`);
+          if (parts.length) return parts.join(" ");
+          return "내용 없음";
+        }
         if (sessionNo === 4) {
           const parts = [];
           if (incomplete?.incomplete) parts.push("(부족)");
@@ -10001,7 +10345,10 @@
       }
 
       function incompleteBadgeLabel(yukha) {
-        return Number(yukha?.sessionNo) === 4 ? "(부족)" : "미비";
+        const sessionNo = Number(yukha?.sessionNo) || 0;
+        if (sessionNo === 4) return "(부족)";
+        if (sessionNo === 3) return "(미비됨)";
+        return "미비";
       }
 
       /** 제출 현황 한 줄 요약 — 강조어(최종 직업·희망직업·관련학과 등) 파란 강조 */
@@ -10035,7 +10382,7 @@
 <section class="eval-card" aria-label="요약" data-sub-id="${escapeHtml(sub.id || "")}" title="클릭하면 요약을 수정할 수 있습니다">
   <p class="eval-para is-solo">
     <strong>요약</strong>
-    <span class="eval-text">${escapeHtml(yukha.paragraph)}</span>
+    <span class="eval-text">${escapeHtml(yukha.paragraph || "요약 내용이 없습니다.")}</span>
   </p>
   <span class="eval-edit-hint">클릭하여 수정</span>
 </section>`;
@@ -10046,10 +10393,15 @@
             html: `<div class="shell">${yukhaBlock}<section class="activity-card"><h2>제출 내용</h2><pre style="white-space:pre-wrap;margin:0;font:500 14px/1.65 var(--serif)">${escapeHtml(raw || "(내용 없음)")}</pre></section></div>`
           };
         }
-        // 신규 포맷: 활동지와 동일한 shell 구조
+        // 신규 포맷: 상단바 위에 요약을 두어 sticky topbar에 가리지 않음
         if (raw.includes("student-activity-export") && raw.includes("activity-card")) {
           let html = raw;
-          if (html.includes('<div class="shell">')) {
+          if (/class="student-activity-export"/.test(html)) {
+            html = html.replace(
+              /(<div class="student-activity-export"[^>]*>)/,
+              `$1${yukhaBlock}`
+            );
+          } else if (html.includes('<div class="shell">')) {
             html = html.replace('<div class="shell">', `<div class="shell">${yukhaBlock}`);
           } else {
             html = yukhaBlock + html;
@@ -10901,12 +11253,14 @@ ${css}
 .submit-fab,.overlay,.hero-qr-wrap{display:none!important}
 .na-manual-info,.na-info-box,.student-info,.info-box,#sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
 input,textarea,select{pointer-events:none;caret-color:transparent}
-.student-activity-export .topbar{position:sticky}
-body{padding:calc(56px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom,0px))}
+.student-activity-export .topbar{position:relative!important;top:auto!important}
+body{padding:calc(16px + var(--safe-top,0px)) 12px calc(16px + var(--safe-bottom,0px))}
+.student-activity-export > .eval-card{margin:0 0 14px}
 .eval-card{
-  position:relative;margin:0 0 14px;padding:16px 16px 18px;border:2.5px solid #111110;border-radius:16px;
+  position:relative;z-index:2;margin:0 0 14px;padding:16px 16px 18px;border:2.5px solid #111110;border-radius:16px;
   background:linear-gradient(180deg,#fff 0%,#fbefe7 100%);
   cursor:text;outline:none;
+  display:block!important;visibility:visible!important;
 }
 .eval-card.is-editing{border-color:#c96442;box-shadow:0 0 0 3px rgba(201,100,66,0.16)}
 .eval-para{margin:0;padding:0;border:0;font:500 14px/1.7 var(--serif);color:#1f1e1d}
@@ -14252,29 +14606,579 @@ ${built.html}
       function closeReportDeck() {
         const el = $("reportDeck");
         if (!el) return;
+        closeDeckSpread();
         el.classList.remove("is-open");
         el.setAttribute("aria-hidden", "true");
       }
 
-      function buildDeckCardHtml(st, key, latest, dealIdx) {
+      function closeDeckSpread() {
+        const deck = $("reportDeck");
+        const reader = $("reportDeckReader");
+        const back = $("btnReportDeckBack");
+        if (!deck) return;
+        deck.classList.remove("is-spread");
+        if (reader) reader.innerHTML = "";
+        if (back) back.hidden = true;
+        deck.querySelectorAll(".deck-card.is-active").forEach((c) => c.classList.remove("is-active"));
+        const subEl = $("reportDeckSub");
+        if (subEl) {
+          subEl.textContent = "";
+          subEl.hidden = true;
+        }
+      }
+
+      function getReportDeckExportContext() {
+        const lesson = lessons.find((l) => l.id === selectedLessonId);
+        if (!lesson) return null;
+        const classId = activeClassId || teacherClass?.id || null;
+        const meta = classMetaById(classId);
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
+        const classLabel =
+          meta?.name ||
+          (grade && classNo ? `${grade}학년 ${classNo}반` : "학급");
+        const students = detailStudentsCache.slice().sort((a, b) => {
+          const keyA =
+            resolveRosterStudentKey(a.student_no, grade, classNo) ||
+            normalizeStudentNo(a.student_no) ||
+            String(a.student_no || "");
+          const keyB =
+            resolveRosterStudentKey(b.student_no, grade, classNo) ||
+            normalizeStudentNo(b.student_no) ||
+            String(b.student_no || "");
+          const na = Number(keyA) || 0;
+          const nb = Number(keyB) || 0;
+          if (na !== nb) return na - nb;
+          return String(keyA).localeCompare(String(keyB), "ko", { numeric: true });
+        });
+        return { lesson, classId, grade, classNo, classLabel, students };
+      }
+
+      function deckExportSnippet(sub, yukha, incomplete) {
+        if (!sub) return "미제출";
+        const sessionNo = Number(sub.session_no) || Number(yukha?.sessionNo) || 0;
+        if (sessionNo === 3) {
+          const bits = [];
+          if (yukha?.winnerJob) bits.push(`최종 ${yukha.winnerJob}`);
+          if (yukha?.runnerUpJob) bits.push(`결승 ${yukha.runnerUpJob}`);
+          if (bits.length) return bits.join(" · ");
+        }
+        if (sessionNo === 4) {
+          const bits = [];
+          if (yukha?.swotJob) bits.push(yukha.swotJob);
+          if (yukha?.swotMajor) bits.push(yukha.swotMajor);
+          if (bits.length) return bits.join(" · ");
+        }
+        const line = String(
+          yukha?.oneLine ||
+            buildDetailSubPreviewText(yukha, incomplete) ||
+            yukha?.paragraph ||
+            ""
+        )
+          .replace(/^\(미비됨\)\s*/, "")
+          .replace(/^\(부족\)\s*/, "")
+          .replace(/^미비\s*·\s*/, "")
+          .trim();
+        return previewText(line, 72) || "제출됨";
+      }
+
+      function deckExportShellHtml({ title, body, kind }) {
+        const css =
+          kind === "focus"
+            ? `
+html,body{margin:0;padding:0;background:#fff;color:#1f1e1d}
+body{font-family:Pretendard,"Noto Sans KR",sans-serif;padding:7mm}
+.xh{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:0 0 4mm;padding:0 0 2.5mm;border-bottom:2px solid #1f1e1d}
+.xk{font:800 9px/1 sans-serif;letter-spacing:.08em;color:#8c4022;text-transform:uppercase}
+h1{margin:2px 0 0;font:800 16px/1.15 "Noto Serif KR",serif;letter-spacing:-.03em}
+.xm{font:700 9px/1.2 sans-serif;color:#57534e;white-space:nowrap}
+.xs{margin:0 0 3mm;padding:2.2mm 2.6mm;border:1.2px solid #c4a484;border-radius:3mm;background:linear-gradient(180deg,#fff,#faf4ee)}
+.xs h2{margin:0 0 1.2mm;font:800 9px/1 sans-serif;color:#8c4022;letter-spacing:.06em}
+.xs p{margin:0;font:500 10.5px/1.45 "Noto Serif KR",serif;word-break:keep-all}
+.xg{display:grid;grid-template-columns:1fr 1fr;gap:2mm}
+.xf{padding:2mm 2.3mm;border:1px solid #d6d3d1;border-radius:2.4mm;background:#fff;min-width:0;break-inside:avoid}
+.xf.is-a{border-color:#93c5fd;background:#f8fbff}
+.xf.is-w{grid-column:1/-1}
+.xf b{display:block;margin:0 0 1mm;font:800 8.5px/1.1 sans-serif;color:#78716c}
+.xf.is-a b{color:#1d4ed8}
+.xf p{margin:0;font:600 10px/1.35 sans-serif;white-space:pre-wrap;word-break:keep-all}
+.xe{grid-column:1/-1;text-align:center;color:#a8a29e;font:600 11px/1.4 sans-serif}
+@page{size:A4 portrait;margin:6mm}
+@media print{
+  body{padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .xg{gap:1.6mm}
+  .xf,.xs{padding:1.6mm 2mm}
+  h1{font-size:14px}
+  .xs p{font-size:9.5px;line-height:1.35}
+  .xf p{font-size:9px;line-height:1.28}
+}`
+            : `
+html,body{margin:0;padding:0;background:#f7f3eb;color:#1f1e1d}
+body{font-family:Pretendard,"Noto Sans KR",sans-serif;padding:5mm}
+.xh{display:flex;justify-content:space-between;align-items:flex-end;gap:8px;margin:0 0 3mm;padding:0 0 2mm;border-bottom:2.5px solid #14532d}
+.xk{font:800 9px/1 sans-serif;letter-spacing:.1em;color:#166534;text-transform:uppercase}
+h1{margin:2px 0 0;font:800 15px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em}
+.xm{font:800 9px/1.2 sans-serif;color:#3f3f46;white-space:nowrap}
+.xb{display:grid;grid-template-columns:repeat(var(--cols,6),minmax(0,1fr));gap:2.2mm;align-content:stretch}
+.xc{display:flex;flex-direction:column;gap:1.2mm;min-height:0;padding:2mm 2.2mm;border:1.4px solid #1f1e1d;border-radius:2.2mm;background:linear-gradient(165deg,#fffef9,#fff7ed 70%,#ffedd5);box-shadow:0 1px 0 #fff inset;break-inside:avoid}
+.xc.is-empty{background:repeating-linear-gradient(-45deg,#1e3a5f 0 5px,#172554 5px 10px);color:#e2e8f0;border-color:#0f172a}
+.xc.is-warn{box-shadow:inset 2.5px 0 0 #a33b2c,0 1px 0 #fff inset}
+.xc.is-ok{box-shadow:inset 2.5px 0 0 #15803d,0 1px 0 #fff inset}
+.xr{display:flex;justify-content:space-between;align-items:center;gap:2px}
+.xr span{font:800 8.5px/1 sans-serif;letter-spacing:-.02em}
+.xr em{font:800 7.5px/1 sans-serif;font-style:normal;padding:1.5px 4px;border-radius:999px;border:1px solid rgba(31,30,29,.2);background:#fff;color:#334155}
+.xr em.is-ok{color:#15803d;border-color:rgba(21,128,61,.35);background:#f0fdf4}
+.xr em.is-warn{color:#a33b2c;border-color:rgba(163,59,44,.35);background:#fff7f5}
+.xc.is-empty .xr em{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:#cbd5e1}
+.xc strong{font:800 10px/1.15 sans-serif;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xc p{margin:0;flex:1;font:600 8px/1.25 sans-serif;color:#334155;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;word-break:keep-all}
+.xc.is-empty p{color:#94a3b8}
+@page{size:A4 landscape;margin:5mm}
+@media print{
+  html,body{background:#fff}
+  body{padding:0;height:100%;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .xh{margin-bottom:2mm;padding-bottom:1.5mm}
+  h1{font-size:13px}
+  .xb{gap:1.6mm;height:calc(100vh - 12mm)}
+  .xc{padding:1.5mm 1.8mm;border-radius:1.8mm}
+  .xc strong{font-size:9px}
+  .xc p{font-size:7.2px;line-height:1.2;-webkit-line-clamp:5}
+}`;
+
+        return `<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>${escapeHtml(title)}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;700;800&display=swap"/>
+<style>${css}</style>
+</head><body>${body}</body></html>`;
+      }
+
+      function buildDeckExportDocument({ focusSubId = "" } = {}) {
+        const ctx = getReportDeckExportContext();
+        if (!ctx) throw new Error("차시·명단을 먼저 확인해 주세요.");
+        const { lesson, grade, classNo, classLabel, students } = ctx;
+        const sessionNo = Number(lesson.session_no) || 0;
+        const stamp = new Date().toISOString().slice(0, 10);
+        const title = `${sessionNo}차시 보고서 종합 · ${classLabel}`;
+
+        const focusSub = focusSubId ? findSubmissionById(focusSubId) : null;
+        if (focusSub) {
+          const yukha = buildYukhaSummary(focusSub);
+          const incomplete = assessSubmissionCompleteness(focusSub);
+          const fields = buildDeckReaderFields(focusSub);
+          const name = String(focusSub.student_name || "").trim() || "이름 없음";
+          const no =
+            resolveRosterStudentKey(focusSub.student_no, grade, classNo) ||
+            normalizeStudentNo(focusSub.student_no) ||
+            String(focusSub.student_no || "");
+          const fieldHtml = fields
+            .map(
+              (f) => `<div class="xf${f.accent ? " is-a" : ""}${f.wide ? " is-w" : ""}">
+              <b>${escapeHtml(f.label)}</b>
+              <p>${escapeHtml(f.value)}</p>
+            </div>`
+            )
+            .join("");
+          const body = `<header class="xh">
+            <div>
+              <div class="xk">${escapeHtml(classLabel)} · ${escapeHtml(String(sessionNo))}차시</div>
+              <h1>${escapeHtml(no)} ${escapeHtml(name)}</h1>
+            </div>
+            <div class="xm">${escapeHtml(stamp)}${incomplete.incomplete ? ` · ${escapeHtml(incompleteBadgeLabel(yukha))}` : ""}</div>
+          </header>
+          ${
+            yukha?.paragraph
+              ? `<section class="xs"><h2>요약</h2><p>${escapeHtml(yukha.paragraph)}</p></section>`
+              : ""
+          }
+          <section class="xg">${fieldHtml || `<p class="xe">입력 내용 없음</p>`}</section>`;
+
+          return {
+            title: `${title} · ${name}`,
+            filename: `보고서종합_${sessionNo}차시_${no}_${name}_${stamp}.html`,
+            html: deckExportShellHtml({ title: `${title} · ${name}`, body, kind: "focus" })
+          };
+        }
+
+        const cols = students.length <= 20 ? 5 : students.length <= 30 ? 6 : 7;
+        const cells = students
+          .map((st) => {
+            const key =
+              resolveRosterStudentKey(st.student_no, grade, classNo) ||
+              normalizeStudentNo(st.student_no) ||
+              String(st.student_no || "");
+            const list =
+              detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
+            const latest = list[0] || null;
+            const rosterName = String(st.student_name || "").trim() || "이름 없음";
+            if (!latest) {
+              return `<article class="xc is-empty">
+                <div class="xr"><span>${escapeHtml(key || "—")}</span><em>미제출</em></div>
+                <strong>${escapeHtml(rosterName)}</strong>
+                <p>—</p>
+              </article>`;
+            }
+            const yukha = buildYukhaSummary(latest);
+            const incomplete = assessSubmissionCompleteness(latest);
+            const name = String(latest.student_name || "").trim() || rosterName;
+            const snippet = deckExportSnippet(latest, yukha, incomplete);
+            const badge = incomplete.incomplete
+              ? `<em class="is-warn">${escapeHtml(incompleteBadgeLabel(yukha))}</em>`
+              : `<em class="is-ok">제출</em>`;
+            return `<article class="xc${incomplete.incomplete ? " is-warn" : " is-ok"}">
+              <div class="xr"><span>${escapeHtml(key || "—")}</span>${badge}</div>
+              <strong>${escapeHtml(name)}</strong>
+              <p>${escapeHtml(snippet)}</p>
+            </article>`;
+          })
+          .join("");
+
+        const submitted = students.filter((st) => {
+          const key =
+            resolveRosterStudentKey(st.student_no, grade, classNo) ||
+            normalizeStudentNo(st.student_no);
+          const list =
+            detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
+          return !!list[0];
+        }).length;
+
+        const body = `<header class="xh">
+          <div>
+            <div class="xk">보고서 종합 카드덱</div>
+            <h1>${escapeHtml(String(sessionNo))}차시 · ${escapeHtml(classLabel)}</h1>
+          </div>
+          <div class="xm">제출 ${submitted}/${students.length} · ${escapeHtml(stamp)}</div>
+        </header>
+        <section class="xb" style="--cols:${cols}">${cells}</section>`;
+
+        return {
+          title,
+          filename: `보고서종합_${sessionNo}차시_${String(classLabel).replace(/\s+/g, "")}_${stamp}.html`,
+          html: deckExportShellHtml({ title, body, kind: "grid" })
+        };
+      }
+
+      function printReportDeck() {
+        const btn = $("btnReportDeckPrint");
+        if (btn) btn.disabled = true;
+        try {
+          const deck = $("reportDeck");
+          const active = deck?.querySelector(".deck-card.is-active[data-sub-id]");
+          const focusSubId =
+            deck?.classList.contains("is-spread") && active
+              ? active.getAttribute("data-sub-id") || ""
+              : "";
+          const doc = buildDeckExportDocument({ focusSubId });
+          const win = window.open("", "_blank");
+          if (!win) {
+            toast("인쇄 창을 열 수 없습니다. 팝업을 허용해 주세요.");
+            return;
+          }
+          win.document.open();
+          win.document.write(doc.html);
+          win.document.close();
+          const trigger = () => {
+            try {
+              win.focus();
+              win.print();
+            } catch (e) {
+              console.warn(e);
+            }
+          };
+          if (win.document.readyState === "complete") setTimeout(trigger, 180);
+          else win.addEventListener("load", () => setTimeout(trigger, 180));
+          toast("인쇄 미리보기 준비 · 한 장 맞춤 레이아웃");
+        } catch (e) {
+          console.error(e);
+          toast(e.message || "인쇄에 실패했습니다.");
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      function saveReportDeck() {
+        const btn = $("btnReportDeckSave");
+        if (btn) btn.disabled = true;
+        try {
+          const deck = $("reportDeck");
+          const active = deck?.querySelector(".deck-card.is-active[data-sub-id]");
+          const focusSubId =
+            deck?.classList.contains("is-spread") && active
+              ? active.getAttribute("data-sub-id") || ""
+              : "";
+          const doc = buildDeckExportDocument({ focusSubId });
+          const blob = new Blob([doc.html], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = doc.filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+          toast(`저장 완료 · ${doc.filename}`);
+        } catch (e) {
+          console.error(e);
+          toast(e.message || "저장에 실패했습니다.");
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
+
+      /** 카드덱 펼침용 · 학생 입력 필드를 질서 있게 정리 */
+      function buildDeckReaderFields(sub) {
+        const sessionNo = Number(sub?.session_no) || 0;
+        const html = String(sub?.content || "");
+        const whoName = sub?.student_name || "";
+        const whoNo = sub?.student_no || "";
+        const fields = [];
+        const push = (label, value, opts = {}) => {
+          const v = sanitizeSeteukText(String(value || "")).trim();
+          if (!v && !opts.allowEmpty) return;
+          fields.push({
+            label: String(label || "").trim() || "응답",
+            value: v || "(비어 있음)",
+            accent: !!opts.accent,
+            wide: opts.wide !== false && v.length > 48
+          });
+        };
+
+        if (sessionNo === 3) {
+          const wc = extractWorldcupFieldMap(html);
+          push("최종직업", wc.wcWinner, { accent: true, wide: false });
+          push("결승진출 직업", wc.wcRunnerUp, { accent: true, wide: false });
+          const qLabels = {
+            wcQ1: "1등으로 고른 가장 큰 이유",
+            wcQ2: "마지막까지 고민한 직업과의 차이",
+            wcQ3: "필요한 핵심 능력 3가지",
+            wcQ4: "앞으로 90일 안 실천 계획"
+          };
+          for (const [k, lab] of Object.entries(qLabels)) {
+            const raw = wc[k] || "";
+            if (!raw || isLowQualityAnswer(raw, whoName, whoNo)) continue;
+            push(lab, raw, { wide: true });
+          }
+        } else if (sessionNo === 1) {
+          const map = extractSession1FieldMap(html);
+          const order = [
+            ["f1", "기본 스펙 & 키워드"],
+            ["f2", "주요 기능 (장점 & 능력)"],
+            ["f3", "전원 충전법 (좋아하는 것)"],
+            ["f4", "주의 사항 (경고)"],
+            ["f5", "알림 설정 (듣고 싶은 말)"],
+            ["f6", "연결 & 호환성"],
+            ["f7", "숨겨진 이스터에그"],
+            ["f8", "기본 탑재 가치관"],
+            ["f9", "네트워크 확장 (관심 진로)"],
+            ["f10", "모듈 조합 (모둠 역할)"],
+            ["f11", "백신 프로그램 (스트레스)"],
+            ["f12", "최근 데이터 저장 (관심사)"],
+            ["f13", "오작동 해결법"],
+            ["f14", "미래 버전 업데이트 계획"]
+          ];
+          for (const [id, lab] of order) {
+            const raw = map[id] || "";
+            if (!raw || isLowQualityAnswer(raw, whoName, whoNo)) continue;
+            push(lab, raw, { wide: true });
+          }
+        } else if (sessionNo === 4) {
+          const map = {};
+          const inputRe =
+            /<(?:input|textarea)\b([^>]*?(?:id|name)=["'](f\d+|fReflect)["'][^>]*)>(?:([\s\S]*?)<\/textarea>)?/gi;
+          let m;
+          while ((m = inputRe.exec(html))) {
+            const attrs = m[1] || "";
+            const key = m[2];
+            const ta = m[3];
+            const v =
+              ta != null
+                ? ta
+                : (/value=["']([^"']*)["']/i.exec(attrs) || /value=([^\s>]+)/i.exec(attrs) || [])[1] || "";
+            map[key] = htmlToPlainTextFast(v).trim();
+          }
+          const order = [
+            ["f1", "희망 직업명", true],
+            ["f2", "관련 학과/전공", true],
+            ["f3", "필요 자격 및 준비 사항", false],
+            ["f4", "초봉 예상 연봉", false],
+            ["f5", "5년차 예상 연봉", false],
+            ["f6", "10년차 이상 예상 연봉", false],
+            ["f7", "예상 퇴직 시점", false],
+            ["f8", "직업 전망 (향후 10년)", false],
+            ["f9", "직업의 주요 특징 및 업무", false],
+            ["f10", "강점 Strength", false],
+            ["f11", "약점 Weakness", false],
+            ["f12", "기회 Opportunity", false],
+            ["f13", "위협 Threat", false],
+            ["f14", "강점 활용 방안", false],
+            ["f15", "약점 보완 방안", false],
+            ["f16", "단기 실행 계획", false],
+            ["f17", "중장기 실행 계획", false],
+            ["f18", "필요 역량 및 조력자", false],
+            ["f19", "진로 포부 및 종합 성찰", false]
+          ];
+          for (const [id, lab, accent] of order) {
+            const raw = map[id] || "";
+            if (!raw || isLowQualityAnswer(raw, whoName, whoNo)) continue;
+            push(lab, raw, { accent, wide: raw.length > 36 });
+          }
+        } else {
+          const answers = extractActivityAnswersFast(html);
+          for (const a of answers) {
+            if (!a.value) continue;
+            if (/느낀\s*점|세특\s*참조/.test(a.label || "")) continue;
+            if (isLowQualityAnswer(a.value, whoName, whoNo)) continue;
+            push(a.label || "응답", a.value, { wide: a.value.length > 40 });
+          }
+        }
+
+        const reflect = extractReflectText(html);
+        if (reflect && !isLowQualityAnswer(reflect, whoName, whoNo)) {
+          push("느낀점 (세특 참조)", reflect, { wide: true });
+        }
+        return fields;
+      }
+
+      function buildDeckReaderHtml(sub, char) {
+        const yukha = buildYukhaSummary(sub);
+        const incomplete = assessSubmissionCompleteness(sub);
+        const displayName =
+          (char?.name && char.name !== "이름 미정" ? char.name : "") ||
+          String(sub.student_name || "").trim() ||
+          "이름 없음";
+        const no = normalizeStudentNo(sub.student_no) || String(sub.student_no || "");
+        const art = char?.faceHtml
+          ? `<div class="deck-reader-art" aria-hidden="true">${char.faceHtml}</div>`
+          : `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
+        const tags = [];
+        if (incomplete.incomplete) {
+          tags.push(`<span class="deck-reader-tag is-warn">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`);
+        }
+        if (char?.mbti) tags.push(`<span class="deck-reader-tag is-blue">MBTI ${escapeHtml(char.mbti)}</span>`);
+        if (char?.arch) tags.push(`<span class="deck-reader-tag">★ ${escapeHtml(char.arch)}</span>`);
+        if (sub.session_no) tags.push(`<span class="deck-reader-tag">${escapeHtml(String(sub.session_no))}차시</span>`);
+        if (sub.created_at) {
+          tags.push(`<span class="deck-reader-tag">${escapeHtml(formatTime(sub.created_at) || "")}</span>`);
+        }
+
+        const fields = buildDeckReaderFields(sub);
+        const fieldHtml = fields.length
+          ? `<div class="deck-reader-grid">${fields
+              .map(
+                (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
+              <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
+              <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
+            </article>`
+              )
+              .join("")}</div>`
+          : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
+
+        const summary = String(yukha?.paragraph || "").trim();
+
+        return `<div class="deck-reader-sheet">
+          <div class="deck-reader-top">
+            ${art}
+            <div class="deck-reader-who">
+              <div class="deck-reader-no">${escapeHtml(no || "—")}</div>
+              <div class="deck-reader-name">${escapeHtml(displayName)}</div>
+              <div class="deck-reader-tags">${tags.join("")}</div>
+            </div>
+          </div>
+          ${
+            summary
+              ? `<section class="deck-reader-section">
+            <p class="deck-reader-label">요약</p>
+            <p class="deck-reader-summary">${escapeHtml(summary)}</p>
+          </section>`
+              : ""
+          }
+          <section class="deck-reader-section">
+            <p class="deck-reader-label">학생 입력</p>
+            ${fieldHtml}
+          </section>
+        </div>`;
+      }
+
+      async function openDeckSpread(submissionId, cardEl) {
+        const sub = findSubmissionById(submissionId);
+        if (!sub) return;
+        const deck = $("reportDeck");
+        const reader = $("reportDeckReader");
+        const back = $("btnReportDeckBack");
+        const subEl = $("reportDeckSub");
+        if (!deck || !reader) return;
+
+        await ensureSubmissionContent(sub);
+
+        let char = null;
+        try {
+          char = extractSession1CharacterPreview(sub.content);
+          if (!char?.faceHtml && Number(sub.session_no) !== 1) {
+            const classId = activeClassId || teacherClass?.id || null;
+            const meta = classMetaById(classId);
+            const grade = meta?.grade || 1;
+            const classNo = meta?.class_no || 1;
+            const key =
+              resolveRosterStudentKey(sub.student_no, grade, classNo) ||
+              normalizeStudentNo(sub.student_no);
+            const map = await loadSession1CharByStudentKey(classId, grade, classNo);
+            char = map.get(key) || null;
+          }
+        } catch {
+          char = null;
+        }
+
+        deck.classList.add("is-spread");
+        if (back) back.hidden = false;
+        if (subEl) {
+          subEl.textContent = "";
+          subEl.hidden = true;
+        }
+        deck.querySelectorAll(".deck-card.is-active").forEach((c) => c.classList.remove("is-active"));
+        if (cardEl) {
+          cardEl.classList.add("is-active");
+          try {
+            cardEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+          } catch {
+            /* ignore */
+          }
+        }
+        reader.innerHTML = buildDeckReaderHtml(sub, char);
+        try {
+          reader.scrollTop = 0;
+        } catch {
+          /* ignore */
+        }
+      }
+
+      function buildDeckCardHtml(st, key, latest, dealIdx, charByKey) {
         const no = key || normalizeStudentNo(st.student_no) || String(st.student_no || "");
         const rosterName = String(st.student_name || "").trim();
+        const char = (charByKey && charByKey.get(key)) || null;
+
         if (!latest) {
-          const initial = (rosterName || no || "?").slice(0, 1);
+          const displayName =
+            (char?.name && char.name !== "이름 미정" ? char.name : "") ||
+            rosterName ||
+            "이름 없음";
+          const art = char?.faceHtml
+            ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
+            : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
           return `<button type="button" class="deck-card is-empty" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
             <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(no)}</span></div>
-            <div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(initial)}</div>
-            <div class="deck-card-name">${escapeHtml(rosterName || "이름 없음")}</div>
+            ${art}
+            <div class="deck-card-name">${escapeHtml(displayName)}</div>
             <div class="deck-card-meta">미제출</div>
-            <div class="deck-card-arch"></div>
+            <div class="deck-card-arch">${char?.arch ? `★ ${escapeHtml(char.arch)}` : ""}</div>
+            <div class="deck-card-summary"></div>
             <div class="deck-card-hint">아직 카드가 뒤집히지 않았어요</div>
           </button>`;
         }
 
         const incomplete = assessSubmissionCompleteness(latest);
         const yukha = buildYukhaSummary(latest);
-        const sessionNo = Number(yukha?.sessionNo) || Number(latest.session_no) || 0;
-        const char = sessionNo === 1 ? extractSession1CharacterPreview(latest.content) : null;
         const displayName =
           (char?.name && char.name !== "이름 미정" ? char.name : "") ||
           String(latest.student_name || "").trim() ||
@@ -14282,21 +15186,30 @@ ${built.html}
           "이름 없음";
         const mbti = char?.mbti || "";
         const arch = char?.arch || "";
-        const oneLine = !char
-          ? buildDetailSubPreviewText(yukha, incomplete).replace(/^미비\s*·\s*/, "").replace(/^\(부족\)\s*/, "")
-          : "";
+        const summary = previewText(
+          String(yukha?.paragraph || "")
+            .replace(/^미비\s*·\s*/, "")
+            .replace(/^\(부족\)\s*/, "")
+            .replace(/^\(미비됨\)\s*/, "")
+            .trim() ||
+            buildDetailSubPreviewText(yukha, incomplete)
+              .replace(/^미비\s*·\s*/, "")
+              .replace(/^\(부족\)\s*/, "")
+              .replace(/^\(미비됨\)\s*/, "")
+              .trim() ||
+            "",
+          72
+        );
         const art = char?.faceHtml
           ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
           : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
         const badge = incomplete.incomplete
           ? `<span class="deck-card-badge">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`
           : "";
-        const metaLine = mbti
-          ? `MBTI ${escapeHtml(mbti)}`
-          : escapeHtml(previewText(oneLine, 28) || "제출 완료");
+        const metaLine = mbti ? `MBTI ${escapeHtml(mbti)}` : "";
         const archLine = arch ? `★ ${escapeHtml(arch)}` : "";
 
-        return `<button type="button" class="deck-card" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="새 탭에서 보고서 열기">
+        return `<button type="button" class="deck-card" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
           <div class="deck-card-rank">
             <span class="deck-card-no">${escapeHtml(no)}</span>
             ${badge}
@@ -14305,8 +15218,50 @@ ${built.html}
           <div class="deck-card-name">${escapeHtml(displayName)}</div>
           <div class="deck-card-meta">${metaLine}</div>
           <div class="deck-card-arch">${archLine}</div>
-          <div class="deck-card-hint">탭! 보고서 열기</div>
+          <div class="deck-card-summary">${escapeHtml(summary || "요약 준비 중…")}</div>
+          <div class="deck-card-hint">탭! 펼쳐 보기</div>
         </button>`;
+      }
+
+      /** 학급 1차시 제출에서 학생별 캐릭터(사진·MBTI·이름) 맵 */
+      async function loadSession1CharByStudentKey(classId, grade, classNo) {
+        const map = new Map();
+        if (!sb || !classId) return map;
+        const lesson1 = lessons.find((l) => Number(l.session_no) === 1);
+        if (!lesson1?.id) return map;
+
+        // 현재 보고 있는 차시가 1차시면 이미 로드된 detailSubMap 우선
+        if (Number(lessons.find((l) => l.id === selectedLessonId)?.session_no) === 1) {
+          for (const [key, list] of detailSubMap) {
+            const latest = list?.[0];
+            if (!latest) continue;
+            await ensureSubmissionContent(latest);
+            const char = extractSession1CharacterPreview(latest.content);
+            if (char?.faceHtml) map.set(key, char);
+          }
+          if (map.size) return map;
+        }
+
+        try {
+          const { data, error } = await sb
+            .from("submissions")
+            .select("id, student_no, student_name, content, created_at")
+            .eq("lesson_id", lesson1.id)
+            .order("created_at", { ascending: false });
+          if (error) throw error;
+          for (const row of data || []) {
+            const key =
+              resolveRosterStudentKey(row.student_no, grade, classNo) ||
+              normalizeStudentNo(row.student_no) ||
+              String(row.student_no || "").trim();
+            if (!key || map.has(key)) continue;
+            const char = extractSession1CharacterPreview(row.content || "");
+            if (char?.faceHtml) map.set(key, char);
+          }
+        } catch (e) {
+          console.warn(e);
+        }
+        return map;
       }
 
       async function openReportDeck() {
@@ -14347,17 +15302,19 @@ ${built.html}
         const subEl = $("reportDeckSub");
         if (!deck || !table) return;
 
+        closeDeckSpread();
         if (title) {
           title.textContent = `<보고서 종합> ${lesson.session_no}차시 카드덱`;
         }
         if (subEl) {
-          subEl.textContent = "카드를 번호순으로 펼치는 중…";
+          subEl.textContent = "";
+          subEl.hidden = true;
+          delete subEl.dataset.deckHint;
         }
         table.innerHTML = `<p class="report-deck-empty">카드를 섞는 중…</p>`;
         deck.classList.add("is-open");
         deck.setAttribute("aria-hidden", "false");
 
-        // 최신 제출 content 확보 (캐릭터 미리보기용)
         const latestSubs = [];
         for (const st of ordered) {
           const key =
@@ -14368,10 +15325,10 @@ ${built.html}
           if (list[0]) latestSubs.push(list[0]);
         }
         await Promise.all(latestSubs.map((sub) => ensureSubmissionContent(sub)));
+        const charByKey = await loadSession1CharByStudentKey(classId, grade, classNo);
 
         const cards = [];
         let dealIdx = 0;
-        let liveCount = 0;
         for (const st of ordered) {
           const key =
             resolveRosterStudentKey(st.student_no, grade, classNo) ||
@@ -14379,8 +15336,7 @@ ${built.html}
           const list =
             detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
           const latest = list[0] || null;
-          if (latest) liveCount += 1;
-          cards.push(buildDeckCardHtml(st, key, latest, dealIdx));
+          cards.push(buildDeckCardHtml(st, key, latest, dealIdx, charByKey));
           dealIdx += 1;
         }
 
@@ -14388,7 +15344,9 @@ ${built.html}
           ? cards.join("")
           : `<p class="report-deck-empty">표시할 학생이 없습니다.</p>`;
         if (subEl) {
-          subEl.textContent = `제출 ${liveCount}명 · 전체 ${ordered.length}명 · 카드를 누르면 새 창으로 보고서가 열려요`;
+          subEl.textContent = "";
+          subEl.hidden = true;
+          delete subEl.dataset.deckHint;
         }
       }
 
@@ -15399,17 +16357,23 @@ ${built.html}
         if (e.target === $("subViewer")) closeSubViewer();
       });
       $("btnReportDeckClose")?.addEventListener("click", () => closeReportDeck());
+      $("btnReportDeckBack")?.addEventListener("click", () => closeDeckSpread());
+      $("btnReportDeckPrint")?.addEventListener("click", () => printReportDeck());
+      $("btnReportDeckSave")?.addEventListener("click", () => saveReportDeck());
       $("reportDeck")?.addEventListener("click", (e) => {
         if (e.target === $("reportDeck")) closeReportDeck();
         const card = e.target.closest?.(".deck-card[data-sub-id]");
         if (card) {
           const id = card.getAttribute("data-sub-id");
-          if (id) void openSubmissionInNewTab(id);
+          if (id) void openDeckSpread(id, card);
         }
       });
       document.addEventListener("keydown", (e) => {
         if (e.key !== "Escape") return;
-        if ($("reportDeck")?.classList.contains("is-open")) closeReportDeck();
+        const deck = $("reportDeck");
+        if (!deck?.classList.contains("is-open")) return;
+        if (deck.classList.contains("is-spread")) closeDeckSpread();
+        else closeReportDeck();
       });
       $("btnObsEvalClose")?.addEventListener("click", () => closeObsEvalSheet());
       $("btnObsEvalSave")?.addEventListener("click", () => saveObsEvalSheet());
