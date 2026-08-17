@@ -18655,59 +18655,62 @@ ${pageCss}</style>
         const viewMode = mode || arenaViewMode || "ours";
         arenaViewMode = viewMode;
 
-        host.hidden = false;
-        const foldbar = host.querySelector(".deck-arena-foldbar");
-        if (foldbar) foldbar.hidden = sn !== 3;
-        if (sn !== 3) applyArenaFoldUi(false);
-        else applyArenaFoldUi(arenaFolded);
-        if (modesEl) {
-          if (sn === 3) {
-            modesEl.hidden = false;
-            const modeBtns = [
-              { id: "ours", label: "우리 반" },
-              { id: "grade", label: "학년별 비교" },
-              { id: "class", label: "반별 비교" }
-            ];
-            if (isVocational()) modeBtns.push({ id: "dept", label: "학과별 비교" });
-            modesEl.innerHTML = modeBtns
-              .map(
-                (m) =>
-                  `<button type="button" class="deck-arena-mode${viewMode === m.id ? " is-on" : ""}" data-arena-mode="${m.id}">${m.label}</button>`
-              )
-              .join("");
-            modesEl.querySelectorAll("[data-arena-mode]").forEach((btn) => {
-              btn.addEventListener("click", () => {
-                const next = btn.getAttribute("data-arena-mode") || "ours";
-                if (next === arenaViewMode) return;
-                if (arenaOursPhase === "countdown" || arenaOursPhase === "rolling") {
-                  if (arenaRevealTimer) {
-                    clearTimeout(arenaRevealTimer);
-                    arenaRevealTimer = 0;
-                  }
-                  arenaRollToken += 1;
-                  arenaOursPhase = "idle";
-                  arenaOursCountdown = 0;
-                  arenaOursRollFocus = -1;
-                  arenaOursLive = null;
-                }
-                arenaViewMode = next;
-                paintReportDeckArena({ grade: g, classNo: c, sessionNo: sn, students });
-                void broadcastReportDeckLive("state");
-              });
-            });
-          } else {
+        // 직업 월드컵 랭킹(접기 바·시상대·비교)은 3차시 보고서 종합에서만 표시
+        if (sn !== 3) {
+          host.hidden = true;
+          if (modesEl) {
             modesEl.hidden = true;
             modesEl.innerHTML = "";
           }
-        }
-
-        if (!board) {
+          if (board) {
+            board.hidden = true;
+            board.innerHTML = "";
+          }
+          applyArenaFoldUi(false);
           return { grade: g, classNo: c, dept, nowLabel, sessionNo: sn, mode: viewMode, stats: null };
         }
 
-        if (sn !== 3) {
-          board.hidden = true;
-          board.innerHTML = "";
+        host.hidden = false;
+        const foldbar = host.querySelector(".deck-arena-foldbar");
+        if (foldbar) foldbar.hidden = false;
+        applyArenaFoldUi(arenaFolded);
+        if (modesEl) {
+          modesEl.hidden = false;
+          const modeBtns = [
+            { id: "ours", label: "우리 반" },
+            { id: "grade", label: "학년별 비교" },
+            { id: "class", label: "반별 비교" }
+          ];
+          if (isVocational()) modeBtns.push({ id: "dept", label: "학과별 비교" });
+          modesEl.innerHTML = modeBtns
+            .map(
+              (m) =>
+                `<button type="button" class="deck-arena-mode${viewMode === m.id ? " is-on" : ""}" data-arena-mode="${m.id}">${m.label}</button>`
+            )
+            .join("");
+          modesEl.querySelectorAll("[data-arena-mode]").forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const next = btn.getAttribute("data-arena-mode") || "ours";
+              if (next === arenaViewMode) return;
+              if (arenaOursPhase === "countdown" || arenaOursPhase === "rolling") {
+                if (arenaRevealTimer) {
+                  clearTimeout(arenaRevealTimer);
+                  arenaRevealTimer = 0;
+                }
+                arenaRollToken += 1;
+                arenaOursPhase = "idle";
+                arenaOursCountdown = 0;
+                arenaOursRollFocus = -1;
+                arenaOursLive = null;
+              }
+              arenaViewMode = next;
+              paintReportDeckArena({ grade: g, classNo: c, sessionNo: sn, students });
+              void broadcastReportDeckLive("state");
+            });
+          });
+        }
+
+        if (!board) {
           return { grade: g, classNo: c, dept, nowLabel, sessionNo: sn, mode: viewMode, stats: null };
         }
 

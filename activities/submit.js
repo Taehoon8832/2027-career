@@ -2444,7 +2444,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2133";
+        css.href = "./live-report-deck.css?v=2134";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2644,17 +2644,21 @@ ${linkedCss}
         String(arena?.nowLabel || "").trim() ||
         (dept ? `${g}학년 ${c}반 · ${dept}` : `${g}학년 ${c}반`);
       nowEl.innerHTML = `<span class="deck-arena-now-kicker">현재 탐구 학급</span><span class="deck-arena-now-title"><em>${escapeHtml(nowLabel)}</em></span>`;
-      host.hidden = false;
-      const foldbar = host.querySelector(".deck-arena-foldbar");
-      if (foldbar) foldbar.hidden = Number(sn) !== 3;
-      if (Number(sn) !== 3) applyLiveArenaFoldUi(false);
-      else if (typeof arena?.folded === "boolean") applyLiveArenaFoldUi(arena.folded);
-      if (!board) return;
+      // 직업 월드컵 랭킹은 3차시 보고서 종합에서만 표시
       if (Number(sn) !== 3) {
-        board.hidden = true;
-        board.innerHTML = "";
+        host.hidden = true;
+        if (board) {
+          board.hidden = true;
+          board.innerHTML = "";
+        }
+        applyLiveArenaFoldUi(false);
         return;
       }
+      host.hidden = false;
+      const foldbar = host.querySelector(".deck-arena-foldbar");
+      if (foldbar) foldbar.hidden = false;
+      if (typeof arena?.folded === "boolean") applyLiveArenaFoldUi(arena.folded);
+      if (!board) return;
       board.hidden = false;
       const mode = arena?.mode || "ours";
       let cols = null;
