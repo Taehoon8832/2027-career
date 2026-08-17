@@ -1006,13 +1006,23 @@ button.deck-arena-col-champ.is-job:focus-visible span {
 .report-deck-table {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 12px 14px 16px;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
   gap: 10px 10px;
-  align-content: stretch;
+  align-content: start;
   perspective: 900px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(253, 230, 138, 0.45) transparent;
+}
+.report-deck-table::-webkit-scrollbar { width: 8px; }
+.report-deck-table::-webkit-scrollbar-thumb {
+  background: rgba(253, 230, 138, 0.4);
+  border-radius: 999px;
 }
 .report-deck.is-spread .report-deck-table {
   flex: 0 0 auto;
@@ -1298,7 +1308,7 @@ button.deck-arena-col-champ.is-job:focus-visible span {
 .deck-arena-start {
   position: relative;
   z-index: 1;
-  padding: 28px 16px 32px;
+  padding: 16px 14px 18px;
   text-align: center;
   overflow: hidden;
 }
@@ -1576,6 +1586,8 @@ button.deck-arena-col-champ.is-job:focus-visible span {
     linear-gradient(160deg, #1a0b2e 0%, #2e1065 45%, #0f172a 100%) !important;
   font-family: var(--arena-body) !important;
   color: #fff7ed !important;
+  overflow: auto !important;
+  max-height: min(42vh, 420px) !important;
 }
 .deck-arena-board-head strong {
   font: 400 20px/1.15 var(--arena-display) !important;

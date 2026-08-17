@@ -1913,7 +1913,7 @@ ${linkedCss}
     const contentById = new Map();
     let liveArenaRollFocus = -999;
     let liveArenaRollToken = 0;
-    let liveArenaFolded = false;
+    let liveArenaFolded = true;
 
     function applyLiveArenaFoldUi(folded) {
       liveArenaFolded = !!folded;
@@ -2444,7 +2444,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2132";
+        css.href = "./live-report-deck.css?v=2133";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
