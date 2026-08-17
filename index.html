@@ -8137,7 +8137,10 @@
         if (preview) {
           const summary = yukha.oneLine || yukha.paragraph || "내용 없음";
           const previewText = incomplete.incomplete ? `미비 · ${summary}` : summary;
-          preview.innerHTML = formatDetailSubPreviewHtml(previewText, yukha.winnerJob);
+          preview.innerHTML = formatDetailSubPreviewHtml(
+            previewText,
+            yukha.highlightTerms || yukha.winnerJob
+          );
           preview.classList.toggle("is-incomplete", !!incomplete.incomplete);
           const block = preview.closest(".detail-sub-block");
           block?.classList.toggle("is-incomplete", !!incomplete.incomplete);
@@ -9233,12 +9236,134 @@
         return toNeisEumseumStyle(parts.join(". ").replace(/\.\.+/g, "."));
       }
 
+      /** 4차시 SWOT 필드 추출 */
+      function extractSwotFieldMap(html) {
+        const s = String(html || "");
+        const map = {};
+        const inputRe = /<input\b([^>]*?\bid=["'](f\d+|fReflect)["'][^>]*)>/gi;
+        let m;
+        while ((m = inputRe.exec(s))) {
+          const attrs = m[1] || "";
+          const key = m[2];
+          const v =
+            /value=["']([^"']*)["']/i.exec(attrs) ||
+            /value=([^\s>]+)/i.exec(attrs);
+          map[key] = htmlToPlainTextFast(v ? v[1] : "").trim();
+        }
+        const taRe =
+          /<textarea[^>]*\bid=["'](f\d+|fReflect)["'][^>]*>([\s\S]*?)<\/textarea>/gi;
+        while ((m = taRe.exec(s))) {
+          map[m[1]] = htmlToPlainTextFast(m[2] || "").trim();
+        }
+        return map;
+      }
+
+      /**
+       * 4차시(희망 직업 SWOT 분석) 세특 문단.
+       * 학생 응답(희망 직업·SWOT·실행 계획)을 반영하고,
+       * 창의력·탐구력·사고력이 뛰어남을 음슴체로 개별 평가.
+       */
+      function buildSession4SwotParagraph({ html, whoName, whoNo, reflect }) {
+        const map = extractSwotFieldMap(html);
+        const good = (v) => !isLowQualityAnswer(v, whoName, whoNo);
+        const snip = (v, n = 40) =>
+          paraphraseSession1Snippet(v, n) || compactStudentSnippet(v, n);
+        const job = good(map.f1) ? sanitizeSeteukText(map.f1).trim() : "";
+        const major = good(map.f2) ? sanitizeSeteukText(map.f2).trim() : "";
+        const prep = good(map.f3) ? snip(map.f3, 36) : "";
+        const s = good(map.f10) ? snip(map.f10, 42) : "";
+        const w = good(map.f11) ? snip(map.f11, 36) : "";
+        const o = good(map.f12) ? snip(map.f12, 36) : "";
+        const t = good(map.f13) ? snip(map.f13, 36) : "";
+        const planS = good(map.f14) ? snip(map.f14, 36) : "";
+        const planW = good(map.f15) ? snip(map.f15, 36) : "";
+        const planShort = good(map.f16) ? snip(map.f16, 36) : "";
+        const planLong = good(map.f17) ? snip(map.f17, 36) : "";
+        const reflectText = reflect || map.fReflect || map.f19 || "";
+
+        const seed = hashSeed(
+          [whoNo, whoName, job, major, s, w, o, t, planS, planShort, reflectText].join("||")
+        );
+        const parts = [];
+
+        if (job && major) {
+          parts.push(
+            pickBySeed(seed, [
+              `희망 직업 SWOT 분석 활동에서 ${job}${objectParticleKo(job)} 탐구하고 관련 학과로 ${major}${objectParticleKo(major)} 정리함`,
+              `나의 희망 직업 SWOT 분석에서 ${job} 진로와 ${major} 전공 연계를 중심으로 직업 정보를 구조화함`,
+              `${job}${objectParticleKo(job)} 희망 직업으로 설정하고 ${major}와의 연결고리를 활동지에 체계적으로 기록함`
+            ])
+          );
+        } else if (job) {
+          parts.push(
+            pickBySeed(seed + 1, [
+              `희망 직업 SWOT 분석 활동에서 ${job}${objectParticleKo(job)} 중심으로 직업 특성과 준비 요건을 탐구함`,
+              `${job} 희망 직업의 핵심 정보를 수집·정리하며 진로 방향을 구체화함`
+            ])
+          );
+        } else {
+          parts.push(
+            "희망 직업 SWOT 분석 활동을 통해 관심 직업의 특성과 진로 조건을 다각도로 탐구함"
+          );
+        }
+
+        if (prep) {
+          parts.push(`필요 자격·준비 사항으로 ${prep}${objectParticleKo(prep)} 파악함`);
+        }
+
+        const swotBits = [];
+        if (s) swotBits.push(`강점(S)으로 ${s}${objectParticleKo(s)} 분석함`);
+        if (w) swotBits.push(`약점(W)으로 ${w}${objectParticleKo(w)} 점검함`);
+        if (o) swotBits.push(`기회(O)로 ${o}${objectParticleKo(o)} 포착함`);
+        if (t) swotBits.push(`위협(T)으로 ${t}${objectParticleKo(t)} 인식함`);
+        if (swotBits.length) {
+          parts.push(
+            pickBySeed(seed + 3, [
+              `SWOT 분석에서 ${swotBits.slice(0, 3).join(", ")}으로써 직업·자기 이해를 입체적으로 구성함`,
+              `${swotBits.slice(0, 3).join(", ")} 과정을 통해 내부·외부 요인을 균형 있게 성찰함`
+            ])
+          );
+        } else {
+          parts.push(
+            "강점·약점·기회·위협을 구분하여 직업과 자신의 적성을 대조·분석하는 모습이 관찰됨"
+          );
+        }
+
+        const planBits = [];
+        if (planS) planBits.push(`강점 활용 방안으로 ${planS}`);
+        if (planW) planBits.push(`약점 보완 방안으로 ${planW}`);
+        if (planShort) planBits.push(`단기 실행 계획으로 ${planShort}`);
+        if (planLong) planBits.push(`중장기 실행 계획으로 ${planLong}`);
+        if (planBits.length) {
+          const joined = planBits.slice(0, 2).join(", ");
+          parts.push(`${joined}${objectParticleKo(joined)} 세워 진로 실행 전략을 구체화함`);
+        }
+
+        if (isSubstantiveReflect(reflectText)) {
+          const r = snip(reflectText, 44);
+          parts.push(`느낀점에서 ${r}${objectParticleKo(r)} 기록하며 배움을 성찰함`);
+        }
+
+        // 창의력·탐구력·사고력 평가 (학생별 표현 변주)
+        parts.push(
+          pickBySeed(seed + 17, [
+            "희망 직업 정보를 재구성하고 SWOT 요인을 연결하는 과정에서 창의력·탐구력·사고력이 뛰어남이 확인됨",
+            "직업 특성을 다각도로 분석하고 실행 계획으로 확장하는 태도가 돋보이며 창의력·탐구력·사고력이 우수함",
+            "내부·외부 요인을 비판적으로 검토하고 자신만의 전략으로 종합하는 모습에서 창의력·탐구력·사고력이 탁월함",
+            "자료를 근거로 강점과 기회를 창의적으로 결합하고 위협을 논리적으로 대비하는 등 창의력·탐구력·사고력이 뛰어남",
+            "SWOT 분석을 통해 진로 문제를 구조화하고 해결 방안을 도출하는 과정에서 창의력·탐구력·사고력이 높게 평가됨"
+          ])
+        );
+
+        return toNeisEumseumStyle(parts.join(". ").replace(/\.\.+/g, "."));
+      }
+
       function buildYukhaSummary(sub, opts = {}) {
         if (!sub) {
           return { oneLine: "", paragraph: "", lines: [], sheetText: "" };
         }
         const editedEarly = getSummaryEdit(sub.id);
-        const cacheKey = "v10|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
+        const cacheKey = "v12|" + (opts.where || "") + "|" + (editedEarly ? hashSeed(editedEarly) : "auto");
         if (sub._yukha && sub._yukhaWhere === cacheKey) return sub._yukha;
         const meta = getLessonMeta(sub.session_no);
         const reflectRaw = extractReflectText(sub.content);
@@ -9246,6 +9371,7 @@
         const whoNo = sanitizeSeteukText(sub.student_no || "-");
         const sessionNo = Number(sub.session_no);
         const wcMap = sessionNo === 3 ? extractWorldcupFieldMap(sub.content) : null;
+        const swotMap = sessionNo === 4 ? extractSwotFieldMap(sub.content) : null;
         const filled = extractActivityAnswersFast(sub.content)
           .filter((a) => a.value)
           .filter((a) => !/느낀\s*점|세특\s*참조|학번|이름/.test(a.label || ""))
@@ -9260,10 +9386,18 @@
           meta?.title || (sub.session_no ? `${sub.session_no}차시 활동` : "활동")
         );
         const winnerJob = sanitizeSeteukText(wcMap?.wcWinner || "").trim();
+        const swotJobRaw = sanitizeSeteukText(swotMap?.f1 || "").trim();
+        const swotMajorRaw = sanitizeSeteukText(swotMap?.f2 || "").trim();
+        const swotJob =
+          swotJobRaw && !isLowQualityAnswer(swotJobRaw, whoName, whoNo) ? swotJobRaw : "";
+        const swotMajor =
+          swotMajorRaw && !isLowQualityAnswer(swotMajorRaw, whoName, whoNo) ? swotMajorRaw : "";
         const whatCore =
           (sessionNo === 3 && winnerJob
             ? winnerJob
-            : compactStudentSnippet(answers[0] || "자신의 특성, 관심사", 36)) ||
+            : sessionNo === 4 && swotJob
+              ? swotJob
+              : compactStudentSnippet(answers[0] || "자신의 특성, 관심사", 36)) ||
           "자신의 특성, 관심사";
         const howBits = answers
           .slice(1, 3)
@@ -9277,6 +9411,8 @@
                 .length
                 ? ", 선택 이유 정리"
                 : "")
+            : sessionNo === 4
+              ? `희망 직업 SWOT 분석${swotJob ? `, ${swotJob}` : ""}`
             : howBits.join(", ") ||
               (filled.length > 1
                 ? filled
@@ -9298,6 +9434,14 @@
           observation = paragraph;
         } else if (sessionNo === 3) {
           paragraph = buildSession3WorldcupParagraph({
+            html: sub.content,
+            whoName,
+            whoNo,
+            reflect: reflectRaw
+          });
+          observation = paragraph;
+        } else if (sessionNo === 4) {
+          paragraph = buildSession4SwotParagraph({
             html: sub.content,
             whoName,
             whoNo,
@@ -9327,6 +9471,8 @@
           : sanitizeSeteukText(
               sessionNo === 3 && winnerJob
                 ? `${winnerJob} 선택을 중심으로 진로 탐색에 성실히 참여함`
+                : sessionNo === 4 && swotJob
+                  ? `${swotJob} SWOT 분석을 중심으로 진로 탐구에 성실히 참여함`
                 : `진로, 자아 탐색을 위해 ${whatCore}를 중심으로 활동에 성실히 참여함`
             );
 
@@ -9347,11 +9493,19 @@
               ? `${whoName}, ${lessonTitle}, 자기이해 탐구`
               : sessionNo === 3 && winnerJob
                 ? `${whoName}, ${lessonTitle}, ${winnerJob}`
+                : sessionNo === 4 && (swotJob || swotMajor)
+                  ? [whoName, swotJob, swotMajor].filter(Boolean).join(", ")
                 : `${whoName}, ${lessonTitle}, ${whatCore}`
           ),
-          72
+          80
         );
         const sheetText = lines.map((l) => `${l.k}: ${l.v}`).join(" / ");
+        const highlightTerms =
+          sessionNo === 3 && winnerJob
+            ? [winnerJob]
+            : sessionNo === 4
+              ? [swotJob, swotMajor].filter(Boolean)
+              : [];
         sub._yukhaWhere = cacheKey;
         sub._yukha = {
           oneLine,
@@ -9359,24 +9513,34 @@
           lines,
           sheetText,
           winnerJob: sessionNo === 3 ? winnerJob : "",
+          swotJob: sessionNo === 4 ? swotJob : "",
+          swotMajor: sessionNo === 4 ? swotMajor : "",
+          highlightTerms,
           sessionNo
         };
         return sub._yukha;
       }
 
-      /** 제출 현황 한 줄 요약 — 3차시 최종 직업을 파란 강조 */
-      function formatDetailSubPreviewHtml(summaryText, winnerJob) {
+      /** 제출 현황 한 줄 요약 — 강조어(최종 직업·희망직업·관련학과 등) 파란 강조 */
+      function formatDetailSubPreviewHtml(summaryText, highlightTerms) {
         const text = String(summaryText || "");
-        const job = String(winnerJob || "").trim();
         if (!text) return "";
-        if (!job) return escapeHtml(text);
-        const idx = text.lastIndexOf(job);
-        if (idx < 0) return escapeHtml(text);
-        return (
-          escapeHtml(text.slice(0, idx)) +
-          `<span class="wc-final-job">${escapeHtml(job)}</span>` +
-          escapeHtml(text.slice(idx + job.length))
-        );
+        const terms = [
+          ...new Set(
+            (Array.isArray(highlightTerms) ? highlightTerms : [highlightTerms])
+              .map((t) => String(t || "").trim())
+              .filter(Boolean)
+          )
+        ].sort((a, b) => b.length - a.length);
+        if (!terms.length) return escapeHtml(text);
+
+        let html = escapeHtml(text);
+        for (const term of terms) {
+          const esc = escapeHtml(term);
+          if (!esc) continue;
+          html = html.split(esc).join(`<span class="wc-final-job">${esc}</span>`);
+        }
+        return html;
       }
 
       function buildSubmissionReportBody(sub) {
@@ -13675,7 +13839,7 @@ ${built.html}
                     <span class="sub-time">${escapeHtml(formatTime(sub.created_at) || "")}</span>
                   </div>
                   <div class="detail-sub-preview" data-tab-detail="${sub.id}" title="${escapeHtml(previewTitle)}">
-                    <div class="plain-mini${incomplete.incomplete ? " is-incomplete" : ""}">${formatDetailSubPreviewHtml(previewText, yukha?.winnerJob)}</div>
+                    <div class="plain-mini${incomplete.incomplete ? " is-incomplete" : ""}">${formatDetailSubPreviewHtml(previewText, yukha?.highlightTerms || yukha?.winnerJob)}</div>
                   </div>
                   <div class="detail-sub-actions">
                     <button type="button" data-tab-detail="${sub.id}">새 탭</button>
