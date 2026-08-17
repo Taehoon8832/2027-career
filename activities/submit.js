@@ -2079,6 +2079,55 @@ ${linkedCss}
       return "학생 작성 내용";
     }
 
+    function uniquifyLiveSvgRefIds(rootEl, prefix) {
+      if (!rootEl) return;
+      const p = String(prefix || "x") + Math.random().toString(36).slice(2, 8);
+      const idMap = new Map();
+      rootEl.querySelectorAll("[id]").forEach((el) => {
+        const oldId = el.getAttribute("id");
+        if (!oldId) return;
+        const next = `${p}-${oldId}`.replace(/[^a-zA-Z0-9_\-:]/g, "_");
+        idMap.set(oldId, next);
+        el.setAttribute("id", next);
+      });
+      if (!idMap.size) return;
+      const rewrite = (val) => {
+        let s = String(val || "");
+        for (const [oldId, next] of idMap) {
+          s = s
+            .split(`url(#${oldId})`)
+            .join(`url(#${next})`)
+            .split(`url('#${oldId}')`)
+            .join(`url('#${next}')`)
+            .split(`url("#${oldId}")`)
+            .join(`url("#${next}")`);
+        }
+        return s;
+      };
+      rootEl.querySelectorAll("*").forEach((el) => {
+        [...el.attributes].forEach((attr) => {
+          if (!attr || !attr.value) return;
+          if (!/url\(#/.test(attr.value) && attr.name !== "href" && attr.name !== "xlink:href") return;
+          const next = rewrite(attr.value);
+          if (next !== attr.value) el.setAttribute(attr.name, next);
+        });
+      });
+    }
+
+    function uniquifyLiveFaceHtml(faceHtml) {
+      const raw = String(faceHtml || "").trim();
+      if (!raw) return "";
+      try {
+        const doc = new DOMParser().parseFromString(`<div id="faceRoot">${raw}</div>`, "text/html");
+        const root = doc.querySelector("#faceRoot");
+        if (!root?.firstElementChild) return raw;
+        uniquifyLiveSvgRefIds(root, "lx");
+        return root.innerHTML;
+      } catch {
+        return raw;
+      }
+    }
+
     function extractLiveSession1Char(html) {
       const raw = String(html || "");
       if (!raw || !/infFaceWrap|inf-face-wrap|inf-photo/i.test(raw)) return null;
@@ -2090,15 +2139,18 @@ ${linkedCss}
           faceWrap?.querySelector(".inf-photo") || doc.querySelector(".inf-photo");
         if (!photo) return null;
         const hasSvg = !!photo.querySelector("svg");
-        if (!hasSvg && !String(photo.innerHTML || "").trim()) return null;
+        const hasImg = !!photo.querySelector("img[src]");
+        if (!hasSvg && !hasImg && !String(photo.innerHTML || "").trim()) return null;
         const clone = photo.cloneNode(true);
         clone
           .querySelectorAll(
             "script, .inf-photo-spark, .inf-photo-ring, .inf-photo-shade, .inf-photo-lv, .inf-photo-arc, .inf-photo-power"
           )
           .forEach((el) => el.remove());
+        uniquifyLiveSvgRefIds(clone, "lf");
         const name =
           (doc.querySelector(".inf-name-text")?.textContent || "").trim() ||
+          (doc.querySelector("#infName")?.textContent || "").trim() ||
           (doc.querySelector("#sheetDisplayName")?.getAttribute("value") || "").trim() ||
           (doc.querySelector("#sheetDisplayName")?.textContent || "").trim();
         let mbti = (doc.querySelector(".inf-photo-mbti")?.textContent || "")
@@ -2116,7 +2168,13 @@ ${linkedCss}
             .replace(/,\s*$/, "")
             .trim();
         }
-        if (!name && !mbti && !hasSvg) return null;
+        if (!arch) {
+          const classLine = (doc.querySelector("#infClass")?.textContent || "").trim();
+          if (classLine && !/분석 중|아키타입/.test(classLine)) {
+            arch = classLine.replace(/^★\s*/, "").trim();
+          }
+        }
+        if (!name && !mbti && !hasSvg && !hasImg) return null;
         return {
           faceHtml: clone.outerHTML,
           name: name || "이름 미정",
@@ -2169,7 +2227,7 @@ ${linkedCss}
       const displayName = who?.name || "이름 없음";
       const no = who?.no || "—";
       const art = who?.faceHtml
-        ? `<div class="deck-reader-art" aria-hidden="true">${who.faceHtml}</div>`
+        ? `<div class="deck-reader-art" aria-hidden="true">${uniquifyLiveFaceHtml(who.faceHtml)}</div>`
         : `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(
             String(displayName).slice(0, 1) || "?"
           )}</div>`;
@@ -2226,7 +2284,7 @@ ${linkedCss}
       const s3 = sessionNo === 3;
       const name = card.name || "이름 없음";
       const art = card.faceHtml
-        ? `<div class="deck-card-art" aria-hidden="true">${card.faceHtml}</div>`
+        ? `<div class="deck-card-art" aria-hidden="true">${uniquifyLiveFaceHtml(card.faceHtml)}</div>`
         : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(
             String(name).slice(0, 1) || "?"
           )}</div>`;
@@ -2285,7 +2343,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2118";
+        css.href = "./live-report-deck.css?v=2119";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");

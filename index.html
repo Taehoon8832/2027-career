@@ -2428,6 +2428,19 @@
       width: 15px; height: 15px;
       flex-shrink: 0;
     }
+    .report-deck-live-hint {
+      margin: 0;
+      max-width: min(420px, 46vw);
+      font: 500 12px/1.35 "Noto Sans KR", Pretendard, var(--font-sans);
+      letter-spacing: -0.02em;
+      color: var(--text-tertiary, #78716c);
+      word-break: keep-all;
+      white-space: normal;
+    }
+    .report-deck-live-hint b {
+      font-weight: 700;
+      color: #64748b;
+    }
     .report-deck {
       position: fixed; inset: 0; z-index: 90;
       display: none;
@@ -2518,14 +2531,26 @@
     }
     .deck-reader-art .inf-photo,
     .deck-reader-art .inf-photo-frame {
-      position: absolute; inset: 0;
+      position: absolute !important; inset: 0 !important;
       width: 100% !important; height: 100% !important;
+      margin: 0 !important;
       border-radius: 50%; overflow: hidden;
+      display: block !important;
+      transform: none !important;
+      animation: none !important;
+      filter: none !important;
+      box-shadow: none !important;
+      background: linear-gradient(160deg, #ffedd5, #fed7aa);
     }
     .deck-reader-art { position: relative; }
+    .deck-reader-art .inf-photo-frame {
+      inset: 3% !important; width: 94% !important; height: 94% !important;
+    }
     .deck-reader-art .inf-photo-frame > svg,
     .deck-reader-art svg {
-      width: 100% !important; height: 100% !important; display: block;
+      width: 100% !important; height: 100% !important;
+      min-width: 100% !important; min-height: 100% !important;
+      display: block !important;
     }
     .deck-reader-art .inf-photo-ring,
     .deck-reader-art .inf-photo-spark,
@@ -2978,13 +3003,25 @@
     }
     .deck-card-art .inf-photo,
     .deck-card-art .inf-photo-frame {
-      position: absolute; inset: 0;
+      position: absolute !important; inset: 0 !important;
       width: 100% !important; height: 100% !important;
+      margin: 0 !important;
       border-radius: 50%; overflow: hidden;
+      display: block !important;
+      transform: none !important;
+      animation: none !important;
+      filter: none !important;
+      box-shadow: none !important;
+      background: linear-gradient(160deg, #ffedd5, #fed7aa);
+    }
+    .deck-card-art .inf-photo-frame {
+      inset: 3% !important; width: 94% !important; height: 94% !important;
     }
     .deck-card-art .inf-photo-frame > svg,
     .deck-card-art svg {
-      width: 100% !important; height: 100% !important; display: block;
+      width: 100% !important; height: 100% !important;
+      min-width: 100% !important; min-height: 100% !important;
+      display: block !important;
     }
     .deck-card-art .inf-photo-ring,
     .deck-card-art .inf-photo-spark,
@@ -3415,22 +3452,46 @@
       height: 48px;
       border-radius: 50%;
       overflow: hidden;
-      background: #f3e7db;
+      isolation: isolate;
+      background: linear-gradient(160deg, #ffedd5, #fed7aa);
       box-shadow: 0 0 0 1.5px rgba(201, 100, 66, 0.35), 0 2px 6px rgba(31, 30, 29, 0.1);
     }
     .detail-sub-preview .s1-char-face .inf-photo,
     .detail-sub-preview .s1-char-face .inf-photo-frame {
-      position: absolute;
-      inset: 0;
+      position: absolute !important;
+      inset: 0 !important;
       width: 100% !important;
       height: 100% !important;
+      margin: 0 !important;
       border-radius: 50%;
       overflow: hidden;
+      display: block !important;
+      transform: none !important;
+      animation: none !important;
+      filter: none !important;
+      box-shadow: none !important;
+      background: linear-gradient(160deg, #ffedd5, #fed7aa);
+      z-index: 1;
+    }
+    .detail-sub-preview .s1-char-face .inf-photo-frame {
+      inset: 3% !important;
+      width: 94% !important;
+      height: 94% !important;
     }
     .detail-sub-preview .s1-char-face .inf-photo-frame > svg,
     .detail-sub-preview .s1-char-face svg {
       width: 100% !important;
       height: 100% !important;
+      min-width: 100% !important;
+      min-height: 100% !important;
+      display: block !important;
+      max-width: none !important;
+      max-height: none !important;
+    }
+    .detail-sub-preview .s1-char-face img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
       display: block;
     }
     .detail-sub-preview .s1-char-face .inf-photo-ring,
@@ -9913,6 +9974,42 @@
         return map;
       }
 
+      /** 미리보기용 SVG id 충돌 방지 (여러 카드가 같은 url(#av…hg)를 쓰면 얼굴이 비어 보임) */
+      function uniquifySvgRefIds(rootEl, prefix) {
+        if (!rootEl) return;
+        const p = String(prefix || "x") + Math.random().toString(36).slice(2, 8);
+        const idMap = new Map();
+        rootEl.querySelectorAll("[id]").forEach((el) => {
+          const oldId = el.getAttribute("id");
+          if (!oldId) return;
+          const next = `${p}-${oldId}`.replace(/[^a-zA-Z0-9_\-:]/g, "_");
+          idMap.set(oldId, next);
+          el.setAttribute("id", next);
+        });
+        if (!idMap.size) return;
+        const rewrite = (val) => {
+          let s = String(val || "");
+          for (const [oldId, next] of idMap) {
+            s = s
+              .split(`url(#${oldId})`)
+              .join(`url(#${next})`)
+              .split(`url('#${oldId}')`)
+              .join(`url('#${next}')`)
+              .split(`url("#${oldId}")`)
+              .join(`url("#${next}")`);
+          }
+          return s;
+        };
+        rootEl.querySelectorAll("*").forEach((el) => {
+          [...el.attributes].forEach((attr) => {
+            if (!attr || !attr.value) return;
+            if (!/url\(#/.test(attr.value) && attr.name !== "href" && attr.name !== "xlink:href") return;
+            const next = rewrite(attr.value);
+            if (next !== attr.value) el.setAttribute(attr.name, next);
+          });
+        });
+      }
+
       /** 1차시 제출 HTML에서 캐릭터 사진·이름·MBTI 추출 */
       function extractSession1CharacterPreview(html) {
         const raw = String(html || "");
@@ -9926,7 +10023,8 @@
             doc.querySelector(".inf-photo");
           if (!photo) return null;
           const hasSvg = !!photo.querySelector("svg");
-          if (!hasSvg && !String(photo.innerHTML || "").trim()) return null;
+          const hasImg = !!photo.querySelector("img[src]");
+          if (!hasSvg && !hasImg && !String(photo.innerHTML || "").trim()) return null;
 
           const clone = photo.cloneNode(true);
           clone
@@ -9934,9 +10032,12 @@
               "script, .inf-photo-spark, .inf-photo-ring, .inf-photo-shade, .inf-photo-lv, .inf-photo-arc, .inf-photo-power"
             )
             .forEach((el) => el.remove());
+          // 미리보기 그리드에 여러 장이 붙을 때 gradient/filter id 충돌 제거
+          uniquifySvgRefIds(clone, "s1f");
 
           const name =
             (doc.querySelector(".inf-name-text")?.textContent || "").trim() ||
+            (doc.querySelector("#infName")?.textContent || "").trim() ||
             (doc.querySelector("#sheetDisplayName")?.getAttribute("value") || "").trim() ||
             (doc.querySelector("#sheetDisplayName")?.textContent || "").trim();
 
@@ -9958,8 +10059,14 @@
               .replace(/,\s*$/, "")
               .trim();
           }
+          if (!arch) {
+            const classLine = (doc.querySelector("#infClass")?.textContent || "").trim();
+            if (classLine && !/분석 중|아키타입/.test(classLine)) {
+              arch = classLine.replace(/^★\s*/, "").trim();
+            }
+          }
 
-          if (!name && !mbti && !hasSvg) return null;
+          if (!name && !mbti && !hasSvg && !hasImg) return null;
           return {
             faceHtml: clone.outerHTML,
             name: name || "이름 미정",
@@ -9968,6 +10075,20 @@
           };
         } catch {
           return null;
+        }
+      }
+
+      function uniquifyFaceHtmlString(faceHtml) {
+        const raw = String(faceHtml || "").trim();
+        if (!raw) return "";
+        try {
+          const doc = new DOMParser().parseFromString(`<div id="faceRoot">${raw}</div>`, "text/html");
+          const root = doc.querySelector("#faceRoot");
+          if (!root?.firstElementChild) return raw;
+          uniquifySvgRefIds(root, "fx");
+          return root.innerHTML;
+        } catch {
+          return raw;
         }
       }
 
@@ -9982,8 +10103,9 @@
         const archLine = char.arch
           ? `<div class="s1-char-arch">★ ${escapeHtml(char.arch)}</div>`
           : "";
+        const face = uniquifyFaceHtmlString(char.faceHtml);
         return `<div class="s1-char-preview${incomplete?.incomplete ? " is-incomplete" : ""}">
-          <div class="s1-char-face" aria-hidden="true">${char.faceHtml}</div>
+          <div class="s1-char-face" aria-hidden="true">${face}</div>
           <div class="s1-char-meta">
             <div class="s1-char-name">${escapeHtml(char.name || "이름 미정")}${flag ? " " + flag : ""}</div>
             ${mbtiLine}
@@ -15805,7 +15927,7 @@ ${pageCss}</style>
           "이름 없음";
         const no = normalizeStudentNo(sub.student_no) || String(sub.student_no || "");
         const art = char?.faceHtml
-          ? `<div class="deck-reader-art" aria-hidden="true">${char.faceHtml}</div>`
+          ? `<div class="deck-reader-art" aria-hidden="true">${uniquifyFaceHtmlString(char.faceHtml)}</div>`
           : `<div class="deck-reader-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
         const tags = [];
         if (incomplete.incomplete) {
@@ -15925,7 +16047,7 @@ ${pageCss}</style>
             rosterName ||
             "이름 없음";
           const art = char?.faceHtml
-            ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
+            ? `<div class="deck-card-art" aria-hidden="true">${uniquifyFaceHtmlString(char.faceHtml)}</div>`
             : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
           const emptyJobs =
             lessonSession === 3
@@ -15955,7 +16077,7 @@ ${pageCss}</style>
         const mbti = char?.mbti || "";
         const arch = char?.arch || "";
         const art = char?.faceHtml
-          ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
+          ? `<div class="deck-card-art" aria-hidden="true">${uniquifyFaceHtmlString(char.faceHtml)}</div>`
           : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
         const badge = incomplete.incomplete
           ? `<span class="deck-card-badge">${escapeHtml(incompleteBadgeLabel(incomplete))}</span>`
@@ -16702,6 +16824,7 @@ ${pageCss}</style>
               </svg>
               <span>&lt;보고서 종합&gt;</span>
             </button>
+            <p class="report-deck-live-hint">▶ 학생 활동지에서 <b>[실시간]</b> 동기화 가능합니다.</p>
             <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
