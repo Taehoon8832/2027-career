@@ -1911,6 +1911,8 @@ ${linkedCss}
       who: null
     };
     const contentById = new Map();
+    let liveArenaRollFocus = -999;
+    let liveArenaRollToken = 0;
 
     function lessonTitleText() {
       const h1 = document.querySelector(".hero-card h1")?.textContent?.trim();
@@ -2422,14 +2424,14 @@ ${linkedCss}
         link.id = "liveDeckNotoSans";
         link.rel = "stylesheet";
         link.href =
-          "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;800&family=Noto+Serif+KR:wght@600;700;800&display=swap";
+          "https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@500;600;700&family=Noto+Sans+KR:wght@400;600;700;800&family=Noto+Serif+KR:wght@600;700;800&display=swap";
         document.head.appendChild(link);
       }
       if (!document.getElementById("liveReportDeckCss")) {
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2129";
+        css.href = "./live-report-deck.css?v=2131";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2641,25 +2643,172 @@ ${linkedCss}
         const phase = arena?.phase || "idle";
         const stats = arena?.stats || { played: 0, ranks: [] };
         if (phase === "revealed") {
-          board.classList.remove("is-counting");
+          liveArenaRollFocus = -999;
+          board.classList.remove("is-counting", "is-rolling");
+          board.classList.add("is-champ");
           board.innerHTML = buildLiveWorldcupArenaHtml(stats);
           bindLiveArenaJobClicks(board, stats.ranks || [], null);
+          requestAnimationFrame(() => {
+            board.querySelectorAll("[data-arena-row]").forEach((el) => {
+              el.classList.add("is-ready", "is-shown");
+            });
+            board.querySelectorAll("[data-count-to]").forEach((el) => {
+              el.textContent = `${el.getAttribute("data-count-to") || 0}%`;
+              el.classList.add("is-done");
+            });
+            board.querySelectorAll(".deck-arena-meter > i").forEach((el) => {
+              const row = el.closest("[data-arena-row]");
+              const pct = row?.style.getPropertyValue("--pct") || "0%";
+              el.style.width = pct;
+            });
+          });
+          setTimeout(() => board.classList.remove("is-champ"), 1600);
+        } else if (phase === "rolling") {
+          const live = arena?.live;
+          board.classList.remove("is-counting");
+          board.classList.add("is-rolling");
+          if (!board.querySelector("[data-arena-list]") || liveArenaRollFocus === -999) {
+            board.innerHTML = buildLiveRaceShellHtml(stats);
+            liveArenaRollFocus = -1;
+          }
+          const tick = Number(live?.tick) || 0;
+          if (live && tick !== liveArenaRollFocus) {
+            liveArenaRollFocus = tick;
+            paintLiveRaceBoard(board, live);
+          }
         } else if (phase === "countdown") {
+          liveArenaRollFocus = -999;
           board.classList.add("is-counting");
+          board.classList.remove("is-rolling");
           board.innerHTML = buildLiveCountdownHtml(Number(arena?.countdown) || 3);
         } else {
-          board.classList.remove("is-counting");
+          liveArenaRollFocus = -999;
+          board.classList.remove("is-counting", "is-rolling", "is-champ");
           board.innerHTML = buildLiveStartHtml(stats);
         }
       }
-      requestAnimationFrame(() => {
-        board.querySelectorAll("[data-arena-row], [data-arena-col]").forEach((el) => {
-          el.classList.add("is-ready");
+      if (mode !== "ours") {
+        requestAnimationFrame(() => {
+          board.querySelectorAll("[data-arena-row], [data-arena-col]").forEach((el) => {
+            el.classList.add("is-ready");
+          });
+          board.querySelectorAll("[data-count-to]").forEach((el) => {
+            el.textContent = `${el.getAttribute("data-count-to") || 0}%`;
+          });
         });
-        board.querySelectorAll("[data-count-to]").forEach((el) => {
-          el.textContent = `${el.getAttribute("data-count-to") || 0}%`;
+      }
+    }
+
+    function buildLiveRaceShellHtml(stats) {
+      const played = Number(stats?.played) || 0;
+      return `
+        <div class="deck-arena-board-head">
+          <strong>직업 월드컵 랭킹 · 우리 반</strong>
+          <span class="deck-arena-live is-tally">TALLY</span>
+          <span data-arena-sub>0 / ${played}게임 집계 중</span>
+        </div>
+        <div class="deck-arena-ticker" data-arena-ticker>
+          <em>LIVE COUNT</em>
+          <strong>직업이 등장하면 초마다 집계됩니다</strong>
+        </div>
+        <div class="deck-arena-stage"><div class="deck-arena-podium" data-arena-podium></div></div>
+        <div class="deck-arena-list" data-arena-list></div>
+        <div class="deck-arena-who" hidden></div>`;
+    }
+
+    function renderLivePodiumHtml(top3) {
+      return [0, 1, 2]
+        .map((i) => {
+          const r = top3[i];
+          const crown = i === 0 ? `<div class="deck-arena-pod-crown" aria-hidden="true">👑</div>` : "";
+          if (!r) {
+            return `<div class="deck-arena-pod is-${i + 1} is-empty" style="--pod-i:${i}">${crown}
+              <div class="deck-arena-pod-rank">${i + 1}위</div>
+              <div class="deck-arena-pod-emoji">·</div>
+              <div class="deck-arena-pod-name">집계 중</div>
+            </div>`;
+          }
+          const n = (r.students || []).length || r.wins || 0;
+          return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i}">
+            ${crown}
+            <div class="deck-arena-pod-rank">${i + 1}위</div>
+            <div class="deck-arena-pod-emoji">${escapeHtml(r.emoji || "🏆")}</div>
+            <button type="button" class="deck-arena-pod-name is-job" data-arena-job="${escapeHtml(r.name)}">${escapeHtml(r.name)}</button>
+            <div class="deck-arena-pod-pct is-done">${Number(r.pct) || 0}%</div>
+            <div class="deck-arena-pod-hint">우승 ${r.wins} · 명단 ${n}</div>
+          </div>`;
+        })
+        .join("");
+    }
+
+    function renderLiveRowHtml(r, i, totalPlayed, flashJob) {
+      const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
+      const n = (r.students || []).length || r.wins || 0;
+      const flash = flashJob && flashJob === r.name ? " is-hit is-live" : "";
+      return `<div class="deck-arena-row${i < 3 ? " is-top" : ""}${flash}" style="--i:${i};--pct:${pct}%" data-arena-row="1" data-job="${escapeHtml(r.name)}">
+        <div class="deck-arena-rank">${i + 1}</div>
+        <button type="button" class="deck-arena-job is-job" data-arena-job="${escapeHtml(r.name)}">
+          <em>${escapeHtml(r.emoji || "🏆")}</em><b>${escapeHtml(r.name)}</b>
+        </button>
+        <div class="deck-arena-meter" aria-hidden="true"><i style="width:${pct}%"></i></div>
+        <div class="deck-arena-pct is-done">${pct}%</div>
+        <div class="deck-arena-meta">우승 <b class="deck-arena-win-n">${r.wins}</b>회 / 집계 ${totalPlayed} · <span class="deck-arena-meta-link">명단 ${n}명 ▸</span></div>
+      </div>`;
+    }
+
+    function paintLiveRaceBoard(board, live) {
+      if (!board || !live) return;
+      const list = board.querySelector("[data-arena-list]");
+      const podium = board.querySelector("[data-arena-podium]");
+      const ticker = board.querySelector("[data-arena-ticker]");
+      const sub = board.querySelector("[data-arena-sub]");
+      const ranks = Array.isArray(live.ranks) ? live.ranks : [];
+      const tallyPlayed = Number(live.tallyPlayed) || 0;
+      const flashJob = live.lastJob || "";
+      const prevRects = new Map();
+      if (list) {
+        list.querySelectorAll("[data-job]").forEach((el) => {
+          prevRects.set(el.getAttribute("data-job"), el.getBoundingClientRect());
         });
-      });
+      }
+      if (sub) sub.textContent = `${tallyPlayed} / ${Number(live.finalPlayed) || tallyPlayed}게임 집계 중`;
+      if (ticker) {
+        if (live.done) {
+          ticker.classList.add("is-done");
+          ticker.innerHTML = ranks[0]
+            ? `<em>COMPLETE</em> <strong>${escapeHtml(ranks[0].name)}</strong> 최종 1위`
+            : `<em>COMPLETE</em>`;
+        } else if (live.intro && flashJob) {
+          ticker.classList.remove("is-done");
+          ticker.innerHTML = `<em>등장</em> <strong>${escapeHtml(flashJob)}</strong> 대기열 합류`;
+        } else if (flashJob) {
+          ticker.classList.remove("is-done");
+          ticker.innerHTML = `<em>${live.tick || 0}초</em> <strong>+1 ${escapeHtml(flashJob)}</strong> · 순위 재정렬`;
+        }
+      }
+      if (podium) podium.innerHTML = renderLivePodiumHtml(ranks.slice(0, 3));
+      if (list) {
+        list.innerHTML = ranks.map((r, i) => renderLiveRowHtml(r, i, tallyPlayed, flashJob)).join("");
+        list.querySelectorAll("[data-job]").forEach((el) => {
+          const key = el.getAttribute("data-job");
+          const first = prevRects.get(key);
+          if (!first) {
+            el.classList.add("is-enter");
+            return;
+          }
+          const last = el.getBoundingClientRect();
+          const dy = first.top - last.top;
+          if (Math.abs(dy) < 2) return;
+          el.style.transition = "none";
+          el.style.transform = `translateY(${dy}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = "transform 0.55s cubic-bezier(0.22, 1, 0.36, 1)";
+            el.style.transform = "";
+            el.classList.add("is-swap");
+          });
+        });
+      }
+      bindLiveArenaJobClicks(board, ranks, null);
     }
 
     function buildLiveStartHtml(stats) {
@@ -2713,39 +2862,10 @@ ${linkedCss}
           <p class="deck-arena-empty">아직 우승 직업이 없어요. 월드컵을 마치면 랭킹이 올라갑니다.</p>`;
       }
       const top = ranks.slice(0, 3);
-      const podium = `<div class="deck-arena-stage"><div class="deck-arena-podium">${[0, 1, 2]
-        .map((i) => {
-          const r = top[i];
-          const crown = i === 0 ? `<div class="deck-arena-pod-crown" aria-hidden="true">👑</div>` : "";
-          if (!r) {
-            return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i};opacity:.35">${crown}<div class="deck-arena-pod-rank">${i + 1}위</div><div class="deck-arena-pod-emoji">—</div><div class="deck-arena-pod-name">대기중</div></div>`;
-          }
-          const n = (r.students || []).length || r.wins || 0;
-          return `<div class="deck-arena-pod is-${i + 1}" style="--pod-i:${i}">
-            ${crown}
-            <div class="deck-arena-pod-rank">${i + 1}위</div>
-            <div class="deck-arena-pod-emoji">${escapeHtml(r.emoji || "🏆")}</div>
-            <button type="button" class="deck-arena-pod-name is-job" data-arena-job="${escapeHtml(r.name)}" title="이 직업을 고른 학생 보기">${escapeHtml(r.name)}</button>
-            <div class="deck-arena-pod-pct" data-count-to="${Number(r.pct) || 0}">${Number(r.pct) || 0}%</div>
-            <div class="deck-arena-pod-hint">${n}명 · 눌러 명단</div>
-          </div>`;
-        })
-        .join("")}</div></div>`;
+      const podium = `<div class="deck-arena-stage"><div class="deck-arena-podium">${renderLivePodiumHtml(top)}</div></div>`;
       const rows = ranks
         .slice(0, 16)
-        .map((r, i) => {
-          const pct = Math.max(0, Math.min(100, Number(r.pct) || 0));
-          const n = (r.students || []).length || r.wins || 0;
-          return `<div class="deck-arena-row${i < 3 ? " is-top" : ""}" style="--i:${i};--pct:${pct}%" data-arena-row="1">
-            <div class="deck-arena-rank">${i + 1}</div>
-            <button type="button" class="deck-arena-job is-job" data-arena-job="${escapeHtml(r.name)}" title="이 직업을 고른 학생 보기">
-              <em>${escapeHtml(r.emoji || "🏆")}</em><b>${escapeHtml(r.name)}</b>
-            </button>
-            <div class="deck-arena-meter" aria-hidden="true"><i></i></div>
-            <div class="deck-arena-pct" data-count-to="${pct}">${pct}%</div>
-            <div class="deck-arena-meta">우승 ${Number(r.wins) || 0}회 / 전체 ${played}게임 · <span class="deck-arena-meta-link">명단 ${n}명 ▸</span></div>
-          </div>`;
-        })
+        .map((r, i) => renderLiveRowHtml(r, i, played, ""))
         .join("");
       return `
         <div class="deck-arena-board-head">
