@@ -1177,32 +1177,33 @@ body{padding:16px!important;background:#fff!important}
   .na-manual-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 5px;
+    gap: 3px;
   }
   .na-card {
     break-inside: avoid;
     page-break-inside: avoid;
     border: 1px solid #94a3b8;
-    border-radius: 8px;
-    padding: 6px 7px;
+    border-radius: 6px;
+    padding: 4px 5px;
+    background: #fff;
   }
   .na-card-head {
     display: flex;
     align-items: center;
-    gap: 5px;
-    margin-bottom: 4px;
-    font: 700 11px/1.25 Pretendard, sans-serif;
+    gap: 4px;
+    margin-bottom: 2px;
+    font: 700 9.5px/1.25 Pretendard, sans-serif;
   }
-  .na-card-icon { font-size: 12px; }
+  .na-card-icon { font-size: 10px; width: 16px; height: 16px; }
   .na-card textarea {
     width: 100%;
-    min-height: 48px;
+    min-height: 28px;
     border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 5px 6px;
-    font: 500 10px/1.4 Pretendard, sans-serif;
+    border-radius: 4px;
+    padding: 3px 4px;
+    font: 500 9px/1.35 Pretendard, sans-serif;
     resize: none;
-    background: #fff;
+    background: #f8fafc;
   }
   .bingo-guide {
     margin: 0 0 6px;
@@ -1652,10 +1653,41 @@ ${linkedCss}
     color-adjust: exact !important;
   }
   .na-manual { margin: 0 0 4px !important; }
-  .lesson-part + .reflect-field, .na-manual + .reflect-field {
-    margin-top: 8px !important; padding-top: 6px !important;
+  .na-manual-head { margin: 0 0 4px !important; padding: 0 0 4px !important; }
+  .na-manual-head strong { font-size: 12px !important; padding-left: 0 !important; }
+  .na-manual-head span { font-size: 9px !important; }
+  .na-manual-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 3px !important;
   }
-  .reflect-field textarea { min-height: 36px !important; height: auto !important; }
+  .na-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    padding: 4px 5px !important;
+    border: 1px solid #94a3b8 !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .na-card-head { gap: 4px !important; margin-bottom: 2px !important; }
+  .na-card-icon { width: 16px !important; height: 16px !important; font-size: 10px !important; border-radius: 4px !important; }
+  .na-card-head label { font-size: 9.5px !important; }
+  .na-card textarea,
+  .activity-card .na-card textarea {
+    min-height: 28px !important;
+    height: auto !important;
+    padding: 3px 4px !important;
+    font: 500 9px/1.35 Pretendard, sans-serif !important;
+    background: #f8fafc !important;
+    box-shadow: inset 0 0 0 1px #e2e8f0 !important;
+    border-radius: 4px !important;
+  }
+  .lesson-part + .reflect-field, .na-manual + .reflect-field {
+    margin-top: 6px !important; padding-top: 4px !important;
+  }
+  .reflect-field textarea { min-height: 28px !important; height: auto !important; font-size: 9px !important; }
+  .html-forge, .html-forge--fold, .html-forge-code, #htmlCodeOut { display: none !important; }
 </style>
 </head>
 <body>

@@ -1001,15 +1001,16 @@ body.qr-lightbox-open { overflow: hidden; }
   gap: 8px;
 }
 .na-card {
-  border: 1px solid #dde3ea;
+  border: 1px solid #c5d8ec;
   border-radius: 12px;
   padding: 9px 10px 8px;
   background:
-    linear-gradient(180deg, #ffffff 0%, #f7f9fb 100%);
+    linear-gradient(165deg, #f3f9ff 0%, #e8f3fc 48%, #dff0fa 100%);
   display: flex;
   flex-direction: column;
   min-height: 0;
   min-width: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
 .na-card-head {
   display: flex;
@@ -1023,8 +1024,8 @@ body.qr-lightbox-open { overflow: hidden; }
   width: 26px;
   height: 26px;
   border-radius: 8px;
-  background: #e8eef4;
-  color: #4a607a;
+  background: linear-gradient(180deg, #e8f2fb 0%, #d4e6f6 100%);
+  color: #3d5f80;
   display: grid;
   place-items: center;
   font-size: 14px;
@@ -1047,13 +1048,14 @@ body.qr-lightbox-open { overflow: hidden; }
   overflow: hidden;
   border: 0 !important;
   border-radius: 8px !important;
-  background: rgba(255, 255, 255, 0.72) !important;
+  background:
+    linear-gradient(180deg, #f7fbff 0%, #eef6fc 100%) !important;
   resize: none;
   padding: 6px 8px !important;
   font: 500 13px/1.45 var(--sans) !important;
   color: #2c3e50;
   outline: none;
-  box-shadow: inset 0 0 0 1px rgba(74, 96, 122, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(74, 120, 160, 0.16);
   field-sizing: content;
 }
 .na-card textarea::placeholder,
@@ -1064,8 +1066,22 @@ body.qr-lightbox-open { overflow: hidden; }
 }
 .na-card textarea:focus,
 .activity-card .na-card textarea:focus {
-  background: #fff !important;
-  box-shadow: inset 0 0 0 1.5px rgba(74, 96, 122, 0.35);
+  background: linear-gradient(180deg, #ffffff 0%, #f3f9ff 100%) !important;
+  box-shadow: inset 0 0 0 1.5px rgba(56, 120, 180, 0.4);
+}
+
+/* 1차시 학번·이름·느낀점 입력칸도 동일 톤 */
+.activity-card:has(.na-manual) .sheet-identity input {
+  border-color: #b7d0e6;
+  background: linear-gradient(180deg, #f5faff 0%, #e8f3fb 100%);
+}
+.activity-card:has(.na-manual) .sheet-identity input:focus {
+  border-color: #5b9fd4;
+  box-shadow: 0 0 0 3px rgba(91, 159, 212, 0.18);
+}
+.activity-card:has(.na-manual) .reflect-field textarea {
+  border-color: #b7d0e6;
+  background: linear-gradient(180deg, #f5faff 0%, #eaf4fb 100%);
 }
 
 /* 1차시 (2) · 100문 100답 */
@@ -6017,6 +6033,8 @@ body.qr-lightbox-open { overflow: hidden; }
   .html-forge,
   .html-forge--fold,
   .html-forge-badge,
+  .html-forge-code,
+  #htmlCodeOut,
   .lesson-part-tools,
   .inf-kakao-btn,
   .inf-card-glow,
@@ -6027,8 +6045,6 @@ body.qr-lightbox-open { overflow: hidden; }
   .inf-face-stage::after {
     display: none !important;
   }
-
-  .html-forge-code { max-height: none !important; color: #111 !important; background: #f8fafc !important; }
 
   .inf-stage {
     min-height: 0 !important;
@@ -6042,7 +6058,7 @@ body.qr-lightbox-open { overflow: hidden; }
   #infCard:not([hidden]),
   .inf-stage.is-live #infCard {
     display: grid !important;
-    grid-template-columns: minmax(160px, 0.85fr) minmax(0, 1.15fr) !important;
+    grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1.2fr) !important;
     min-height: 0 !important;
     height: auto !important;
     max-height: none !important;
@@ -6052,16 +6068,16 @@ body.qr-lightbox-open { overflow: hidden; }
   .inf-stats {
     height: auto !important;
     justify-content: flex-start !important;
-    padding: 10px 8px !important;
+    padding: 6px !important;
   }
 
   .inf-face-stage {
-    width: 120px !important;
+    width: 96px !important;
   }
 
   .inf-face-wrap {
-    width: 120px !important;
-    height: 120px !important;
+    width: 96px !important;
+    height: 96px !important;
     transform: none !important;
     filter: none !important;
     animation: none !important;
@@ -6071,6 +6087,7 @@ body.qr-lightbox-open { overflow: hidden; }
     min-height: 0 !important;
     transform: none !important;
     box-shadow: none !important;
+    padding: 3px 5px !important;
   }
 
   .inf-stat-fill,
@@ -6086,8 +6103,31 @@ body.qr-lightbox-open { overflow: hidden; }
 
   .lesson-part--stage,
   .lesson-part--html {
-    margin-top: 10px !important;
-    padding-top: 6px !important;
+    margin-top: 6px !important;
+    padding-top: 4px !important;
+  }
+
+  .activity-card:has(.na-manual) {
+    padding: 4px !important;
+  }
+  .na-manual-grid {
+    gap: 3px !important;
+  }
+  .na-card {
+    padding: 4px 5px !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+  .na-card textarea,
+  .activity-card .na-card textarea {
+    min-height: 28px !important;
+    font-size: 9px !important;
+    padding: 3px 4px !important;
+    background: #f8fafc !important;
+  }
+  .activity-card:has(.na-manual) .reflect-field textarea {
+    min-height: 28px !important;
+    background: #fff !important;
   }
 
 }

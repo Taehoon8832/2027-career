@@ -2358,6 +2358,279 @@
       margin: 0;
       font: 700 14px/1.3 var(--font-sans); color: var(--text-primary);
     }
+    .report-deck-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 28px;
+      padding: 0 10px 0 7px;
+      border: 1.5px solid #1d4ed8;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+      color: #1e3a8a;
+      font: 800 11px/1 var(--font-sans);
+      letter-spacing: -0.02em;
+      cursor: pointer;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8), 0 2px 6px rgba(29, 78, 216, 0.16);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      white-space: nowrap;
+    }
+    .report-deck-btn:hover {
+      background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+      box-shadow: 0 2px 0 rgba(255,255,255,0.85), 0 4px 10px rgba(29, 78, 216, 0.22);
+      transform: translateY(-1px);
+    }
+    .report-deck-btn:active { transform: translateY(0) scale(0.97); }
+    .report-deck-btn svg {
+      width: 15px; height: 15px;
+      flex-shrink: 0;
+    }
+    .report-deck {
+      position: fixed; inset: 0; z-index: 90;
+      display: none;
+      align-items: stretch;
+      justify-content: center;
+      padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      background:
+        radial-gradient(ellipse 70% 55% at 50% 35%, rgba(255, 255, 255, 0.12), transparent 60%),
+        radial-gradient(ellipse 90% 80% at 50% 100%, rgba(0,0,0,0.35), transparent 55%),
+        linear-gradient(160deg, #0f3d2e 0%, #14532d 40%, #166534 70%, #0b3b28 100%);
+    }
+    .report-deck.is-open { display: flex; }
+    .report-deck-panel {
+      width: min(1100px, 100%);
+      max-height: 100%;
+      display: flex;
+      flex-direction: column;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 2px solid rgba(253, 230, 138, 0.45);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(255,255,255,0.08), transparent 40%),
+        linear-gradient(180deg, rgba(20, 83, 45, 0.35) 0%, rgba(6, 40, 28, 0.55) 100%);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+    .report-deck-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(253, 230, 138, 0.28);
+      background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.05));
+    }
+    .report-deck-head h3 {
+      margin: 0;
+      flex: 1;
+      min-width: 0;
+      font: 800 16px/1.25 "Noto Serif KR", var(--font-serif);
+      color: #fef3c7;
+      letter-spacing: -0.02em;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+    }
+    .report-deck-head .sub {
+      margin: 2px 0 0;
+      font: 600 11px/1.3 var(--font-sans);
+      color: rgba(254, 243, 199, 0.72);
+    }
+    .report-deck-head .btn-tiny {
+      border-color: rgba(253, 230, 138, 0.5);
+      background: rgba(255,255,255,0.1);
+      color: #fef3c7;
+    }
+    .report-deck-head .btn-tiny:hover {
+      background: rgba(255,255,255,0.18);
+    }
+    .report-deck-table {
+      flex: 1;
+      overflow: auto;
+      padding: 16px 14px 22px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+      gap: 14px 12px;
+      align-content: start;
+      perspective: 900px;
+    }
+    .report-deck-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 48px 16px;
+      color: rgba(254, 243, 199, 0.8);
+      font: 600 14px/1.5 var(--font-sans);
+    }
+    .deck-card {
+      --tilt: 0deg;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-height: 196px;
+      padding: 10px 10px 12px;
+      border: 2px solid #1f1e1d;
+      border-radius: 14px;
+      background:
+        linear-gradient(165deg, #fffef9 0%, #fff7ed 55%, #ffedd5 100%);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.9) inset,
+        0 8px 0 rgba(31,30,29,0.12),
+        0 14px 22px rgba(0,0,0,0.28);
+      color: #1f1e1d;
+      text-align: left;
+      cursor: pointer;
+      transform: rotate(var(--tilt)) translateY(18px) scale(0.92);
+      opacity: 0;
+      animation: deckDeal 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+      animation-delay: calc(var(--deal, 0) * 45ms);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .deck-card:nth-child(4n+1) { --tilt: -2.2deg; }
+    .deck-card:nth-child(4n+2) { --tilt: 1.6deg; }
+    .deck-card:nth-child(4n+3) { --tilt: -1.1deg; }
+    .deck-card:nth-child(4n) { --tilt: 2deg; }
+    @keyframes deckDeal {
+      0% { opacity: 0; transform: rotate(calc(var(--tilt) - 8deg)) translateY(42px) scale(0.82); }
+      100% { opacity: 1; transform: rotate(var(--tilt)) translateY(0) scale(1); }
+    }
+    .deck-card:hover,
+    .deck-card:focus-visible {
+      outline: none;
+      z-index: 2;
+      transform: rotate(0deg) translateY(-10px) scale(1.05);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.95) inset,
+        0 12px 0 rgba(31,30,29,0.1),
+        0 22px 32px rgba(0,0,0,0.35);
+    }
+    .deck-card:active {
+      transform: rotate(0deg) translateY(-2px) scale(0.98);
+    }
+    .deck-card.is-empty {
+      cursor: default;
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          #1e3a5f 0 8px,
+          #172554 8px 16px
+        );
+      color: #e2e8f0;
+      border-color: #0f172a;
+    }
+    .deck-card.is-empty:hover,
+    .deck-card.is-empty:focus-visible {
+      transform: rotate(var(--tilt)) translateY(0) scale(1);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,0.12) inset,
+        0 8px 0 rgba(0,0,0,0.2),
+        0 14px 22px rgba(0,0,0,0.28);
+    }
+    .deck-card-rank {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .deck-card-no {
+      font: 800 13px/1 var(--font-sans);
+      letter-spacing: -0.03em;
+      color: #9a3412;
+    }
+    .deck-card.is-empty .deck-card-no { color: #93c5fd; }
+    .deck-card-badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 16px;
+      padding: 0 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(31,30,29,0.2);
+      background: #fff;
+      font: 800 8px/1 var(--font-sans);
+      color: #a33b2c;
+    }
+    .deck-card-art {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      margin: 2px auto 0;
+      border-radius: 50%;
+      overflow: hidden;
+      background: linear-gradient(160deg, #ffedd5, #fed7aa);
+      box-shadow: 0 0 0 2px #1f1e1d, 0 4px 10px rgba(0,0,0,0.18);
+    }
+    .deck-card-art .inf-photo,
+    .deck-card-art .inf-photo-frame {
+      position: absolute; inset: 0;
+      width: 100% !important; height: 100% !important;
+      border-radius: 50%; overflow: hidden;
+    }
+    .deck-card-art .inf-photo-frame > svg,
+    .deck-card-art svg {
+      width: 100% !important; height: 100% !important; display: block;
+    }
+    .deck-card-art .inf-photo-ring,
+    .deck-card-art .inf-photo-spark,
+    .deck-card-art .inf-photo-shade,
+    .deck-card-art .inf-photo-lv,
+    .deck-card-art .inf-photo-arc,
+    .deck-card-art .inf-photo-power,
+    .deck-card-art .inf-photo-mbti { display: none !important; }
+    .deck-card-art.is-fallback {
+      display: grid;
+      place-items: center;
+      font: 800 22px/1 "Noto Serif KR", var(--font-serif);
+      color: #9a3412;
+      letter-spacing: -0.04em;
+    }
+    .deck-card.is-empty .deck-card-art {
+      background: rgba(15, 23, 42, 0.35);
+      box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.35);
+      color: #93c5fd;
+      font-size: 18px;
+    }
+    .deck-card-name {
+      margin-top: 2px;
+      text-align: center;
+      font: 800 13px/1.2 var(--font-sans);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .deck-card-meta {
+      text-align: center;
+      font: 700 10px/1.25 var(--font-sans);
+      color: #1d4ed8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 1.25em;
+    }
+    .deck-card.is-empty .deck-card-meta { color: #94a3b8; font-weight: 600; }
+    .deck-card-arch {
+      text-align: center;
+      font: 600 9.5px/1.2 var(--font-sans);
+      color: #9f1239;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-height: 1.2em;
+    }
+    .deck-card-hint {
+      margin-top: auto;
+      text-align: center;
+      font: 700 9px/1 var(--font-sans);
+      color: #a16207;
+      letter-spacing: -0.01em;
+    }
+    .deck-card.is-empty .deck-card-hint { color: #64748b; }
+    @media (max-width: 720px) {
+      .report-deck-table {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+        gap: 10px;
+        padding: 12px 10px 18px;
+      }
+      .deck-card { min-height: 178px; padding: 8px; }
+      .deck-card-art { width: 64px; height: 64px; }
+    }
     .detail-roster-grid {
       display: grid;
       grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -4552,6 +4825,18 @@
             <div class="sub-viewer-body" id="subViewerBody"></div>
           </div>
         </div>
+        <div class="report-deck" id="reportDeck" aria-hidden="true">
+          <div class="report-deck-panel" role="dialog" aria-modal="true" aria-labelledby="reportDeckTitle">
+            <div class="report-deck-head">
+              <div style="min-width:0;flex:1">
+                <h3 id="reportDeckTitle">&lt;보고서 종합&gt; 카드덱</h3>
+                <p class="sub" id="reportDeckSub">번호순으로 펼쳐진 카드를 눌러 보고서를 확인하세요</p>
+              </div>
+              <button type="button" class="btn-tiny" id="btnReportDeckClose">닫기</button>
+            </div>
+            <div class="report-deck-table" id="reportDeckTable"></div>
+          </div>
+        </div>
         <div class="obs-eval-sheet" id="obsEvalSheet" aria-hidden="true">
           <div class="obs-eval-panel" role="dialog" aria-modal="true" aria-labelledby="obsEvalTitle">
             <div class="obs-eval-head">
@@ -4760,6 +5045,7 @@
       let folioSaveTimer = 0;
       let folioSaveSeq = 0;
       let detailSubMap = new Map();
+      let detailStudentsCache = [];
       let submissionById = new Map();
       let detailExportRows = [];
       let detailFilterGrade = null;
@@ -9018,7 +9304,11 @@
           if (badge) {
             const b = badge.cloneNode(true);
             b.querySelectorAll(".inf-mbti-sep, .inf-mbti-bit").forEach((el) => el.remove());
-            arch = (b.textContent || "").replace(/^★\s*/, "").replace(/,\s*$/, "").trim();
+            arch = (b.textContent || "")
+              .replace(/,?\s*MBTI는\s*/gi, "")
+              .replace(/^★\s*/, "")
+              .replace(/,\s*$/, "")
+              .trim();
           }
 
           if (!name && !mbti && !hasSvg) return null;
@@ -13959,6 +14249,149 @@ ${built.html}
         }
       }
 
+      function closeReportDeck() {
+        const el = $("reportDeck");
+        if (!el) return;
+        el.classList.remove("is-open");
+        el.setAttribute("aria-hidden", "true");
+      }
+
+      function buildDeckCardHtml(st, key, latest, dealIdx) {
+        const no = key || normalizeStudentNo(st.student_no) || String(st.student_no || "");
+        const rosterName = String(st.student_name || "").trim();
+        if (!latest) {
+          const initial = (rosterName || no || "?").slice(0, 1);
+          return `<button type="button" class="deck-card is-empty" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
+            <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(no)}</span></div>
+            <div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(initial)}</div>
+            <div class="deck-card-name">${escapeHtml(rosterName || "이름 없음")}</div>
+            <div class="deck-card-meta">미제출</div>
+            <div class="deck-card-arch"></div>
+            <div class="deck-card-hint">아직 카드가 뒤집히지 않았어요</div>
+          </button>`;
+        }
+
+        const incomplete = assessSubmissionCompleteness(latest);
+        const yukha = buildYukhaSummary(latest);
+        const sessionNo = Number(yukha?.sessionNo) || Number(latest.session_no) || 0;
+        const char = sessionNo === 1 ? extractSession1CharacterPreview(latest.content) : null;
+        const displayName =
+          (char?.name && char.name !== "이름 미정" ? char.name : "") ||
+          String(latest.student_name || "").trim() ||
+          rosterName ||
+          "이름 없음";
+        const mbti = char?.mbti || "";
+        const arch = char?.arch || "";
+        const oneLine = !char
+          ? buildDetailSubPreviewText(yukha, incomplete).replace(/^미비\s*·\s*/, "").replace(/^\(부족\)\s*/, "")
+          : "";
+        const art = char?.faceHtml
+          ? `<div class="deck-card-art" aria-hidden="true">${char.faceHtml}</div>`
+          : `<div class="deck-card-art is-fallback" aria-hidden="true">${escapeHtml(displayName.slice(0, 1) || "?")}</div>`;
+        const badge = incomplete.incomplete
+          ? `<span class="deck-card-badge">${escapeHtml(incompleteBadgeLabel(yukha))}</span>`
+          : "";
+        const metaLine = mbti
+          ? `MBTI ${escapeHtml(mbti)}`
+          : escapeHtml(previewText(oneLine, 28) || "제출 완료");
+        const archLine = arch ? `★ ${escapeHtml(arch)}` : "";
+
+        return `<button type="button" class="deck-card" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="새 탭에서 보고서 열기">
+          <div class="deck-card-rank">
+            <span class="deck-card-no">${escapeHtml(no)}</span>
+            ${badge}
+          </div>
+          ${art}
+          <div class="deck-card-name">${escapeHtml(displayName)}</div>
+          <div class="deck-card-meta">${metaLine}</div>
+          <div class="deck-card-arch">${archLine}</div>
+          <div class="deck-card-hint">탭! 보고서 열기</div>
+        </button>`;
+      }
+
+      async function openReportDeck() {
+        const lesson = lessons.find((l) => l.id === selectedLessonId);
+        if (!lesson) {
+          toast("차시를 먼저 선택해 주세요.");
+          return;
+        }
+        const students = detailStudentsCache.slice();
+        if (!students.length) {
+          toast("명단이 없습니다.");
+          return;
+        }
+
+        const classId = activeClassId || teacherClass?.id || null;
+        const meta = classMetaById(classId);
+        const grade = meta?.grade || 1;
+        const classNo = meta?.class_no || 1;
+
+        const ordered = students.slice().sort((a, b) => {
+          const keyA =
+            resolveRosterStudentKey(a.student_no, grade, classNo) ||
+            normalizeStudentNo(a.student_no) ||
+            String(a.student_no || "");
+          const keyB =
+            resolveRosterStudentKey(b.student_no, grade, classNo) ||
+            normalizeStudentNo(b.student_no) ||
+            String(b.student_no || "");
+          const na = Number(keyA) || 0;
+          const nb = Number(keyB) || 0;
+          if (na !== nb) return na - nb;
+          return String(keyA).localeCompare(String(keyB), "ko", { numeric: true });
+        });
+
+        const deck = $("reportDeck");
+        const table = $("reportDeckTable");
+        const title = $("reportDeckTitle");
+        const subEl = $("reportDeckSub");
+        if (!deck || !table) return;
+
+        if (title) {
+          title.textContent = `<보고서 종합> ${lesson.session_no}차시 카드덱`;
+        }
+        if (subEl) {
+          subEl.textContent = "카드를 번호순으로 펼치는 중…";
+        }
+        table.innerHTML = `<p class="report-deck-empty">카드를 섞는 중…</p>`;
+        deck.classList.add("is-open");
+        deck.setAttribute("aria-hidden", "false");
+
+        // 최신 제출 content 확보 (캐릭터 미리보기용)
+        const latestSubs = [];
+        for (const st of ordered) {
+          const key =
+            resolveRosterStudentKey(st.student_no, grade, classNo) ||
+            normalizeStudentNo(st.student_no);
+          const list =
+            detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
+          if (list[0]) latestSubs.push(list[0]);
+        }
+        await Promise.all(latestSubs.map((sub) => ensureSubmissionContent(sub)));
+
+        const cards = [];
+        let dealIdx = 0;
+        let liveCount = 0;
+        for (const st of ordered) {
+          const key =
+            resolveRosterStudentKey(st.student_no, grade, classNo) ||
+            normalizeStudentNo(st.student_no);
+          const list =
+            detailSubMap.get(key) || detailSubMap.get(normalizeStudentNo(st.student_no)) || [];
+          const latest = list[0] || null;
+          if (latest) liveCount += 1;
+          cards.push(buildDeckCardHtml(st, key, latest, dealIdx));
+          dealIdx += 1;
+        }
+
+        table.innerHTML = cards.length
+          ? cards.join("")
+          : `<p class="report-deck-empty">표시할 학생이 없습니다.</p>`;
+        if (subEl) {
+          subEl.textContent = `제출 ${liveCount}명 · 전체 ${ordered.length}명 · 카드를 누르면 새 창으로 보고서가 열려요`;
+        }
+      }
+
       function paintDetailRosterGrid(students) {
         const grid = $("detailRosterGrid");
         if (!grid) return;
@@ -14533,6 +14966,14 @@ ${built.html}
           <div class="detail-toolbar">
             <h3 class="detail-section-title">제출 현황</h3>
             <span class="settings-sub" style="margin:0" id="detailSubmitCount">…</span>
+            <button type="button" class="report-deck-btn" id="btnReportDeck" title="보고서 종합 — 번호순 카드덱">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="4" y="5" width="11" height="15" rx="2"/>
+                <path d="M9 5V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-1"/>
+                <circle cx="9.5" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
+              </svg>
+              <span>&lt;보고서 종합&gt;</span>
+            </button>
             <span class="settings-sub detail-missing-list" style="margin:0" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
@@ -14610,9 +15051,14 @@ ${built.html}
 
         bindDetailLessonTimer(lesson, submitCode);
 
+        $("btnReportDeck")?.addEventListener("click", () => {
+          void openReportDeck();
+        });
+
         if (!classId) return;
         const students = await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no);
         if (opts.switchSeq != null && opts.switchSeq !== switchSeq) return;
+        detailStudentsCache = students;
 
         const submittedCount = [...detailSubMap.values()].filter((arr) => arr.length).length;
         const submissionTotal = [...detailSubMap.values()].reduce((n, arr) => n + arr.length, 0);
@@ -14951,6 +15397,19 @@ ${built.html}
       });
       $("subViewer")?.addEventListener("click", (e) => {
         if (e.target === $("subViewer")) closeSubViewer();
+      });
+      $("btnReportDeckClose")?.addEventListener("click", () => closeReportDeck());
+      $("reportDeck")?.addEventListener("click", (e) => {
+        if (e.target === $("reportDeck")) closeReportDeck();
+        const card = e.target.closest?.(".deck-card[data-sub-id]");
+        if (card) {
+          const id = card.getAttribute("data-sub-id");
+          if (id) void openSubmissionInNewTab(id);
+        }
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape") return;
+        if ($("reportDeck")?.classList.contains("is-open")) closeReportDeck();
       });
       $("btnObsEvalClose")?.addEventListener("click", () => closeObsEvalSheet());
       $("btnObsEvalSave")?.addEventListener("click", () => saveObsEvalSheet());
