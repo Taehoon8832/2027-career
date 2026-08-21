@@ -2373,10 +2373,29 @@
       cursor: not-allowed;
     }
     .detail-timer-hint {
-      flex: 1 1 160px;
       margin: 0;
       font: 500 11px/1.35 "Noto Sans KR", var(--font-sans);
       color: var(--text-tertiary);
+      flex-shrink: 0;
+    }
+    .detail-timer .report-deck-live-hint {
+      flex: 1 1 12rem;
+      margin: 0 0 0 auto;
+      min-width: 0;
+      max-width: none;
+      text-align: right;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font: 500 12px/1.35 "Noto Sans KR", Pretendard, var(--font-sans);
+      letter-spacing: -0.02em;
+      color: #3d5c45;
+    }
+    .detail-timer .report-deck-live-hint .hint-em {
+      text-decoration: underline;
+      text-underline-offset: 2px;
+      font-weight: 600;
+      color: #2f4a36;
     }
     .detail-toolbar {
       display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
@@ -16706,7 +16725,7 @@ ${built.html}
       let arenaOursCountdown = 0;
       let arenaOursRollFocus = -1;
       let arenaOursLive = null; // { tick, totalTicks, tallyPlayed, lastJob, ranks }
-      let arenaFolded = true;
+      let arenaFolded = false;
       let arenaRevealTimer = 0;
       let arenaRollToken = 0;
       let liveDeckCharByKey = new Map();
@@ -19072,8 +19091,8 @@ ${pageCss}</style>
 
         // 1) 화면을 즉시 열고 · 채널/동기화는 병렬 시작
         liveDeckFocusId = "";
-        arenaFolded = true;
-        applyArenaFoldUi(true);
+        arenaFolded = false;
+        applyArenaFoldUi(false);
         deck.classList.add("is-open", "is-snap");
         deck.setAttribute("aria-hidden", "false");
         const channelReady = code ? ensureLiveDeckChannel(code, sessionNo) : Promise.resolve(null);
@@ -19729,12 +19748,12 @@ ${pageCss}</style>
               </div>
             </div>
             <p class="detail-timer-hint" id="detailTwHint">QR로 접속한 학생 화면에 같은 시간이 동기화됩니다.</p>
+            <p class="report-deck-live-hint">“수업 동기화”를 누르면 <span class="hint-em">학생 화면에 커서·스크롤·화면 전환까지 실시간 동기화</span>됩니다. ▲</p>
           </div>
 
           <div class="detail-toolbar">
             <h3 class="detail-section-title">제출 현황</h3>
             <span class="detail-submit-count" style="margin:0" id="detailSubmitCount">…</span>
-            <p class="report-deck-live-hint">▶ “수업 동기화”를 누르면 <span class="hint-em">학생 화면에 커서·스크롤·화면 전환까지 실시간 동기화</span>됩니다.</p>
             <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>

@@ -1913,7 +1913,7 @@ ${linkedCss}
     const contentById = new Map();
     let liveArenaRollFocus = -999;
     let liveArenaRollToken = 0;
-    let liveArenaFolded = true;
+    let liveArenaFolded = false;
 
     function applyLiveArenaFoldUi(folded) {
       liveArenaFolded = !!folded;
@@ -2870,7 +2870,9 @@ ${linkedCss}
       host.hidden = false;
       const foldbar = host.querySelector(".deck-arena-foldbar");
       if (foldbar) foldbar.hidden = false;
+      // 수업 동기화에서는 랭킹을 항상 펼친 상태로 맞춤 (교사 folded=false 우선)
       if (typeof arena?.folded === "boolean") applyLiveArenaFoldUi(arena.folded);
+      else applyLiveArenaFoldUi(false);
       if (!board) return;
       board.hidden = false;
       const mode = arena?.mode || "ours";
