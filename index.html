@@ -1034,6 +1034,69 @@
       color: var(--text-tertiary);
       text-align: center;
     }
+    .detail-qr-lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 95;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      background: rgba(31, 30, 29, 0.55);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      cursor: pointer;
+    }
+    .detail-qr-lightbox.is-open { display: flex; }
+    .detail-qr-dialog {
+      width: min(420px, 92vw);
+      padding: 22px 20px 16px;
+      border: 2px solid #111110;
+      border-radius: var(--radius-lg);
+      background: #fffefb;
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      pointer-events: none;
+      animation: enter-bounce 0.42s var(--ease-bounce) both;
+    }
+    .detail-qr-pop {
+      width: min(320px, 78vw);
+      height: min(320px, 78vw);
+      box-sizing: border-box;
+      border: 2px solid #111110;
+      border-radius: 16px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      padding: 14px;
+    }
+    .detail-qr-pop canvas,
+    .detail-qr-pop img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      object-fit: contain;
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+    .detail-qr-pop-cap {
+      margin: 0;
+      font: 700 15px/1.35 var(--font-sans);
+      color: var(--text-primary);
+      letter-spacing: -0.01em;
+      text-align: center;
+    }
+    .detail-qr-hint {
+      margin: 0;
+      font: 500 12px/1.4 var(--font-sans);
+      color: var(--text-tertiary);
+      text-align: center;
+    }
     .auth-panel {
       min-width: 0; display: flex; align-items: center; justify-content: center;
       opacity: 0; transform: translateY(22px) scale(0.96);
@@ -6807,6 +6870,21 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div
+    class="detail-qr-lightbox"
+    id="detailQrLightbox"
+    hidden
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="detailQrPopCap"
+  >
+    <div class="detail-qr-dialog" id="detailQrDialog">
+      <div class="detail-qr-pop" id="detailQrHost" aria-hidden="true"></div>
+      <p class="detail-qr-pop-cap" id="detailQrPopCap">활동지 접속 QR</p>
+      <p class="detail-qr-hint">화면을 누르면 닫힙니다</p>
+    </div>
+  </div>
 
   <script>
     (() => {
@@ -14652,6 +14730,55 @@ ${built.html}
         return u.href;
       }
 
+      let detailQrPopupUrl = "";
+
+      function isDetailQrPopupOpen() {
+        return !!$("detailQrLightbox")?.classList.contains("is-open");
+      }
+
+      function closeDetailQrPopup() {
+        const light = $("detailQrLightbox");
+        if (!light) return;
+        light.classList.remove("is-open");
+        light.hidden = true;
+        detailQrPopupUrl = "";
+        const host = $("detailQrHost");
+        if (host) host.innerHTML = "";
+      }
+
+      function openDetailQrPopup(url) {
+        const light = $("detailQrLightbox");
+        const host = $("detailQrHost");
+        const href = String(url || "").trim();
+        if (!light || !host || !href) return;
+        detailQrPopupUrl = href;
+        const size = Math.min(320, Math.max(220, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.62)));
+        paintQr(host, href, size);
+        light.hidden = false;
+        light.classList.add("is-open");
+      }
+
+      if (document.documentElement.dataset.detailQrPopupBound !== "1") {
+        document.documentElement.dataset.detailQrPopupBound = "1";
+        $("detailQrLightbox")?.addEventListener("click", () => {
+          closeDetailQrPopup();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" && isDetailQrPopupOpen()) closeDetailQrPopup();
+        });
+        window.addEventListener(
+          "resize",
+          () => {
+            if (!isDetailQrPopupOpen() || !detailQrPopupUrl) return;
+            const host = $("detailQrHost");
+            if (!host) return;
+            const size = Math.min(320, Math.max(220, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.62)));
+            paintQr(host, detailQrPopupUrl, size);
+          },
+          { passive: true }
+        );
+      }
+
       /** 활동지 열기 — 실제 활동지 URL로 이동 (QR에 찍히는 주소와 동일해야 함) */
       function openActivitySheet(url, opts = {}) {
         let href = String(url || "").trim();
@@ -19712,7 +19839,7 @@ ${pageCss}</style>
           </div>
 
           <div class="detail-action-strip">
-            <a class="qr" id="detailQr" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="탭하여 활동지 열기" aria-label="활동지 QR — 눌러서 열기"></a>
+            <a class="qr" id="detailQr" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="눌러서 QR 크게 보기" aria-label="활동지 QR — 눌러서 크게 보기" aria-haspopup="dialog"></a>
             <div class="btns">
               <a class="btn btn-primary" id="btnOpenActivity" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">활동지 열기</a>
               <button type="button" class="btn btn-sync" id="btnReportDeck" title="수업 동기화 — 학생 화면에 커서·화면 이동까지 실시간 공유">
@@ -19805,7 +19932,7 @@ ${pageCss}</style>
           paintQr(qrEl, url, qrSize);
           qrEl.addEventListener("click", (e) => {
             e.preventDefault();
-            void openActivitySheet(url);
+            openDetailQrPopup(url);
           });
         }
         $("btnOpenActivity")?.addEventListener("click", (e) => {
