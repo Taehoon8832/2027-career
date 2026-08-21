@@ -2352,7 +2352,7 @@ ${linkedCss}
       const fieldHtml = withWide.length
         ? `<div class="${useFlow ? "deck-reader-flow" : "deck-reader-grid"}">${withWide
             .map(
-              (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
+              (f, i) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}" data-field-i="${i}" data-field-k="${escapeHtml(f.label || "")}">
               <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
               <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
             </article>`
@@ -2361,7 +2361,7 @@ ${linkedCss}
         : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
 
       return `<div class="deck-reader-sheet">
-        <div class="deck-reader-top">
+        <div class="deck-reader-top" data-reader-zone="top">
           ${art}
           <div class="deck-reader-who">
             <div class="deck-reader-no">${escapeHtml(no)}</div>
@@ -2369,7 +2369,7 @@ ${linkedCss}
             <div class="deck-reader-tags">${tags.join("")}</div>
           </div>
         </div>
-        <section class="deck-reader-section">
+        <section class="deck-reader-section" data-reader-zone="section">
           <p class="deck-reader-label">${escapeHtml(sectionLabelForLive())}</p>
           ${fieldHtml}
         </section>
@@ -2444,7 +2444,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2137";
+        css.href = "./live-report-deck.css?v=2138";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2581,6 +2581,22 @@ ${linkedCss}
 
     function resolvePresenceHitEl(root, hit) {
       if (!root || !hit) return null;
+      if (hit.zone === "field") {
+        const fields = Array.from(root.querySelectorAll(".deck-reader-field[data-field-i]"));
+        if (Number.isFinite(Number(hit.i))) {
+          const byI = fields.find((f) => Number(f.getAttribute("data-field-i")) === Number(hit.i));
+          if (byI) return byI;
+        }
+        if (hit.k) {
+          const k = String(hit.k).trim();
+          const byK = fields.find((f) => String(f.getAttribute("data-field-k") || "").trim() === k);
+          if (byK) return byK;
+        }
+        return null;
+      }
+      if (hit.zone === "reader-top") {
+        return root.querySelector(".deck-reader-top, [data-reader-zone='top']");
+      }
       if (hit.zone === "card") {
         if (hit.id) {
           const id = String(hit.id);
@@ -2659,7 +2675,7 @@ ${linkedCss}
         if (hit) {
           const el = resolvePresenceHitEl(root, hit);
           if (el) {
-            if (hit.zone === "card") {
+            if (hit.zone === "card" || hit.zone === "field" || hit.zone === "reader-top") {
               try {
                 el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "auto" });
               } catch {
@@ -2747,6 +2763,23 @@ ${linkedCss}
       const stack = document.elementsFromPoint(clientX, clientY) || [];
       for (const node of stack) {
         if (!root.contains(node)) continue;
+        const field = node.closest?.(".deck-reader-field[data-field-i]");
+        if (field && root.contains(field)) {
+          const box = presenceRelBox(clientX, clientY, field);
+          if (!box) break;
+          return {
+            zone: "field",
+            i: Number(field.getAttribute("data-field-i")),
+            k: String(field.getAttribute("data-field-k") || field.querySelector(".deck-reader-field-k")?.textContent || "").trim(),
+            ...box
+          };
+        }
+        const readerTop = node.closest?.(".deck-reader-top, [data-reader-zone='top']");
+        if (readerTop && root.contains(readerTop)) {
+          const box = presenceRelBox(clientX, clientY, readerTop);
+          if (!box) break;
+          return { zone: "reader-top", ...box };
+        }
         const card = node.closest?.(".deck-card");
         if (card && root.contains(card)) {
           const box = presenceRelBox(clientX, clientY, card);

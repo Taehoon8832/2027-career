@@ -17180,6 +17180,23 @@ ${built.html}
         const stack = document.elementsFromPoint(clientX, clientY) || [];
         for (const node of stack) {
           if (!root.contains(node)) continue;
+          const field = node.closest?.(".deck-reader-field[data-field-i]");
+          if (field && root.contains(field)) {
+            const box = presenceRelBox(clientX, clientY, field);
+            if (!box) break;
+            return {
+              zone: "field",
+              i: Number(field.getAttribute("data-field-i")),
+              k: String(field.getAttribute("data-field-k") || field.querySelector(".deck-reader-field-k")?.textContent || "").trim(),
+              ...box
+            };
+          }
+          const readerTop = node.closest?.(".deck-reader-top, [data-reader-zone='top']");
+          if (readerTop && root.contains(readerTop)) {
+            const box = presenceRelBox(clientX, clientY, readerTop);
+            if (!box) break;
+            return { zone: "reader-top", ...box };
+          }
           const card = node.closest?.(".deck-card");
           if (card && root.contains(card)) {
             const box = presenceRelBox(clientX, clientY, card);
@@ -17992,7 +18009,7 @@ ${pageCss}</style>
         const fieldHtml = fields.length
           ? `<div class="${useFlow ? "deck-reader-flow" : "deck-reader-grid"}">${fields
               .map(
-                (f) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}">
+                (f, i) => `<article class="deck-reader-field${f.accent ? " is-accent" : ""}${f.wide ? " is-wide" : ""}" data-field-i="${i}" data-field-k="${escapeHtml(f.label || "")}">
               <p class="deck-reader-field-k">${escapeHtml(f.label)}</p>
               <p class="deck-reader-field-v">${escapeHtml(f.value)}</p>
             </article>`
@@ -18001,7 +18018,7 @@ ${pageCss}</style>
           : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
 
         return `<div class="deck-reader-sheet">
-          <div class="deck-reader-top">
+          <div class="deck-reader-top" data-reader-zone="top">
             ${art}
             <div class="deck-reader-who">
               <div class="deck-reader-no">${escapeHtml(no || "—")}</div>
@@ -18009,7 +18026,7 @@ ${pageCss}</style>
               <div class="deck-reader-tags">${tags.join("")}</div>
             </div>
           </div>
-          <section class="deck-reader-section">
+          <section class="deck-reader-section" data-reader-zone="section">
             <p class="deck-reader-label">${escapeHtml(sectionLabel)}</p>
             ${fieldHtml}
           </section>
@@ -18068,6 +18085,23 @@ ${pageCss}</style>
         }
         liveDeckFocusId = submissionId;
         void broadcastReportDeckLive("state");
+        // 카드 펼친 직후 커서 타깃을 필드/리더 기준으로 다시 맞춤
+        if (livePresenceActive) {
+          const sn =
+            Number(sub.session_no) ||
+            Number(lessons.find((l) => l.id === selectedLessonId)?.session_no) ||
+            0;
+          requestAnimationFrame(() => {
+            if (livePresencePtr.visible) {
+              livePresencePtr.hit = buildLivePresenceHit(
+                livePresencePtr.clientX,
+                livePresencePtr.clientY,
+                deck
+              );
+            }
+            queueLivePresence(sn);
+          });
+        }
       }
 
       function buildDeckCardHtml(st, key, latest, dealIdx, charByKey) {
