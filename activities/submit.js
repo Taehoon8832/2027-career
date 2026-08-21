@@ -6158,7 +6158,18 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
         </div>
       </article>`
         )
-        .join("")}</div>`;
+        .join("")}</div>
+      <div class="vault-save-bar">
+        <button type="button" class="vault-save-all" id="btnVaultSaveAll" title="모든 보고서를 HTML로 저장">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v12"/>
+            <path d="M7 11l5 5 5-5"/>
+            <path d="M5 19h14"/>
+          </svg>
+          <span>저장하기</span>
+        </button>
+        <p class="vault-save-hint">모든 보고서를 HTML로 저장 · 저장 위치를 선택할 수 있습니다</p>
+      </div>`;
     body.querySelectorAll("[data-vault-load]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-vault-load");
@@ -6180,6 +6191,9 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
         paintVaultBody();
         showDraftToast("보관함에서 삭제했습니다.", 1600);
       });
+    });
+    body.querySelector("#btnVaultSaveAll")?.addEventListener("click", () => {
+      void saveAllVaultReportsAsHtml();
     });
   }
 
@@ -6496,6 +6510,95 @@ ${vaultReportChromeCss()}
 </button>
 ${bodyHtml}
 </body></html>`;
+  }
+
+  function vaultExportFileName(item, usedNames) {
+    const base = sanitizeFilePart(
+      item?.title || `${item?.sessionNo || sessionNo}차시-보고서`,
+      "보고서"
+    ).slice(0, 80);
+    let name = `${base}.html`;
+    let n = 2;
+    while (usedNames.has(name.toLowerCase())) {
+      name = `${base}-${n}.html`;
+      n += 1;
+    }
+    usedNames.add(name.toLowerCase());
+    return name;
+  }
+
+  function downloadVaultHtmlFile(name, html) {
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  async function saveAllVaultReportsAsHtml() {
+    const items = readVaultItems().filter((x) => x && x.content);
+    if (!items.length) {
+      showDraftToast("저장할 보고서가 없습니다.", 2000);
+      return;
+    }
+    const btn = document.getElementById("btnVaultSaveAll");
+    if (btn) {
+      btn.disabled = true;
+      btn.classList.add("is-busy");
+    }
+    try {
+      if (!vaultReportCssPromise) vaultReportCssPromise = loadActivityCssText();
+      await vaultReportCssPromise;
+      const used = new Set();
+      const files = [];
+      for (const item of items) {
+        const html = await buildVaultReportDocument(item);
+        files.push({ name: vaultExportFileName(item, used), html });
+      }
+
+      if (typeof window.showDirectoryPicker === "function") {
+        try {
+          const dir = await window.showDirectoryPicker({ mode: "readwrite" });
+          for (const file of files) {
+            const handle = await dir.getFileHandle(file.name, { create: true });
+            const writable = await handle.createWritable();
+            await writable.write(file.html);
+            await writable.close();
+          }
+          showDraftToast(`${files.length}개 HTML을 선택한 폴더에 저장했습니다.`, 2800);
+          return;
+        } catch (e) {
+          if (e && (e.name === "AbortError" || e.name === "NotAllowedError")) {
+            showDraftToast("저장이 취소되었습니다.", 1800);
+            return;
+          }
+          console.warn(e);
+        }
+      }
+
+      for (let i = 0; i < files.length; i++) {
+        downloadVaultHtmlFile(files[i].name, files[i].html);
+        if (i < files.length - 1) {
+          await new Promise((r) => setTimeout(r, 160));
+        }
+      }
+      showDraftToast(
+        `${files.length}개 HTML 저장을 시작했습니다. (다운로드 폴더를 확인하세요)`,
+        3000
+      );
+    } catch (e) {
+      console.warn(e);
+      showDraftToast("저장에 실패했습니다.", 2200);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.classList.remove("is-busy");
+      }
+    }
   }
 
   async function openVaultItemTab(id) {

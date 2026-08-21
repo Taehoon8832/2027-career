@@ -5286,11 +5286,51 @@
       min-width: 26px; height: 26px; padding: 0 7px; border-radius: var(--radius-full);
       background: var(--color-primary-500); color: var(--text-on-primary);
       display: grid; place-items: center; font: 700 11px/1 var(--font-sans);
+      transition: box-shadow 0.25s ease, transform 0.25s ease, background 0.25s ease;
     }
     .lesson-count.is-zero {
       background: transparent; color: var(--text-tertiary);
       border: 1px solid var(--border-default);
       font-weight: 600;
+    }
+    .lesson-item.is-vault-req {
+      border-color: rgba(37, 99, 235, 0.45);
+      box-shadow:
+        0 0 0 1px rgba(37, 99, 235, 0.12),
+        0 4px 14px rgba(37, 99, 235, 0.12);
+    }
+    .lesson-item.is-vault-req .lesson-count,
+    .lesson-count.is-vault-ping {
+      background: linear-gradient(145deg, #60a5fa, #2563eb 55%, #1d4ed8);
+      color: #fff;
+      border: 0;
+      box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.28),
+        0 0 16px rgba(59, 130, 246, 0.45);
+      animation: lessonVaultPing 1.15s ease-in-out infinite;
+    }
+    .lesson-item.is-vault-req .lesson-count.is-zero {
+      background: linear-gradient(145deg, #60a5fa, #2563eb 55%, #1d4ed8);
+      color: #fff;
+      border: 0;
+    }
+    @keyframes lessonVaultPing {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow:
+          0 0 0 3px rgba(37, 99, 235, 0.22),
+          0 0 12px rgba(59, 130, 246, 0.35);
+      }
+      50% {
+        transform: scale(1.12);
+        box-shadow:
+          0 0 0 6px rgba(37, 99, 235, 0.32),
+          0 0 22px rgba(59, 130, 246, 0.55);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .lesson-item.is-vault-req .lesson-count,
+      .lesson-count.is-vault-ping { animation: none; }
     }
     .class-settings {
       display: grid;
@@ -15913,6 +15953,7 @@ ${built.html}
           badge.textContent = String(n);
           badge.classList.toggle("is-zero", n <= 0);
         });
+        syncLessonVaultBadges();
       }
 
       async function renderLessonList() {
@@ -15940,16 +15981,24 @@ ${built.html}
             lessonIds.push(lesson.id);
             const meta = getLessonMeta(sessionNo);
             const count = subCountCache.has(lesson.id) ? subCountCache.get(lesson.id) : 0;
+            const vaultPending = vaultPendingBySession.get(Number(sessionNo))?.size || 0;
             const btn = document.createElement("button");
             btn.type = "button";
-            btn.className = "lesson-item" + (lesson.id === selectedLessonId ? " is-active" : "");
+            btn.className =
+              "lesson-item" +
+              (lesson.id === selectedLessonId ? " is-active" : "") +
+              (vaultPending > 0 ? " is-vault-req" : "");
             btn.dataset.id = lesson.id;
             btn.innerHTML = `
               <div class="lesson-meta">
                 <strong>${sessionNo}차시 · ${escapeHtml(meta.title)}</strong>
                 ${meta.summary ? `<small>${escapeHtml(meta.summary)}</small>` : ""}
               </div>
-              ${Number(count) > 0 ? `<span class="lesson-count">${count}</span>` : `<span class="lesson-count is-zero">0</span>`}`;
+              ${
+                Number(count) > 0
+                  ? `<span class="lesson-count${vaultPending > 0 ? " is-vault-ping" : ""}"${vaultPending > 0 ? ` title="불러오기 요청 ${vaultPending}건"` : ""}>${count}</span>`
+                  : `<span class="lesson-count is-zero${vaultPending > 0 ? " is-vault-ping" : ""}"${vaultPending > 0 ? ` title="불러오기 요청 ${vaultPending}건"` : ""}>0</span>`
+              }`;
             btn.addEventListener("click", () => {
               selectLesson(lesson.id);
             });
@@ -15958,6 +16007,8 @@ ${built.html}
           root.appendChild(group);
         }
         refreshSubCountsInBackground(lessonIds, seq);
+        ensureAllVaultListeners();
+        syncLessonVaultBadges();
       }
 
       function paintQr(el, text, size) {
@@ -16897,6 +16948,11 @@ ${built.html}
       let vaultChannel = null;
       let vaultBoundKey = "";
       let vaultSubscribed = false;
+      /** @type {Map<string, { channel: any, subscribed: boolean, sessionNo: number }>} */
+      const vaultChannelPool = new Map();
+      /** sessionNo → Map(studentKey → request) — 사이드바 차시 아이콘 이펙트용 */
+      /** @type {Map<number, Map<string, { requestId: string, studentNo: string, studentName: string, code: string, at: number }>>} */
+      const vaultPendingBySession = new Map();
       /** @type {Map<string, { requestId: string, studentNo: string, studentName: string, code: string, at: number }>} */
       let vaultReqByStudentKey = new Map();
 
@@ -16908,72 +16964,148 @@ ${built.html}
         );
       }
 
+      function syncLessonVaultBadges() {
+        document.querySelectorAll(".lesson-item").forEach((btn) => {
+          const lesson = lessons.find((l) => l.id === btn.dataset.id);
+          const sn = Number(lesson?.session_no) || 0;
+          const pending = vaultPendingBySession.get(sn)?.size || 0;
+          btn.classList.toggle("is-vault-req", pending > 0);
+          const badge = btn.querySelector(".lesson-count");
+          if (!badge) return;
+          badge.classList.toggle("is-vault-ping", pending > 0);
+          if (pending > 0) {
+            badge.title = `불러오기 요청 ${pending}건`;
+            badge.setAttribute("aria-label", `불러오기 요청 ${pending}건`);
+          } else {
+            badge.removeAttribute("title");
+            badge.removeAttribute("aria-label");
+          }
+        });
+      }
+
+      function hydrateVaultReqForSession(sessionNo) {
+        const sn = Number(sessionNo) || 0;
+        const src = vaultPendingBySession.get(sn);
+        vaultReqByStudentKey = src ? new Map(src) : new Map();
+      }
+
+      function noteVaultRequest(sessionNo, payload, fallbackCode) {
+        const sn = Number(sessionNo) || 0;
+        const no = String(payload?.studentNo || "").trim();
+        if (!sn || !no) return;
+        const meta = classMetaById(activeClassId || teacherClass?.id || null);
+        const sk = vaultStudentKey(no, meta?.grade || 1, meta?.class_no || 1);
+        const entry = {
+          requestId: String(payload.requestId || ""),
+          studentNo: no,
+          studentName: String(payload.studentName || "").trim(),
+          code: String(payload.code || fallbackCode || "").toUpperCase(),
+          at: Number(payload.t) || Date.now()
+        };
+        if (!vaultPendingBySession.has(sn)) vaultPendingBySession.set(sn, new Map());
+        vaultPendingBySession.get(sn).set(sk, entry);
+
+        const curSn = Number(lessons.find((l) => l.id === selectedLessonId)?.session_no) || 0;
+        if (curSn === sn) {
+          vaultReqByStudentKey.set(sk, entry);
+          if (detailStudentsCache?.length) paintDetailRosterGrid(detailStudentsCache);
+        }
+        syncLessonVaultBadges();
+        toast(`${no} ${entry.studentName || ""} · ${sn}차시 불러오기 요청`.trim());
+      }
+
+      function clearVaultRequest(sessionNo, studentKey, studentNo) {
+        const sn = Number(sessionNo) || 0;
+        const map = vaultPendingBySession.get(sn);
+        const noNorm = normalizeStudentNo(studentNo || "") || normalizeStudentNo(studentKey || "");
+        const keys = new Set();
+        if (studentKey) keys.add(String(studentKey));
+        if (noNorm) keys.add(noNorm);
+        if (map) {
+          for (const [k, v] of map.entries()) {
+            const vNo = normalizeStudentNo(v?.studentNo || "");
+            if (
+              (studentKey && k === studentKey) ||
+              (noNorm && (k === noNorm || vNo === noNorm || normalizeStudentNo(k) === noNorm))
+            ) {
+              keys.add(k);
+            }
+          }
+          keys.forEach((k) => map.delete(k));
+          if (!map.size) vaultPendingBySession.delete(sn);
+        }
+        keys.forEach((k) => vaultReqByStudentKey.delete(k));
+        syncLessonVaultBadges();
+      }
+
       async function ensureVaultChannel(code, sessionNo) {
         if (!sb || !code) return null;
-        const key = `${String(code).toUpperCase()}:${Number(sessionNo) || 0}`;
-        if (vaultChannel && vaultBoundKey === key && vaultSubscribed) return vaultChannel;
-        try {
-          if (vaultChannel && vaultBoundKey !== key) {
-            await sb.removeChannel(vaultChannel);
-            vaultChannel = null;
-            vaultSubscribed = false;
-            vaultReqByStudentKey = new Map();
-          }
-        } catch {
-          vaultChannel = null;
-          vaultSubscribed = false;
+        const sn = Number(sessionNo) || 0;
+        const key = `${String(code).toUpperCase()}:${sn}`;
+        const existing = vaultChannelPool.get(key);
+        if (existing?.channel && existing.subscribed) {
+          vaultChannel = existing.channel;
+          vaultBoundKey = key;
+          vaultSubscribed = true;
+          return existing.channel;
         }
-        if (vaultChannel && vaultBoundKey === key) {
-          if (vaultSubscribed) return vaultChannel;
+        if (existing?.channel && !existing.subscribed) {
           await new Promise((resolve) => {
-            const t = setTimeout(resolve, 500);
+            const t = setTimeout(resolve, 600);
             const poll = setInterval(() => {
-              if (vaultSubscribed) {
+              if (existing.subscribed) {
                 clearInterval(poll);
                 clearTimeout(t);
                 resolve();
               }
             }, 40);
-            setTimeout(() => clearInterval(poll), 500);
+            setTimeout(() => clearInterval(poll), 600);
           });
-          return vaultChannel;
+          vaultChannel = existing.channel;
+          vaultBoundKey = key;
+          vaultSubscribed = !!existing.subscribed;
+          return existing.channel;
         }
-        vaultBoundKey = key;
-        vaultSubscribed = false;
-        vaultChannel = sb.channel(`lesson-vault:${key}`, {
+
+        const channel = sb.channel(`lesson-vault:${key}`, {
           config: { broadcast: { self: false, ack: false } }
         });
-        vaultChannel.on("broadcast", { event: "vault-request" }, ({ payload }) => {
-          if (!payload || Number(payload.sessionNo) !== Number(sessionNo)) return;
-          const no = String(payload.studentNo || "").trim();
-          if (!no) return;
-          const meta = classMetaById(activeClassId || teacherClass?.id || null);
-          const sk = vaultStudentKey(no, meta?.grade || 1, meta?.class_no || 1);
-          vaultReqByStudentKey.set(sk, {
-            requestId: String(payload.requestId || ""),
-            studentNo: no,
-            studentName: String(payload.studentName || "").trim(),
-            code: String(payload.code || code).toUpperCase(),
-            at: Number(payload.t) || Date.now()
-          });
-          if (detailStudentsCache?.length) paintDetailRosterGrid(detailStudentsCache);
-          toast(`${no} ${payload.studentName || ""} · 불러오기 요청`.trim());
+        const entry = { channel, subscribed: false, sessionNo: sn };
+        vaultChannelPool.set(key, entry);
+        channel.on("broadcast", { event: "vault-request" }, ({ payload }) => {
+          if (!payload || Number(payload.sessionNo) !== sn) return;
+          noteVaultRequest(sn, payload, code);
         });
         await new Promise((resolve) => {
           const t = setTimeout(resolve, 700);
-          vaultChannel.subscribe((status) => {
+          channel.subscribe((status) => {
             if (status === "SUBSCRIBED") {
-              vaultSubscribed = true;
+              entry.subscribed = true;
               clearTimeout(t);
               resolve();
             }
           });
         });
-        return vaultChannel;
+        vaultChannel = channel;
+        vaultBoundKey = key;
+        vaultSubscribed = entry.subscribed;
+        return channel;
+      }
+
+      function ensureAllVaultListeners() {
+        if (!sb || !lessons?.length) return;
+        lessons.forEach((lesson) => {
+          const code = lessonSubmitCode(lesson);
+          const sn = Number(lesson.session_no) || 0;
+          if (!code || !sn) return;
+          void ensureVaultChannel(code, sn);
+        });
       }
 
       async function sendVaultRestoreToStudent(studentKey) {
-        const req = vaultReqByStudentKey.get(studentKey);
+        const req =
+          vaultReqByStudentKey.get(studentKey) ||
+          vaultReqByStudentKey.get(normalizeStudentNo(studentKey));
         if (!req) {
           toast("불러오기 요청이 없습니다.");
           return;
@@ -16985,6 +17117,7 @@ ${built.html}
         const list =
           detailSubMap.get(studentKey) ||
           detailSubMap.get(normalizeStudentNo(req.studentNo)) ||
+          detailSubMap.get(normalizeStudentNo(studentKey)) ||
           [];
         const latest = list[0] || null;
         if (!latest) {
@@ -17013,7 +17146,8 @@ ${built.html}
               t: Date.now()
             }
           });
-          vaultReqByStudentKey.delete(studentKey);
+          // 전송 성공 → 해당 차시 사이드바 이펙트 제거
+          clearVaultRequest(sessionNo, studentKey, req.studentNo);
           if (detailStudentsCache?.length) paintDetailRosterGrid(detailStudentsCache);
           toast("학생 기기로 전송했습니다.");
         } catch (e) {
@@ -20273,6 +20407,8 @@ ${pageCss}</style>
           void ensureLiveDeckChannel(submitCode, Number(lesson.session_no) || 0);
           void ensureVaultChannel(submitCode, Number(lesson.session_no) || 0);
         }
+        hydrateVaultReqForSession(Number(lesson.session_no) || 0);
+        syncLessonVaultBadges();
 
         if (!classId) return;
         const students = await loadDetailStudentsAndSubs(classId, lesson.id, lesson.session_no);
