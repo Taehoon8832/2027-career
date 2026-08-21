@@ -5657,6 +5657,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       bindDraftAutosave();
       scheduleLiveHintCoach();
       scheduleVaultSubmitTip();
+      schedulePendingVaultLoad();
       return;
     }
 
@@ -5750,6 +5751,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     prefillCodeFromUrl();
     scheduleLiveHintCoach();
     scheduleVaultSubmitTip();
+    schedulePendingVaultLoad();
   }
 
   function setMsg(text, type) {
@@ -5934,6 +5936,16 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     localStorage.setItem(VAULT_KEY, JSON.stringify(items.slice(0, 80)));
   }
 
+  function flashVaultFabFilled(ms = 5200) {
+    const btn = document.getElementById("btnDraftSave");
+    if (!btn) return;
+    btn.classList.add("is-vault-filled");
+    clearTimeout(flashVaultFabFilled._timer);
+    flashVaultFabFilled._timer = setTimeout(() => {
+      btn.classList.remove("is-vault-filled");
+    }, Math.max(1800, Number(ms) || 5200));
+  }
+
   function saveSubmissionToVault({ content, studentNo, studentName, submitCode }) {
     const title = buildVaultTitle(studentNo, studentName);
     const item = {
@@ -6055,7 +6067,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
               <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h16v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8z"/><path d="M9 8V6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/><path d="M4 12h16"/></svg>
             </span>
             <h3 id="vaultTitle">보관함</h3>
-            <p>제출한 보고서를 이 기기에 보관합니다. 제목을 누르면 원본을 볼 수 있어요.</p>
+            <p>어느 차시 활동지에서든 제목을 누르면 원본 보고서가 열립니다.</p>
           </div>
           <button type="button" class="vault-close" id="btnVaultClose" aria-label="닫기">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
@@ -6177,6 +6189,8 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     paintVaultBody();
     light.hidden = false;
     light.classList.add("is-open");
+    document.getElementById("btnDraftSave")?.classList.remove("is-vault-filled");
+    clearTimeout(flashVaultFabFilled._timer);
     if (!vaultReportCssPromise) vaultReportCssPromise = loadActivityCssText();
     void bindVaultChannel(getSubmitCodeFromPage() || getDraftCodeKey());
   }
@@ -6188,47 +6202,105 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     light.hidden = true;
   }
 
-  function loadVaultItemToSheet(id) {
+  const VAULT_PENDING_LOAD_KEY = "career-vault-pending-load:v1";
+
+  function vaultActivityHref(targetSession) {
+    const n = Number(targetSession);
+    if (!n || n < 1 || n > 30) return "";
+    const file = `${String(n).padStart(2, "0")}.html`;
+    try {
+      const u = new URL(file, location.href);
+      u.hash = "";
+      try {
+        const code = (new URLSearchParams(location.search).get("code") || "").trim().toUpperCase();
+        if (code) u.searchParams.set("code", code);
+      } catch {
+        /* ignore */
+      }
+      return u.href;
+    } catch {
+      return file;
+    }
+  }
+
+  function setPendingVaultLoad(id) {
+    try {
+      sessionStorage.setItem(VAULT_PENDING_LOAD_KEY, String(id || ""));
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function takePendingVaultLoad() {
+    try {
+      const id = sessionStorage.getItem(VAULT_PENDING_LOAD_KEY) || "";
+      if (id) sessionStorage.removeItem(VAULT_PENDING_LOAD_KEY);
+      return id;
+    } catch {
+      return "";
+    }
+  }
+
+  function applyVaultItemToCurrentSheet(item) {
+    const fields = resolveVaultEditFields(item);
+    if (!Object.keys(fields).length && !item.studentNo && !item.studentName) {
+      return { ok: false, reason: "empty" };
+    }
+    const ok = applyDraftFields({
+      fields,
+      studentNo: item.studentNo || "",
+      studentName: item.studentName || ""
+    });
+    if (!ok) return { ok: false, reason: "mismatch" };
+    ensureAutosizeTextareas();
+    try {
+      if (typeof window.__careerWorldcupAfterDraft === "function") {
+        window.__careerWorldcupAfterDraft();
+      }
+    } catch (e) {
+      console.warn(e);
+    }
+    const all = readVaultItems();
+    const hit = all.find((x) => x.id === item.id);
+    if (hit) {
+      hit.fields = fields;
+      writeVaultItems(all);
+    }
+    saveActivityDraft({ toast: false, force: true });
+    return { ok: true };
+  }
+
+  function loadVaultItemToSheet(id, opts = {}) {
     const item = readVaultItems().find((x) => x.id === id);
     if (!item) return;
     try {
-      if (item.sessionNo != null && Number(item.sessionNo) !== Number(sessionNo)) {
-        showDraftToast(
-          `${item.sessionNo}차시 보고서입니다. 해당 차시 활동지에서 열어 주세요.`,
-          2800
-        );
-        return;
-      }
-      const fields = resolveVaultEditFields(item);
-      if (!Object.keys(fields).length && !item.studentNo && !item.studentName) {
-        showDraftToast("불러올 작성 내용이 없습니다.", 2200);
-        return;
-      }
-      const ok = applyDraftFields({
-        fields,
-        studentNo: item.studentNo || "",
-        studentName: item.studentName || ""
-      });
-      if (!ok) {
-        showDraftToast("이 활동지와 맞지 않아 불러오지 못했습니다.", 2400);
-        return;
-      }
-      ensureAutosizeTextareas();
-      try {
-        if (typeof window.__careerWorldcupAfterDraft === "function") {
-          window.__careerWorldcupAfterDraft();
+      const targetSession = Number(item.sessionNo);
+      if (
+        !opts.skipSessionCheck &&
+        targetSession &&
+        targetSession !== Number(sessionNo)
+      ) {
+        // 다른 차시: 해당 활동지로 이동 후 자동 불러오기
+        const href = vaultActivityHref(targetSession);
+        if (!href) {
+          void openVaultItemTab(id);
+          return;
         }
-      } catch (e) {
-        console.warn(e);
+        setPendingVaultLoad(id);
+        closeVaultModal();
+        showDraftToast(`${targetSession}차시 활동지로 이동해 불러옵니다…`, 1600);
+        location.assign(href);
+        return;
       }
-      // 제출 당시 필드를 기기에 다시 저장해 이후에도 수정 가능
-      const all = readVaultItems();
-      const hit = all.find((x) => x.id === item.id);
-      if (hit) {
-        hit.fields = fields;
-        writeVaultItems(all);
+      const result = applyVaultItemToCurrentSheet(item);
+      if (!result.ok) {
+        if (result.reason === "empty") {
+          showDraftToast("불러올 작성 내용이 없습니다.", 2200);
+        } else {
+          showDraftToast("이 활동지와 맞지 않아 불러오지 못했습니다.", 2400);
+        }
+        return;
       }
-      saveActivityDraft({ toast: false, force: true });
       closeVaultModal();
       showDraftToast("제출 당시 내용을 불러왔습니다. 수정할 수 있어요.", 2400);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -6236,6 +6308,26 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       console.warn(e);
       showDraftToast("불러오기에 실패했습니다.", 2400);
     }
+  }
+
+  function schedulePendingVaultLoad() {
+    let pending = "";
+    try {
+      pending = sessionStorage.getItem(VAULT_PENDING_LOAD_KEY) || "";
+    } catch {
+      pending = "";
+    }
+    if (!pending) return;
+    void (async () => {
+      const t0 = Date.now();
+      while (!draftRestored && Date.now() - t0 < 4500) {
+        await new Promise((r) => setTimeout(r, 80));
+      }
+      await new Promise((r) => setTimeout(r, 140));
+      const id = takePendingVaultLoad();
+      if (!id) return;
+      loadVaultItemToSheet(id, { skipSessionCheck: true });
+    })();
   }
 
   let vaultReportCssPromise = null;
@@ -6485,6 +6577,7 @@ ${bodyHtml}
       }
       vaultTab = "local";
       paintVaultBody();
+      flashVaultFabFilled();
       showDraftToast("교사에게서 보고서를 받아 보관함에 저장했습니다.", 2800);
     });
     await vaultChannel.subscribe();
@@ -6596,6 +6689,7 @@ ${bodyHtml}
 
       try {
         saveSubmissionToVault({ content, studentNo, studentName, submitCode });
+        flashVaultFabFilled();
       } catch (e) {
         console.warn(e);
       }
