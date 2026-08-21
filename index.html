@@ -4911,6 +4911,41 @@
       color: #B23A2C; border-color: rgba(178, 58, 44, 0.4);
     }
     .detail-sub-actions button.is-danger:hover { background: #fdf1ef; }
+    .vault-req-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 8px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1.5px solid #1d4ed8;
+      background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    }
+    .vault-req-banner strong {
+      font: 800 11.5px/1.3 "Noto Sans KR", var(--font-sans);
+      color: #1e3a8a;
+      letter-spacing: -0.02em;
+    }
+    .vault-req-banner button {
+      margin-left: auto;
+      height: 30px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 999px;
+      background: linear-gradient(145deg, #3b82f6, #1d4ed8);
+      color: #fff;
+      font: 800 11.5px/1 "Noto Sans KR", var(--font-sans);
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(29, 78, 216, 0.28);
+    }
+    .vault-req-banner button:disabled {
+      opacity: 0.55;
+      cursor: wait;
+    }
+    .detail-roster-cell.has-vault-req {
+      box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.35);
+    }
     .move-sub-body {
       display: grid;
       gap: 10px;
@@ -16859,6 +16894,133 @@ ${built.html}
       let liveDeckCharByKey = new Map();
       let liveDeckSubscribed = false;
       let liveDeckCharCacheKey = "";
+      let vaultChannel = null;
+      let vaultBoundKey = "";
+      let vaultSubscribed = false;
+      /** @type {Map<string, { requestId: string, studentNo: string, studentName: string, code: string, at: number }>} */
+      let vaultReqByStudentKey = new Map();
+
+      function vaultStudentKey(studentNo, grade, classNo) {
+        return (
+          resolveRosterStudentKey(studentNo, grade, classNo) ||
+          normalizeStudentNo(studentNo) ||
+          String(studentNo || "").trim()
+        );
+      }
+
+      async function ensureVaultChannel(code, sessionNo) {
+        if (!sb || !code) return null;
+        const key = `${String(code).toUpperCase()}:${Number(sessionNo) || 0}`;
+        if (vaultChannel && vaultBoundKey === key && vaultSubscribed) return vaultChannel;
+        try {
+          if (vaultChannel && vaultBoundKey !== key) {
+            await sb.removeChannel(vaultChannel);
+            vaultChannel = null;
+            vaultSubscribed = false;
+            vaultReqByStudentKey = new Map();
+          }
+        } catch {
+          vaultChannel = null;
+          vaultSubscribed = false;
+        }
+        if (vaultChannel && vaultBoundKey === key) {
+          if (vaultSubscribed) return vaultChannel;
+          await new Promise((resolve) => {
+            const t = setTimeout(resolve, 500);
+            const poll = setInterval(() => {
+              if (vaultSubscribed) {
+                clearInterval(poll);
+                clearTimeout(t);
+                resolve();
+              }
+            }, 40);
+            setTimeout(() => clearInterval(poll), 500);
+          });
+          return vaultChannel;
+        }
+        vaultBoundKey = key;
+        vaultSubscribed = false;
+        vaultChannel = sb.channel(`lesson-vault:${key}`, {
+          config: { broadcast: { self: false, ack: false } }
+        });
+        vaultChannel.on("broadcast", { event: "vault-request" }, ({ payload }) => {
+          if (!payload || Number(payload.sessionNo) !== Number(sessionNo)) return;
+          const no = String(payload.studentNo || "").trim();
+          if (!no) return;
+          const meta = classMetaById(activeClassId || teacherClass?.id || null);
+          const sk = vaultStudentKey(no, meta?.grade || 1, meta?.class_no || 1);
+          vaultReqByStudentKey.set(sk, {
+            requestId: String(payload.requestId || ""),
+            studentNo: no,
+            studentName: String(payload.studentName || "").trim(),
+            code: String(payload.code || code).toUpperCase(),
+            at: Number(payload.t) || Date.now()
+          });
+          if (detailStudentsCache?.length) paintDetailRosterGrid(detailStudentsCache);
+          toast(`${no} ${payload.studentName || ""} · 불러오기 요청`.trim());
+        });
+        await new Promise((resolve) => {
+          const t = setTimeout(resolve, 700);
+          vaultChannel.subscribe((status) => {
+            if (status === "SUBSCRIBED") {
+              vaultSubscribed = true;
+              clearTimeout(t);
+              resolve();
+            }
+          });
+        });
+        return vaultChannel;
+      }
+
+      async function sendVaultRestoreToStudent(studentKey) {
+        const req = vaultReqByStudentKey.get(studentKey);
+        if (!req) {
+          toast("불러오기 요청이 없습니다.");
+          return;
+        }
+        const lesson = lessons.find((l) => l.id === selectedLessonId);
+        if (!lesson) return;
+        const code = lessonSubmitCode(lesson);
+        const sessionNo = Number(lesson.session_no) || 0;
+        const list =
+          detailSubMap.get(studentKey) ||
+          detailSubMap.get(normalizeStudentNo(req.studentNo)) ||
+          [];
+        const latest = list[0] || null;
+        if (!latest) {
+          toast("전송할 제출이 없습니다. 학생이 먼저 제출해야 합니다.");
+          return;
+        }
+        await ensureSubmissionContent(latest);
+        const content = String(latest.content || "");
+        if (!content) {
+          toast("제출 내용을 불러오지 못했습니다.");
+          return;
+        }
+        try {
+          const ch = await ensureVaultChannel(code, sessionNo);
+          if (!ch) throw new Error("채널 연결 실패");
+          await ch.send({
+            type: "broadcast",
+            event: "vault-deliver",
+            payload: {
+              requestId: req.requestId,
+              sessionNo,
+              code,
+              studentNo: req.studentNo || latest.student_no || "",
+              studentName: req.studentName || latest.student_name || "",
+              content,
+              t: Date.now()
+            }
+          });
+          vaultReqByStudentKey.delete(studentKey);
+          if (detailStudentsCache?.length) paintDetailRosterGrid(detailStudentsCache);
+          toast("학생 기기로 전송했습니다.");
+        } catch (e) {
+          console.warn(e);
+          toast(e?.message || "전송에 실패했습니다.");
+        }
+      }
 
       async function ensureLiveDeckChannel(code, sessionNo) {
         if (!sb || !code) return null;
@@ -19523,6 +19685,13 @@ ${pageCss}</style>
           const edited =
             !!(latest && getSummaryEdit(latest.id)) ||
             !!folioBlobHasContent(readLocalTeacherObsBlob(classIdForObs, key));
+          const vaultReq = vaultReqByStudentKey.get(key) || vaultReqByStudentKey.get(normalizeStudentNo(st.student_no));
+          const vaultBanner = vaultReq
+            ? `<div class="vault-req-banner">
+                <strong>불러오기 요청</strong>
+                <button type="button" data-vault-send="${escapeHtml(key)}">전송하기</button>
+              </div>`
+            : "";
           const obsBtn = latest
             ? `<button type="button" class="obs-eval-btn${edited ? " is-edited" : ""}" data-obs-eval="${latest.id}" title="관찰 평가 · 교사 관찰 평가와 학생 활동">
                 <span class="obs-eval-mark" aria-hidden="true">관</span>
@@ -19533,7 +19702,7 @@ ${pageCss}</style>
                 <span>관찰 평가</span>
               </button>`;
           parts[i] = `
-            <div class="detail-roster-cell${latest ? " has-sub" : ""}${officerCls}" data-id="${st.id || ""}">
+            <div class="detail-roster-cell${latest ? " has-sub" : ""}${vaultReq ? " has-vault-req" : ""}${officerCls}" data-id="${st.id || ""}">
               ${bandHtml}
               <div class="head">
                 <span class="no">${escapeHtml(key || st.student_no)}</span>
@@ -19541,6 +19710,7 @@ ${pageCss}</style>
                 <span class="dot" aria-hidden="true" title="${latest ? `제출 ${list.length}건` : "미제출"}"></span>
               </div>
               <div class="name" title="${escapeHtml(st.student_name || latest?.student_name || "")}">${escapeHtml(st.student_name || latest?.student_name || "이름 없음")}</div>
+              ${vaultBanner}
               ${bodyHtml}
             </div>`;
         }
@@ -19549,6 +19719,19 @@ ${pageCss}</style>
         if (!grid.dataset.bound) {
           grid.dataset.bound = "1";
           grid.addEventListener("click", async (e) => {
+            const vaultSend = e.target.closest("[data-vault-send]");
+            if (vaultSend) {
+              e.stopPropagation();
+              const sk = vaultSend.getAttribute("data-vault-send");
+              if (!sk) return;
+              vaultSend.disabled = true;
+              try {
+                await sendVaultRestoreToStudent(sk);
+              } finally {
+                vaultSend.disabled = false;
+              }
+              return;
+            }
             const obs = e.target.closest("[data-obs-eval]");
             if (obs) {
               e.stopPropagation();
@@ -20088,6 +20271,7 @@ ${pageCss}</style>
         // 수업 동기화 채널 선행 연결 → 클릭 시 즉시 방송
         if (submitCode) {
           void ensureLiveDeckChannel(submitCode, Number(lesson.session_no) || 0);
+          void ensureVaultChannel(submitCode, Number(lesson.session_no) || 0);
         }
 
         if (!classId) return;

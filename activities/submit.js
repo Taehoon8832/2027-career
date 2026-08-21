@@ -2005,7 +2005,7 @@ ${linkedCss}
         let label = liveHtmlPlain(m[1]).replace(/\s+/g, " ").trim();
         if (!label) continue;
         if (/^(학번|이름)\b/.test(label)) continue;
-        if (/차시\s*활동|학생\s*활동지|코드번호|눌러서|제출|임시|초기화|동기화/.test(label)) continue;
+        if (/차시\s*활동|학생\s*활동지|코드번호|눌러서|제출|임시|보관함|초기화|동기화/.test(label)) continue;
         label = label.replace(/^\d+\s*[.)]\s*/, "").trim();
         const value = liveHtmlPlain(m[2] || m[3] || m[4] || "").trim();
         if (!value) continue;
@@ -5424,18 +5424,19 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     }
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "draft-fab";
+    btn.className = "draft-fab is-vault";
     btn.id = "btnDraftSave";
-    btn.setAttribute("aria-label", "임시 저장");
-    btn.title = "작성 중인 내용을 이 기기에 임시 저장합니다";
+    btn.setAttribute("aria-label", "보관함");
+    btn.title = "이 기기에 보관한 제출 보고서를 확인합니다";
     btn.innerHTML = `
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-        <path d="M17 21v-8H7v8"/>
-        <path d="M7 3v5h8"/>
+        <path d="M3 7.5 12 3l9 4.5"/>
+        <path d="M3 7.5v9L12 21l9-4.5v-9"/>
+        <path d="M12 12v9"/>
+        <path d="M3 7.5 12 12l9-4.5"/>
       </svg>
-      <span class="label">임시</span>`;
-    btn.addEventListener("click", () => saveActivityDraft({ toast: true, force: true }));
+      <span class="label">보관함</span>`;
+    btn.addEventListener("click", () => openVaultModal());
     const submit = document.getElementById("btnSubmitActivity");
     if (submit && submit.parentNode === actionsHost) actionsHost.insertBefore(btn, submit);
     else actionsHost.appendChild(btn);
@@ -5915,6 +5916,366 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       .replace(/"/g, "&quot;");
   }
 
+  /* —— 보관함 (기기 로컬 + 다른 기기 불러오기 요청) —— */
+  const VAULT_KEY = "career-activity-vault:v1";
+  let vaultTab = "local";
+  let vaultChannel = null;
+  let vaultBoundKey = "";
+  let vaultPendingRequestId = "";
+
+  function vaultLessonShortTitle() {
+    const raw = lessonTitleText();
+    return String(raw || "")
+      .replace(/^\s*\d+\s*차시\s*[·・.\-–—]?\s*/i, "")
+      .replace(/\s+/g, " ")
+      .trim() || "활동";
+  }
+
+  function buildVaultTitle(studentNo, studentName) {
+    const no = String(studentNo || "").trim() || "학번";
+    const name = String(studentName || "").trim() || "이름";
+    return `${sessionNo}차시-${vaultLessonShortTitle()}-${no}-${name}`;
+  }
+
+  function readVaultItems() {
+    try {
+      const raw = localStorage.getItem(VAULT_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeVaultItems(items) {
+    localStorage.setItem(VAULT_KEY, JSON.stringify(items.slice(0, 80)));
+  }
+
+  function saveSubmissionToVault({ content, studentNo, studentName, submitCode }) {
+    const title = buildVaultTitle(studentNo, studentName);
+    const item = {
+      id: `v_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+      title,
+      sessionNo,
+      sessionTitle: vaultLessonShortTitle(),
+      code: String(submitCode || getDraftCodeKey() || "").toUpperCase(),
+      studentNo: String(studentNo || "").trim(),
+      studentName: String(studentName || "").trim(),
+      content: String(content || ""),
+      fields: collectDraftFields()?.fields || {},
+      savedAt: Date.now()
+    };
+    const next = [item, ...readVaultItems().filter((x) => x && x.id !== item.id)];
+    writeVaultItems(next);
+    return item;
+  }
+
+  function formatVaultTime(ts) {
+    try {
+      return new Date(ts).toLocaleString("ko-KR", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    } catch {
+      return "";
+    }
+  }
+
+  function ensureVaultDom() {
+    let light = document.getElementById("vaultLightbox");
+    if (light) return light;
+    light = document.createElement("div");
+    light.id = "vaultLightbox";
+    light.className = "vault-lightbox";
+    light.hidden = true;
+    light.setAttribute("role", "dialog");
+    light.setAttribute("aria-modal", "true");
+    light.setAttribute("aria-labelledby", "vaultTitle");
+    light.innerHTML = `
+      <div class="vault-panel" id="vaultPanel">
+        <div class="vault-head">
+          <div class="vault-head-copy">
+            <p class="vault-kicker">Archive</p>
+            <h3 id="vaultTitle">보관함</h3>
+            <p>이 기기에 저장된 제출 보고서입니다. 다른 기기라면 아래에서 불러오기를 요청하세요.</p>
+          </div>
+          <button type="button" class="vault-close" id="btnVaultClose" aria-label="닫기">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+        <div class="vault-tabs" role="tablist">
+          <button type="button" class="vault-tab is-on" data-vault-tab="local" role="tab" aria-selected="true">이 기기</button>
+          <button type="button" class="vault-tab" data-vault-tab="request" role="tab" aria-selected="false">다른 기기</button>
+        </div>
+        <div class="vault-body" id="vaultBody"></div>
+      </div>`;
+    document.body.appendChild(light);
+    light.addEventListener("click", (e) => {
+      if (e.target === light) closeVaultModal();
+    });
+    light.querySelector("#btnVaultClose")?.addEventListener("click", closeVaultModal);
+    light.querySelector("#vaultPanel")?.addEventListener("click", (e) => e.stopPropagation());
+    light.querySelectorAll("[data-vault-tab]").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        vaultTab = tab.getAttribute("data-vault-tab") || "local";
+        paintVaultBody();
+      });
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && light.classList.contains("is-open")) closeVaultModal();
+    });
+    return light;
+  }
+
+  function paintVaultBody() {
+    const body = document.getElementById("vaultBody");
+    const light = document.getElementById("vaultLightbox");
+    if (!body || !light) return;
+    light.querySelectorAll("[data-vault-tab]").forEach((tab) => {
+      const on = tab.getAttribute("data-vault-tab") === vaultTab;
+      tab.classList.toggle("is-on", on);
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    if (vaultTab === "request") {
+      const id = readSheetIdentity();
+      const code = getSubmitCodeFromPage() || getDraftCodeKey() || "";
+      body.innerHTML = `
+        <div class="vault-form">
+          <p class="vault-form-hint">전자기기가 바뀌었다면 활동지 코드번호·학번·이름으로 교사에게 불러오기를 요청할 수 있습니다. 교사 제출 현황에서 「전송하기」를 누르면 이 기기 보관함에 저장됩니다.</p>
+          <label>코드번호
+            <input id="vaultReqCode" maxlength="16" autocomplete="off" spellcheck="false" value="${escapeHtml(String(code).toUpperCase())}" placeholder="예: BC3B9BB0" />
+          </label>
+          <label>학번
+            <input id="vaultReqNo" inputmode="numeric" maxlength="12" value="${escapeHtml(id.studentNo || "")}" placeholder="예: 10101" />
+          </label>
+          <label>이름
+            <input id="vaultReqName" maxlength="40" value="${escapeHtml(id.studentName || "")}" placeholder="예: 홍길동" />
+          </label>
+          <button type="button" class="vault-form-go" id="btnVaultRequest">불러오기 요청</button>
+          <p class="vault-status" id="vaultReqStatus" role="status"></p>
+        </div>`;
+      body.querySelector("#vaultReqCode")?.addEventListener("input", (e) => {
+        e.currentTarget.value = String(e.currentTarget.value || "")
+          .toUpperCase()
+          .replace(/[^0-9A-Z]/g, "");
+      });
+      body.querySelector("#btnVaultRequest")?.addEventListener("click", () => {
+        void sendVaultRestoreRequest();
+      });
+      return;
+    }
+    const items = readVaultItems().filter((x) => x && x.content);
+    if (!items.length) {
+      body.innerHTML = `<p class="vault-empty">아직 보관된 보고서가 없습니다.<br>「제출하기」를 누르면 자동으로 이 기기 보관함에 저장됩니다.</p>`;
+      return;
+    }
+    body.innerHTML = `<div class="vault-list">${items
+      .map(
+        (it) => `
+      <article class="vault-item" data-vault-id="${escapeHtml(it.id)}">
+        <h4 class="vault-item-title">${escapeHtml(it.title || "보고서")}</h4>
+        <p class="vault-item-meta">${escapeHtml(formatVaultTime(it.savedAt))} · ${escapeHtml(it.code || "—")} · ${escapeHtml(it.studentNo || "")} ${escapeHtml(it.studentName || "")}</p>
+        <div class="vault-item-actions">
+          <button type="button" class="vault-btn-primary" data-vault-load="${escapeHtml(it.id)}">불러와 작성</button>
+          <button type="button" class="vault-btn-ghost" data-vault-open="${escapeHtml(it.id)}">새 탭으로 보기</button>
+          <button type="button" class="vault-btn-danger" data-vault-del="${escapeHtml(it.id)}">삭제</button>
+        </div>
+      </article>`
+      )
+      .join("")}</div>`;
+    body.querySelectorAll("[data-vault-load]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-vault-load");
+        loadVaultItemToSheet(id);
+      });
+    });
+    body.querySelectorAll("[data-vault-open]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-vault-open");
+        openVaultItemTab(id);
+      });
+    });
+    body.querySelectorAll("[data-vault-del]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-vault-del");
+        if (!id) return;
+        if (!confirm("이 보관 항목을 삭제할까요?")) return;
+        writeVaultItems(readVaultItems().filter((x) => x.id !== id));
+        paintVaultBody();
+        showDraftToast("보관함에서 삭제했습니다.", 1600);
+      });
+    });
+  }
+
+  function openVaultModal() {
+    const light = ensureVaultDom();
+    vaultTab = "local";
+    paintVaultBody();
+    light.hidden = false;
+    light.classList.add("is-open");
+    void bindVaultChannel(getSubmitCodeFromPage() || getDraftCodeKey());
+  }
+
+  function closeVaultModal() {
+    const light = document.getElementById("vaultLightbox");
+    if (!light) return;
+    light.classList.remove("is-open");
+    light.hidden = true;
+  }
+
+  function loadVaultItemToSheet(id) {
+    const item = readVaultItems().find((x) => x.id === id);
+    if (!item) return;
+    try {
+      applyDraftFields({
+        fields: item.fields || {},
+        studentNo: item.studentNo || "",
+        studentName: item.studentName || ""
+      });
+      try {
+        if (typeof window.__careerWorldcupAfterDraft === "function") {
+          window.__careerWorldcupAfterDraft();
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+      saveActivityDraft({ toast: false, force: true });
+      closeVaultModal();
+      showDraftToast("보관함에서 불러왔습니다.", 2000);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (e) {
+      console.warn(e);
+      showDraftToast("불러오기에 실패했습니다.", 2400);
+    }
+  }
+
+  function openVaultItemTab(id) {
+    const item = readVaultItems().find((x) => x.id === id);
+    if (!item?.content) return;
+    const w = window.open("", "_blank");
+    if (!w) {
+      showDraftToast("팝업이 차단되었습니다. 새 탭 허용 후 다시 시도해 주세요.", 2800);
+      return;
+    }
+    w.document.open();
+    w.document.write(String(item.content));
+    w.document.close();
+  }
+
+  async function bindVaultChannel(code) {
+    if (!sb || !code) return;
+    const key = `${String(code).toUpperCase()}:${sessionNo}`;
+    if (vaultChannel && vaultBoundKey === key) return;
+    try {
+      if (vaultChannel) {
+        await sb.removeChannel(vaultChannel);
+        vaultChannel = null;
+      }
+    } catch {
+      vaultChannel = null;
+    }
+    vaultBoundKey = key;
+    vaultChannel = sb.channel(`lesson-vault:${key}`, {
+      config: { broadcast: { self: false } }
+    });
+    vaultChannel.on("broadcast", { event: "vault-deliver" }, ({ payload }) => {
+      if (!payload || Number(payload.sessionNo) !== sessionNo) return;
+      if (vaultPendingRequestId && payload.requestId && payload.requestId !== vaultPendingRequestId) {
+        return;
+      }
+      const content = String(payload.content || "");
+      if (!content) return;
+      const item = saveSubmissionToVault({
+        content,
+        studentNo: payload.studentNo || "",
+        studentName: payload.studentName || "",
+        submitCode: payload.code || code
+      });
+      if (payload.fields && typeof payload.fields === "object") {
+        const all = readVaultItems();
+        const hit = all.find((x) => x.id === item.id);
+        if (hit) {
+          hit.fields = payload.fields;
+          writeVaultItems(all);
+        }
+      }
+      vaultPendingRequestId = "";
+      const st = document.getElementById("vaultReqStatus");
+      if (st) {
+        st.classList.remove("is-err");
+        st.textContent = "교사가 전송했습니다. 보관함에 저장되었어요.";
+      }
+      vaultTab = "local";
+      paintVaultBody();
+      showDraftToast("교사에게서 보고서를 받아 보관함에 저장했습니다.", 2800);
+    });
+    await vaultChannel.subscribe();
+  }
+
+  async function sendVaultRestoreRequest() {
+    const code = String(document.getElementById("vaultReqCode")?.value || "")
+      .trim()
+      .toUpperCase();
+    const studentNo = String(document.getElementById("vaultReqNo")?.value || "").trim();
+    const studentName = String(document.getElementById("vaultReqName")?.value || "").trim();
+    const st = document.getElementById("vaultReqStatus");
+    const btn = document.getElementById("btnVaultRequest");
+    if (!code) {
+      if (st) {
+        st.classList.add("is-err");
+        st.textContent = "코드번호를 입력해 주세요.";
+      }
+      return;
+    }
+    if (!studentNo || !studentName) {
+      if (st) {
+        st.classList.add("is-err");
+        st.textContent = "학번과 이름을 입력해 주세요.";
+      }
+      return;
+    }
+    if (!sb) {
+      if (st) {
+        st.classList.add("is-err");
+        st.textContent = "서버 연결에 실패했습니다.";
+      }
+      return;
+    }
+    if (btn) btn.disabled = true;
+    try {
+      await bindVaultChannel(code);
+      const requestId = `r_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+      vaultPendingRequestId = requestId;
+      await vaultChannel.send({
+        type: "broadcast",
+        event: "vault-request",
+        payload: {
+          requestId,
+          sessionNo,
+          code,
+          studentNo,
+          studentName,
+          t: Date.now()
+        }
+      });
+      if (st) {
+        st.classList.remove("is-err");
+        st.textContent = "불러오기 요청을 보냈습니다. 교사가 「전송하기」를 누르면 이 기기에 저장됩니다.";
+      }
+      showDraftToast("불러오기 요청을 보냈습니다.", 2200);
+    } catch (e) {
+      console.warn(e);
+      if (st) {
+        st.classList.add("is-err");
+        st.textContent = e?.message || "요청에 실패했습니다.";
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
   async function submitActivity() {
     if (!sb) {
       setMsg("서버 연결에 실패했습니다.", "error");
@@ -5957,7 +6318,12 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
         return;
       }
 
-      setMsg("제출되었습니다. 교사 화면에 전송되었습니다.", "ok");
+      try {
+        saveSubmissionToVault({ content, studentNo, studentName, submitCode });
+      } catch (e) {
+        console.warn(e);
+      }
+      setMsg("제출되었습니다. 보관함에도 저장했습니다.", "ok");
       saveActivityDraft({ toast: false });
       setTimeout(() => {
         document.getElementById("submitOverlay")?.classList.remove("is-open");
