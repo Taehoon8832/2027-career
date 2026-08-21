@@ -27,6 +27,7 @@
   cursor: var(--deck-laser-cursor) !important;
 }
 .report-deck-panel {
+  position: relative;
   width: min(1100px, 100%);
   max-height: 100%;
   height: 100%;
@@ -1732,4 +1733,56 @@ button.deck-arena-job.is-job {
     opacity: 1;
     transform: none;
   }
+}
+
+/* 교사 커서 · 화면 동기화 미러 (학생 기기) */
+.live-teacher-cursor {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 80;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-100px, -100px, 0);
+  transition: opacity 0.18s ease;
+  will-change: transform, opacity;
+  filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.35));
+}
+.live-teacher-cursor.is-on { opacity: 1; }
+.live-teacher-cursor svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+.live-teacher-cursor .live-teacher-cursor-tag {
+  position: absolute;
+  left: 18px;
+  top: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(29, 78, 216, 0.92);
+  color: #fff;
+  font: 700 10px/1.2 "Noto Sans KR", Pretendard, sans-serif;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+}
+@media (max-width: 720px) {
+  .live-teacher-cursor { width: 34px; height: 34px; }
+  .live-teacher-cursor svg { width: 34px; height: 34px; }
+  .live-teacher-cursor .live-teacher-cursor-tag {
+    left: 22px;
+    top: 24px;
+    font-size: 11px;
+    padding: 3px 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .live-teacher-cursor { transition: none; }
 }

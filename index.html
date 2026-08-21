@@ -2274,6 +2274,24 @@
     .detail-action-strip .btns .btn-secondary:hover:not(:disabled) {
       background: var(--color-primary-50);
     }
+    .detail-action-strip .btns .btn-sync {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+      color: #1e3a8a;
+      border: 2px solid #1d4ed8;
+      box-shadow: 0 2px 0 rgba(29, 78, 216, 0.18), 0 4px 12px rgba(29, 78, 216, 0.14);
+    }
+    .detail-action-strip .btns .btn-sync:hover:not(:disabled) {
+      background: linear-gradient(180deg, #dbeafe 0%, #bfdbfe 100%);
+    }
+    .detail-action-strip .btns .btn-sync svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
     .detail-timer {
       display: flex;
       flex-wrap: wrap;
@@ -2466,6 +2484,54 @@
       font-weight: 600;
       color: #57534e;
     }
+    /* 교사 커서 미러 (학생 화면) — index에도 동일 규칙 유지 */
+    .live-teacher-cursor {
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: 80;
+      width: 28px;
+      height: 28px;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate3d(-100px, -100px, 0);
+      transition: opacity 0.18s ease;
+      will-change: transform, opacity;
+      filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.35));
+    }
+    .live-teacher-cursor.is-on { opacity: 1; }
+    .live-teacher-cursor svg {
+      display: block;
+      width: 28px;
+      height: 28px;
+    }
+    .live-teacher-cursor .live-teacher-cursor-tag {
+      position: absolute;
+      left: 18px;
+      top: 20px;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(29, 78, 216, 0.92);
+      color: #fff;
+      font: 700 10px/1.2 "Noto Sans KR", Pretendard, sans-serif;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.25);
+    }
+    @media (max-width: 720px) {
+      .live-teacher-cursor { width: 34px; height: 34px; }
+      .live-teacher-cursor svg { width: 34px; height: 34px; }
+      .live-teacher-cursor .live-teacher-cursor-tag {
+        left: 22px;
+        top: 24px;
+        font-size: 11px;
+        padding: 3px 7px;
+      }
+    }
     .report-deck {
       position: fixed; inset: 0; z-index: 90;
       display: none;
@@ -2485,6 +2551,7 @@
       cursor: var(--deck-laser-cursor) !important;
     }
     .report-deck-panel {
+      position: relative;
       width: min(1100px, 100%);
       max-height: 100%;
       height: 100%;
@@ -4807,7 +4874,13 @@
       }
       .detail-action-strip .qr,
       .detail-action-strip a.qr { width: 128px; height: 128px; padding: 8px; }
-      .detail-action-strip .btns { min-width: 0; width: 100%; }
+      .detail-action-strip .btns {
+        min-width: 0;
+        width: 100%;
+      }
+      .detail-action-strip .btns .btn-sync span {
+        letter-spacing: -0.04em;
+      }
     }
     @media (max-width: 560px) {
       .detail-roster-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -16888,6 +16961,7 @@ ${built.html}
           const ch = await ensureLiveDeckChannel(code, sessionNo);
           if (!ch) return;
           if (event === "close") {
+            stopLivePresenceSync({ sendHide: false });
             await ch.send({
               type: "broadcast",
               event: "close",
@@ -16903,9 +16977,154 @@ ${built.html}
         }
       }
 
+      let livePresenceActive = false;
+      let livePresenceRaf = 0;
+      let livePresenceLastSent = 0;
+      let livePresencePending = null;
+      let livePresencePtr = { nx: 0.5, ny: 0.35, visible: false };
+      const LIVE_PRESENCE_MIN_MS = 45;
+
+      function deckScrollRatio(el) {
+        if (!el) return { x: 0, y: 0 };
+        const maxX = Math.max(0, el.scrollWidth - el.clientWidth);
+        const maxY = Math.max(0, el.scrollHeight - el.clientHeight);
+        return {
+          x: maxX > 0 ? +(el.scrollLeft / maxX).toFixed(4) : 0,
+          y: maxY > 0 ? +(el.scrollTop / maxY).toFixed(4) : 0
+        };
+      }
+
+      function collectLivePresencePayload(sessionNo) {
+        const deck = $("reportDeck");
+        const panel = deck?.querySelector(".report-deck-panel");
+        if (!panel) return null;
+        return {
+          sessionNo: Number(sessionNo) || 0,
+          nx: +livePresencePtr.nx.toFixed(4),
+          ny: +livePresencePtr.ny.toFixed(4),
+          visible: !!livePresencePtr.visible,
+          scroll: {
+            table: deckScrollRatio($("reportDeckTable")),
+            reader: deckScrollRatio($("reportDeckReader"))
+          },
+          t: Date.now()
+        };
+      }
+
+      function flushLivePresence() {
+        livePresenceRaf = 0;
+        if (!livePresenceActive || !livePresencePending) return;
+        const now = performance.now();
+        if (now - livePresenceLastSent < LIVE_PRESENCE_MIN_MS) {
+          livePresenceRaf = requestAnimationFrame(flushLivePresence);
+          return;
+        }
+        const payload = livePresencePending;
+        livePresencePending = null;
+        livePresenceLastSent = now;
+        const ch = liveDeckChannel;
+        if (!ch || !liveDeckSubscribed) return;
+        ch.send({ type: "broadcast", event: "presence", payload }).catch(() => {});
+      }
+
+      function queueLivePresence(sessionNo) {
+        if (!livePresenceActive) return;
+        livePresencePending = collectLivePresencePayload(sessionNo);
+        if (!livePresencePending) return;
+        if (!livePresenceRaf) livePresenceRaf = requestAnimationFrame(flushLivePresence);
+      }
+
+      function stopLivePresenceSync(opts = {}) {
+        const sendHide = opts.sendHide !== false;
+        livePresenceActive = false;
+        if (livePresenceRaf) {
+          cancelAnimationFrame(livePresenceRaf);
+          livePresenceRaf = 0;
+        }
+        livePresencePending = null;
+        livePresencePtr.visible = false;
+        const deck = $("reportDeck");
+        if (deck && deck._livePresenceBound) {
+          const panel = deck.querySelector(".report-deck-panel");
+          const table = $("reportDeckTable");
+          const reader = $("reportDeckReader");
+          const onMove = deck._livePresenceOnMove;
+          const onLeave = deck._livePresenceOnLeave;
+          const onScroll = deck._livePresenceOnScroll;
+          if (panel && onMove) panel.removeEventListener("pointermove", onMove);
+          if (panel && onLeave) {
+            panel.removeEventListener("pointerleave", onLeave);
+            panel.removeEventListener("pointerdown", onMove);
+          }
+          if (table && onScroll) table.removeEventListener("scroll", onScroll);
+          if (reader && onScroll) reader.removeEventListener("scroll", onScroll);
+          delete deck._livePresenceBound;
+          delete deck._livePresenceOnMove;
+          delete deck._livePresenceOnLeave;
+          delete deck._livePresenceOnScroll;
+        }
+        if (sendHide && liveDeckChannel && liveDeckSubscribed) {
+          const lesson = lessons.find((l) => l.id === selectedLessonId);
+          const sessionNo = Number(lesson?.session_no) || 0;
+          liveDeckChannel
+            .send({
+              type: "broadcast",
+              event: "presence",
+              payload: {
+                sessionNo,
+                nx: 0.5,
+                ny: 0.35,
+                visible: false,
+                scroll: { table: { x: 0, y: 0 }, reader: { x: 0, y: 0 } },
+                t: Date.now()
+              }
+            })
+            .catch(() => {});
+        }
+      }
+
+      function startLivePresenceSync(sessionNo) {
+        const deck = $("reportDeck");
+        const panel = deck?.querySelector(".report-deck-panel");
+        if (!deck || !panel) return;
+        stopLivePresenceSync({ sendHide: false });
+        livePresenceActive = true;
+        const sn = Number(sessionNo) || 0;
+
+        const onMove = (e) => {
+          if (!livePresenceActive) return;
+          if (e.pointerType === "touch" && e.buttons === 0 && e.type === "pointermove") {
+            /* allow finger tracking while dragging */
+          }
+          const rect = panel.getBoundingClientRect();
+          if (rect.width < 1 || rect.height < 1) return;
+          livePresencePtr.nx = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+          livePresencePtr.ny = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+          livePresencePtr.visible = true;
+          queueLivePresence(sn);
+        };
+        const onLeave = () => {
+          livePresencePtr.visible = false;
+          queueLivePresence(sn);
+        };
+        const onScroll = () => queueLivePresence(sn);
+
+        panel.addEventListener("pointermove", onMove, { passive: true });
+        panel.addEventListener("pointerdown", onMove, { passive: true });
+        panel.addEventListener("pointerleave", onLeave);
+        $("reportDeckTable")?.addEventListener("scroll", onScroll, { passive: true });
+        $("reportDeckReader")?.addEventListener("scroll", onScroll, { passive: true });
+        deck._livePresenceBound = true;
+        deck._livePresenceOnMove = onMove;
+        deck._livePresenceOnLeave = onLeave;
+        deck._livePresenceOnScroll = onScroll;
+        queueLivePresence(sn);
+      }
+
       function closeReportDeck() {
         const el = $("reportDeck");
         if (!el) return;
+        stopLivePresenceSync();
         if (arenaRevealTimer) {
           clearTimeout(arenaRevealTimer);
           arenaRevealTimer = 0;
@@ -17261,6 +17480,7 @@ h1{margin:2px 0 0;font:800 14px/1.1 "Noto Serif KR",serif;letter-spacing:-.03em;
         const stamp = new Date().toISOString().slice(0, 10);
         const clone = panel.cloneNode(true);
         clone.querySelector(".report-deck-actions")?.remove();
+        clone.querySelectorAll(".live-teacher-cursor").forEach((el) => el.remove());
         // 인쇄/저장은 카드(또는 펼친 보고서)만 — 월드컵 랭킹 아레나는 제외
         clone.querySelector(".report-deck-arena")?.remove();
         clone.querySelectorAll("[hidden]").forEach((el) => el.remove());
@@ -18857,6 +19077,7 @@ ${pageCss}</style>
         deck.classList.add("is-open", "is-snap");
         deck.setAttribute("aria-hidden", "false");
         const channelReady = code ? ensureLiveDeckChannel(code, sessionNo) : Promise.resolve(null);
+        startLivePresenceSync(sessionNo);
 
         // 캐시된 캐릭터로 바로 1차 페인트 (없으면 빈 맵)
         let charByKey =
@@ -19475,7 +19696,14 @@ ${pageCss}</style>
             <a class="qr" id="detailQr" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" title="탭하여 활동지 열기" aria-label="활동지 QR — 눌러서 열기"></a>
             <div class="btns">
               <a class="btn btn-primary" id="btnOpenActivity" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer">활동지 열기</a>
-              <button type="button" class="btn btn-secondary" id="btnCopyLink">링크 복사</button>
+              <button type="button" class="btn btn-sync" id="btnReportDeck" title="수업 동기화 — 학생 화면에 커서·화면 이동까지 실시간 공유">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="4" y="5" width="11" height="15" rx="2"/>
+                  <path d="M9 5V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-1"/>
+                  <circle cx="9.5" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>수업 동기화</span>
+              </button>
             </div>
             <div class="meta">
               <div class="code-row">
@@ -19506,15 +19734,7 @@ ${pageCss}</style>
           <div class="detail-toolbar">
             <h3 class="detail-section-title">제출 현황</h3>
             <span class="detail-submit-count" style="margin:0" id="detailSubmitCount">…</span>
-            <button type="button" class="report-deck-btn" id="btnReportDeck" title="보고서 종합 — 번호순 카드덱">
-              <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="4" y="5" width="11" height="15" rx="2"/>
-                <path d="M9 5V4a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-1"/>
-                <circle cx="9.5" cy="12.5" r="1.2" fill="currentColor" stroke="none"/>
-              </svg>
-              <span>&lt;보고서 종합&gt;</span>
-            </button>
-            <p class="report-deck-live-hint">▶ “보고서 종합”을 누르면 <span class="hint-em">학생 화면도 자동 동기화되어 ‘보고서 종합’ 화면으로 전환</span>됩니다.</p>
+            <p class="report-deck-live-hint">▶ “수업 동기화”를 누르면 <span class="hint-em">학생 화면에 커서·스크롤·화면 전환까지 실시간 동기화</span>됩니다.</p>
             <span class="settings-sub detail-missing-list" id="detailMissingSubmitters"></span>
             <span class="grow"></span>
           </div>
@@ -19573,14 +19793,6 @@ ${pageCss}</style>
           e.preventDefault();
           void openActivitySheet(url, { liveHint: true });
         });
-        $("btnCopyLink").addEventListener("click", async () => {
-          try {
-            await navigator.clipboard.writeText(url);
-            toast("링크를 복사했습니다.");
-          } catch {
-            toast(url);
-          }
-        });
         $("btnCopySubmitCode")?.addEventListener("click", async () => {
           try {
             await navigator.clipboard.writeText(submitCode);
@@ -19595,7 +19807,7 @@ ${pageCss}</style>
         $("btnReportDeck")?.addEventListener("click", () => {
           void openReportDeck();
         });
-        // 보고서 종합 채널 선행 연결 → 클릭 시 즉시 방송
+        // 수업 동기화 채널 선행 연결 → 클릭 시 즉시 방송
         if (submitCode) {
           void ensureLiveDeckChannel(submitCode, Number(lesson.session_no) || 0);
         }
