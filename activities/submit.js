@@ -2416,8 +2416,8 @@ ${linkedCss}
           <div class="deck-card-arch">${escapeHtml(archLine)}</div>`;
       }
       const attrs = empty
-        ? `disabled data-empty="1"`
-        : `data-sub-id="${escapeHtml(card.id || "")}"`;
+        ? `disabled data-empty="1" data-card-no="${escapeHtml(card.no || "")}"`
+        : `data-sub-id="${escapeHtml(card.id || "")}" data-card-no="${escapeHtml(card.no || "")}"`;
       return `<button type="button" class="deck-card${empty ? " is-empty" : ""}${active ? " is-active" : ""}${
         s3 ? " is-s3" : s4 ? " is-s4" : ""
       }" ${attrs} style="--deal:${dealIdx}" ${isTeacher && !empty ? "" : 'tabindex="-1"'} title="${
@@ -2444,7 +2444,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2135";
+        css.href = "./live-report-deck.css?v=2137";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -2528,8 +2528,15 @@ ${linkedCss}
     let teacherPresenceRaf = 0;
     let teacherPresenceLastSent = 0;
     let teacherPresencePending = null;
-    let teacherPresencePtr = { nx: 0.5, ny: 0.35, visible: false };
-    const TEACHER_PRESENCE_MIN_MS = 45;
+    let teacherPresencePtr = {
+      nx: 0.5,
+      ny: 0.35,
+      visible: false,
+      hit: null,
+      clientX: 0,
+      clientY: 0
+    };
+    const TEACHER_PRESENCE_MIN_MS = 40;
 
     function ensureTeacherCursorEl(panel) {
       if (!panel) return null;
@@ -2555,6 +2562,11 @@ ${linkedCss}
       return el;
     }
 
+    function cursorTipOffset(cursor) {
+      const size = cursor?.offsetWidth || 28;
+      return { x: (2 / 30) * size, y: (1 / 30) * size };
+    }
+
     function applyScrollRatio(el, ratio) {
       if (!el || !ratio) return;
       const maxX = Math.max(0, el.scrollWidth - el.clientWidth);
@@ -2567,6 +2579,58 @@ ${linkedCss}
       });
     }
 
+    function resolvePresenceHitEl(root, hit) {
+      if (!root || !hit) return null;
+      if (hit.zone === "card") {
+        if (hit.id) {
+          const id = String(hit.id);
+          const byId = Array.from(root.querySelectorAll(".deck-card[data-sub-id]")).find(
+            (c) => c.getAttribute("data-sub-id") === id
+          );
+          if (byId) return byId;
+        }
+        if (hit.no) {
+          const no = String(hit.no).trim();
+          const cards = root.querySelectorAll(".deck-card[data-card-no]");
+          for (const c of cards) {
+            if (String(c.getAttribute("data-card-no") || "").trim() === no) return c;
+          }
+          for (const c of root.querySelectorAll(".deck-card")) {
+            const t = c.querySelector(".deck-card-no")?.textContent?.trim();
+            if (t === no) return c;
+          }
+        }
+        return null;
+      }
+      if (hit.zone === "reader") return root.querySelector("#liveDeckReader, .report-deck-reader");
+      if (hit.zone === "table") return root.querySelector("#liveDeckTable, .report-deck-table");
+      if (hit.zone === "arena") return root.querySelector("#liveDeckArena, .report-deck-arena");
+      if (hit.zone === "head") return root.querySelector(".report-deck-head");
+      return root.querySelector(".report-deck-panel");
+    }
+
+    function presencePointFromHit(el, hit) {
+      if (!el || !hit) return null;
+      const rx = Math.min(1, Math.max(0, Number(hit.rx) || 0));
+      const ry = Math.min(1, Math.max(0, Number(hit.ry) || 0));
+      if (hit.mode === "content") {
+        const localX = rx * Math.max(1, el.scrollWidth) - el.scrollLeft;
+        const localY = ry * Math.max(1, el.scrollHeight) - el.scrollTop;
+        const er = el.getBoundingClientRect();
+        return { clientX: er.left + localX, clientY: er.top + localY };
+      }
+      const er = el.getBoundingClientRect();
+      return { clientX: er.left + rx * er.width, clientY: er.top + ry * er.height };
+    }
+
+    function placeTeacherCursor(panel, cursor, clientX, clientY) {
+      const pr = panel.getBoundingClientRect();
+      const tip = cursorTipOffset(cursor);
+      const x = clientX - pr.left - tip.x;
+      const y = clientY - pr.top - tip.y;
+      cursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+    }
+
     function applyPresencePayload(payload) {
       if (!payload || Number(payload.sessionNo) !== sessionNo) return;
       if (isActivityTeacherUi()) return;
@@ -2575,22 +2639,46 @@ ${linkedCss}
       const panel = root?.querySelector(".report-deck-panel");
       if (!panel || !root?.classList.contains("is-open")) return;
 
-      const cursor = ensureTeacherCursorEl(panel);
-      const w = panel.clientWidth || 1;
-      const h = panel.clientHeight || 1;
-      const nx = Math.min(1, Math.max(0, Number(payload.nx) || 0));
-      const ny = Math.min(1, Math.max(0, Number(payload.ny) || 0));
-      if (payload.visible) {
-        cursor.classList.add("is-on");
-        cursor.style.transform = `translate3d(${nx * w}px, ${ny * h}px, 0)`;
-      } else {
-        cursor.classList.remove("is-on");
+      const table = document.getElementById("liveDeckTable");
+      const reader = document.getElementById("liveDeckReader");
+      if (payload.scroll) {
+        applyScrollRatio(table, payload.scroll.table);
+        applyScrollRatio(reader, payload.scroll.reader);
       }
 
-      if (payload.scroll) {
-        applyScrollRatio(document.getElementById("liveDeckTable"), payload.scroll.table);
-        applyScrollRatio(document.getElementById("liveDeckReader"), payload.scroll.reader);
+      const cursor = ensureTeacherCursorEl(panel);
+      if (!payload.visible) {
+        cursor.classList.remove("is-on");
+        return;
       }
+      cursor.classList.add("is-on");
+
+      const paintCursor = () => {
+        const hit = payload.hit;
+        let point = null;
+        if (hit) {
+          const el = resolvePresenceHitEl(root, hit);
+          if (el) {
+            if (hit.zone === "card") {
+              try {
+                el.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "auto" });
+              } catch {
+                /* ignore */
+              }
+            }
+            point = presencePointFromHit(el, hit);
+          }
+        }
+        if (!point) {
+          const pr = panel.getBoundingClientRect();
+          const nx = Math.min(1, Math.max(0, Number(payload.nx) || 0));
+          const ny = Math.min(1, Math.max(0, Number(payload.ny) || 0));
+          point = { clientX: pr.left + nx * pr.width, clientY: pr.top + ny * pr.height };
+        }
+        placeTeacherCursor(panel, cursor, point.clientX, point.clientY);
+      };
+
+      requestAnimationFrame(paintCursor);
     }
 
     function reapplyLastPresence() {
@@ -2606,6 +2694,15 @@ ${linkedCss}
         },
         { passive: true }
       );
+      window.addEventListener(
+        "orientationchange",
+        () => {
+          if (document.body.classList.contains("live-deck-open")) {
+            setTimeout(reapplyLastPresence, 120);
+          }
+        },
+        { passive: true }
+      );
     }
 
     function deckScrollRatio(el) {
@@ -2618,12 +2715,90 @@ ${linkedCss}
       };
     }
 
+    function presenceRelBox(clientX, clientY, el) {
+      const r = el.getBoundingClientRect();
+      if (r.width < 1 || r.height < 1) return null;
+      return {
+        rx: +Math.min(1, Math.max(0, (clientX - r.left) / r.width)).toFixed(4),
+        ry: +Math.min(1, Math.max(0, (clientY - r.top) / r.height)).toFixed(4),
+        mode: "box"
+      };
+    }
+
+    function presenceRelContent(clientX, clientY, el) {
+      const r = el.getBoundingClientRect();
+      const sw = Math.max(1, el.scrollWidth);
+      const sh = Math.max(1, el.scrollHeight);
+      return {
+        rx: +Math.min(1, Math.max(0, (clientX - r.left + el.scrollLeft) / sw)).toFixed(4),
+        ry: +Math.min(1, Math.max(0, (clientY - r.top + el.scrollTop) / sh)).toFixed(4),
+        mode: "content"
+      };
+    }
+
+    function presenceElVisible(el) {
+      if (!el || el.hidden) return false;
+      const st = window.getComputedStyle(el);
+      return st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0";
+    }
+
+    function buildLivePresenceHit(clientX, clientY, root) {
+      if (!root) return null;
+      const stack = document.elementsFromPoint(clientX, clientY) || [];
+      for (const node of stack) {
+        if (!root.contains(node)) continue;
+        const card = node.closest?.(".deck-card");
+        if (card && root.contains(card)) {
+          const box = presenceRelBox(clientX, clientY, card);
+          if (!box) break;
+          return {
+            zone: "card",
+            id: card.getAttribute("data-sub-id") || "",
+            no: String(card.getAttribute("data-card-no") || card.querySelector(".deck-card-no")?.textContent || "").trim(),
+            ...box
+          };
+        }
+      }
+      const reader = root.querySelector(".report-deck-reader");
+      if (presenceElVisible(reader)) {
+        const r = reader.getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+          return { zone: "reader", ...presenceRelContent(clientX, clientY, reader) };
+        }
+      }
+      const table = root.querySelector(".report-deck-table");
+      if (presenceElVisible(table)) {
+        const r = table.getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+          return { zone: "table", ...presenceRelContent(clientX, clientY, table) };
+        }
+      }
+      const arena = root.querySelector(".report-deck-arena");
+      if (presenceElVisible(arena)) {
+        const r = arena.getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+          return { zone: "arena", ...presenceRelBox(clientX, clientY, arena) };
+        }
+      }
+      const head = root.querySelector(".report-deck-head");
+      if (presenceElVisible(head)) {
+        const r = head.getBoundingClientRect();
+        if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+          return { zone: "head", ...presenceRelBox(clientX, clientY, head) };
+        }
+      }
+      const panel = root.querySelector(".report-deck-panel") || root;
+      const box = presenceRelBox(clientX, clientY, panel);
+      return box ? { zone: "panel", ...box } : null;
+    }
+
     function collectTeacherPresencePayload() {
       return {
         sessionNo,
         nx: +teacherPresencePtr.nx.toFixed(4),
         ny: +teacherPresencePtr.ny.toFixed(4),
         visible: !!teacherPresencePtr.visible,
+        hit: teacherPresencePtr.hit,
         scroll: {
           table: deckScrollRatio(document.getElementById("liveDeckTable")),
           reader: deckScrollRatio(document.getElementById("liveDeckReader"))
@@ -2661,6 +2836,7 @@ ${linkedCss}
       }
       teacherPresencePending = null;
       teacherPresencePtr.visible = false;
+      teacherPresencePtr.hit = null;
       const root = document.getElementById("liveReportDeck");
       if (root?._teacherPresenceBound) {
         const panel = root.querySelector(".report-deck-panel");
@@ -2691,6 +2867,7 @@ ${linkedCss}
               nx: 0.5,
               ny: 0.35,
               visible: false,
+              hit: null,
               scroll: { table: { x: 0, y: 0 }, reader: { x: 0, y: 0 } },
               t: Date.now()
             }
@@ -2712,15 +2889,26 @@ ${linkedCss}
         if (rect.width < 1 || rect.height < 1) return;
         teacherPresencePtr.nx = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
         teacherPresencePtr.ny = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+        teacherPresencePtr.clientX = e.clientX;
+        teacherPresencePtr.clientY = e.clientY;
+        teacherPresencePtr.hit = buildLivePresenceHit(e.clientX, e.clientY, root);
         teacherPresencePtr.visible = true;
         queueTeacherPresence();
       };
       const onLeave = () => {
         teacherPresencePtr.visible = false;
+        teacherPresencePtr.hit = null;
         queueTeacherPresence();
       };
       const onScroll = () => {
         if (applyingRemoteScroll) return;
+        if (teacherPresencePtr.visible) {
+          teacherPresencePtr.hit = buildLivePresenceHit(
+            teacherPresencePtr.clientX,
+            teacherPresencePtr.clientY,
+            root
+          );
+        }
         queueTeacherPresence();
       };
       panel.addEventListener("pointermove", onMove, { passive: true });
@@ -2745,7 +2933,17 @@ ${linkedCss}
       const back = document.getElementById("btnLiveDeckBack");
       if (printBtn) printBtn.hidden = !isTeacher;
       if (saveBtn) saveBtn.hidden = !isTeacher;
-      if (close) close.hidden = false;
+      if (close) {
+        close.hidden = false;
+        close.classList.toggle("is-locked", !isTeacher);
+        close.title = isTeacher
+          ? "닫기"
+          : "X를 눌러 닫을 수 없습니다. 선생님이 동기화를 끄면 닫힙니다.";
+        close.setAttribute(
+          "aria-label",
+          isTeacher ? "닫기" : "닫을 수 없음 — 선생님 동기화 종료 시 닫힘"
+        );
+      }
       if (back) back.hidden = !isTeacher || !root.classList.contains("is-spread");
       const liveBtn = document.getElementById("btnLiveReport");
       if (liveBtn) liveBtn.classList.toggle("is-on", !!localState.open);
@@ -3760,9 +3958,13 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       paintFromState({ open: false, cards: [] });
     }
 
+    function denyStudentClose() {
+      showDraftToast("X를 눌러 닫을 수 없습니다. 선생님이 동기화를 끄면 닫힙니다.", 2800);
+    }
+
     function closeDeck() {
       if (!isActivityTeacherUi()) {
-        closeDeckLocal();
+        denyStudentClose();
         return;
       }
       paintFromState({ open: false, cards: [] });
@@ -3772,6 +3974,10 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     const root = ensureDom();
     document.getElementById("btnLiveReport")?.addEventListener("click", () => {
       if (localState.open) {
+        if (!isActivityTeacherUi()) {
+          denyStudentClose();
+          return;
+        }
         closeDeck();
         return;
       }
@@ -3781,7 +3987,11 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       }
       void openAsViewer();
     });
-    document.getElementById("btnLiveDeckClose")?.addEventListener("click", closeDeck);
+    document.getElementById("btnLiveDeckClose")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeDeck();
+    });
     document.getElementById("btnLiveDeckBack")?.addEventListener("click", backToDeck);
     document.getElementById("btnLiveDeckPrint")?.addEventListener("click", printLiveDeck);
     document.getElementById("btnLiveDeckSave")?.addEventListener("click", saveLiveDeck);
@@ -5155,7 +5365,17 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       const back = document.getElementById("btnLiveDeckBack");
       if (printBtn) printBtn.hidden = !show;
       if (saveBtn) saveBtn.hidden = !show;
-      if (close) close.hidden = false;
+      if (close) {
+        close.hidden = false;
+        close.classList.toggle("is-locked", !show);
+        close.title = show
+          ? "닫기"
+          : "X를 눌러 닫을 수 없습니다. 선생님이 동기화를 끄면 닫힙니다.";
+        close.setAttribute(
+          "aria-label",
+          show ? "닫기" : "닫을 수 없음 — 선생님 동기화 종료 시 닫힘"
+        );
+      }
       if (back) back.hidden = !show || !liveRoot.classList.contains("is-spread");
     }
   }

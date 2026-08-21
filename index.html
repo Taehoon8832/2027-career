@@ -2581,7 +2581,8 @@
       pointer-events: none;
       opacity: 0;
       transform: translate3d(-100px, -100px, 0);
-      transition: opacity 0.18s ease;
+      transform-origin: 2px 1px;
+      transition: opacity 0.12s ease;
       will-change: transform, opacity;
       filter: drop-shadow(0 1px 2px rgba(15, 23, 42, 0.35));
     }
@@ -17127,8 +17128,15 @@ ${built.html}
       let livePresenceRaf = 0;
       let livePresenceLastSent = 0;
       let livePresencePending = null;
-      let livePresencePtr = { nx: 0.5, ny: 0.35, visible: false };
-      const LIVE_PRESENCE_MIN_MS = 45;
+      let livePresencePtr = {
+        nx: 0.5,
+        ny: 0.35,
+        visible: false,
+        hit: null,
+        clientX: 0,
+        clientY: 0
+      };
+      const LIVE_PRESENCE_MIN_MS = 40;
 
       function deckScrollRatio(el) {
         if (!el) return { x: 0, y: 0 };
@@ -17140,6 +17148,83 @@ ${built.html}
         };
       }
 
+      function presenceRelBox(clientX, clientY, el) {
+        const r = el.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return null;
+        return {
+          rx: +Math.min(1, Math.max(0, (clientX - r.left) / r.width)).toFixed(4),
+          ry: +Math.min(1, Math.max(0, (clientY - r.top) / r.height)).toFixed(4),
+          mode: "box"
+        };
+      }
+
+      function presenceRelContent(clientX, clientY, el) {
+        const r = el.getBoundingClientRect();
+        const sw = Math.max(1, el.scrollWidth);
+        const sh = Math.max(1, el.scrollHeight);
+        return {
+          rx: +Math.min(1, Math.max(0, (clientX - r.left + el.scrollLeft) / sw)).toFixed(4),
+          ry: +Math.min(1, Math.max(0, (clientY - r.top + el.scrollTop) / sh)).toFixed(4),
+          mode: "content"
+        };
+      }
+
+      function presenceElVisible(el) {
+        if (!el || el.hidden) return false;
+        const st = window.getComputedStyle(el);
+        return st.display !== "none" && st.visibility !== "hidden" && st.opacity !== "0";
+      }
+
+      function buildLivePresenceHit(clientX, clientY, root) {
+        if (!root) return null;
+        const stack = document.elementsFromPoint(clientX, clientY) || [];
+        for (const node of stack) {
+          if (!root.contains(node)) continue;
+          const card = node.closest?.(".deck-card");
+          if (card && root.contains(card)) {
+            const box = presenceRelBox(clientX, clientY, card);
+            if (!box) break;
+            return {
+              zone: "card",
+              id: card.getAttribute("data-sub-id") || "",
+              no: String(card.getAttribute("data-card-no") || card.querySelector(".deck-card-no")?.textContent || "").trim(),
+              ...box
+            };
+          }
+        }
+        const reader = root.querySelector(".report-deck-reader");
+        if (presenceElVisible(reader)) {
+          const r = reader.getBoundingClientRect();
+          if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+            return { zone: "reader", ...presenceRelContent(clientX, clientY, reader) };
+          }
+        }
+        const table = root.querySelector(".report-deck-table");
+        if (presenceElVisible(table)) {
+          const r = table.getBoundingClientRect();
+          if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+            return { zone: "table", ...presenceRelContent(clientX, clientY, table) };
+          }
+        }
+        const arena = root.querySelector(".report-deck-arena");
+        if (presenceElVisible(arena)) {
+          const r = arena.getBoundingClientRect();
+          if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+            return { zone: "arena", ...presenceRelBox(clientX, clientY, arena) };
+          }
+        }
+        const head = root.querySelector(".report-deck-head");
+        if (presenceElVisible(head)) {
+          const r = head.getBoundingClientRect();
+          if (clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom) {
+            return { zone: "head", ...presenceRelBox(clientX, clientY, head) };
+          }
+        }
+        const panel = root.querySelector(".report-deck-panel") || root;
+        const box = presenceRelBox(clientX, clientY, panel);
+        return box ? { zone: "panel", ...box } : null;
+      }
+
       function collectLivePresencePayload(sessionNo) {
         const deck = $("reportDeck");
         const panel = deck?.querySelector(".report-deck-panel");
@@ -17149,6 +17234,7 @@ ${built.html}
           nx: +livePresencePtr.nx.toFixed(4),
           ny: +livePresencePtr.ny.toFixed(4),
           visible: !!livePresencePtr.visible,
+          hit: livePresencePtr.hit,
           scroll: {
             table: deckScrollRatio($("reportDeckTable")),
             reader: deckScrollRatio($("reportDeckReader"))
@@ -17189,6 +17275,7 @@ ${built.html}
         }
         livePresencePending = null;
         livePresencePtr.visible = false;
+        livePresencePtr.hit = null;
         const deck = $("reportDeck");
         if (deck && deck._livePresenceBound) {
           const panel = deck.querySelector(".report-deck-panel");
@@ -17221,6 +17308,7 @@ ${built.html}
                 nx: 0.5,
                 ny: 0.35,
                 visible: false,
+                hit: null,
                 scroll: { table: { x: 0, y: 0 }, reader: { x: 0, y: 0 } },
                 t: Date.now()
               }
@@ -17239,21 +17327,31 @@ ${built.html}
 
         const onMove = (e) => {
           if (!livePresenceActive) return;
-          if (e.pointerType === "touch" && e.buttons === 0 && e.type === "pointermove") {
-            /* allow finger tracking while dragging */
-          }
           const rect = panel.getBoundingClientRect();
           if (rect.width < 1 || rect.height < 1) return;
           livePresencePtr.nx = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
           livePresencePtr.ny = Math.min(1, Math.max(0, (e.clientY - rect.top) / rect.height));
+          livePresencePtr.clientX = e.clientX;
+          livePresencePtr.clientY = e.clientY;
+          livePresencePtr.hit = buildLivePresenceHit(e.clientX, e.clientY, deck);
           livePresencePtr.visible = true;
           queueLivePresence(sn);
         };
         const onLeave = () => {
           livePresencePtr.visible = false;
+          livePresencePtr.hit = null;
           queueLivePresence(sn);
         };
-        const onScroll = () => queueLivePresence(sn);
+        const onScroll = () => {
+          if (livePresencePtr.visible) {
+            livePresencePtr.hit = buildLivePresenceHit(
+              livePresencePtr.clientX,
+              livePresencePtr.clientY,
+              deck
+            );
+          }
+          queueLivePresence(sn);
+        };
 
         panel.addEventListener("pointermove", onMove, { passive: true });
         panel.addEventListener("pointerdown", onMove, { passive: true });
@@ -18003,7 +18101,7 @@ ${pageCss}</style>
                 : "";
           return `<button type="button" class="deck-card is-empty${
             lessonSession === 3 || lessonSession === 4 ? (lessonSession === 3 ? " is-s3" : " is-s4") : ""
-          }" data-empty="1" style="--deal:${dealIdx}" disabled title="미제출">
+          }" data-empty="1" data-card-no="${escapeHtml(no)}" style="--deal:${dealIdx}" disabled title="미제출">
             <div class="deck-card-rank"><span class="deck-card-no">${escapeHtml(no)}</span></div>
             ${art}
             <div class="deck-card-name">${escapeHtml(displayName)}</div>
@@ -18055,7 +18153,7 @@ ${pageCss}</style>
 
         return `<button type="button" class="deck-card${
           sessionNo === 3 ? " is-s3" : sessionNo === 4 ? " is-s4" : ""
-        }" data-sub-id="${escapeHtml(latest.id)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
+        }" data-sub-id="${escapeHtml(latest.id)}" data-card-no="${escapeHtml(no)}" style="--deal:${dealIdx}" title="펼쳐서 내용 보기">
           <div class="deck-card-rank">
             <span class="deck-card-no">${escapeHtml(no)}</span>
             ${badge}
