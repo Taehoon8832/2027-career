@@ -5141,8 +5141,137 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     showDraftToast._timer = setTimeout(() => t.classList.remove("is-on"), Math.max(1200, Number(ms) || 2000));
   }
 
-  const SAVE_KEEP_HINT_HTML =
-    '추후 "나만의 웹 페이지" 제작을 위해, HTML 저장 후 반드시 <span class="save-keep-hint-keep">보관해두세요~!</span>';
+  function hideVaultSubmitTip() {
+    const tip = document.getElementById("vaultSubmitTip");
+    const btn = document.getElementById("btnSubmitActivity");
+    btn?.classList.remove("is-vault-tip");
+    if (hideVaultSubmitTip._onReposition) {
+      window.removeEventListener("resize", hideVaultSubmitTip._onReposition);
+      window.removeEventListener("scroll", hideVaultSubmitTip._onReposition, true);
+      hideVaultSubmitTip._onReposition = null;
+    }
+    if (tip?._cleanup) {
+      try {
+        tip._cleanup();
+      } catch {
+        /* ignore */
+      }
+      tip._cleanup = null;
+    }
+    tip?.remove();
+  }
+
+  function positionVaultSubmitTip() {
+    const tip = document.getElementById("vaultSubmitTip");
+    const btn = document.getElementById("btnSubmitActivity");
+    if (!tip || !btn) return false;
+    const ring = tip.querySelector(".vault-submit-tip-ring");
+    const label = tip.querySelector(".vault-submit-tip-label");
+    if (!ring || !label) return false;
+
+    const r = btn.getBoundingClientRect();
+    if (r.width < 8 || r.height < 8) return false;
+
+    const pad = 5;
+    ring.style.top = `${Math.round(r.top - pad)}px`;
+    ring.style.left = `${Math.round(r.left - pad)}px`;
+    ring.style.width = `${Math.round(r.width + pad * 2)}px`;
+    ring.style.height = `${Math.round(r.height + pad * 2)}px`;
+    ring.style.borderRadius = `${Math.max(8, Math.round(r.height / 2) + 2)}px`;
+
+    label.classList.remove("is-above", "is-below");
+    const labelW = Math.min(320, window.innerWidth - 20);
+    label.style.width = `${labelW}px`;
+    label.style.maxWidth = `${labelW}px`;
+
+    const gap = 10;
+    let place = "below";
+    let top = r.bottom + gap;
+    const labelH = label.offsetHeight || 52;
+    if (top + labelH > window.innerHeight - 10 && r.top - gap - labelH > 10) {
+      place = "above";
+      top = r.top - gap - labelH;
+    }
+    let left = r.right - labelW;
+    if (left < 10) left = 10;
+    if (left + labelW > window.innerWidth - 10) {
+      left = Math.max(10, window.innerWidth - labelW - 10);
+    }
+
+    label.classList.add(place === "above" ? "is-above" : "is-below");
+    const arrowX = Math.min(
+      Math.max(18, r.left + r.width / 2 - left),
+      labelW - 18
+    );
+    label.style.setProperty("--tip-arrow-left", `${Math.round(arrowX)}px`);
+    label.style.top = `${Math.round(top)}px`;
+    label.style.left = `${Math.round(left)}px`;
+    return true;
+  }
+
+  function showVaultSubmitTip() {
+    hideVaultSubmitTip();
+    const btn = document.getElementById("btnSubmitActivity");
+    if (!btn) return;
+
+    const tip = document.createElement("div");
+    tip.id = "vaultSubmitTip";
+    tip.className = "vault-submit-tip";
+    tip.setAttribute("aria-live", "polite");
+    tip.innerHTML = `
+      <div class="vault-submit-tip-ring" aria-hidden="true"></div>
+      <p class="vault-submit-tip-label">제출하기를 누르면 보관함으로 자동 저장됩니다.</p>`;
+    document.body.appendChild(tip);
+    btn.classList.add("is-vault-tip");
+
+    const place = () => {
+      if (!positionVaultSubmitTip()) return false;
+      requestAnimationFrame(() => tip.classList.add("is-on"));
+      return true;
+    };
+
+    let tries = 0;
+    const tryPlace = () => {
+      tries += 1;
+      if (place() || tries >= 24) return;
+      setTimeout(tryPlace, 70);
+    };
+    tryPlace();
+
+    const onReposition = () => positionVaultSubmitTip();
+    hideVaultSubmitTip._onReposition = onReposition;
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
+
+    const holdMs = 3400;
+    const fadeTimer = setTimeout(() => {
+      tip.classList.add("is-out");
+      tip.classList.remove("is-on");
+      btn.classList.remove("is-vault-tip");
+    }, holdMs);
+    const removeTimer = setTimeout(() => {
+      hideVaultSubmitTip();
+    }, holdMs + 550);
+
+    const dismissEarly = () => hideVaultSubmitTip();
+    btn.addEventListener("click", dismissEarly, { once: true });
+
+    tip._cleanup = () => {
+      clearTimeout(fadeTimer);
+      clearTimeout(removeTimer);
+      btn.removeEventListener("click", dismissEarly);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
+      hideVaultSubmitTip._onReposition = null;
+    };
+  }
+
+  function scheduleVaultSubmitTip() {
+    void (async () => {
+      await new Promise((r) => setTimeout(r, 360));
+      showVaultSubmitTip();
+    })();
+  }
 
   function hideSaveKeepHint() {
     const hint = document.getElementById("saveKeepHint");
@@ -5153,110 +5282,11 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       window.removeEventListener("scroll", hideSaveKeepHint._onReposition, true);
       hideSaveKeepHint._onReposition = null;
     }
-    if (hint) {
-      hint.hidden = true;
-      hint.setAttribute("aria-hidden", "true");
-    }
-  }
-
-  function placeSaveKeepHint() {
-    const hint = document.getElementById("saveKeepHint");
-    const ring = hint?.querySelector(".save-keep-hint-ring");
-    const card = hint?.querySelector(".save-keep-hint-card");
-    const btn = document.getElementById("btnSaveSheet");
-    if (!hint || hint.hidden || !ring || !card || !btn) return;
-
-    const r = btn.getBoundingClientRect();
-    const pad = 5;
-    ring.style.top = `${Math.round(r.top - pad)}px`;
-    ring.style.left = `${Math.round(r.left - pad)}px`;
-    ring.style.width = `${Math.round(r.width + pad * 2)}px`;
-    ring.style.height = `${Math.round(r.height + pad * 2)}px`;
-
-    card.style.visibility = "hidden";
-    card.style.top = "0";
-    card.style.left = "0";
-    const cw = card.offsetWidth || 320;
-    const ch = card.offsetHeight || 120;
-    const gap = 14;
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    const edge = 10;
-    const btnCenterX = r.left + r.width / 2;
-
-    // 첨부 이미지와 같이: 다운로드 버튼 바로 아래, 화살표가 버튼 중앙을 가리킴
-    let top = r.bottom + gap;
-    let left = Math.round(btnCenterX - cw / 2);
-    if (left < edge) left = edge;
-    if (left + cw > vw - edge) left = Math.max(edge, vw - cw - edge);
-
-    let above = false;
-    if (top + ch > vh - edge) {
-      top = Math.max(edge, r.top - ch - gap);
-      above = top + ch <= r.top;
-    }
-
-    const arrowLeft = Math.min(cw - 16, Math.max(16, btnCenterX - left));
-    card.style.setProperty("--hint-arrow-left", `${Math.round(arrowLeft)}px`);
-    card.classList.toggle("is-above", above);
-    card.style.top = `${Math.round(top)}px`;
-    card.style.left = `${Math.round(left)}px`;
-    card.style.visibility = "visible";
+    if (hint) hint.remove();
   }
 
   function showSaveKeepHint() {
-    const btn = document.getElementById("btnSaveSheet");
-    if (!btn) return;
-    hideSaveKeepHint();
-
-    let hint = document.getElementById("saveKeepHint");
-    if (!hint) {
-      hint = document.createElement("div");
-      hint.id = "saveKeepHint";
-      hint.className = "save-keep-hint";
-      hint.innerHTML = `
-        <div class="save-keep-hint-ring" aria-hidden="true"></div>
-        <div class="save-keep-hint-card" role="dialog" aria-modal="true" aria-labelledby="saveKeepHintMsg">
-          <p class="save-keep-hint-msg" id="saveKeepHintMsg"></p>
-          <div class="save-keep-hint-actions">
-            <button type="button" class="save-keep-hint-ok" id="btnSaveKeepHintOk">확인</button>
-          </div>
-        </div>`;
-      document.body.appendChild(hint);
-      hint.querySelector("#btnSaveKeepHintOk")?.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        hideSaveKeepHint();
-      });
-    }
-
-    const msgEl = hint.querySelector(".save-keep-hint-msg");
-    if (msgEl) msgEl.innerHTML = SAVE_KEEP_HINT_HTML;
-
-    btn.classList.add("is-save-hint");
-    if (!btn.dataset.saveHintDismissBound) {
-      btn.dataset.saveHintDismissBound = "1";
-      btn.addEventListener("click", () => {
-        const h = document.getElementById("saveKeepHint");
-        if (h && !h.hidden) hideSaveKeepHint();
-      });
-    }
-    hint.hidden = false;
-    hint.setAttribute("aria-hidden", "false");
-    try {
-      btn.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
-    } catch (_) {
-      /* ignore */
-    }
-    placeSaveKeepHint();
-
-    const onReposition = () => placeSaveKeepHint();
-    hideSaveKeepHint._onReposition = onReposition;
-    window.addEventListener("resize", onReposition);
-    window.addEventListener("scroll", onReposition, true);
-    requestAnimationFrame(placeSaveKeepHint);
-    setTimeout(placeSaveKeepHint, 320);
-    setTimeout(() => hint.querySelector("#btnSaveKeepHintOk")?.focus(), 80);
+    /* 저장 안내 팝업·하이라이트 제거됨 */
   }
 
   function bindDraftAutosave() {
@@ -5675,6 +5705,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       scheduleDraftRestore();
       bindDraftAutosave();
       scheduleLiveHintCoach();
+      scheduleVaultSubmitTip();
       return;
     }
 
@@ -5767,6 +5798,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     document.getElementById("btnConfirmSubmit").addEventListener("click", submitActivity);
     prefillCodeFromUrl();
     scheduleLiveHintCoach();
+    scheduleVaultSubmitTip();
   }
 
   function setMsg(text, type) {
@@ -5993,11 +6025,18 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     light.setAttribute("role", "dialog");
     light.setAttribute("aria-modal", "true");
     light.setAttribute("aria-labelledby", "vaultTitle");
+    if (!document.getElementById("vaultNotoSans")) {
+      const font = document.createElement("link");
+      font.id = "vaultNotoSans";
+      font.rel = "stylesheet";
+      font.href =
+        "https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;600;700;800&display=swap";
+      document.head.appendChild(font);
+    }
     light.innerHTML = `
       <div class="vault-panel" id="vaultPanel">
         <div class="vault-head">
           <div class="vault-head-copy">
-            <p class="vault-kicker">Archive</p>
             <h3 id="vaultTitle">보관함</h3>
             <p>이 기기에 저장된 제출 보고서입니다. 다른 기기라면 아래에서 불러오기를 요청하세요.</p>
           </div>
@@ -6075,11 +6114,12 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       .map(
         (it) => `
       <article class="vault-item" data-vault-id="${escapeHtml(it.id)}">
-        <h4 class="vault-item-title">${escapeHtml(it.title || "보고서")}</h4>
-        <p class="vault-item-meta">${escapeHtml(formatVaultTime(it.savedAt))} · ${escapeHtml(it.code || "—")} · ${escapeHtml(it.studentNo || "")} ${escapeHtml(it.studentName || "")}</p>
+        <div class="vault-item-main">
+          <button type="button" class="vault-item-title" data-vault-open="${escapeHtml(it.id)}" title="제출 보고서 열기">${escapeHtml(it.title || "보고서")}</button>
+          <p class="vault-item-meta">${escapeHtml(formatVaultTime(it.savedAt))} · ${escapeHtml(it.code || "—")} · ${escapeHtml(it.studentNo || "")} ${escapeHtml(it.studentName || "")}</p>
+        </div>
         <div class="vault-item-actions">
-          <button type="button" class="vault-btn-primary" data-vault-load="${escapeHtml(it.id)}">불러와 작성</button>
-          <button type="button" class="vault-btn-ghost" data-vault-open="${escapeHtml(it.id)}">새 탭으로 보기</button>
+          <button type="button" class="vault-btn-primary" data-vault-load="${escapeHtml(it.id)}">수정</button>
           <button type="button" class="vault-btn-danger" data-vault-del="${escapeHtml(it.id)}">삭제</button>
         </div>
       </article>`
@@ -6094,7 +6134,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     body.querySelectorAll("[data-vault-open]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-vault-open");
-        openVaultItemTab(id);
+        void openVaultItemTab(id);
       });
     });
     body.querySelectorAll("[data-vault-del]").forEach((btn) => {
@@ -6115,6 +6155,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     paintVaultBody();
     light.hidden = false;
     light.classList.add("is-open");
+    if (!vaultReportCssPromise) vaultReportCssPromise = loadActivityCssText();
     void bindVaultChannel(getSubmitCodeFromPage() || getDraftCodeKey());
   }
 
@@ -6151,17 +6192,206 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
     }
   }
 
-  function openVaultItemTab(id) {
+  let vaultReportCssPromise = null;
+
+  function vaultReportChromeCss() {
+    return `
+html,body{margin:0;background:#f3f1ea}
+body{
+  padding:calc(18px + env(safe-area-inset-top,0px)) 16px calc(28px + env(safe-area-inset-bottom,0px));
+  font-family:"Noto Sans KR",Pretendard,sans-serif;
+  color:#1f1e1d;
+}
+.student-activity-export{
+  width:min(820px,100%);
+  margin:0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  box-sizing:border-box;
+}
+.student-activity-export > .topbar,
+.student-activity-export > .shell,
+.student-activity-export > .eval-card{
+  width:100%;
+  max-width:100%;
+  box-sizing:border-box;
+}
+.shell{
+  width:100%!important;
+  max-width:none!important;
+  margin:0!important;
+  padding:0!important;
+  zoom:1!important;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.shell > .eval-card,
+.shell > .hero-card,
+.shell > .activity-card{
+  margin:0!important;
+  width:100%;
+  box-sizing:border-box;
+}
+.submit-fab,.overlay,.hero-qr-wrap,.topbar-actions,
+.sheet-tools,.zoom-controls,.draft-controls,.time-watch,
+.html-forge-copy,.html-forge-badge,.lesson-part-tools,
+.inf-kakao-btn,.wc-btn,.wc-help,.no-print,
+.na-manual-info,.na-info-box,.student-info,.info-box,
+#sheetStudentNo,#sheetStudentName,#studentId,#studentName{display:none!important}
+input,textarea,select{pointer-events:none;caret-color:transparent}
+input::placeholder,textarea::placeholder{color:transparent!important;opacity:0!important;-webkit-text-fill-color:transparent!important}
+.na-card textarea.is-blank,.activity-card .na-card textarea.is-blank,
+.na-card textarea[data-blank="1"],.activity-card .na-card textarea[data-blank="1"],
+.q-item input.is-blank,.bingo-cell textarea.is-blank,.reflect-field textarea.is-blank,
+.swot-cell input.is-blank,.swot-cell textarea.is-blank,.swot-step input.is-blank,
+.swot-card textarea.is-blank,.swot-plan textarea.is-blank,
+.field input.is-blank,.field textarea.is-blank,input.is-blank,textarea.is-blank{
+  background:#fff!important;
+  box-shadow:inset 0 0 0 1px #e5e7eb!important;
+  color:#94a3b8!important;
+}
+.student-activity-export .topbar{
+  position:relative!important;
+  top:auto!important;
+  left:auto!important;
+  right:auto!important;
+  width:100%!important;
+  margin:0!important;
+  padding:10px 14px!important;
+  border:2px solid #1f1e1d!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+}
+.topbar .brand{
+  width:28px;height:28px;flex-shrink:0;
+  display:grid;place-items:center;
+  border-radius:8px;background:#c96442;color:#fff;
+  font:800 14px/1 Georgia,serif;
+}
+.topbar .chip{
+  display:inline-flex;align-items:center;
+  min-height:22px;padding:0 8px;border-radius:999px;
+  background:#fff1ea;color:#8c4022;
+  font:700 11px/1 "Noto Sans KR",sans-serif;
+}
+.topbar .top-meta strong{
+  display:block;margin-top:3px;
+  font:800 15px/1.25 "Noto Sans KR",sans-serif;
+  letter-spacing:-0.02em;color:#1f1e1d;
+}
+.hero-card,.activity-card{
+  box-shadow:none!important;
+  border-radius:14px!important;
+}
+.hero-card{
+  padding:14px 16px!important;
+  grid-template-columns:1fr!important;
+}
+.hero-card h1{
+  margin:4px 0 6px!important;
+  font:800 20px/1.25 "Noto Sans KR",sans-serif!important;
+  letter-spacing:-0.03em;
+}
+.hero-card p{margin:0!important;font:600 13px/1.4 "Noto Sans KR",sans-serif!important;color:#57534e}
+.activity-card{padding:14px 14px 16px!important}
+.activity-card > h2{
+  margin:0 0 10px!important;
+  font:800 16px/1.3 "Noto Sans KR",sans-serif!important;
+}
+.report-close{
+  position:fixed;top:max(10px,env(safe-area-inset-top,0px));right:max(10px,env(safe-area-inset-right,0px));
+  z-index:100;display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  min-width:44px;min-height:44px;padding:0 14px;border:2px solid #1f1e1d;border-radius:4px;
+  background:#fff;color:#1f1e1d;font:700 14px/1 "Noto Sans KR",sans-serif;cursor:pointer;
+  box-shadow:0 4px 14px rgba(31,30,29,0.16);touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.report-close svg{width:18px;height:18px;stroke:currentColor;stroke-width:2.2;fill:none;stroke-linecap:round}
+.report-close:active{transform:scale(0.96)}
+@media (max-width:720px){
+  body{padding:14px 10px 22px}
+  .report-close{padding:0;width:46px;height:46px}
+  .report-close span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+  .hero-card h1{font-size:17px!important}
+  .student-activity-export{gap:10px}
+  .shell{gap:10px}
+}
+`.trim();
+  }
+
+  function normalizeVaultReportBody(raw) {
+    const html = String(raw || "").trim();
+    if (!html) return "";
+    if (/^<!DOCTYPE/i.test(html) || /^<html[\s>]/i.test(html)) return html;
+    if (/student-activity-export/i.test(html)) return html;
+    return `<div class="student-activity-export">${html}</div>`;
+  }
+
+  async function buildVaultReportDocument(item) {
+    if (!vaultReportCssPromise) vaultReportCssPromise = loadActivityCssText();
+    const css = await vaultReportCssPromise;
+    const bodyHtml = normalizeVaultReportBody(item.content);
+    if (/^<!DOCTYPE/i.test(bodyHtml) || /^<html[\s>]/i.test(bodyHtml)) {
+      return bodyHtml;
+    }
+    const title = escapeHtml(item.title || "제출 보고서");
+    return `<!DOCTYPE html><html lang="ko"><head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>${title}</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@500;600;700;800&family=Noto+Serif+KR:wght@400;600;700&display=swap"/>
+<style>
+${css}
+${vaultReportChromeCss()}
+</style>
+</head><body>
+<button type="button" class="report-close" onclick="window.close()" aria-label="닫기" title="닫기">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+  <span>닫기</span>
+</button>
+${bodyHtml}
+</body></html>`;
+  }
+
+  async function openVaultItemTab(id) {
     const item = readVaultItems().find((x) => x.id === id);
     if (!item?.content) return;
-    const w = window.open("", "_blank");
+    // 클릭 직후 동기 오픈 → 팝업 차단 방지
+    const w = window.open("about:blank", "_blank");
     if (!w) {
       showDraftToast("팝업이 차단되었습니다. 새 탭 허용 후 다시 시도해 주세요.", 2800);
       return;
     }
-    w.document.open();
-    w.document.write(String(item.content));
-    w.document.close();
+    try {
+      w.document.write(
+        '<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>불러오는 중</title></head>' +
+          '<body style="margin:0;padding:24px;font:600 15px/1.5 \'Noto Sans KR\',sans-serif;color:#4a4845;background:#f7f4ee">불러오는 중…</body></html>'
+      );
+      w.document.close();
+    } catch {
+      /* ignore */
+    }
+    try {
+      const doc = await buildVaultReportDocument(item);
+      w.document.open();
+      w.document.write(doc);
+      w.document.close();
+    } catch (e) {
+      console.warn(e);
+      showDraftToast("보고서를 열지 못했습니다.", 2400);
+      try {
+        w.close();
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   async function bindVaultChannel(code) {
@@ -6328,7 +6558,6 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       setTimeout(() => {
         document.getElementById("submitOverlay")?.classList.remove("is-open");
         setMsg("");
-        showSaveKeepHint();
       }, 1200);
     } catch (err) {
       console.error(err);

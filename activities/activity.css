@@ -384,6 +384,16 @@ button, .submit-fab, a { touch-action: manipulation; }
   background: linear-gradient(145deg, #d88861, var(--accent) 50%, var(--accent-deep));
   box-shadow: 0 8px 18px rgba(201, 100, 66, 0.28);
   font: 700 13px/1 var(--sans);
+  transition: box-shadow 0.25s ease, outline-color 0.25s ease;
+}
+.submit-fab.is-vault-tip {
+  outline: 2.5px solid #2563eb;
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.22),
+    0 8px 22px rgba(37, 99, 235, 0.28);
+  z-index: 40;
+  position: relative;
 }
 .submit-fab svg {
   width: 18px; height: 18px; stroke: currentColor; fill: none;
@@ -443,6 +453,7 @@ button, .submit-fab, a { touch-action: manipulation; }
 
 /* —— 보관함 (로컬 제출 아카이브) —— */
 .vault-lightbox {
+  --vault-font: "Noto Sans KR", Pretendard, sans-serif;
   position: fixed;
   inset: 0;
   z-index: 70;
@@ -450,67 +461,54 @@ button, .submit-fab, a { touch-action: manipulation; }
   align-items: flex-end;
   justify-content: center;
   padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
-  background: rgba(18, 17, 16, 0.48);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(31, 30, 29, 0.42);
 }
 .vault-lightbox.is-open { display: flex; }
 @media (min-width: 720px) {
   .vault-lightbox { align-items: center; }
 }
 .vault-panel {
-  width: min(520px, 100%);
-  max-height: min(88dvh, 760px);
+  width: min(560px, 100%);
+  max-height: min(88dvh, 720px);
   display: flex;
   flex-direction: column;
-  border-radius: 22px 22px 18px 18px;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  background:
-    radial-gradient(120% 80% at 10% -10%, rgba(255, 214, 170, 0.22), transparent 50%),
-    linear-gradient(165deg, #1c1b1a 0%, #2a2724 48%, #1a1918 100%);
-  color: #f5f0ea;
-  box-shadow: 0 28px 64px rgba(0, 0, 0, 0.45);
+  border-radius: 4px;
+  border: 2px solid #1f1e1d;
+  background: linear-gradient(180deg, #faf9f7 0%, #f2f0eb 100%);
+  color: #1f1e1d;
+  box-shadow: 0 16px 40px rgba(31, 30, 29, 0.18);
   overflow: hidden;
-  animation: vaultIn 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-@keyframes vaultIn {
-  from { opacity: 0; transform: translateY(18px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  font-family: var(--vault-font);
 }
 .vault-head {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 18px 18px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 16px 16px 12px;
+  border-bottom: 2px solid #1f1e1d;
+  background: linear-gradient(180deg, #ffffff 0%, #f7f5f1 100%);
 }
 .vault-head-copy { flex: 1; min-width: 0; }
-.vault-kicker {
-  margin: 0 0 4px;
-  font: 600 11px/1.2 var(--sans);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(245, 240, 234, 0.55);
-}
 .vault-head h3 {
   margin: 0;
-  font: 700 20px/1.25 "Noto Sans KR", var(--sans);
+  font: 800 18px/1.3 var(--vault-font);
   letter-spacing: -0.03em;
-  color: #fffaf4;
+  color: #1f1e1d;
 }
 .vault-head p {
   margin: 6px 0 0;
-  font: 500 12.5px/1.45 var(--sans);
-  color: rgba(245, 240, 234, 0.62);
+  font: 500 12.5px/1.45 var(--vault-font);
+  color: #6b6860;
+  word-break: keep-all;
 }
 .vault-close {
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f0ea;
+  border: 2px solid #1f1e1d;
+  border-radius: 4px;
+  background: #fff;
+  color: #1f1e1d;
   cursor: pointer;
   display: grid;
   place-items: center;
@@ -520,40 +518,43 @@ button, .submit-fab, a { touch-action: manipulation; }
   stroke: currentColor; fill: none; stroke-width: 2;
   stroke-linecap: round;
 }
-.vault-close:hover { background: rgba(255, 255, 255, 0.14); }
+.vault-close:hover { background: #f3f1ec; }
+.vault-close:active { transform: scale(0.98); }
 .vault-tabs {
-  display: flex;
-  gap: 6px;
-  padding: 12px 14px 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border-bottom: 2px solid #1f1e1d;
 }
 .vault-tab {
-  flex: 1;
-  height: 40px;
+  height: 44px;
   border: 0;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(245, 240, 234, 0.7);
-  font: 700 13px/1 var(--sans);
+  border-radius: 0;
+  background: #ebe8e1;
+  color: #5c5952;
+  font: 700 13.5px/1 var(--vault-font);
   letter-spacing: -0.02em;
   cursor: pointer;
 }
+.vault-tab + .vault-tab { border-left: 2px solid #1f1e1d; }
 .vault-tab.is-on {
-  background: linear-gradient(145deg, #f0c7a0, #e8a87c 55%, #d88861);
-  color: #1f1410;
-  box-shadow: 0 6px 16px rgba(216, 136, 97, 0.28);
+  background: linear-gradient(180deg, #ffffff 0%, #f5f3ee 100%);
+  color: #1f1e1d;
 }
 .vault-body {
   flex: 1;
   min-height: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 14px;
+  padding: 12px;
+  background: linear-gradient(180deg, #f7f5f1 0%, #efece6 100%);
 }
 .vault-empty {
   margin: 28px 8px;
   text-align: center;
-  font: 500 13.5px/1.55 var(--sans);
-  color: rgba(245, 240, 234, 0.55);
+  font: 500 13.5px/1.55 var(--vault-font);
+  color: #6b6860;
+  word-break: keep-all;
 }
 .vault-list {
   display: flex;
@@ -561,51 +562,79 @@ button, .submit-fab, a { touch-action: manipulation; }
   gap: 10px;
 }
 .vault-item {
-  display: grid;
+  display: flex;
+  align-items: stretch;
   gap: 10px;
-  padding: 14px 14px 12px;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-radius: 4px;
+  border: 2px solid #1f1e1d;
+  background: linear-gradient(180deg, #ffffff 0%, #f8f6f2 100%);
+  box-shadow: 0 2px 0 rgba(31, 30, 29, 0.06);
+}
+.vault-item-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  justify-content: center;
 }
 .vault-item-title {
+  appearance: none;
+  display: block;
+  width: 100%;
   margin: 0;
-  font: 700 14.5px/1.35 "Noto Sans KR", var(--sans);
+  padding: 8px 10px;
+  border: 2px solid #1f1e1d;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #fffefb 0%, #f3f0ea 100%);
+  font: 700 13.5px/1.35 var(--vault-font);
   letter-spacing: -0.02em;
-  color: #fffaf4;
+  color: #1f1e1d;
+  text-align: left;
+  cursor: pointer;
   word-break: keep-all;
+  overflow-wrap: anywhere;
 }
+.vault-item-title:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #ebe7df 100%);
+}
+.vault-item-title:active { transform: scale(0.995); }
 .vault-item-meta {
   margin: 0;
-  font: 500 11.5px/1.4 var(--sans);
-  color: rgba(245, 240, 234, 0.5);
+  padding: 0 2px;
+  font: 500 11.5px/1.4 var(--vault-font);
+  color: #78746c;
 }
 .vault-item-actions {
+  flex-shrink: 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: row;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
 }
 .vault-item-actions button {
   height: 36px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 0;
-  font: 700 12.5px/1 var(--sans);
+  min-width: 52px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 2px solid #1f1e1d;
+  font: 700 12.5px/1 var(--vault-font);
   cursor: pointer;
+  white-space: nowrap;
 }
 .vault-btn-primary {
-  background: linear-gradient(145deg, #f0c7a0, #d88861);
-  color: #1f1410;
+  background: linear-gradient(180deg, #ffffff 0%, #e8e4dc 100%);
+  color: #1f1e1d;
 }
-.vault-btn-ghost {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f0ea;
-}
+.vault-btn-primary:hover { background: linear-gradient(180deg, #fff 0%, #ddd8ce 100%); }
 .vault-btn-danger {
-  background: rgba(220, 80, 60, 0.18);
-  color: #ffc9be;
-  margin-left: auto;
+  background: linear-gradient(180deg, #fff8f6 0%, #f3e0db 100%);
+  color: #8f2e22;
+  border-color: #8f2e22;
 }
+.vault-btn-danger:hover { background: linear-gradient(180deg, #fff 0%, #edd2cb 100%); }
 .vault-form {
   display: grid;
   gap: 12px;
@@ -614,55 +643,69 @@ button, .submit-fab, a { touch-action: manipulation; }
 .vault-form label {
   display: grid;
   gap: 6px;
-  font: 600 12px/1.2 var(--sans);
-  color: rgba(245, 240, 234, 0.72);
+  font: 700 12px/1.2 var(--vault-font);
+  color: #3f3c36;
 }
 .vault-form input {
   height: 46px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1.5px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.25);
-  color: #fffaf4;
-  font: 600 15px/1 var(--sans);
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 2px solid #1f1e1d;
+  background: #fff;
+  color: #1f1e1d;
+  font: 600 15px/1 var(--vault-font);
   outline: none;
 }
 .vault-form input:focus {
-  border-color: rgba(232, 168, 124, 0.7);
-  box-shadow: 0 0 0 3px rgba(216, 136, 97, 0.22);
+  box-shadow: 0 0 0 3px rgba(31, 30, 29, 0.12);
 }
 .vault-form-hint {
   margin: 0;
-  font: 500 12.5px/1.5 var(--sans);
-  color: rgba(245, 240, 234, 0.55);
+  font: 500 12.5px/1.5 var(--vault-font);
+  color: #6b6860;
+  word-break: keep-all;
 }
 .vault-form-go {
   height: 48px;
-  border: 0;
-  border-radius: 14px;
-  background: linear-gradient(145deg, #f0c7a0, #e8a87c 50%, #d88861);
-  color: #1f1410;
-  font: 800 14px/1 var(--sans);
+  border: 2px solid #1f1e1d;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #ffffff 0%, #e6e2da 100%);
+  color: #1f1e1d;
+  font: 800 14px/1 var(--vault-font);
   cursor: pointer;
-  box-shadow: 0 10px 24px rgba(216, 136, 97, 0.3);
 }
+.vault-form-go:hover { background: linear-gradient(180deg, #fff 0%, #d9d4ca 100%); }
 .vault-form-go:disabled { opacity: 0.55; cursor: wait; }
 .vault-status {
   margin: 0;
   min-height: 1.2em;
-  font: 600 12.5px/1.4 var(--sans);
-  color: #c8e6b8;
+  font: 600 12.5px/1.4 var(--vault-font);
+  color: #3f6a2c;
 }
-.vault-status.is-err { color: #ffb4a8; }
+.vault-status.is-err { color: #b23a2c; }
 .draft-fab.is-vault {
   border-color: #1f1e1d;
   background: #fff;
 }
 @media (max-width: 560px) {
-  .vault-panel { border-radius: 20px 20px 14px 14px; max-height: 92dvh; }
-  .vault-head h3 { font-size: 18px; }
-  .vault-item-actions button { flex: 1 1 auto; min-width: 0; }
-  .vault-btn-danger { margin-left: 0; width: 100%; }
+  .vault-panel { max-height: 92dvh; border-radius: 4px; }
+  .vault-head { padding: 14px 12px 10px; }
+  .vault-head h3 { font-size: 17px; }
+  .vault-body { padding: 10px; }
+  .vault-item {
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px;
+  }
+  .vault-item-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .vault-item-actions button {
+    min-height: 40px;
+    min-width: 64px;
+  }
+  .vault-item-title { font-size: 13px; padding: 10px; }
 }
 
 .sheet-tools {
@@ -852,12 +895,105 @@ button, .submit-fab, a { touch-action: manipulation; }
 
 /* live report deck styles: see live-report-deck.css (injected) */
 
-/* 제출 후 HTML 저장 안내 */
-.save-keep-hint {
+/* 활동지 첫 진입 — 제출하기 → 보관함 안내 */
+.vault-submit-tip {
   position: fixed;
   inset: 0;
-  z-index: 55;
+  z-index: 94;
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+.vault-submit-tip.is-on { opacity: 1; }
+.vault-submit-tip.is-out {
+  opacity: 0;
+  transition: opacity 0.45s ease;
+}
+.vault-submit-tip-ring {
+  position: fixed;
+  box-sizing: border-box;
+  border: 2.5px solid #2563eb;
+  background: transparent;
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.2),
+    0 8px 22px rgba(37, 99, 235, 0.22);
+  animation: vaultSubmitTipPulse 1.2s ease-in-out infinite;
+}
+.vault-submit-tip-label {
+  position: fixed;
+  z-index: 95;
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  border: 1.5px solid #1d4ed8;
+  background: linear-gradient(180deg, #eff6ff 0%, #dbeafe 100%);
+  color: #1e3a8a;
+  font: 800 13.5px/1.45 "Noto Sans KR", Pretendard, var(--sans);
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 10px 28px rgba(37, 99, 235, 0.22);
+  box-sizing: border-box;
+}
+.vault-submit-tip-label::before {
+  content: "";
+  position: absolute;
+  left: var(--tip-arrow-left, 50%);
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background: #eff6ff;
+  border-left: 1.5px solid #1d4ed8;
+  border-top: 1.5px solid #1d4ed8;
+  transform: rotate(45deg);
+}
+.vault-submit-tip-label.is-below::before { top: -6px; }
+.vault-submit-tip-label.is-above::before {
+  top: auto;
+  bottom: -6px;
+  border-left: 0;
+  border-top: 0;
+  border-right: 1.5px solid #1d4ed8;
+  border-bottom: 1.5px solid #1d4ed8;
+  background: #dbeafe;
+}
+@keyframes vaultSubmitTipPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), 0 8px 20px rgba(37, 99, 235, 0.18);
+  }
+  50% {
+    box-shadow: 0 0 0 7px rgba(37, 99, 235, 0.28), 0 10px 26px rgba(37, 99, 235, 0.28);
+  }
+}
+@media (max-width: 720px) {
+  .vault-submit-tip-label {
+    font-size: 12.5px;
+    line-height: 1.4;
+    padding: 10px 12px;
+  }
+}
+@media (max-width: 420px) {
+  .vault-submit-tip-label {
+    font-size: 12px;
+    padding: 9px 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vault-submit-tip-ring { animation: none; }
+  .vault-submit-tip,
+  .vault-submit-tip.is-out { transition: opacity 0.2s ease; }
+}
+@media print {
+  .vault-submit-tip { display: none !important; }
+  .submit-fab.is-vault-tip { outline: none; box-shadow: none; }
+}
+
+/* 제출 후 HTML 저장 안내 — 비활성 */
+.save-keep-hint,
+.save-keep-hint-ring,
+.save-keep-hint-card {
+  display: none !important;
 }
 .save-keep-hint[hidden] { display: none !important; }
 .save-keep-hint-ring {
