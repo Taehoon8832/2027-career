@@ -693,6 +693,20 @@ button, .submit-fab, a { touch-action: manipulation; }
   filter: brightness(0.98);
   box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.12);
 }
+.vault-btn-save {
+  background: var(--vault-green);
+  color: #2f6b45;
+  border-color: rgba(46, 125, 82, 0.32);
+}
+.vault-btn-save:hover {
+  filter: brightness(0.98);
+  box-shadow: 0 0 0 1px rgba(46, 125, 82, 0.16);
+}
+.vault-btn-save:disabled,
+.vault-btn-save.is-busy {
+  opacity: 0.6;
+  cursor: wait;
+}
 .vault-btn-danger,
 .vault-btn-del {
   background: var(--vault-red);
@@ -759,63 +773,6 @@ button, .submit-fab, a { touch-action: manipulation; }
   color: #2f7d52;
 }
 .vault-status.is-err { color: #b23a2c; }
-.vault-save-bar {
-  display: grid;
-  gap: 8px;
-  margin: 14px 0 4px;
-  padding: 12px 4px 6px;
-  border-top: 1.5px solid rgba(46, 125, 82, 0.18);
-}
-.vault-save-all {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 48px;
-  padding: 0 16px;
-  border: 1.5px solid rgba(46, 125, 82, 0.35);
-  border-radius: 999px;
-  background: linear-gradient(135deg, #e8f6ee 0%, #d9f0e4 48%, #eef8f2 100%);
-  color: #2f6b45;
-  font: 800 14.5px/1 "Noto Sans KR", Pretendard, sans-serif;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  box-shadow: 0 4px 14px rgba(61, 130, 90, 0.12);
-}
-.vault-save-all svg {
-  width: 20px;
-  height: 20px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  flex-shrink: 0;
-}
-.vault-save-all:hover {
-  filter: brightness(0.98);
-  box-shadow: 0 6px 18px rgba(61, 130, 90, 0.18);
-}
-.vault-save-all:active { transform: scale(0.985); }
-.vault-save-all:disabled,
-.vault-save-all.is-busy {
-  opacity: 0.62;
-  cursor: wait;
-}
-.vault-save-hint {
-  margin: 0;
-  text-align: center;
-  font: 500 11.5px/1.4 "Noto Sans KR", Pretendard, sans-serif;
-  color: #6b7a72;
-  word-break: keep-all;
-}
-@media (max-width: 560px) {
-  .vault-save-bar { margin-top: 12px; padding-top: 10px; }
-  .vault-save-all { min-height: 50px; font-size: 14px; }
-}
 .draft-fab.is-vault {
   border-color: #1f1e1d;
   background: #fff;
@@ -876,8 +833,9 @@ button, .submit-fab, a { touch-action: manipulation; }
   }
   .vault-item-actions button {
     min-height: 38px;
-    min-width: 58px;
-    padding: 0 14px;
+    min-width: 52px;
+    padding: 0 12px;
+    font-size: 12px;
   }
   .vault-item-title { font-size: 13.5px; }
   .vault-item-meta { white-space: normal; }

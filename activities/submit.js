@@ -6111,7 +6111,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       const code = getSubmitCodeFromPage() || getDraftCodeKey() || "";
       body.innerHTML = `
         <div class="vault-form">
-          <p class="vault-form-hint">🍀 전자기기가 바뀌었다면 &lt;활동지 코드번호, 학번, 이름&gt;으로 교사에게 불러오기를 요청할 수 있습니다. 📣선생님 제출 현황 화면에서 「전송하기」를 누르면 이 기기 보관함에 저장됩니다.</p>
+          <p class="vault-form-hint">🍀 전자기기가 바뀌었다면 &lt;활동지 코드번호, 학번, 이름&gt;로 교사에게 불러오기를 요청할 수 있습니다.  📣선생님 제출 현황 화면에서 「전송하기」를 누르면 이 기기 보관함에 저장됩니다.</p>
           <label>코드번호
             <input id="vaultReqCode" maxlength="16" autocomplete="off" spellcheck="false" value="${escapeHtml(String(code).toUpperCase())}" placeholder="예: BC3B9BB0" />
           </label>
@@ -6152,28 +6152,24 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
         <div class="vault-item-side">
           <span class="vault-item-date">${escapeHtml(formatVaultDateShort(it.savedAt))}</span>
           <div class="vault-item-actions">
+            <button type="button" class="vault-btn-save" data-vault-save="${escapeHtml(it.id)}" title="HTML로 저장">저장</button>
             <button type="button" class="vault-btn-edit" data-vault-load="${escapeHtml(it.id)}" title="작성 내용 불러와 수정">수정</button>
             <button type="button" class="vault-btn-del" data-vault-del="${escapeHtml(it.id)}">삭제</button>
           </div>
         </div>
       </article>`
         )
-        .join("")}</div>
-      <div class="vault-save-bar">
-        <button type="button" class="vault-save-all" id="btnVaultSaveAll" title="모든 보고서를 HTML로 저장">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M12 3v12"/>
-            <path d="M7 11l5 5 5-5"/>
-            <path d="M5 19h14"/>
-          </svg>
-          <span>저장하기</span>
-        </button>
-        <p class="vault-save-hint">모든 보고서를 HTML로 저장 · 저장 위치를 선택할 수 있습니다</p>
-      </div>`;
+        .join("")}</div>`;
     body.querySelectorAll("[data-vault-load]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-vault-load");
         loadVaultItemToSheet(id);
+      });
+    });
+    body.querySelectorAll("[data-vault-save]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-vault-save");
+        void saveVaultItemAsHtml(id, btn);
       });
     });
     body.querySelectorAll("[data-vault-open]").forEach((btn) => {
@@ -6191,9 +6187,6 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
         paintVaultBody();
         showDraftToast("보관함에서 삭제했습니다.", 1600);
       });
-    });
-    body.querySelector("#btnVaultSaveAll")?.addEventListener("click", () => {
-      void saveAllVaultReportsAsHtml();
     });
   }
 
@@ -6527,76 +6520,45 @@ ${bodyHtml}
     return name;
   }
 
-  function downloadVaultHtmlFile(name, html) {
-    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  function downloadVaultBlob(name, blob) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = name;
+    a.rel = "noopener";
     document.body.appendChild(a);
     a.click();
     a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    setTimeout(() => URL.revokeObjectURL(url), 2500);
   }
 
-  async function saveAllVaultReportsAsHtml() {
-    const items = readVaultItems().filter((x) => x && x.content);
-    if (!items.length) {
+  function downloadVaultHtmlFile(name, html) {
+    downloadVaultBlob(name, new Blob([html], { type: "text/html;charset=utf-8" }));
+  }
+
+  async function saveVaultItemAsHtml(id, triggerBtn) {
+    const item = readVaultItems().find((x) => x.id === id);
+    if (!item?.content) {
       showDraftToast("저장할 보고서가 없습니다.", 2000);
       return;
     }
-    const btn = document.getElementById("btnVaultSaveAll");
-    if (btn) {
-      btn.disabled = true;
-      btn.classList.add("is-busy");
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.classList.add("is-busy");
     }
     try {
-      if (!vaultReportCssPromise) vaultReportCssPromise = loadActivityCssText();
-      await vaultReportCssPromise;
+      const html = await buildVaultReportDocument(item);
       const used = new Set();
-      const files = [];
-      for (const item of items) {
-        const html = await buildVaultReportDocument(item);
-        files.push({ name: vaultExportFileName(item, used), html });
-      }
-
-      if (typeof window.showDirectoryPicker === "function") {
-        try {
-          const dir = await window.showDirectoryPicker({ mode: "readwrite" });
-          for (const file of files) {
-            const handle = await dir.getFileHandle(file.name, { create: true });
-            const writable = await handle.createWritable();
-            await writable.write(file.html);
-            await writable.close();
-          }
-          showDraftToast(`${files.length}개 HTML을 선택한 폴더에 저장했습니다.`, 2800);
-          return;
-        } catch (e) {
-          if (e && (e.name === "AbortError" || e.name === "NotAllowedError")) {
-            showDraftToast("저장이 취소되었습니다.", 1800);
-            return;
-          }
-          console.warn(e);
-        }
-      }
-
-      for (let i = 0; i < files.length; i++) {
-        downloadVaultHtmlFile(files[i].name, files[i].html);
-        if (i < files.length - 1) {
-          await new Promise((r) => setTimeout(r, 160));
-        }
-      }
-      showDraftToast(
-        `${files.length}개 HTML 저장을 시작했습니다. (다운로드 폴더를 확인하세요)`,
-        3000
-      );
+      const name = vaultExportFileName(item, used);
+      downloadVaultHtmlFile(name, html);
+      showDraftToast("HTML 다운로드를 시작했습니다.", 2000);
     } catch (e) {
       console.warn(e);
       showDraftToast("저장에 실패했습니다.", 2200);
     } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.classList.remove("is-busy");
+      if (triggerBtn) {
+        triggerBtn.disabled = false;
+        triggerBtn.classList.remove("is-busy");
       }
     }
   }
