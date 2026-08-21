@@ -6111,7 +6111,7 @@ body{margin:0;background:#14532d;font-family:"Noto Sans KR",sans-serif}
       const code = getSubmitCodeFromPage() || getDraftCodeKey() || "";
       body.innerHTML = `
         <div class="vault-form">
-          <p class="vault-form-hint">전자기기가 바뀌었다면 활동지 코드번호·학번·이름으로 교사에게 불러오기를 요청할 수 있습니다. 교사 제출 현황에서 「전송하기」를 누르면 이 기기 보관함에 저장됩니다.</p>
+          <p class="vault-form-hint">✅ 전자기기가 바뀌었다면 &lt;활동지 코드번호, 학번, 이름&gt;으로 교사에게 불러오기를 요청할 수 있습니다.<br>✔ 선생님 제출 현황 화면에서 「전송하기」를 누르면 이 기기 보관함에 저장됩니다.</p>
           <label>코드번호
             <input id="vaultReqCode" maxlength="16" autocomplete="off" spellcheck="false" value="${escapeHtml(String(code).toUpperCase())}" placeholder="예: BC3B9BB0" />
           </label>
