@@ -2499,7 +2499,7 @@ ${linkedCss}
         const css = document.createElement("link");
         css.id = "liveReportDeckCss";
         css.rel = "stylesheet";
-        css.href = "./live-report-deck.css?v=2138";
+        css.href = "./live-report-deck.css?v=2141";
         document.head.appendChild(css);
       }
       let root = document.getElementById("liveReportDeck");
@@ -3123,7 +3123,73 @@ ${linkedCss}
       });
     }
 
-    function paintLiveArena(arena, sn) {
+    function inferGradeClassFromNos(nos) {
+      const votes = new Map();
+      for (const raw of nos || []) {
+        const digits = String(raw || "").replace(/\D/g, "");
+        if (!digits) continue;
+        let g = 0;
+        let c = 0;
+        if (digits.length >= 5) {
+          g = Number(digits[0]);
+          c = Number(digits.slice(1, 3));
+        } else if (digits.length === 4) {
+          g = Number(digits[0]);
+          c = Number(digits[1]);
+        } else {
+          continue;
+        }
+        if (!(g >= 1 && g <= 6 && c >= 1 && c <= 40)) continue;
+        const key = `${g}:${c}`;
+        votes.set(key, (votes.get(key) || 0) + 1);
+      }
+      let best = null;
+      let bestN = 0;
+      for (const [key, n] of votes) {
+        if (n > bestN) {
+          best = key;
+          bestN = n;
+        }
+      }
+      if (!best || bestN < 1) return null;
+      const [grade, classNo] = best.split(":").map(Number);
+      return { grade, classNo, votes: bestN };
+    }
+
+    function formatLiveNowClassLabel(grade, classNo, dept) {
+      const g = Number(grade) || 1;
+      const c = Number(classNo) || 1;
+      const d = String(dept || "").trim();
+      return d ? `${g}학년 ${c}반 · ${d}` : `${g}학년 ${c}반`;
+    }
+
+    function resolveLiveNowClassLabel(arena, cards) {
+      const dept = String(arena?.dept || "").trim();
+      const inferred = inferGradeClassFromNos((cards || []).map((c) => c?.no));
+      const g = Number(arena?.grade);
+      const c = Number(arena?.classNo);
+      const hasArenaClass = Number.isFinite(g) && g > 0 && Number.isFinite(c) && c > 0;
+      // 카드 학번이 화면에 보이는 학급이므로, 방송값과 다르면 학번 다수결을 따름
+      if (inferred && (!hasArenaClass || g !== inferred.grade || c !== inferred.classNo)) {
+        return formatLiveNowClassLabel(inferred.grade, inferred.classNo, dept);
+      }
+      const labeled = String(arena?.nowLabel || "").trim();
+      if (labeled) {
+        if (
+          inferred &&
+          /1학년\s*1반/.test(labeled) &&
+          (inferred.grade !== 1 || inferred.classNo !== 1)
+        ) {
+          return formatLiveNowClassLabel(inferred.grade, inferred.classNo, dept);
+        }
+        return labeled;
+      }
+      if (hasArenaClass) return formatLiveNowClassLabel(g, c, dept);
+      if (inferred) return formatLiveNowClassLabel(inferred.grade, inferred.classNo, dept);
+      return formatLiveNowClassLabel(1, 1, dept);
+    }
+
+    function paintLiveArena(arena, sn, cards) {
       const host = document.getElementById("liveDeckArena");
       const nowEl = document.getElementById("liveDeckArenaNow");
       const board = document.getElementById("liveDeckArenaBoard");
@@ -3136,12 +3202,8 @@ ${linkedCss}
         }
         return;
       }
-      const g = Number(arena?.grade) || 1;
-      const c = Number(arena?.classNo) || 1;
-      const dept = String(arena?.dept || "").trim();
-      const nowLabel =
-        String(arena?.nowLabel || "").trim() ||
-        (dept ? `${g}학년 ${c}반 · ${dept}` : `${g}학년 ${c}반`);
+      const cardList = Array.isArray(cards) ? cards : localState?.cards || [];
+      const nowLabel = resolveLiveNowClassLabel(arena, cardList);
       nowEl.innerHTML = `<span class="deck-arena-now-kicker">현재 탐구 학급</span><span class="deck-arena-now-title"><em>${escapeHtml(nowLabel)}</em></span>`;
       // 직업 월드컵 랭킹은 3차시 보고서 종합에서만 표시
       if (Number(sn) !== 3) {
@@ -3579,7 +3641,7 @@ ${linkedCss}
       const focusId = localState.focusId;
       const isSpread = !!focusId;
       root.classList.toggle("is-spread", isSpread);
-      paintLiveArena(localState.arena, localState.sessionNo);
+      paintLiveArena(localState.arena, localState.sessionNo, localState.cards);
 
       if (table) {
         if (!localState.cards.length) {

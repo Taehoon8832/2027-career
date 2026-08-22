@@ -20,6 +20,13 @@
   let historyData = { r16: [], r8: [], r4: [], r2: [], winner: "", runnerUp: "", semi: [] };
   let pickerTargetIdx = null;
   let pickerCat = "전체";
+  let activeCat = "전체";
+  let pickerItemsCache = [];
+  let pickerShown = 0;
+  let pickerSearchTimer = 0;
+  const PICKER_PAGE = 72;
+  const isCoarseUi = () =>
+    window.matchMedia("(pointer: coarse)").matches || window.innerWidth < 720;
 
   const root = document.getElementById("activity-root");
   const inputContainer = document.getElementById("wc-job-inputs");
@@ -81,6 +88,7 @@
     btn.className = "wc-cat" + (cat === "전체" ? " is-on" : "");
     btn.textContent = cat;
     btn.addEventListener("click", () => {
+      activeCat = cat;
       [...rail.children].forEach((b) => b.classList.toggle("is-on", b === btn));
       [...inputContainer.children].forEach((cell) => {
         const cellCat = cell.dataset.cat || "";
@@ -94,6 +102,19 @@
     });
     rail.appendChild(btn);
   });
+
+  function getActiveCategory() {
+    const on = rail?.querySelector(".wc-cat.is-on");
+    const fromRail = String(on?.textContent || "").trim();
+    if (fromRail && CATEGORIES.includes(fromRail)) return fromRail;
+    return CATEGORIES.includes(activeCat) ? activeCat : "전체";
+  }
+
+  function poolForCategory(cat) {
+    const scope = cat && cat !== "전체" ? cat : "전체";
+    if (scope === "전체") return JOB_POOL.filter((j) => j && j.name);
+    return JOB_POOL.filter((j) => j && j.name && j.cat === scope);
+  }
 
   document.getElementById("wc-btn-fill-remain")?.addEventListener("click", fillRemainingRandom);
   document.getElementById("wc-btn-pick-list")?.addEventListener("click", () => openPicker(firstEmptyIdx()));
@@ -262,10 +283,24 @@
       toast("직업 목록을 불러오지 못했어요 · 페이지를 새로고침해 주세요");
       return;
     }
+    const cat = getActiveCategory();
     const used = filledNamesSet();
-    const available = shuffle(JOB_POOL.filter((j) => j && j.name && !used.has(j.name)));
+    const scoped = poolForCategory(cat);
+    const available = shuffle(scoped.filter((j) => !used.has(j.name)));
+    if (!available.length) {
+      toast(
+        cat === "전체"
+          ? "더 고를 직업이 없어요"
+          : `「${cat}」분야에서 더 고를 직업이 없어요 · 상단에서 다른 분야를 골라 보세요`
+      );
+      return;
+    }
     if (available.length < blanks.length) {
-      toast("남은 칸보다 고를 직업이 부족해요 · 일부만 채울게요");
+      toast(
+        cat === "전체"
+          ? "남은 칸보다 고를 직업이 부족해요 · 일부만 채울게요"
+          : `「${cat}」분야 직업이 부족해요 · 가능한 칸만 채울게요`
+      );
     }
     let filled = 0;
     blanks.forEach((cell, idx) => {
@@ -275,7 +310,11 @@
       filled += 1;
     });
     updateFillMeter();
-    toast(`남은 칸 ${filled}개를 랜덤 직업으로 채웠어요`);
+    toast(
+      cat === "전체"
+        ? `남은 칸 ${filled}개를 랜덤 직업으로 채웠어요`
+        : `「${cat}」분야에서 남은 칸 ${filled}개를 랜덤으로 채웠어요`
+    );
   }
 
   function ensurePickerDom() {
@@ -318,10 +357,54 @@
     wrap.addEventListener("click", (e) => {
       if (e.target.closest?.("[data-wc-picker-close]")) closePicker();
     });
-    wrap.querySelector("#wc-picker-search")?.addEventListener("input", () => renderPickerList());
+    const searchEl = wrap.querySelector("#wc-picker-search");
+    searchEl?.addEventListener("input", () => {
+      clearTimeout(pickerSearchTimer);
+      pickerSearchTimer = setTimeout(() => renderPickerList(), isCoarseUi() ? 80 : 40);
+    });
+    const listEl = wrap.querySelector("#wc-picker-list");
+    listEl?.addEventListener("click", (e) => {
+      const btn = e.target.closest?.(".wc-picker-item");
+      if (!btn || btn.disabled) return;
+      pickJobFromList(btn.getAttribute("data-job") || "");
+    });
+    listEl?.addEventListener(
+      "scroll",
+      () => {
+        if (pickerShown >= pickerItemsCache.length) return;
+        const nearBottom = listEl.scrollTop + listEl.clientHeight >= listEl.scrollHeight - 120;
+        if (nearBottom) appendPickerChunk();
+      },
+      { passive: true }
+    );
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !wrap.hidden) closePicker();
     });
+  }
+
+  function pickJobFromList(name) {
+    const job = JOB_POOL.find((j) => j.name === name);
+    if (!job) return;
+    let idx = pickerTargetIdx;
+    if (!idx || document.getElementById(`job-${idx}`)?.value.trim()) {
+      idx = firstEmptyIdx();
+    }
+    if (!idx) {
+      toast("빈 칸이 없어요 · 먼저 칸을 비우거나 직접 수정해 주세요");
+      return;
+    }
+    const cell = document.getElementById(`job-${idx}`)?.closest(".wc-job-cell");
+    applyJobToCell(cell, job);
+    updateFillMeter();
+    const next = firstEmptyIdx();
+    if (next) {
+      pickerTargetIdx = next;
+      renderPickerList();
+      toast(`${idx}번에 「${job.name}」을(를) 넣었어요`);
+    } else {
+      closePicker();
+      toast("32칸이 모두 채워졌어요");
+    }
   }
 
   function openPicker(targetIdx) {
@@ -333,20 +416,26 @@
       return;
     }
     pickerTargetIdx = targetIdx || firstEmptyIdx();
+    const railCat = getActiveCategory();
+    pickerCat = CATEGORIES.includes(railCat) ? railCat : "전체";
+    const scopedCount = poolForCategory(pickerCat).length;
     const sub = document.getElementById("wc-picker-sub");
     if (sub) {
+      const scopeHint =
+        pickerCat === "전체" ? `${JOB_POOL.length}가지` : `「${pickerCat}」 ${scopedCount}가지`;
       sub.textContent = pickerTargetIdx
-        ? `${pickerTargetIdx}번 칸에 넣을 직업을 고르세요 · ${JOB_POOL.length}가지`
+        ? `${pickerTargetIdx}번 칸에 넣을 직업을 고르세요 · ${scopeHint}`
         : `이미 32칸이 찼어요 · 직업을 고르면 첫 칸부터 교체할 수 있어요`;
     }
     const search = document.getElementById("wc-picker-search");
     if (search) search.value = "";
-    pickerCat = "전체";
-    document.querySelectorAll(".wc-picker-cat").forEach((b, i) => b.classList.toggle("is-on", i === 0));
+    document.querySelectorAll(".wc-picker-cat").forEach((b) => {
+      b.classList.toggle("is-on", String(b.textContent || "").trim() === pickerCat);
+    });
     renderPickerList();
     wrap.hidden = false;
     document.body.classList.add("wc-picker-open");
-    setTimeout(() => search?.focus(), 50);
+    if (!isCoarseUi()) setTimeout(() => search?.focus(), 40);
   }
 
   function closePicker() {
@@ -364,18 +453,39 @@
       .trim()
       .toLowerCase();
     const used = filledNamesSet();
-    const items = JOB_POOL.filter((j) => {
-      if (!j?.name) return false;
-      if (pickerCat !== "전체" && j.cat !== pickerCat) return false;
+    pickerItemsCache = poolForCategory(pickerCat).filter((j) => {
       if (q && !String(j.name).toLowerCase().includes(q)) return false;
       return true;
     });
-    if (!items.length) {
+    if (!pickerItemsCache.length) {
+      pickerShown = 0;
       host.innerHTML = `<p class="wc-picker-empty">조건에 맞는 직업이 없어요</p>`;
       return;
     }
-    host.innerHTML = items
-      .slice(0, 220)
+    const sub = document.getElementById("wc-picker-sub");
+    if (sub && pickerTargetIdx) {
+      const scopeHint =
+        pickerCat === "전체"
+          ? `전체 ${pickerItemsCache.length}가지`
+          : `「${pickerCat}」 ${pickerItemsCache.length}가지`;
+      sub.textContent = `${pickerTargetIdx}번 칸에 넣을 직업을 고르세요 · ${scopeHint}${
+        q ? " (검색 결과)" : ""
+      }`;
+    }
+    pickerShown = 0;
+    host.innerHTML = "";
+    appendPickerChunk(used);
+  }
+
+  function appendPickerChunk(usedSet) {
+    const host = document.getElementById("wc-picker-list");
+    if (!host || !pickerItemsCache.length) return;
+    const used = usedSet || filledNamesSet();
+    const next = Math.min(pickerShown + PICKER_PAGE, pickerItemsCache.length);
+    const frag = document.createDocumentFragment();
+    const tmp = document.createElement("div");
+    tmp.innerHTML = pickerItemsCache
+      .slice(pickerShown, next)
       .map((j) => {
         const taken = used.has(j.name);
         return `<button type="button" class="wc-picker-item${taken ? " is-taken" : ""}" data-job="${escapeHtml(j.name)}">
@@ -386,35 +496,18 @@
         </button>`;
       })
       .join("");
-    host.querySelectorAll(".wc-picker-item").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const name = btn.getAttribute("data-job") || "";
-        const job = JOB_POOL.find((j) => j.name === name);
-        if (!job) return;
-        let idx = pickerTargetIdx;
-        if (!idx || document.getElementById(`job-${idx}`)?.value.trim()) {
-          idx = firstEmptyIdx();
-        }
-        if (!idx) {
-          toast("빈 칸이 없어요 · 먼저 칸을 비우거나 직접 수정해 주세요");
-          return;
-        }
-        const cell = document.getElementById(`job-${idx}`)?.closest(".wc-job-cell");
-        applyJobToCell(cell, job);
-        updateFillMeter();
-        const next = firstEmptyIdx();
-        if (next) {
-          pickerTargetIdx = next;
-          const sub = document.getElementById("wc-picker-sub");
-          if (sub) sub.textContent = `${next}번 칸에 넣을 직업을 고르세요 · 이어서 고를 수 있어요`;
-          renderPickerList();
-          toast(`${idx}번에 「${job.name}」을(를) 넣었어요`);
-        } else {
-          closePicker();
-          toast("32칸이 모두 채워졌어요");
-        }
-      });
-    });
+    while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+    host.querySelector(".wc-picker-more")?.remove();
+    host.appendChild(frag);
+    pickerShown = next;
+    if (pickerShown < pickerItemsCache.length) {
+      const more = document.createElement("button");
+      more.type = "button";
+      more.className = "wc-picker-more";
+      more.textContent = `더 보기 · ${pickerItemsCache.length - pickerShown}개 남음`;
+      more.addEventListener("click", () => appendPickerChunk());
+      host.appendChild(more);
+    }
   }
 
   function shuffleInputs() {
@@ -626,7 +719,7 @@
 
       updateMatchUI();
       selecting = false;
-    }, 350);
+    }, isCoarseUi() ? 140 : 280);
   }
 
   function showResult() {
@@ -738,7 +831,8 @@
     const canvas = document.getElementById("wc-confetti");
     if (!canvas || !canvas.getContext) return;
     const ctx = canvas.getContext("2d");
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const mobile = isCoarseUi();
+    const dpr = Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2);
     canvas.width = window.innerWidth * dpr;
     canvas.height = window.innerHeight * dpr;
     canvas.style.width = "100%";
@@ -746,7 +840,7 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     const colors = ["#2563EB", "#F59E0B", "#10B981", "#F43F5E", "#8B5CF6", "#FFFFFF"];
-    const pieces = Array.from({ length: 110 }, () => ({
+    const pieces = Array.from({ length: mobile ? 36 : 110 }, () => ({
       x: Math.random() * window.innerWidth,
       y: -20 - Math.random() * 200,
       r: 4 + Math.random() * 6,
@@ -758,6 +852,7 @@
     }));
 
     let frames = 0;
+    const maxFrames = mobile ? 70 : 150;
     (function frame() {
       frames++;
       ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
@@ -773,7 +868,7 @@
         ctx.fillRect(-p.r, -p.r / 2, p.r * 2, p.r);
         ctx.restore();
       });
-      if (frames < 150) requestAnimationFrame(frame);
+      if (frames < maxFrames) requestAnimationFrame(frame);
       else ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
     })();
   }

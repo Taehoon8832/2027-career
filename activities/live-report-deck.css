@@ -626,12 +626,12 @@
   50% { transform: translateY(-4px) scale(1.06); }
 }
 .deck-arena-pod-name {
-  font: 900 13px/1.25 var(--font-sans);
+  font: 600 16px/1.3 "Noto Sans KR", var(--font-sans);
   color: #fff7ed;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   word-break: keep-all;
 }
-.deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 15px; }
+.deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 18px; font-weight: 700; }
 button.deck-arena-pod-name.is-job {
   appearance: none;
   border: none;
@@ -712,7 +712,7 @@ button.deck-arena-pod-name.is-job:focus-visible {
   align-items: center;
   gap: 7px;
   min-width: 0;
-  font: 800 13.5px/1.25 var(--font-sans);
+  font: 600 16px/1.3 "Noto Sans KR", var(--font-sans);
   color: #fff7ed;
   letter-spacing: -0.02em;
 }
@@ -985,14 +985,14 @@ button.deck-arena-col-champ.is-job:focus-visible span {
   color: rgba(254, 243, 199, 0.5);
 }
 @media (max-width: 720px) {
-  .deck-arena-now-title { font-size: 1.12rem; }
+  .deck-arena-now-title { font-size: clamp(1.08rem, 4.6vw, 1.35rem); }
   .deck-arena-podium { gap: 5px; min-height: 132px; }
   .deck-arena-pod { padding: 10px 5px 8px; }
   .deck-arena-pod.is-1 { min-height: 132px; }
   .deck-arena-pod.is-2 { min-height: 112px; }
   .deck-arena-pod.is-3 { min-height: 100px; }
-  .deck-arena-pod-name { font-size: 11.5px; }
-  .deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 13px; }
+  .deck-arena-pod-name { font-size: 14px; }
+  .deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 16px; }
   .deck-arena-row {
     grid-template-columns: 28px minmax(0, 1fr) 48px;
     grid-template-rows: auto auto;
@@ -1006,6 +1006,175 @@ button.deck-arena-col-champ.is-job:focus-visible span {
   .report-deck-arena { padding: 8px 8px 10px; }
   .deck-arena-now { padding: 10px 11px; }
   .deck-arena-mode { padding: 6px 9px; font-size: 10.5px; }
+}
+
+/* 실시간 덱 · 휴대폰/태블릿 속도·터치 최적화 */
+@media (max-width: 1024px) {
+  .report-deck {
+    padding:
+      max(6px, env(safe-area-inset-top, 0px))
+      max(6px, env(safe-area-inset-right, 0px))
+      max(6px, env(safe-area-inset-bottom, 0px))
+      max(6px, env(safe-area-inset-left, 0px));
+  }
+  .report-deck-panel {
+    border-radius: 14px;
+    width: 100%;
+  }
+  .report-deck-body {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  .deck-arena-start::before,
+  .deck-arena-start-btn {
+    animation: none !important;
+  }
+  .deck-arena-board::before {
+    opacity: 0.35;
+  }
+  .deck-arena-start {
+    padding: 14px 12px 16px;
+  }
+  .deck-arena-start-title {
+    font-size: clamp(1.45rem, 5.8vw, 2.1rem);
+    margin: 8px 0 6px;
+  }
+  .deck-arena-start-btn {
+    min-width: min(100%, 320px);
+    min-height: 54px;
+    padding: 14px 22px;
+    font-size: clamp(1.25rem, 5vw, 1.65rem);
+    touch-action: manipulation;
+  }
+  .deck-arena-modes {
+    gap: 6px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    padding-bottom: 2px;
+  }
+  .deck-arena-mode {
+    min-height: 40px;
+    flex: 0 0 auto;
+    touch-action: manipulation;
+  }
+  .deck-arena-fold-btn {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  .deck-card {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 200px;
+    animation-duration: 0.28s;
+  }
+  .report-deck.is-snap .deck-card {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .deck-arena-job,
+  button.deck-arena-job.is-job,
+  .deck-arena-pod-name,
+  button.deck-arena-pod-name.is-job {
+    font-size: 16px !important;
+    line-height: 1.3 !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .report-deck-arena {
+    padding: 6px 8px 8px;
+  }
+  .deck-arena-board {
+    margin-top: 6px;
+    border-radius: 14px;
+    overflow: visible;
+  }
+  .deck-arena-list {
+    padding: 8px 8px 12px;
+    gap: 7px;
+  }
+  .deck-arena-row {
+    padding: 10px 8px;
+    border-radius: 12px;
+    animation: none;
+  }
+  .deck-arena-meta {
+    font-size: 11px;
+  }
+  .deck-arena-who-list {
+    max-height: min(38vh, 280px);
+  }
+  .report-deck-table {
+    grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+    gap: 8px;
+    padding: 10px 8px 16px;
+  }
+  .deck-card {
+    min-height: 188px;
+    padding: 7px;
+    border-radius: 12px;
+  }
+  .deck-card.is-s3,
+  .deck-card.is-s4 { min-height: 210px; }
+  .deck-card-job b { font-size: 11px; }
+  .report-deck-head {
+    padding: 10px 10px;
+    gap: 8px;
+  }
+  .report-deck-head h3 {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .report-deck-table {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .deck-arena-start-sub { font-size: 12px; margin-bottom: 12px; }
+  .deck-arena-podium { min-height: 118px; }
+  .deck-arena-pod-name { font-size: 13px !important; }
+  .deck-arena-pod.is-1 .deck-arena-pod-name { font-size: 15px !important; }
+  .deck-arena-compare {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .report-deck.is-spread .deck-card {
+    flex: 0 0 96px;
+    width: 96px;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+  .report-deck-table {
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 12px;
+  }
+  .deck-card { min-height: 220px; }
+  .deck-arena-start-title {
+    font-size: clamp(1.7rem, 3.2vw, 2.2rem);
+  }
+  .deck-arena-start-btn {
+    min-width: 300px;
+    min-height: 56px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-card,
+  .deck-arena-row,
+  .deck-arena-pod,
+  .deck-arena-start::before,
+  .deck-arena-start-btn {
+    animation: none !important;
+    transition: none !important;
+  }
+  .deck-card {
+    opacity: 1;
+    transform: none;
+  }
 }
 .report-deck-actions {
   display: inline-flex;
@@ -1406,10 +1575,10 @@ button.deck-arena-col-champ.is-job:focus-visible span {
 }
 .deck-arena-start-title {
   margin: 10px 0 6px;
-  font: 900 clamp(1.35rem, 4vw, 1.85rem)/1.15 var(--font-sans);
+  font: 600 clamp(1.7rem, 5.2vw, 2.35rem)/1.2 "Noto Sans KR", var(--font-sans);
   color: #fffbeb;
-  letter-spacing: -0.04em;
-  text-shadow: 0 0 24px rgba(250, 204, 21, 0.25);
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 18px rgba(250, 204, 21, 0.2);
 }
 .deck-arena-start-sub {
   margin: 0 0 18px;
@@ -1694,7 +1863,12 @@ button.deck-arena-col-champ.is-job:focus-visible span {
 .deck-arena-pod-rank { color: #ff2d6a !important; }
 .deck-arena-pod-name,
 button.deck-arena-pod-name.is-job {
-  font: 400 15px/1.25 var(--arena-display) !important;
+  font: 600 17px/1.3 "Noto Sans KR", Pretendard, sans-serif !important;
+  color: #0b1020 !important;
+}
+.deck-arena-job,
+button.deck-arena-job.is-job {
+  font: 600 17px/1.3 "Noto Sans KR", Pretendard, sans-serif !important;
   color: #0b1020 !important;
 }
 .deck-arena-pod-pct {
@@ -1719,11 +1893,6 @@ button.deck-arena-pod-name.is-job {
   color: #22d3ee !important;
 }
 .deck-arena-row.is-top .deck-arena-rank { background: #ff2d6a !important; color: #fff !important; }
-.deck-arena-job,
-button.deck-arena-job.is-job {
-  font: 400 15px/1.25 var(--arena-display) !important;
-  color: #0b1020 !important;
-}
 .deck-arena-meta { color: #475569 !important; font-family: var(--arena-body) !important; }
 .deck-arena-win-n { color: #ff2d6a !important; }
 .deck-arena-meter {
@@ -1768,9 +1937,10 @@ button.deck-arena-job.is-job {
   100% { opacity: 1; transform: translateX(0) scale(1); }
 }
 .deck-arena-start-title {
-  font: 400 clamp(1.6rem, 4.5vw, 2.2rem)/1.1 "Black Han Sans", sans-serif !important;
+  font: 600 clamp(1.85rem, 5.5vw, 2.5rem)/1.15 "Noto Sans KR", Pretendard, sans-serif !important;
   color: #fff !important;
-  text-shadow: 0 3px 0 #ff2d6a !important;
+  text-shadow: 0 2px 0 rgba(255, 45, 106, 0.45) !important;
+  letter-spacing: -0.03em;
 }
 .deck-arena-start-btn {
   background: #ff2d6a !important;
