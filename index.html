@@ -4496,6 +4496,66 @@
     .deck-reader-flow .deck-reader-field-v {
       white-space: pre-wrap;
     }
+    .deck-reader-sheet-block {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1.5px dashed rgba(148, 163, 184, 0.55);
+    }
+    .deck-activity-sheet {
+      margin-top: 8px;
+      padding: 10px;
+      border: 1.5px solid rgba(31, 30, 29, 0.14);
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fff 0%, #f8faf9 100%);
+      max-height: min(52vh, 560px);
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      overscroll-behavior: contain;
+      contain: content;
+      content-visibility: auto;
+      font: 500 13px/1.45 "Noto Sans KR", Pretendard, sans-serif;
+      color: #1f1e1d;
+    }
+    .deck-activity-sheet * { box-sizing: border-box; max-width: 100%; }
+    .deck-activity-sheet input,
+    .deck-activity-sheet textarea,
+    .deck-activity-sheet select {
+      pointer-events: none !important;
+      caret-color: transparent !important;
+      width: 100%;
+      font: inherit;
+      color: inherit;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 6px 8px;
+    }
+    .deck-activity-sheet textarea { min-height: 52px; resize: none; }
+    .deck-activity-sheet button,
+    .deck-activity-sheet .no-print,
+    .deck-activity-sheet .html-forge,
+    .deck-activity-sheet .lesson-part-tools,
+    .deck-activity-sheet .wc-btn,
+    .deck-activity-sheet .inf-kakao-btn { display: none !important; }
+    .deck-activity-sheet .swot-grid,
+    .deck-activity-sheet .swot-plan,
+    .deck-activity-sheet .grid-2 {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    @media (max-width: 720px) {
+      .deck-activity-sheet {
+        max-height: min(46vh, 420px);
+        padding: 8px;
+        font-size: 12.5px;
+      }
+      .deck-activity-sheet .swot-grid,
+      .deck-activity-sheet .swot-plan,
+      .deck-activity-sheet .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
     @media (max-width: 720px) {
       .report-deck-table {
         grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
@@ -17350,7 +17410,11 @@ ${built.html}
               mbti: char?.mbti || "",
               arch: char?.arch || "",
               incompleteLabel: incomplete.incomplete ? incompleteBadgeLabel(incomplete) : "",
-              createdAt: sub.created_at || ""
+              createdAt: sub.created_at || "",
+              sheetHtml:
+                sessionNo === 4
+                  ? extractDeckActivitySheetHtml(sub.content, sub.id)
+                  : ""
             };
           }
         }
@@ -18174,6 +18238,52 @@ ${pageCss}</style>
         }
       }
 
+      /** 카드덱용 · 제출 HTML에서 활동지 미리보기 추출 (캐시·경량) */
+      const deckSheetPreviewCache = new Map();
+      function extractDeckActivitySheetHtml(content, cacheKey) {
+        const key = cacheKey ? String(cacheKey) : "";
+        if (key && deckSheetPreviewCache.has(key)) return deckSheetPreviewCache.get(key);
+        const raw = String(content || "");
+        if (!raw) return "";
+        let html = "";
+        try {
+          const doc = new DOMParser().parseFromString(raw, "text/html");
+          const root =
+            doc.querySelector("#activity-root") ||
+            doc.querySelector(".activity-card") ||
+            doc.querySelector(".student-activity-export .shell > .activity-card");
+          if (!root) return "";
+          const clone = root.cloneNode(true);
+          clone
+            .querySelectorAll(
+              "script, style, .no-print, .html-forge, .html-forge-copy, .lesson-part-tools, .wc-btn, .wc-help, .inf-kakao-btn, .inf-bubble, button"
+            )
+            .forEach((el) => el.remove());
+          clone.querySelectorAll("img[src^='data:']").forEach((img) => {
+            const src = img.getAttribute("src") || "";
+            if (src.length > 2500) {
+              const ph = doc.createElement("span");
+              ph.textContent = "[이미지]";
+              ph.style.cssText = "color:#94a3b8;font-size:12px;";
+              img.replaceWith(ph);
+            }
+          });
+          clone.querySelectorAll("input, textarea, select").forEach((el) => {
+            el.setAttribute("readonly", "readonly");
+            el.setAttribute("tabindex", "-1");
+            if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
+          });
+          html = clone.innerHTML;
+        } catch {
+          html = "";
+        }
+        if (key) {
+          if (deckSheetPreviewCache.size > 48) deckSheetPreviewCache.clear();
+          deckSheetPreviewCache.set(key, html);
+        }
+        return html;
+      }
+
       /** 카드덱 펼침용 · 학생 입력 필드를 질서 있게 정리 */
       function buildDeckReaderFields(sub) {
         const sessionNo = Number(sub?.session_no) || 0;
@@ -18313,6 +18423,17 @@ ${pageCss}</style>
               .join("")}</div>`
           : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
 
+        let sheetBlock = "";
+        if (sessionNo === 4) {
+          const sheetHtml = extractDeckActivitySheetHtml(sub?.content, sub?.id);
+          if (sheetHtml) {
+            sheetBlock = `<section class="deck-reader-section deck-reader-sheet-block" data-reader-zone="sheet">
+              <p class="deck-reader-label">학생 활동지</p>
+              <div class="deck-activity-sheet" data-sheet-preview="1">${sheetHtml}</div>
+            </section>`;
+          }
+        }
+
         return `<div class="deck-reader-sheet">
           <div class="deck-reader-top" data-reader-zone="top">
             ${art}
@@ -18326,6 +18447,7 @@ ${pageCss}</style>
             <p class="deck-reader-label">${escapeHtml(sectionLabel)}</p>
             ${fieldHtml}
           </section>
+          ${sheetBlock}
         </div>`;
       }
 

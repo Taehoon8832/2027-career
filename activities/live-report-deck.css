@@ -211,6 +211,66 @@
 }
 .deck-reader-field.is-wide { grid-column: 1 / -1; }
 .deck-reader-flow .deck-reader-field { grid-column: auto; }
+.deck-reader-sheet-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1.5px dashed rgba(148, 163, 184, 0.45);
+}
+.deck-activity-sheet {
+  margin-top: 8px;
+  padding: 10px;
+  border: 1.5px solid rgba(253, 230, 138, 0.28);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 249, 0.94) 100%);
+  color: #1f1e1d;
+  max-height: min(48vh, 520px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  contain: content;
+  content-visibility: auto;
+  font: 500 13px/1.45 "Noto Sans KR", Pretendard, sans-serif;
+}
+.deck-activity-sheet * { box-sizing: border-box; max-width: 100%; }
+.deck-activity-sheet input,
+.deck-activity-sheet textarea,
+.deck-activity-sheet select {
+  pointer-events: none !important;
+  caret-color: transparent !important;
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.deck-activity-sheet textarea { min-height: 52px; resize: none; }
+.deck-activity-sheet button,
+.deck-activity-sheet .no-print,
+.deck-activity-sheet .html-forge,
+.deck-activity-sheet .lesson-part-tools,
+.deck-activity-sheet .wc-btn,
+.deck-activity-sheet .inf-kakao-btn { display: none !important; }
+.deck-activity-sheet .swot-grid,
+.deck-activity-sheet .swot-plan,
+.deck-activity-sheet .grid-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+@media (max-width: 720px) {
+  .deck-activity-sheet {
+    max-height: min(42vh, 380px);
+    padding: 8px;
+    font-size: 12.5px;
+  }
+  .deck-activity-sheet .swot-grid,
+  .deck-activity-sheet .swot-plan,
+  .deck-activity-sheet .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
 .deck-reader-field.is-accent {
   border-color: rgba(29, 78, 216, 0.22);
   background: linear-gradient(180deg, #f8fbff 0%, #eef5ff 100%);

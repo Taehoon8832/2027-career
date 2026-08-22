@@ -2284,6 +2284,51 @@ ${linkedCss}
       }
     }
 
+    const liveSheetPreviewCache = new Map();
+    function extractLiveActivitySheetHtml(content, cacheKey) {
+      const key = cacheKey ? String(cacheKey) : "";
+      if (key && liveSheetPreviewCache.has(key)) return liveSheetPreviewCache.get(key);
+      const raw = String(content || "");
+      if (!raw || sessionNo !== 4) return "";
+      let html = "";
+      try {
+        const doc = new DOMParser().parseFromString(raw, "text/html");
+        const root =
+          doc.querySelector("#activity-root") ||
+          doc.querySelector(".activity-card") ||
+          doc.querySelector(".student-activity-export .activity-card");
+        if (!root) return "";
+        const clone = root.cloneNode(true);
+        clone
+          .querySelectorAll(
+            "script, style, .no-print, .html-forge, .html-forge-copy, .lesson-part-tools, .wc-btn, .wc-help, .inf-kakao-btn, .inf-bubble, button"
+          )
+          .forEach((el) => el.remove());
+        clone.querySelectorAll("img[src^='data:']").forEach((img) => {
+          const src = img.getAttribute("src") || "";
+          if (src.length > 2500) {
+            const ph = doc.createElement("span");
+            ph.textContent = "[이미지]";
+            ph.style.cssText = "color:#94a3b8;font-size:12px;";
+            img.replaceWith(ph);
+          }
+        });
+        clone.querySelectorAll("input, textarea, select").forEach((el) => {
+          el.setAttribute("readonly", "readonly");
+          el.setAttribute("tabindex", "-1");
+          if (el.tagName === "SELECT") el.setAttribute("disabled", "disabled");
+        });
+        html = clone.innerHTML;
+      } catch {
+        html = "";
+      }
+      if (key) {
+        if (liveSheetPreviewCache.size > 48) liveSheetPreviewCache.clear();
+        liveSheetPreviewCache.set(key, html);
+      }
+      return html;
+    }
+
     function assessLiveCompleteness(content) {
       const html = String(content || "");
       const exportAttr = /data-complete=["']([01])["']/i.exec(html);
@@ -2360,6 +2405,15 @@ ${linkedCss}
             .join("")}</div>`
         : `<p class="deck-reader-empty">정리할 입력 내용이 아직 없습니다.</p>`;
 
+      let sheetBlock = "";
+      const sheetHtml = String(who?.sheetHtml || "").trim();
+      if (sessionNo === 4 && sheetHtml) {
+        sheetBlock = `<section class="deck-reader-section deck-reader-sheet-block" data-reader-zone="sheet">
+          <p class="deck-reader-label">학생 활동지</p>
+          <div class="deck-activity-sheet" data-sheet-preview="1">${sheetHtml}</div>
+        </section>`;
+      }
+
       return `<div class="deck-reader-sheet">
         <div class="deck-reader-top" data-reader-zone="top">
           ${art}
@@ -2373,6 +2427,7 @@ ${linkedCss}
           <p class="deck-reader-label">${escapeHtml(sectionLabelForLive())}</p>
           ${fieldHtml}
         </section>
+        ${sheetBlock}
       </div>`;
     }
 
@@ -3893,7 +3948,8 @@ ${linkedCss}
                 mbti: char?.mbti || card.mbti || "",
                 arch: char?.arch || card.arch || "",
                 incompleteLabel: card.incompleteLabel || "",
-                createdAt: card.createdAt || ""
+                createdAt: card.createdAt || "",
+                sheetHtml: extractLiveActivitySheetHtml(content, keepFocus)
               }
             : localState.who;
           next.fields = buildLiveFields(content);
@@ -3924,7 +3980,8 @@ ${linkedCss}
           mbti: char?.mbti || card.mbti || "",
           arch: char?.arch || card.arch || "",
           incompleteLabel: card.incompleteLabel || "",
-          createdAt: card.createdAt || ""
+          createdAt: card.createdAt || "",
+          sheetHtml: extractLiveActivitySheetHtml(content, subId)
         }
       });
       void broadcastLive("state", snapshotPayload());
